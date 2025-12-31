@@ -42,7 +42,7 @@
        - First, try to use GitHub MCP tools for branch protection (if available)
        - If GitHub MCP doesn't have a branch protection tool, use `run_terminal_cmd` with curl as fallback:
          - Make HTTP PUT request to: `https://api.github.com/repos/{owner}/{repo}/branches/main/protection`
-         - Headers: `Authorization: token {GITHUB_TOKEN}`, `Accept: application/vnd.github.v3+json`
+         - Headers: `Authorization: Bearer {GITHUB_PERSONAL_ACCESS_TOKEN}`, `Accept: application/vnd.github.v3+json` (use GITHUB_PERSONAL_ACCESS_TOKEN, not GITHUB_TOKEN, for API calls)
          - Body:
            ```json
            {
@@ -67,22 +67,62 @@
            }
            ```
        - Verify protection was set: Check response status is 200
-     - [ ] **CRITICAL:** After repository is created or confirmed to exist:
-       - [ ] Update `.boss/project-config.json` directly with repository information:
-         - Set `repository.remote = "origin"`
-         - Set `repository.url = "https://github.com/{owner}/{repo}"`
-         - Set `repository.owner`, `repository.name`, `repository.private`
-         - Set `initialization.remoteCreated = true`
-       - [ ] **DO NOT add git remotes or push commits** - repository setup is complete
-       - [ ] **DO NOT create Container-Use environments for initialization** - BOSS handles this via GitHub MCP only
-     - [ ] **NEVER push directly to main after this** - always use PRs
-     - [ ] Mark `initialization.stage = "ready"` in `project-config.json`
+     - [ ] **CRITICAL: Verify validation checks pass BEFORE pushing**
+       - **IMPORTANT:** The pre-push hook allows the first push to main (if remote main doesn't exist), BUT it still runs validation checks that can block the push
+       - **BEFORE pushing main branch, verify all checks pass:**
+         1. **Typecheck:** Run `pnpm typecheck` (or `npm run typecheck`) - must pass
+         2. **Lint:** Run `pnpm lint` (or `npm run lint`) - must pass
+         3. **Security:** Run `bash scripts/security-check.sh` - must pass
+         4. **Tests:** Run `pnpm test:unit` (or `npm run test:unit`) - must pass
+         5. **Test files:** Verify at least one test file exists (`.test.ts`, `.spec.ts`, etc.) - required for non-interactive pushes
+       - **If any check fails, fix the issues before pushing**
+       - **The bootstrap process should have created passing code, but verify before pushing**
+     - [ ] **CRITICAL ORDER - Follow EXACTLY:**
+       1. **Add remote using HTTPS:** `git remote add origin https://github.com/<owner>/<repo>.git` (ALWAYS use HTTPS format, NEVER SSH `git@github.com` format)
+       2. **Verify validation checks pass** (see above) - DO NOT skip this step
+       3. **FIRST push main branch:** `git push -u origin main` (contains all bootstrap files - MUST be pushed first, git will use GITHUB_TOKEN automatically, which is set to same value as GITHUB_PERSONAL_ACCESS_TOKEN)
+          - **NOTE:** The pre-push hook will allow this first push (remote main doesn't exist yet), but validation checks still run
+          - **If push fails due to validation, fix the issues and try again**
+       4. **THEN create feature branch if needed:** `git checkout -b feature/boss-initial-setup` (if it doesn't exist)
+       5. **THEN push feature branch:** `git push -u origin feature/boss-initial-setup` (git will use GITHUB_TOKEN automatically, which is set to same value as GITHUB_PERSONAL_ACCESS_TOKEN)
+       5. **Update `.boss/project-config.json`** with repository information:
+          - Set `repository.remote = "origin"`
+          - Set `repository.url = "https://github.com/{owner}/{repo}"`
+          - Set `repository.owner`, `repository.name`, `repository.private`
+          - Set `initialization.remoteCreated = true`
+       6. **Commit and push project-config.json:** `git add .boss/project-config.json && git commit -m "chore: update project-config.json" && git push`
+       7. **Mark `initialization.stage = "ready"`** in `project-config.json`
+       8. **Commit and push again:** `git add .boss/project-config.json && git commit -m "chore: mark initialization as ready" && git push`
+     - [ ] **DO NOT create Container-Use environments for initialization** - BOSS handles this via git commands
+     - [ ] **NEVER push feature branch before main branch** - main must be pushed first
+     - [ ] **After initial setup, NEVER push directly to main** - always use PRs
 
 4. **After Initial Setup**
    - All BOSS and worker work happens on `feature/boss-initial-setup` branch
    - Workers spawn from this branch
    - **AUTOMATICALLY** create PR from `feature/boss-initial-setup` to `main` when work is complete
    - **DO NOT ask user** - always create PR automatically after pushing changes
+
+## Pre-Push Hook Behavior During Initialization
+
+**CRITICAL UNDERSTANDING:** The pre-push hook (`.husky/pre-push`) has special behavior for the first push to main:
+
+1. **First Push Detection:** The hook checks if remote main branch exists using `git ls-remote --heads origin main`
+2. **First Push Allowed:** If remote main doesn't exist, the hook allows the push (with a warning)
+3. **BUT Validation Still Runs:** Even though the first push is allowed, the hook STILL runs all validation checks:
+   - TypeScript typecheck (`pnpm typecheck`)
+   - Linting (`pnpm lint`)
+   - Security checks (`bash scripts/security-check.sh`)
+   - Unit tests (`pnpm test:unit`)
+   - Test file presence check (blocks non-interactive pushes if no test files exist)
+4. **Validation Can Block Push:** If any validation check fails, the push will be blocked even though it's the first push
+5. **After First Push:** Once main branch exists remotely, all future pushes to main are blocked (must use feature branches and PRs)
+
+**IMPORTANT:** Before pushing main branch during initialization:
+- **ALWAYS verify all validation checks pass first**
+- Run the checks manually: `pnpm typecheck && pnpm lint && bash scripts/security-check.sh && pnpm test:unit`
+- Fix any failures before attempting to push
+- The bootstrap process should have created passing code, but verify before pushing
 
 ## Project Config Structure
 
@@ -130,4 +170,12 @@
 - When creating/updating remote repository
 - When changing branches or workflow stages
 - After any significant project state change
+
+**CRITICAL: After ANY change to project-config.json, you MUST:**
+1. **Immediately commit the change:** `git add .boss/project-config.json && git commit -m "chore: update project-config.json"`
+2. **Immediately push the change:** `git push` (or `git push origin <branch-name>` if not tracking)
+3. **DO NOT wait** - do this automatically without asking for confirmation
+4. **DO NOT leave project-config.json changes uncommitted** - always commit and push immediately after modification
+
+This ensures project state is always persisted and synchronized with the remote repository.
 

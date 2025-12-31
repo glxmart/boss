@@ -66,7 +66,7 @@
       - [ ] Update git remote URL to reflect new owner using Container-Use MCP
   - [ ] **CRITICAL: Lock main branch and require PRs** - Use GitHub API to set branch protection:
     - [ ] Make HTTP PUT request to: `https://api.github.com/repos/{owner}/{repo}/branches/main/protection`
-    - [ ] Headers: `Authorization: token {GITHUB_TOKEN}`, `Accept: application/vnd.github.v3+json`
+    - [ ] Headers: `Authorization: Bearer {GITHUB_PERSONAL_ACCESS_TOKEN}`, `Accept: application/vnd.github.v3+json` (use GITHUB_PERSONAL_ACCESS_TOKEN, not GITHUB_TOKEN, for API calls)
     - [ ] Body (JSON):
       ```json
       {
@@ -92,20 +92,39 @@
       ```
     - [ ] Verify protection was set: Check response status is 200
     - [ ] **DO NOT skip this step** - branch protection is mandatory
-  - [ ] Add remote using Container-Use MCP environment (or update if transferred)
-  - [ ] **Push main branch to remote FIRST** (contains all bootstrap files) - use Container-Use MCP
-  - [ ] Push `feature/boss-initial-setup` branch to remote - use Container-Use MCP
+  - [ ] **CRITICAL: Verify validation checks pass BEFORE pushing**
+    - **IMPORTANT:** The pre-push hook allows the first push to main (if remote main doesn't exist), BUT it still runs validation checks that can block the push
+    - **BEFORE pushing main branch, verify all checks pass:**
+      1. **Typecheck:** Run `pnpm typecheck` (or `npm run typecheck`) - must pass
+      2. **Lint:** Run `pnpm lint` (or `npm run lint`) - must pass
+      3. **Security:** Run `bash scripts/security-check.sh` - must pass
+      4. **Tests:** Run `pnpm test:unit` (or `npm run test:unit`) - must pass
+      5. **Test files:** Verify at least one test file exists (`.test.ts`, `.spec.ts`, etc.) - required for non-interactive pushes
+    - **If any check fails, fix the issues before pushing**
+    - **The bootstrap process should have created passing code, but verify before pushing**
+  - [ ] **CRITICAL ORDER - Follow EXACTLY:**
+    1. **Add remote using HTTPS:** `git remote add origin https://github.com/<owner>/<repo>.git` (ALWAYS use HTTPS, NEVER SSH `git@github.com` format)
+    2. **If transferred, update remote:** `git remote set-url origin https://github.com/<new-owner>/<repo>.git` (use HTTPS format)
+    3. **Verify validation checks pass** (see above) - DO NOT skip this step
+    4. **FIRST push main branch:** `git push -u origin main` (contains all bootstrap files - MUST be pushed first, git will use GITHUB_TOKEN from environment automatically, which is set to same value as GITHUB_PERSONAL_ACCESS_TOKEN)
+       - **NOTE:** The pre-push hook will allow this first push (remote main doesn't exist yet), but validation checks still run
+       - **If push fails due to validation, fix the issues and try again**
+    5. **THEN create feature branch if needed:** `git checkout -b feature/boss-initial-setup` (if it doesn't exist)
+    6. **THEN push feature branch:** `git push -u origin feature/boss-initial-setup` (git will use GITHUB_TOKEN from environment automatically, which is set to same value as GITHUB_PERSONAL_ACCESS_TOKEN)
+    5. **Update project-config.json** with repository info (including final owner after transfer)
+    6. **Commit and push project-config.json:** `git add .boss/project-config.json && git commit -m "chore: update project-config.json" && git push`
+    7. **Mark `initialization.stage = "ready"`** in project-config.json
+    8. **Update `initialization.remoteCreated = true`** and `initialization.initialSetupComplete = true`
+    9. **Commit and push again:** `git add .boss/project-config.json && git commit -m "chore: mark initialization as ready" && git push`
+  - [ ] **NEVER push feature branch before main branch** - main must be pushed first
   - [ ] **After this, NEVER push directly to main** - main branch is protected, use PRs for future changes
   - [ ] Create PR from `feature/boss-initial-setup` to `main` automatically (for any future work)
-  - [ ] Update project-config.json with repository info (including final owner after transfer)
-- [ ] Mark `initialization.stage = "ready"` in project-config.json
-- [ ] Update `initialization.remoteCreated = true`
-- [ ] Update `initialization.initialSetupComplete = true`
-- [ ] Report completion to user
+  - [ ] Report completion to user
 
 **Important Notes:**
-- NEVER use git CLI directly - use Container-Use MCP for all git operations (git CLI is only allowed during bootstrap before Container-Use is available)
-- ALWAYS update `.boss/project-config.json` to reflect status changes
+- BOSS uses git commands for orchestration (branches, pushes, merges) - git CLI is allowed and expected
+- Workers use Container-Use MCP for their git operations (automatic)
+- ALWAYS update `.boss/project-config.json` to reflect status changes, then commit and push immediately
 - ALWAYS ask user for repository preferences before creating
 - Default to private repositories unless user specifies otherwise
 - **CRITICAL:** Main branch MUST be protected before any pushes - require PRs for all changes

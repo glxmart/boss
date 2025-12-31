@@ -5,17 +5,25 @@
 # Get the current branch name
 current_branch=$(git symbolic-ref --short HEAD 2>/dev/null)
 
-# Prevent direct pushes to main
+# Prevent direct pushes to main (including initial push)
 if [ "$current_branch" = "main" ]; then
-  echo "❌ Direct push to main is not allowed!"
-  echo ""
-  echo "Please create a feature branch and submit a PR instead:"
-  echo "  git checkout -b feature/your-feature-name"
-  echo "  git push -u origin feature/your-feature-name"
-  echo "  gh pr create  # or use GitHub UI"
-  echo ""
-  echo "For emergency hotfixes, see: docs/emergency-bypass-procedure.md"
-  exit 1
+  # Check if this is the very first push (no remote main exists yet)
+  if ! git ls-remote --heads origin main > /dev/null 2>&1; then
+    echo "⚠️  Warning: This appears to be the first push to main"
+    echo "   For initial setup, this is allowed, but main branch protection will be enforced after setup"
+    echo "   Future pushes to main will be blocked - use feature branches and PRs instead"
+    # Allow first push but warn
+  else
+    echo "❌ Direct push to main is not allowed!"
+    echo ""
+    echo "Please create a feature branch and submit a PR instead:"
+    echo "  git checkout -b feature/your-feature-name"
+    echo "  git push -u origin feature/your-feature-name"
+    echo "  gh pr create  # or use GitHub UI"
+    echo ""
+    echo "For emergency hotfixes, see: docs/emergency-bypass-procedure.md"
+    exit 1
+  fi
 fi
 
 echo "🔍 Running pre-push validation..."
@@ -60,12 +68,23 @@ fi
 
 # Warn if no tests in staged commits
 echo "  ✓ Checking for tests..."
-test_files=$(git diff origin/$current_branch..HEAD --name-only 2>/dev/null | grep -E 'test\.(ts|tsx|js|jsx)$' || true)
+# Check if remote branch exists (for first push, it won't)
+if git ls-remote --heads origin $current_branch > /dev/null 2>&1; then
+  # Remote branch exists - check diff
+  test_files=$(git diff origin/$current_branch..HEAD --name-only 2>/dev/null | grep -E '\.(test|spec)\.(ts|tsx|js|jsx)$' || true)
+else
+  # First push - check all files in HEAD for test files
+  test_files=$(git ls-tree -r HEAD --name-only | grep -E '\.(test|spec)\.(ts|tsx|js|jsx)$' || true)
+fi
+
 if [ -z "$test_files" ]; then
   echo "⚠️  Warning: No test files in commits being pushed"
   echo "   TDD Constitution requires tests before implementation"
-  # Skip interactive prompt in CI environments
-  if [ -z "${CI:-}" ] && [ -t 0 ]; then
+  # Allow bypass only in CI environments, but block in all other cases (including BOSS automated pushes)
+  if [ -n "${CI:-}" ]; then
+    echo "   (Allowing in CI environment, but tests should still be added)"
+  elif [ -t 0 ]; then
+    # Interactive terminal - ask user
     echo "   Continue? (y/N)"
     read -r response
     if [ "$response" != "y" ]; then
@@ -73,7 +92,10 @@ if [ -z "$test_files" ]; then
       exit 1
     fi
   else
-    echo "   (Skipping prompt in non-interactive environment)"
+    # Non-interactive but not CI (e.g., BOSS automated push) - block it
+    echo "❌ Push blocked: TDD Constitution requires tests before implementation"
+    echo "   Add test files and commit them before pushing."
+    exit 1
   fi
 fi
 

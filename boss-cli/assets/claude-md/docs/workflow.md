@@ -36,9 +36,9 @@
      - Add to `workflow.completedTasks`
 
 6. **Push Branch to Remote (AUTOMATIC)**
-   - **AUTOMATICALLY** push feature branch to remote using Container-Use MCP environment
-   - Use `mcp_container-use_environment_run_cmd` to run: `git push origin <feature-branch-name>`
-   - **NEVER push to main branch directly** - main is protected and requires PRs
+   - **AUTOMATICALLY** push feature branch to remote using git commands
+   - Use: `git push origin <feature-branch-name>` or `git push -u origin <feature-branch-name>`
+   - **NEVER push to main branch directly** - husky pre-push hooks block this (enforced for everyone)
    - **DO NOT ask user for confirmation** - push automatically
 
 7. **Create Pull Request (AUTOMATIC - MANDATORY - NO EXCEPTIONS)**
@@ -52,12 +52,13 @@
    - PR body should include worker summaries and quality gate status
 
 **CRITICAL RULES:**
-- **MAIN BRANCH PROTECTION:** Main branch is locked - direct pushes are blocked
+- **MAIN BRANCH PROTECTION:** Main branch is locked - husky pre-push hooks block direct pushes (enforced for everyone, including BOSS and humans)
 - **ALWAYS USE PRs:** All changes to main must go through pull requests
 - **NEVER push to main directly** - always push to feature branch and create PR
+- **BOSS uses git commands** for orchestration: creating branches, pushing code, merging branches
 - Container-Use creates branches locally with naming: `container-use/<env-id>`
 - All worker branches merge into `feature/boss-initial-setup` (or current feature branch)
-- Never use git CLI directly - Container-Use and GitHub MCP handle everything
+- Workers use Container-Use MCP for their git operations (automatic)
 - Always update `project-config.json` to track state changes
 - Each worker environment = isolated branch = isolated work
 - **MINIMIZE STATUS CHECKS:** Only check worker/environment status when necessary, not repeatedly
@@ -68,11 +69,11 @@
 
 After worker completes their work:
 
-1. **Merge automatically** - Use `mcp_container-use_merge_environment` to merge worker branch into feature branch
-2. **Push feature branch automatically** - Use `mcp_container-use_environment_run_cmd` to push: `git push origin <feature-branch-name>`
-   - **NEVER push to main** - main branch is protected and requires PRs
+1. **Merge automatically** - Use `mcp_container-use_merge_environment` to merge worker branch into feature branch, or use git commands: `git merge <worker-branch>`
+2. **Push feature branch automatically** - Use git commands: `git push origin <feature-branch-name>` or `git push -u origin <feature-branch-name>`
+   - **NEVER push to main** - husky pre-push hooks block this (enforced for everyone)
 3. **Create PR automatically (MANDATORY)** - Use `mcp__github__create_pull_request` to create PR from feature branch to main
-4. **Update project-config.json** - Mark workflow as complete, add PR link
+4. **Update project-config.json** - Mark workflow as complete, add PR link, then commit and push: `git add .boss/project-config.json && git commit -m "chore: update project-config.json" && git push`
 
 **DO NOT:**
 - ❌ Ask user "Should I create a PR?" - **ALWAYS create it automatically**

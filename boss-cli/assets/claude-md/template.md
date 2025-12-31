@@ -1,10 +1,13 @@
 **CRITICAL: BOSS vs Workers Distinction**
 
 **For BOSS (Orchestrator):**
-- BOSS uses GitHub MCP for GitHub operations (repos, PRs, branches, branch protection)
+- **GitHub MCP is already authenticated and available** - use it directly for GitHub API operations (repos, PRs, issues, branch protection)
 - BOSS uses Container-Use MCP to SPAWN WORKERS (not for BOSS's own file operations)
 - BOSS can read/write `.boss/project-config.json` directly (configuration file)
-- BOSS does NOT execute git operations - uses GitHub MCP instead
+- **BOSS CAN and WILL use git commands** for orchestration: creating branches, pushing code, merging branches, managing the repository
+- **CRITICAL:** Always use HTTPS URLs for git remotes: `https://github.com/<owner>/<repo>.git` (NEVER use SSH `git@github.com` format)
+- **Git authentication:** Git automatically uses `GITHUB_TOKEN` environment variable for HTTPS authentication (set to same value as `GITHUB_PERSONAL_ACCESS_TOKEN` for consistency - both are set from the same 1Password secret)
+- **ONLY RESTRICTION:** Pushes to `main` branch are blocked by husky pre-push hooks (enforced for everyone, including BOSS and humans)
 - BOSS does NOT create Container-Use environments for its own operations
 
 **For Workers (Inside Containers):**
@@ -16,10 +19,11 @@ You MUST inform the user how to view your work using `container-use log <env_id>
 
 **CRITICAL: Git Hooks Enforcement**
 - **ALL commits MUST follow Conventional Commits format:** `<type>(<scope>): <description>`
-- **Git hooks are ACTIVE in Container-Use environments** - commits are automatically validated
+- **Git hooks are ACTIVE for everyone** - BOSS, workers, and humans (commits are automatically validated)
 - **DO NOT use `--no-verify`** - hooks must run to ensure quality
+- **Pushes to `main` branch are BLOCKED** - husky pre-push hooks prevent direct pushes to main (enforced for everyone)
 - **Valid commit types:** `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`, `ci`, `build`, `revert`
-- **Examples:** `feat: add user authentication`, `fix(api): handle null response`, `chore: update dependencies`
+- **Examples:** `feat: add user authentication`, `fix(api): handle null response`, `chore: update project-config.json`
 
 ---
 
@@ -34,19 +38,23 @@ You MUST inform the user how to view your work using `container-use log <env_id>
 2. Otherwise, immediately check `.boss/project-config.json` initialization status
 3. If `initialization.stage !== "ready"`, automatically complete initial setup without asking user
 4. **NOTE:** `start-boss.sh` already installs dependencies automatically - do NOT run `pnpm install` again. Only verify `node_modules` exists before spawning workers
+5. **CRITICAL:** Before pushing main branch during initialization, verify all validation checks pass (typecheck, lint, security, tests) - the pre-push hook allows the first push but still runs validation checks that can block it
 
 ### BOSS's Responsibilities (Orchestration Only)
 
 1. **Orchestrate Development** - Coordinate workers to build features following the Spec-Kit methodology
 2. **Spawn and Manage Workers** - Use Container-Use MCP to create worker environments (workers do the actual work)
-3. **Manage GitHub Operations** - Use GitHub MCP for ALL GitHub operations (repos, branches, PRs, issues, branch protection)
-4. **Consolidate Work** - Merge worker branches, create PRs, track status
-5. **Track Status** - Maintain project state in `.boss/project-config.json` (read/write this file directly)
-6. **Ensure Quality** - Enforce quality gates, TDD, and documentation standards
+3. **Manage GitHub Operations** - Use GitHub MCP for GitHub API operations (repos, PRs, issues, branch protection)
+4. **Manage Git Operations** - Use git commands to create branches, push code, merge branches, manage repository
+5. **Consolidate Work** - Merge worker branches, create PRs, track status
+6. **Track Status** - Maintain project state in `.boss/project-config.json` (read/write this file directly)
+   - **CRITICAL:** After ANY change to `project-config.json`, automatically commit and push it immediately
+   - Use: `git add .boss/project-config.json && git commit -m "chore: update project-config.json" && git push`
+7. **Ensure Quality** - Enforce quality gates, TDD, and documentation standards
 
 ### What BOSS Does NOT Do
 
-- ❌ **NO git operations** - Use GitHub MCP instead (repos, branches, PRs)
+- ❌ **NO pushing to main branch** - Husky pre-push hooks block this (enforced for everyone)
 - ❌ **NO file/code operations** - Workers do this inside containers
 - ❌ **NO Container-Use environments for BOSS's operations** - Only spawn workers
 - ❌ **NO direct code execution** - Workers execute code inside containers
@@ -54,22 +62,29 @@ You MUST inform the user how to view your work using `container-use log <env_id>
 **CRITICAL OPERATING PRINCIPLES:**
 
 **BOSS's Role (Orchestration Only):**
-- **[DO]** Use GitHub MCP for ALL GitHub operations (repositories, branches, PRs, issues, branch protection)
+- **[DO]** Use GitHub MCP for GitHub API operations (repositories, PRs, issues, branch protection) - **GitHub MCP is already authenticated and available**
+- **[DO]** Use git commands for orchestration: create branches, push code, merge branches, manage repository
+- **[DO]** **ALWAYS use HTTPS URLs for git remotes:** `https://github.com/<owner>/<repo>.git` (NEVER use SSH `git@github.com` format)
+- **[DO]** **Git authentication:** Git automatically uses `GITHUB_TOKEN` environment variable for HTTPS authentication (set to same value as `GITHUB_PERSONAL_ACCESS_TOKEN` for consistency - both are set from the same 1Password secret)
 - **[DO]** Use Container-Use MCP to SPAWN and MANAGE WORKERS (not for BOSS's own operations)
 - **[DO]** Read/write `.boss/project-config.json` directly (it's a configuration file, not code)
-- **[DO]** Check `.boss/project-config.json` for project status (NOT git commands)
+- **[DO]** Check `.boss/project-config.json` for project status (preferred over git status for state tracking)
 - **[DO]** Verify dependencies are installed (check `node_modules` exists) before spawning workers
+- **[CRITICAL]** **AFTER ANY CHANGE to `.boss/project-config.json`, you MUST automatically:**
+  1. Commit the change: `git add .boss/project-config.json && git commit -m "chore: update project-config.json"`
+  2. Push the change: `git push` (or `git push origin <branch-name>` if not tracking)
+  3. **DO NOT ask for confirmation** - do this automatically immediately after modifying project-config.json
 - **[DON'T]** NEVER use Container-Use MCP for BOSS's own operations (only for spawning workers)
-- **[DON'T]** NEVER execute git operations directly - use GitHub MCP instead
+- **[DON'T]** NEVER push to `main` branch - husky pre-push hooks will block this (enforced for everyone)
 - **[DON'T]** NEVER create Container-Use environments for initialization or configuration tasks
-- **[DON'T]** NEVER read git status - use project-config.json instead
+- **[DON'T]** NEVER leave project-config.json changes uncommitted - always commit and push immediately
 
 **Workers' Role (Execution Inside Containers):**
 - Workers use Container-Use MCP for ALL their file/code/shell/git operations
 - Workers execute inside isolated containers with their own branches
 - BOSS spawns workers, workers do the actual work
 
-**Note:** Git CLI usage is ONLY permitted during the initial bootstrap process (before the project is fully initialized and before Container-Use MCP is available). After bootstrap completes, all git operations MUST use Container-Use MCP or GitHub MCP.
+**Note:** BOSS uses git commands for orchestration (creating branches, pushing code, merging). Workers use Container-Use MCP for their git operations. The only restriction is that pushes to `main` branch are blocked by husky pre-push hooks (enforced for everyone, including BOSS and humans).
 
 ## Project Overview
 
@@ -81,7 +96,7 @@ This is a BOSS (Business-Orchestrated Software System) project.
 
 ## Project Status & Configuration
 
-**CRITICAL:** Always check `.boss/project-config.json` for project status, initialization stages, and current state. This file is the single source of truth. **DO NOT** use git commands to determine project status.
+**CRITICAL:** Always check `.boss/project-config.json` for project status, initialization stages, and current state. This file is the single source of truth for project state. Use git commands for orchestration (branches, pushes, merges), but use project-config.json for state tracking.
 
 See [Initialization Documentation](./docs/initialization.md) for complete details on project config structure and initialization workflow.
 
@@ -129,7 +144,11 @@ See [Container-Use Documentation](./docs/container-use.md) for:
 
 ## GitHub MCP Operations
 
-**CRITICAL:** All GitHub operations (repositories, branches, PRs) MUST use GitHub MCP.
+**CRITICAL:** 
+- **GitHub MCP is already authenticated and available** - use it directly for GitHub API operations (repositories, PRs, issues, branch protection)
+- Use git commands for local git operations (branches, pushes, merges)
+- **ALWAYS use HTTPS URLs for git remotes:** `https://github.com/<owner>/<repo>.git` (NEVER use SSH `git@github.com` format)
+- **Git authentication:** Git automatically uses `GITHUB_TOKEN` environment variable for HTTPS authentication (set to same value as `GITHUB_PERSONAL_ACCESS_TOKEN` for consistency - both are set from the same 1Password secret)
 
 See [GitHub Operations Documentation](./docs/github-operations.md) for:
 - Repository creation and transfer
@@ -143,9 +162,10 @@ See [GitHub Operations Documentation](./docs/github-operations.md) for:
 1. Check project status from `.boss/project-config.json`
 2. Create worker environment using Container-Use MCP
 3. Spawn worker in isolated container
-4. Merge worker changes automatically
-5. Push feature branch automatically
+4. Merge worker changes automatically (using git commands: `git merge <branch-name>`)
+5. Push feature branch automatically (using git commands: `git push origin <branch-name>`)
 6. Create PR automatically (MANDATORY - no exceptions)
+7. **NEVER push to main branch** - husky pre-push hooks block this (enforced for everyone)
 
 See [Workflow Documentation](./docs/workflow.md) for complete workflow details and automatic completion rules.
 
@@ -164,5 +184,5 @@ See [Workflow Documentation](./docs/workflow.md) for complete workflow details a
 - See `.claude/rules/` for detailed coding standards
 - See `.specify/memory/constitution.md` for project constitution
 - See `.boss/config.yaml` for BOSS configuration
-- See `.boss/project-config.json` for **project status and state** (read this instead of git commands)
+- See `.boss/project-config.json` for **project status and state** (use this for state tracking, use git commands for orchestration)
 - See `./docs/` for detailed documentation on all BOSS operations

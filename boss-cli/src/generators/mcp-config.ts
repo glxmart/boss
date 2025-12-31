@@ -146,8 +146,11 @@ async function generateMCPEnvFile(projectPath: string): Promise<void> {
 # Start your IDE with: op run --env-file=.env -- <your-ide-command>
 # See: https://1password.com/blog/securing-mcp-servers-with-1password-stop-credential-exposure-in-your-agent
 
-# GitHub MCP Server
+# GitHub Authentication (used by GitHub MCP and git)
+# Standardized on GITHUB_PERSONAL_ACCESS_TOKEN for consistency
 GITHUB_PERSONAL_ACCESS_TOKEN=op://boss/github/token
+# Git also uses GITHUB_TOKEN for HTTPS authentication - set to same value
+GITHUB_TOKEN=op://boss/github/token
 
 # Add other secrets as needed:
 # OPENAI_API_KEY=op://boss/openai/api-key

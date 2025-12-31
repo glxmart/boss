@@ -1,6 +1,10 @@
 # GitHub MCP Operations
 
-**CRITICAL:** All GitHub operations (repositories, branches, PRs) MUST use GitHub MCP.
+**CRITICAL:** 
+- **GitHub MCP is already authenticated and available** - use it directly for GitHub API operations (repositories, PRs, issues, branch protection)
+- Use git commands for local git operations (branches, pushes, merges)
+- **ALWAYS use HTTPS URLs for git remotes:** `https://github.com/<owner>/<repo>.git` (NEVER use SSH `git@github.com` format)
+- **Git authentication:** Git automatically uses `GITHUB_TOKEN` environment variable for HTTPS authentication (set to same value as `GITHUB_PERSONAL_ACCESS_TOKEN` for consistency)
 
 ## Organization Selection
 
@@ -28,17 +32,23 @@
 **CRITICAL: BOSS's Role in Repository Setup**
 
 **BOSS does NOT:**
-- ❌ Add git remotes using Container-Use MCP or git commands
-- ❌ Push commits using Container-Use MCP or git commands
+- ❌ Push to main branch (husky pre-push hooks block this - enforced for everyone)
 - ❌ Create Container-Use environments for repository setup operations
-- ❌ Execute git operations directly
+- ❌ Use Container-Use MCP for BOSS's own git operations
 
 **BOSS DOES:**
+- ✅ Use git commands for orchestration: create branches, push code, merge branches, add remotes
+- ✅ Use GitHub MCP for GitHub API operations: create repositories, create PRs, set branch protection
+
+**BOSS DOES (continued):**
 - ✅ Use GitHub MCP to check if repository exists (`search_repositories` or similar)
 - ✅ Use GitHub MCP to create repository if it doesn't exist (`createRepository`)
 - ✅ Use GitHub MCP to set branch protection (use GitHub MCP tools, or if not available, use `run_terminal_cmd` with curl as fallback)
-- ✅ Update `.boss/project-config.json` directly with repository information
-- ✅ Use GitHub MCP for all GitHub operations (repos, branches, PRs)
+- ✅ Use git commands to add remotes: `git remote add origin https://github.com/<owner>/<repo>.git` (ALWAYS use HTTPS, NEVER SSH)
+- ✅ Use git commands to push branches: `git push origin <branch-name>` (except main - blocked by hooks)
+- ✅ **Git authentication:** Git automatically uses `GITHUB_TOKEN` environment variable for HTTPS authentication (set to same value as `GITHUB_PERSONAL_ACCESS_TOKEN` for consistency)
+- ✅ **GitHub MCP is authenticated:** GitHub MCP server is already up and authenticated - use it directly, no additional setup needed
+- ✅ Update `.boss/project-config.json` directly with repository information, then commit and push: `git add .boss/project-config.json && git commit -m "chore: update project-config.json" && git push`
 
 **IMPORTANT LIMITATION:** The GitHub MCP `createRepository` tool currently only creates repositories under the authenticated user's personal account, not under organizations. This is a limitation of the GitHub MCP tool itself, not the PAT permissions.
 
@@ -61,7 +71,7 @@ When creating a GitHub repository:
 
 3. **Create Repository:**
    ```typescript
-   // Use GitHub MCP to create repository
+   // Use GitHub MCP to create repository (GitHub MCP is already authenticated - use it directly)
    // NOTE: This will create under personal account even if organization is specified
    const repo = await mcp.github.createRepository({
      name: "project-name",
@@ -70,6 +80,10 @@ When creating a GitHub repository:
      // organization parameter is not supported by GitHub MCP
    });
    ```
+   **After creating repository, use HTTPS URL for git remote:**
+   - Repository URL format: `https://github.com/<owner>/<repo>.git`
+   - Add remote: `git remote add origin https://github.com/<owner>/<repo>.git` (NEVER use SSH `git@github.com` format)
+   - Git will automatically use `GITHUB_TOKEN` environment variable for authentication (set to same value as `GITHUB_PERSONAL_ACCESS_TOKEN` for consistency)
 
 4. **If Organization Was Selected - Automatic Transfer:**
    - Inform the user: "Repository created under your personal account. Would you like me to transfer it to [org-name] now?"
@@ -80,7 +94,7 @@ When creating a GitHub repository:
      - Verify response status is `202 Accepted`
      - Wait for transfer to complete (poll status if needed, or wait a few seconds)
      - **Verify dependencies are installed** - `start-boss.sh` already runs `pnpm install` automatically, so just verify `node_modules` exists (do NOT run install again)
-     - Update git remote URL using Container-Use MCP environment
+     - Update git remote URL using HTTPS: `git remote set-url origin https://github.com/<new-owner>/<repo>.git` (NEVER use SSH format)
      - Update `project-config.json` with transferred repository info
 
 5. **Update project-config.json:**
@@ -167,9 +181,11 @@ curl -X POST \
 
 ## Branch Operations
 
-- **Create branches:** Use Container-Use MCP (creates environment = branch)
-- **Push branches:** Use GitHub MCP `mcp__github__*` tools
-- **List branches:** Use GitHub MCP (NOT git commands)
+- **Create branches:** BOSS uses git commands: `git checkout -b <branch-name>` or Container-Use MCP for worker branches (creates environment = branch)
+- **Push branches:** BOSS uses git commands: `git push origin <branch-name>` (except main - blocked by husky hooks)
+  - **Git authentication:** Git automatically uses `GITHUB_TOKEN` environment variable for HTTPS authentication (set to same value as `GITHUB_PERSONAL_ACCESS_TOKEN` for consistency)
+  - **ALWAYS use HTTPS remotes:** Ensure remote URL is `https://github.com/<owner>/<repo>.git` (NEVER SSH format)
+- **List branches:** Use GitHub MCP for remote branch info, or git commands for local branches: `git branch` or `git branch -a`
 
 ## Branch Protection
 

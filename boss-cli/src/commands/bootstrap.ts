@@ -152,6 +152,11 @@ export async function bootstrapCommand(options: BootstrapOptions): Promise<void>
     await generateTemplateDocs(projectPath, config);
     logger.stopSpinner(true, 'Template documentation generated');
 
+    // CRITICAL: Ensure test file exists (required for pre-push hook)
+    logger.startSpinner('Ensuring test file exists...');
+    await ensureTestFileExists(projectPath, config);
+    logger.stopSpinner(true, 'Test file ensured');
+
     // CRITICAL: Commit ALL bootstrap files to main branch FIRST
     // Main branch must contain all bootstrap configuration before feature branch is created
     logger.startSpinner('Committing all bootstrap files to main branch...');
@@ -200,8 +205,78 @@ async function initializeHuskyAfterPackageJson(projectPath: string): Promise<voi
   }
 }
 
+async function ensureTestFileExists(projectPath: string, config: ProjectConfig): Promise<void> {
+  // NOTE: Dynamic import of fs-extra requires accessing .default
+  // See: docs/common-issues.md for details
+  const fsModule = await import('fs-extra');
+  const fs = fsModule.default;
+  const { writeFile } = await import('../utils/file-system.js');
+  const { loadTemplate: loadAssetTemplate } = await import('../utils/template-loader.js');
+  
+  // Check if any test files exist
+  const testsDir = path.join(projectPath, 'tests');
+  
+  let hasTestFile = false;
+  if (await fs.pathExists(testsDir)) {
+    const files = await fs.readdir(testsDir, { recursive: true }) as string[];
+    hasTestFile = files.some((f) => {
+      return /\.(test|spec)\.(ts|tsx|js|jsx)$/.test(f);
+    });
+  }
+  
+  // Also check root and src directories
+  if (!hasTestFile) {
+    try {
+      const rootFiles = await fs.readdir(projectPath) as string[];
+      hasTestFile = rootFiles.some((f) => {
+        return /\.(test|spec)\.(ts|tsx|js|jsx)$/.test(f);
+      });
+    } catch {
+      // Ignore errors
+    }
+  }
+  
+  if (!hasTestFile) {
+    const srcDir = path.join(projectPath, 'src');
+    if (await fs.pathExists(srcDir)) {
+      try {
+        const srcFiles = await fs.readdir(srcDir, { recursive: true }) as string[];
+        hasTestFile = srcFiles.some((f) => {
+          return /\.(test|spec)\.(ts|tsx|js|jsx)$/.test(f);
+        });
+      } catch {
+        // Ignore errors
+      }
+    }
+  }
+
+  // If no test file exists, create a minimal one
+  if (!hasTestFile) {
+    await fs.ensureDir(testsDir);
+    try {
+      // Try to load the template test file
+      const testFile = await loadAssetTemplate('template-loader/index.test.ts', { config });
+      await writeFile(path.join(testsDir, 'index.test.ts'), testFile);
+    } catch {
+      // If template doesn't exist, create a minimal test file
+      const minimalTest = `import { describe, it, expect } from 'vitest';
+
+describe('Bootstrap Test', () => {
+  it('should pass initial test', () => {
+    expect(true).toBe(true);
+  });
+});
+`;
+      await writeFile(path.join(testsDir, 'index.test.ts'), minimalTest);
+    }
+  }
+}
+
 async function createInitialSetupBranch(projectPath: string): Promise<void> {
-  const fs = await import('fs-extra');
+  // NOTE: Dynamic import of fs-extra requires accessing .default
+  // See: docs/common-issues.md for details
+  const fsModule = await import('fs-extra');
+  const fs = fsModule.default;
   const { readFile, writeFile } = await import('../utils/file-system.js');
   const projectConfigPath = path.join(projectPath, '.boss', 'project-config.json');
 

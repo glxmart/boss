@@ -1,0 +1,74 @@
+# BOSS Local Infrastructure
+# Minimal setup - GitHub used for project management (no Plane needed)
+
+version: '3.8'
+
+services:
+  # PostgreSQL - Knowledge Base (structured data)
+  postgres:
+    image: postgres:16-alpine
+    container_name: boss-postgres
+    environment:
+      POSTGRES_DB: boss_knowledge
+      POSTGRES_USER: boss
+      POSTGRES_PASSWORD: bosssecret
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts/postgres:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U boss"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Qdrant - Vector Database (embeddings)
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: boss-qdrant
+    ports:
+      - "6333:6333"  # HTTP API
+      - "6334:6334"  # gRPC API
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      QDRANT__SERVICE__GRPC_PORT: 6334
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # HuggingFace Text Embeddings Inference - Local Embeddings
+  embeddings:
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.2
+    container_name: boss-embeddings
+    command: --model-id BAAI/bge-large-en-v1.5 --port 8080
+    ports:
+      - "8080:8080"
+    volumes:
+      - embeddings_cache:/data
+    environment:
+      HUGGING_FACE_HUB_TOKEN: ${HUGGING_FACE_HUB_TOKEN:-}  # Optional, for gated models
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s  # Model download takes time
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    name: boss_postgres_data
+  qdrant_data:
+    name: boss_qdrant_data
+  embeddings_cache:
+    name: boss_embeddings_cache
+
+networks:
+  default:
+    name: boss-network

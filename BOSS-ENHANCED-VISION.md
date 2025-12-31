@@ -2,7 +2,7 @@
 
 ## What It Is
 
-**BOSS** is a bootstrapping and orchestration system that transforms business ideas into production-ready code by coordinating specialized AI agents in isolated container environments, while maintaining human governance and cross-project intelligence.
+**BOSS** is a framework and methodology that transforms **Claude Code or Cursor** into an autonomous development orchestrator. By configuring your AI assistant with MCP servers, BOSS skills, and worker templates, you get a system that transforms business ideas into production-ready code through coordinated, isolated container-use workers - maintaining human governance and cross-project intelligence.
 
 ## The Complete Vision
 
@@ -20,8 +20,8 @@ Modern software development faces:
 
 A **two-tier system**:
 
-1. **Bootstrap Tool** - Sets up new projects with everything configured
-2. **BOSS Controller** - Orchestrates development lifecycle with AI workers
+1. **Bootstrap CLI** - Sets up new projects with everything configured (.boss/, .specify/, MCP servers)
+2. **BOSS-Configured Claude Code/Cursor** - Your AI assistant becomes the orchestrator with loaded skills and MCP connections
 
 ### Foundation Technologies
 
@@ -467,25 +467,35 @@ boss-bootstrap/
 
 ---
 
-## Part 2: BOSS Controller
+## Part 2: BOSS Orchestration
 
-### What BOSS Is
+### What BOSS Actually Is
 
-The **BOSS** (Business-Orchestrated Software System) is a **local controller** that runs on your host machine (not in a container) and orchestrates the entire development lifecycle.
+**BOSS is NOT a standalone application.**
 
-### Why BOSS Runs Locally
+**BOSS IS:**
+- Your **Claude Code or Cursor instance** configured to act as an orchestrator
+- A set of **BOSS skills** loaded into Claude Code/Cursor for orchestration capabilities
+- **MCP server connections** (Container-Use, Plane, GitHub, Knowledge Base)
+- **1Password CLI** for secure secret management (op CLI, not MCP)
+- **Worker templates** defining configurations for spawning specialized container-use agents
+- A **methodology** for spec-driven, autonomous development
 
-BOSS must run on the host machine (via Claude Code or Cursor) because it:
-- Orchestrates all worker containers via container-use
-- Manages state across the entire workflow
-- Creates PRs via GitHub
-- Interacts with you when needed
-- Coordinates with other BOSS instances
-- Accesses Plane for project management
-- Queries the knowledge base
-- Has full system access (not sandboxed)
+When you bootstrap a BOSS project and open it in Claude Code/Cursor, your AI assistant loads the BOSS configuration and becomes the orchestrator.
 
-**Workers run in isolated container-use environments. BOSS coordinates them all.**
+### Why BOSS Runs on Host (Not in Container)
+
+Claude Code/Cursor must run on the host machine because it needs to:
+- Orchestrate worker containers via **Container-Use MCP**
+- Manage state across the entire workflow
+- Create PRs via **GitHub MCP**
+- Interact with you when needed
+- Query the **Knowledge Base MCP** (shared PostgreSQL + Qdrant)
+- Access **Plane MCP** for project management
+- Request secrets via GitHub (humans create in 1Password using op CLI)
+- Have full system access (cannot be sandboxed)
+
+**Workers run in isolated container-use environments. Claude Code/Cursor (configured as BOSS) coordinates them all via MCP commands.**
 
 **Why Workers Use Container-Use:**
 - ✅ Isolation (can't break main branch)
@@ -500,42 +510,62 @@ BOSS must run on the host machine (via Claude Code or Cursor) because it:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│              BOSS CONTROLLER (Claude Code/Cursor)       │
-│                    (Local Machine)                      │
+│              YOUR LOCAL MACHINE (Host)                  │
+├─────────────────────────────────────────────────────────┤
 │                                                         │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐ │
-│  │ Conversation │  │  Workflow    │  │  Knowledge   │ │
-│  │   Manager    │  │  Orchestrator│  │   Engine     │ │
-│  └──────────────┘  └──────────────┘  └──────────────┘ │
-│                                                         │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐ │
-│  │   Quality    │  │ Container-Use│  │   Plane      │ │
-│  │   Gates      │  │   Spawner    │  │   Client     │ │
-│  └──────────────┘  └──────────────┘  └──────────────┘ │
-└─────────────┬───────────────────────────────────────────┘
-              │
-              │ spawns via container-use
-              │
-    ┌─────────┼─────────┬──────────┬──────────┐
-    │         │         │          │          │
-    ▼         ▼         ▼          ▼          ▼
-┌─────────┐┌─────────┐┌─────────┐┌─────────┐┌─────────┐
-│Worker 1 ││Worker 2 ││Worker 3 ││Worker 4 ││Worker 5 │
-│         ││         ││         ││         ││         │
-│Clarify  ││Spec     ││Plan     ││Dev      ││Review   │
-│         ││         ││         ││         ││         │
-│cu/env-1 ││cu/env-2 ││cu/env-3 ││cu/env-4 ││cu/env-5 │
-│         ││         ││         ││         ││         │
-│Secrets: ││Secrets: ││Secrets: ││Secrets: ││Secrets: │
-│(none)   ││(none)   ││(none)   ││STRIPE_* ││GITHUB_* │
-│         ││         ││         ││DATABASE ││         │
-└─────────┘└─────────┘└─────────┘└─────────┘└─────────┘
+│  ┌───────────────────────────────────────────────┐    │
+│  │  Claude Code or Cursor                        │    │
+│  │  (= BOSS when loaded with skills & MCPs)      │    │
+│  │                                               │    │
+│  │  • BOSS Skills (orchestration logic)          │    │
+│  │  • Spec-Kit workflow (8 phases)               │    │
+│  │  • Quality gate enforcement                   │    │
+│  └──────────────┬────────────────────────────────┘    │
+│                 │                                       │
+│  ┌──────────────┴────────────────────────────────┐    │
+│  │  MCP Servers (all local)                      │    │
+│  │                                               │    │
+│  │  • Container-Use MCP → spawn/manage workers   │    │
+│  │  • Knowledge Base MCP → PostgreSQL + Qdrant   │    │
+│  │  • Plane MCP → project mgmt (local Docker)    │    │
+│  │  • GitHub MCP → repo operations               │    │
+│  │  • 1Password CLI → manual secret setup (op)   │    │
+│  └──────────────┬────────────────────────────────┘    │
+│                 │                                       │
+│  ┌──────────────┴────────────────────────────────┐    │
+│  │  Docker Daemon (local containers)             │    │
+│  │                                               │    │
+│  │  • postgres (knowledge base)                  │    │
+│  │  • qdrant (vectors)                           │    │
+│  │  • text-embeddings-inference (embeddings)     │    │
+│  │  • plane stack (project management)           │    │
+│  │  • worker containers (via container-use)      │    │
+│  └──────────────┬────────────────────────────────┘    │
+│                 │                                       │
+└─────────────────┼───────────────────────────────────────┘
+                  │
+                  │ Container-Use spawns via MCP
+                  │
+      ┌───────────┼──────────┬──────────┬──────────┐
+      │           │          │          │          │
+      ▼           ▼          ▼          ▼          ▼
+  ┌───────┐  ┌───────┐  ┌───────┐  ┌───────┐  ┌───────┐
+  │Worker1│  │Worker2│  │Worker3│  │Worker4│  │Worker5│
+  │Clarify│  │ Spec  │  │ Plan  │  │  Dev  │  │Review │
+  │cu/001 │  │cu/002 │  │cu/003 │  │cu/004 │  │cu/005 │
+  │Claude │  │Claude │  │Claude │  │Claude │  │Claude │
+  │+skills│  │+skills│  │+skills│  │+skills│  │+skills│
+  │branch │  │branch │  │branch │  │branch │  │branch │
+  │       │  │       │  │       │  │Stripe │  │GitHub │
+  │       │  │       │  │       │  │DB     │  │secrets│
+  └───────┘  └───────┘  └───────┘  └───────┘  └───────┘
 ```
 
 **Key:**
-- `cu/env-*` = Container-use environment ID
-- Secrets injected from 1Password (op:// references)
-- Each worker isolated in own container + Git branch
+- `cu/###` = Container-use environment ID
+- Secrets injected from 1Password (op:// references) - never visible to AI
+- Each worker = isolated container + Git branch + Claude Code + role-specific skills
+- BOSS orchestrates via Container-Use MCP commands (see [container-use.com/environment-workflow](https://container-use.com/environment-workflow))
 
 ### BOSS Capabilities
 
@@ -716,27 +746,34 @@ workflow_state:
 
 ## Part 3: Knowledge Engine
 
-### Multi-BOSS Intelligence
+### Cross-Project Intelligence
 
-Multiple BOSS instances share knowledge through a centralized knowledge base:
+Multiple BOSS-configured projects (Claude Code/Cursor instances) share knowledge through a **local** knowledge base:
 
 ```
-┌──────────┐    ┌──────────┐    ┌──────────┐
-│ BOSS 1   │    │ BOSS 2   │    │ BOSS 3   │
-│ (App A)  │    │ (App B)  │    │ (App C)  │
-└────┬─────┘    └────┬─────┘    └────┬─────┘
-     │               │               │
-     └───────────────┼───────────────┘
-                     │
-                     ▼
-           ┌─────────────────┐
-           │ Knowledge Base  │
-           ├─────────────────┤
-           │ PostgreSQL      │ ← Structured data
-           │ Qdrant          │ ← Vector embeddings
-           │ Voyage AI       │ ← Embeddings API
-           └─────────────────┘
+┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│  Project 1   │  │  Project 2   │  │  Project 3   │
+│  (auth-svc)  │  │  (dashboard) │  │  (api-gw)    │
+│              │  │              │  │              │
+│ Claude Code  │  │ Claude Code  │  │ Claude Code  │
+│ + BOSS cfg   │  │ + BOSS cfg   │  │ + BOSS cfg   │
+└──────┬───────┘  └──────┬───────┘  └──────┬───────┘
+       │                 │                 │
+       └─────────────────┼─────────────────┘
+                         │
+                         │ All query same local DB
+                         ▼
+              ┌──────────────────────┐
+              │  Local Knowledge Base │
+              ├──────────────────────┤
+              │ PostgreSQL (Docker)   │ ← Structured data
+              │ Qdrant (Docker)       │ ← Vector embeddings
+              │ HuggingFace TEI       │ ← Local embeddings
+              │   (Docker)            │    (BAAI/bge-large)
+              └──────────────────────┘
 ```
+
+**No real-time BOSS-to-BOSS communication.** Each project's Claude Code/Cursor queries the shared local knowledge base independently via Knowledge Base MCP.
 
 ### What BOSSES Share
 
@@ -766,24 +803,28 @@ Multiple BOSS instances share knowledge through a centralized knowledge base:
 
 ### Knowledge Engine Gatekeeper Pattern
 
-**BOSS is the sole accessor to the knowledge base** - workers never query directly:
+**Claude Code/Cursor (BOSS-configured) is the sole accessor to the knowledge base** - workers never query directly:
 
 ```
-1. BOSS receives task
-2. BOSS queries knowledge base ONCE
+1. BOSS (Claude Code/Cursor) receives task
+2. BOSS queries Knowledge Base MCP ONCE
+   └─► mcp.knowledgeBase.search({
+         query: "OAuth implementation patterns",
+         filters: { tech_stack: ["nodejs", "typescript"] }
+       })
 3. BOSS assembles Task Context Package:
-   - Relevant specs
-   - Similar patterns
-   - Related decisions
-   - Dependencies
-4. BOSS includes context in worker prompt
-5. Worker executes with full context
+   - Relevant specs from similar projects
+   - Code patterns that worked before
+   - Related architectural decisions
+   - Dependency information
+4. BOSS includes context in worker prompt when spawning via Container-Use MCP
+5. Worker executes with full context (no knowledge base access needed)
 
 Benefits:
-- 1 query instead of 5+ queries
-- Consistent context across workers
-- Faster execution
-- Lower embedding costs
+- 1 query instead of 5+ queries (cheaper, faster)
+- Consistent context across all workers
+- Workers remain simple (no KB dependency)
+- Lower embedding/vector search costs
 ```
 
 ---
@@ -828,83 +869,103 @@ BOSS uses Plane for approval workflow:
 
 ---
 
-## Part 5: Cross-BOSS Coordination
+## Part 5: Cross-Project Coordination
 
-### The Multi-BOSS Problem
+### The Multi-Project Problem
 
-You're working on multiple projects simultaneously:
+You're working on multiple BOSS-configured projects simultaneously:
 
-- **Project A** (BOSS 1): Building auth service
-- **Project B** (BOSS 2): Building dashboard that needs auth
-- **Project C** (BOSS 3): Building API that uses auth
+- **Project A** (auth-service): Building OAuth API
+- **Project B** (dashboard-app): Needs OAuth integration
+- **Project C** (api-gateway): Needs JWT validation
 
-**Without coordination**: BOSS 2 starts work on dashboard, doesn't know BOSS 1 is still building the auth API it needs.
+**Without coordination**: Dashboard project starts OAuth implementation, doesn't know auth-service already has it.
 
-### Cross-BOSS Communication
+### Knowledge Base-Driven Coordination
 
-BOSSES can see each other's roadmaps and coordinate:
+**No real-time communication protocol.** Projects coordinate by querying the shared local knowledge base:
 
 ```
-BOSS 2 (Dashboard):
+Dashboard Project (Claude Code/Cursor + BOSS):
   "I need to implement OAuth integration for the dashboard.
    Let me check the knowledge base..."
 
-  Query: "oauth integration patterns"
+  Query via Knowledge Base MCP:
+    └─► mcp.knowledgeBase.search({
+          query: "OAuth implementation",
+          filters: { artifact_type: "api", status: "deployed" }
+        })
 
-  Result: "BOSS 1 (Auth Service) is currently implementing OAuth
-           in Epic: User Authentication, Story: OAuth Provider
-           Status: In Progress, ETA: 2 days"
+  Result from PostgreSQL:
+    └─► Project: auth-service
+        Artifact: src/oauth/authorize.ts
+        Status: deployed
+        Endpoints: /oauth/authorize, /oauth/token
+        Created: 2024-01-10
+        Docs: API contract available
 
-BOSS 2:
-  "Hey User! I noticed BOSS 1 is working on OAuth integration
-   for the Auth Service, which I need for the Dashboard.
+BOSS (Dashboard):
+  "Found existing OAuth implementation in auth-service!
 
    Should I:
-   A) Wait for BOSS 1 to finish (recommended - avoids duplication)
-   B) Implement a temporary mock for now
-   C) Coordinate with BOSS 1 to prioritize my needs
+   A) Use existing auth-service OAuth API (recommended)
+   B) Implement new OAuth from scratch
 
-   What would you prefer?"
+   If A, I'll add auth-service as dependency and use the
+   existing API patterns from the knowledge base."
 ```
 
-### Dependency Management
+**Key: No BOSS-to-BOSS messages. Only database queries.**
 
-BOSSES maintain a dependency graph:
+### Dependency Management via Knowledge Base
 
-```yaml
-dependencies:
-  dashboard-app:
-    depends_on:
-      - auth-service:
-          api: /oauth/authorize
-          status: in_progress
-          boss: BOSS-1
-          eta: 2024-01-15
+Projects record dependencies in shared PostgreSQL database:
 
-  api-gateway:
-    depends_on:
-      - auth-service:
-          api: /oauth/token
-          status: planned
-          boss: BOSS-1
-          eta: 2024-01-20
+```sql
+-- PostgreSQL schema
+CREATE TABLE project_dependencies (
+  id SERIAL PRIMARY KEY,
+  from_project VARCHAR(255),      -- 'dashboard-app'
+  to_project VARCHAR(255),         -- 'auth-service'
+  dependency_type VARCHAR(50),     -- 'api', 'library', 'data'
+  endpoint VARCHAR(255),           -- '/oauth/authorize'
+  status VARCHAR(50),              -- 'available', 'in_progress', 'planned'
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Dashboard queries dependencies
+SELECT * FROM project_dependencies
+WHERE from_project = 'dashboard-app';
+
+-- Result:
+-- to_project: auth-service
+-- endpoint: /oauth/authorize
+-- status: available  (auth-service completed and updated KB)
 ```
 
-**BOSS can proactively notify:**
+**How Updates Happen:**
 
 ```
-BOSS 1 (Auth Service):
-  "I just completed the OAuth API endpoint!
+Auth Service Project (Claude Code/Cursor):
+  "OAuth API implementation complete!"
 
-   Notifying dependent BOSSES:
-   - BOSS 2 (Dashboard): Can now implement OAuth login
-   - BOSS 3 (API Gateway): Can now implement token validation
+  └─► Updates knowledge base via Knowledge Base MCP:
+      mcp.knowledgeBase.updateArtifact({
+        project: "auth-service",
+        artifact: "oauth-api",
+        status: "deployed",
+        endpoints: ["/oauth/authorize", "/oauth/token"],
+        contract: openapi_spec,
+        examples: code_examples
+      })
 
-   Updated knowledge base with:
-   - API contract: /oauth/authorize
-   - Usage examples
-   - Test data"
+Dashboard Project (later, when user opens it):
+  └─► Queries knowledge base
+      └─► Finds auth-service OAuth API is now available
+          └─► Suggests: "Use existing OAuth API from auth-service"
 ```
+
+**No notifications. Projects discover changes when they query the knowledge base.**
 
 ---
 
@@ -1353,84 +1414,85 @@ BOSS 3:
 ### System Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                  BOSS NETWORK                           │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│  ┌──────────┐    ┌──────────┐    ┌──────────┐         │
-│  │ BOSS 1   │    │ BOSS 2   │    │ BOSS 3   │         │
-│  │ (Local)  │    │ (Local)  │    │ (Local)  │         │
-│  └────┬─────┘    └────┬─────┘    └────┬─────┘         │
-│       │               │               │                │
-│       └───────────────┼───────────────┘                │
-└───────────────────────┼────────────────────────────────┘
-                        │
-        ┌───────────────┼───────────────┐
-        │               │               │
-        ▼               ▼               ▼
-┌──────────────┐ ┌─────────────┐ ┌─────────────┐
-│ Knowledge    │ │   Plane     │ │   GitHub    │
-│    Base      │ │  Workspace  │ │   Repos     │
-├──────────────┤ └─────────────┘ └─────────────┘
-│ PostgreSQL   │
-│ Qdrant       │
-│ Voyage AI    │
-└──────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│           MULTIPLE BOSS-CONFIGURED PROJECTS                 │
+│           (Claude Code/Cursor instances)                    │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
+│  │  Project 1   │  │  Project 2   │  │  Project 3   │     │
+│  │ (auth-svc)   │  │ (dashboard)  │  │ (api-gw)     │     │
+│  │              │  │              │  │              │     │
+│  │ Claude Code  │  │ Claude Code  │  │ Claude Code  │     │
+│  │ + BOSS cfg   │  │ + BOSS cfg   │  │ + BOSS cfg   │     │
+│  │ + MCPs       │  │ + MCPs       │  │ + MCPs       │     │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘     │
+│         │                 │                 │              │
+│         └─────────────────┼─────────────────┘              │
+└───────────────────────────┼──────────────────────────────────┘
+                            │
+            ┌───────────────┼───────────────────┐
+            │               │                   │
+            ▼               ▼                   ▼
+  ┌──────────────────┐ ┌─────────────┐ ┌──────────────┐
+  │ Local Knowledge  │ │ Plane       │ │   GitHub     │
+  │     Base         │ │ (Docker)    │ │   (Cloud)    │
+  ├──────────────────┤ └─────────────┘ └──────────────┘
+  │ PostgreSQL (🐳)  │
+  │ Qdrant (🐳)      │
+  │ HF TEI (🐳)      │ ← Local embeddings
+  └──────────────────┘    (all Docker containers)
 ```
 
 ### BOSS Components
 
+**BOSS = Claude Code/Cursor + Skills + MCP Servers**
+
 ```
-BOSS Controller (Node.js + TypeScript)
-├── Conversation Manager
-│   ├── User interaction
-│   ├── Business requirements gathering
-│   └── Approval handling
+Claude Code/Cursor (configured as BOSS)
+├── BOSS Skills (loaded capabilities)
+│   ├── Spec-Kit workflow orchestration (8 phases)
+│   ├── Quality gate enforcement logic
+│   ├── Task breakdown & parallelization
+│   ├── Worker prompt generation
+│   └── State management & resume capability
 │
-├── Workflow Orchestrator
-│   ├── State machine
-│   ├── Phase management
-│   ├── Worker spawning
-│   └── Resume capability
-│
-├── Worker Spawner
-│   ├── container-use integration
-│   ├── Concurrency control (max 5)
-│   ├── Environment management
-│   └── Branch management
-│
-├── Knowledge Engine Client
-│   ├── Vector search (Qdrant)
-│   ├── Relationship queries (PostgreSQL)
-│   ├── Context assembly
-│   └── Embedding generation (Voyage AI)
-│
-├── Quality Gate Enforcer
-│   ├── TypeCheck
-│   ├── Lint
-│   ├── Test runner
-│   ├── Coverage checker
-│   ├── Mutation testing
-│   └── Security scanner
-│
-├── Plane Client
-│   ├── Project sync
-│   ├── Epic/Story/Task creation
-│   ├── Status updates
-│   └── Approval workflow
-│
-├── GitHub Client
-│   ├── PR creation
-│   ├── Branch management
-│   ├── Status checks
-│   └── Deployment triggers
-│
-└── BOSS Network Client
-    ├── BOSS discovery
-    ├── Dependency graph
-    ├── Cross-BOSS messaging
-    └── Roadmap sharing
+└── MCP Server Connections (all local)
+    │
+    ├── Container-Use MCP
+    │   ├── Environment creation/deletion
+    │   ├── Worker spawn & management
+    │   ├── Command execution in containers
+    │   ├── Log retrieval & monitoring
+    │   └── Branch merge operations
+    │
+    ├── Knowledge Base MCP (Node.js server)
+    │   ├── PostgreSQL client (structured data)
+    │   ├── Qdrant client (vector search)
+    │   ├── HuggingFace TEI client (embeddings)
+    │   ├── Context assembly (gatekeeper pattern)
+    │   └── Cross-project search
+    │
+    ├── Plane MCP
+    │   ├── Epic/Story/Task creation
+    │   ├── Status synchronization
+    │   ├── Approval workflow triggers
+    │   └── Roadmap queries
+    │
+    └── GitHub MCP
+        ├── PR creation & management
+        ├── Branch operations
+        ├── Status checks
+        └── Deployment triggers
+
+**1Password CLI (Not MCP):**
+    - Humans create secrets when BOSS requests via GitHub
+    - Secrets injected into container-use workers
+    - Workers run "dangerously" (full permissions inside isolated containers)
+    - BOSS controls egress rules (network restrictions per container)
 ```
+
+**No standalone BOSS application. It's Claude Code/Cursor configured with above components.**
 
 ### Worker Container
 

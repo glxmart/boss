@@ -35,11 +35,15 @@ This document details how BOSS (Business-Orchestrated Software System) uses **co
 ### Container-Use Workflow
 
 ```
-1. Create Environment
+1. Create Environment (with "Dangerous" Mode)
    └─► New Git branch + Docker container spawned
+   └─► Worker has FULL permissions inside container
+   └─► BOSS configures egress rules (network restrictions)
 
 2. Execute Work
    └─► Agent runs commands in isolated container
+   └─► Can execute any command, install any tool
+   └─► Limited to configured external API access
 
 3. Observe Results
    ├─► container-use log <env-id>      # Command history
@@ -52,11 +56,90 @@ This document details how BOSS (Business-Orchestrated Software System) uses **co
    └─► container-use delete <env-id>   # Discard
 ```
 
+### "Dangerous" Mode Explained
+
+**Workers run with full permissions inside their isolated containers:**
+- ✅ Can execute any shell command (`sudo`, `rm -rf`, etc.)
+- ✅ Can install any package or tool
+- ✅ Can modify any file in the workspace
+- ✅ No filesystem restrictions within the container
+- ✅ Full root access inside the sandboxed environment
+
+**Security is provided by:**
+1. **Container isolation** - Worker cannot affect host machine or other workers
+2. **Egress control** - BOSS restricts which external services each worker can access
+3. **Branch isolation** - Each worker has own Git branch, cannot modify main
+4. **Observable execution** - Complete command history logged
+5. **Disposable environments** - Failed workers deleted and recreated
+
+**Example Egress Configuration:**
+```json
+{
+  "egress_rules": {
+    "allow": [
+      "api.stripe.com",           // Payment API
+      "api.sendgrid.com",         // Email API
+      "registry.npmjs.org",       // NPM packages
+      "github.com"                // Git operations
+    ],
+    "deny": [
+      "*.amazonaws.com",          // Block AWS (frontend worker doesn't need)
+      "*.s3.amazonaws.com"
+    ]
+  }
+}
+```
+
+**Why "Dangerous" Mode:**
+- Enables Claude to use full development capabilities
+- No permission errors blocking legitimate operations
+- Simpler worker configuration (no complex permission rules)
+- Security through isolation, not restriction
+
 ---
 
 ## How BOSS Uses Container-Use
 
-BOSS runs on the **host machine** (not in a container) and orchestrates **workers in container-use environments**.
+**BOSS = Claude Code/Cursor configured with MCP servers.**
+
+Claude Code/Cursor runs on the **host machine** and orchestrates **workers in container-use environments** via the **Container-Use MCP server**.
+
+### BOSS Orchestration via Container-Use MCP
+
+```
+┌─────────────────────────────────────────────────┐
+│  Claude Code/Cursor (Host Machine)              │
+│  = BOSS when configured with:                   │
+│  • BOSS skills                                  │
+│  • Container-Use MCP ← Uses this to spawn workers │
+│  • Knowledge Base MCP                           │
+│  • Plane MCP                                    │
+│  • GitHub MCP                                   │
+│  • 1Password CLI (op) - humans create secrets  │
+└────────────┬────────────────────────────────────┘
+             │
+             │ Container-Use MCP Commands:
+             │ • createEnvironment()
+             │ • executeInEnvironment()
+             │ • getEnvironmentStatus()
+             │ • mergeEnvironment()
+             │ • deleteEnvironment()
+             │
+             ▼
+┌────────────────────────────────────────────────┐
+│  Container-Use (manages Docker containers)     │
+│                                                │
+│  Environment 1: env-abc123                     │
+│  ├─ Branch: container-use/env-abc123          │
+│  ├─ Container: Docker (isolated)               │
+│  └─ Worker: Claude Code + skills + secrets    │
+│                                                │
+│  Environment 2: env-def456                     │
+│  ├─ Branch: container-use/env-def456          │
+│  ├─ Container: Docker (isolated)               │
+│  └─ Worker: Claude Code + skills + secrets    │
+└────────────────────────────────────────────────┘
+```
 
 ### Architecture
 
@@ -90,9 +173,19 @@ BOSS runs on the **host machine** (not in a container) and orchestrates **worker
 **Why This Architecture:**
 - ✅ BOSS needs full system access (GitHub, Plane, Knowledge Base)
 - ✅ Workers need isolation (can't break main branch)
+- ✅ Workers run "dangerously" inside containers (full permissions)
+- ✅ BOSS controls egress rules (network restrictions per container)
 - ✅ Workers need secrets (API keys for integrations)
 - ✅ Each worker has own branch (parallel work possible)
 - ✅ BOSS can observe and coordinate all workers
+
+**Container Security Model:**
+- Workers have **full permissions** inside their isolated containers
+- Claude can execute any command, install any tool, modify any file
+- Security comes from **container isolation**, not permission restrictions
+- BOSS controls **egress rules** (which external services workers can access)
+- Example: Backend worker can access Stripe API but not AWS
+- Humans create secrets in 1Password when BOSS requests via GitHub
 
 ---
 
@@ -293,9 +386,21 @@ BOSS maintains different configurations for different worker types:
 
 ---
 
-## Secret Management with 1Password
+## Secret Management with 1Password CLI
 
-BOSS uses **1Password** as the secret provider for all workers via container-use.
+**IMPORTANT:** 1Password does NOT offer an MCP server. Instead:
+1. BOSS requests secrets via GitHub (issues, PR comments)
+2. Humans manually create secrets in 1Password
+3. Humans configure container-use with `op://` references
+4. Container-use workers resolve secrets via the op CLI at runtime
+
+### How BOSS Requests Secrets
+
+When planning detects required integrations (Stripe, SendGrid, AWS, etc.), BOSS:
+1. Creates detailed setup instructions in `.specify/specs/.../secret-requirements.md`
+2. Creates GitHub issue: "Configure [Service] API Secrets"
+3. Waits for human to complete setup and comment "done" on the issue
+4. Proceeds with implementation once secrets are available
 
 ### 1Password Secret References
 
@@ -316,21 +421,31 @@ op://vault/aws/access-key
 ### How Secrets Work in Container-Use
 
 ```
-1. Configuration (.container-use/environment.json)
-   └─► Contains op:// references (safe to commit)
+1. BOSS detects integration requirements (e.g., Stripe)
+   └─► Creates GitHub issue with secret setup instructions
+   └─► Example: "Issue #42: Configure Stripe API Secrets"
 
-2. Worker Environment Creation
-   └─► container-use reads op:// references
+2. Human creates secrets in 1Password
+   └─► Follows step-by-step instructions from BOSS
+   └─► Stores in 1Password: op://glx/stripe/test-secret-key
+   └─► Comments "done" on GitHub issue
 
-3. Secret Resolution (inside container)
-   └─► 1Password CLI (op) resolves actual values
-   └─► Injected as environment variables
+3. Human configures container-use
+   └─► Runs: container-use config secret set STRIPE_SECRET_KEY op://glx/stripe/test-secret-key
+   └─► Configuration file (.container-use/environment.json) contains op:// references (safe to commit)
 
-4. Worker Execution
+4. BOSS spawns worker with secrets
+   └─► container-use reads op:// references from config
+   └─► 1Password CLI (op) resolves actual values at runtime
+   └─► Injected as environment variables inside container
+
+5. Worker Execution
+   └─► Worker runs "dangerously" (full permissions inside container)
+   └─► BOSS controls egress (network access to specific APIs only)
    └─► Worker accesses secrets via process.env
    └─► AI model NEVER sees actual secret values
 
-5. Logging & Output
+6. Logging & Output
    └─► container-use strips secrets from logs
    └─► Safe to review command history
 ```
@@ -641,58 +756,73 @@ secrets:
 
 ## Worker Lifecycle with Container-Use
 
-### 1. Worker Creation
+### 1. Worker Creation via Container-Use MCP
+
+**BOSS (Claude Code/Cursor) uses Container-Use MCP to spawn workers:**
 
 ```typescript
-// BOSS spawns a worker
+// Example: BOSS spawning a Backend Developer worker
 
-interface WorkerConfig {
-  id: string;
-  role: 'clarifier' | 'spec-writer' | 'planner' | 'developer-frontend' | 'developer-backend' | 'developer-fullstack' | 'reviewer' | 'consolidator';
-  task: string;
-  userStory?: string;
-  prompt: string;
-  config: ContainerUseConfig;
-}
+// 1. BOSS queries Knowledge Base MCP for relevant context
+const context = await mcp.knowledgeBase.search({
+  query: "Stripe integration patterns",
+  filters: { tech_stack: ["nodejs", "typescript"] }
+});
 
-async function spawnWorker(config: WorkerConfig): Promise<string> {
-  // 1. Set container-use configuration for this worker type
-  await setContainerUseConfig(config.role);
+// 2. BOSS creates worker environment via Container-Use MCP
+const env = await mcp.containerUse.createEnvironment({
+  title: "developer-backend-US1",
+  config: ".boss/workers/developer-backend/container-config.json"
+});
+// Returns: { env_id: "env-abc123", branch: "container-use/env-abc123" }
 
-  // 2. Create container-use environment
-  const envId = await createEnvironment(config.task);
+// 3. BOSS assembles worker prompt (includes knowledge base context)
+const workerPrompt = `
+# Backend Developer - User Story 1: Stripe Payment Integration
 
-  // 3. Inject worker-specific prompt and context
-  const fullPrompt = assemblePrompt({
-    role: config.role,
-    task: config.task,
-    prompt: config.prompt,
-    context: await getKnowledgeContext(config.task)
-  });
+${context}  // Relevant patterns from knowledge base
 
-  // 4. Execute worker in container-use environment
-  await executeInEnvironment(envId, fullPrompt);
+## Your Task
+Implement Stripe payment integration following TDD methodology.
 
-  return envId;
-}
+## Quality Gates
+- Tests written BEFORE implementation
+- Coverage ≥ 80%
+- All TypeScript checks pass
+- Integration tests with real Stripe test API
+
+## Available Secrets (injected via 1Password)
+- STRIPE_SECRET_KEY (op://glx/stripe/test-secret-key)
+- DATABASE_URL (op://glx/database/test-url)
+`;
+
+// 4. BOSS executes work in environment via Container-Use MCP
+await mcp.containerUse.executeInEnvironment({
+  env_id: env.env_id,
+  prompt: workerPrompt,
+  skills: ["nodejs", "stripe", "api-design", "testing"],
+  max_iterations: 50
+});
 ```
 
-**Container-Use Commands:**
+**What Happens Under the Hood:**
+
+Container-Use MCP translates these calls into container-use CLI commands:
 
 ```bash
-# BOSS executes these under the hood
+# Equivalent container-use CLI commands (abstracted by MCP)
 
-# 1. Set configuration
-container-use config set base-image node:22-slim
-container-use config secret set STRIPE_SECRET_KEY op://glx/stripe/test-secret-key
+# 1. Load config from .boss/workers/developer-backend/container-config.json
+container-use config load .boss/workers/developer-backend/container-config.json
 
 # 2. Create environment
 container-use environment create --title "developer-backend-US1"
 # Returns: env-abc123
 
-# 3. Execute worker (via Claude Code or Cursor)
-# The worker prompt is passed to Claude/Cursor, which uses container-use MCP
-# All commands executed in environment env-abc123
+# 3. Claude Code/Cursor runs inside the container
+# With the worker prompt loaded
+# With skills activated
+# With secrets injected from 1Password
 ```
 
 ### 2. Worker Execution
@@ -713,78 +843,121 @@ Inside container-use environment: env-abc123
     4. Commit changes to branch
 ```
 
-### 3. Worker Observation
+### 3. Worker Observation via Container-Use MCP
 
-```bash
-# BOSS monitors worker progress
-
-# View command history
-container-use log env-abc123
-
-# Check code changes
-container-use diff env-abc123
-
-# Inspect live container (if needed)
-container-use terminal env-abc123
-```
-
-### 4. Worker Completion
+**BOSS monitors worker progress via MCP:**
 
 ```typescript
-// Worker completes successfully
+// BOSS checking worker status
 
-interface WorkerResult {
-  envId: string;
-  status: 'completed' | 'failed';
-  branch: string;
-  testsPass: boolean;
-  coverage: number;
-  mutationScore: number;
-  qualityGate: 'passed' | 'failed';
-}
+// 1. Get environment status
+const status = await mcp.containerUse.getEnvironmentStatus({
+  env_id: "env-abc123"
+});
+// Returns: { status: "running", last_activity: "2024-01-15T10:30:00Z" }
 
-async function completeWorker(envId: string): Promise<WorkerResult> {
-  // 1. Run quality gate checks
-  const qualityResult = await runQualityGates(envId);
+// 2. Retrieve logs
+const logs = await mcp.containerUse.getEnvironmentLog({
+  env_id: "env-abc123",
+  lines: 50  // Last 50 lines
+});
 
-  if (qualityResult.passed) {
-    // 2. Merge worker branch to integration branch
-    await mergeEnvironment(envId);
+// 3. Check code changes
+const diff = await mcp.containerUse.getEnvironmentDiff({
+  env_id: "env-abc123"
+});
 
-    // 3. Cleanup
-    await deleteEnvironment(envId);
+// 4. Get test results
+const artifacts = await mcp.containerUse.getEnvironmentArtifacts({
+  env_id: "env-abc123",
+  paths: ["coverage/", "test-results.json"]
+});
+```
 
-    return {
-      envId,
-      status: 'completed',
-      branch: `container-use/${envId}`,
-      testsPass: true,
-      coverage: qualityResult.coverage,
-      mutationScore: qualityResult.mutationScore,
-      qualityGate: 'passed'
-    };
-  } else {
-    // Quality gate failed - keep environment for debugging
-    return {
-      envId,
-      status: 'failed',
-      branch: `container-use/${envId}`,
-      qualityGate: 'failed'
-    };
-  }
+**For Manual Inspection (if needed):**
+
+```bash
+# User can manually inspect using container-use CLI
+container-use log env-abc123
+container-use diff env-abc123
+container-use terminal env-abc123  # Interactive shell
+```
+
+### 4. Worker Completion via Container-Use MCP
+
+**BOSS completes worker via MCP after quality gates:**
+
+```typescript
+// Example: Worker completes successfully
+
+// 1. BOSS retrieves quality gate results
+const qualityGates = await mcp.containerUse.getQualityGateResults({
+  env_id: "env-abc123"
+});
+
+if (qualityGates.allPassed) {
+  // ✅ Quality gates PASSED
+
+  // 2. Merge worker branch via Container-Use MCP
+  await mcp.containerUse.mergeEnvironment({
+    env_id: "env-abc123",
+    target_branch: "main",
+    delete_after_merge: true
+  });
+
+  // BOSS logs completion
+  console.log(`Worker env-abc123 completed successfully!
+    Coverage: ${qualityGates.coverage}%
+    Tests: ${qualityGates.testsPass ? 'PASS' : 'FAIL'}
+    Branch merged and cleaned up.`);
+
+} else {
+  // ❌ Quality gates FAILED
+
+  // BOSS analyzes failure
+  const failures = qualityGates.failures;
+  // ["Coverage: 76% (need 80%)", "Missing tests for error cases"]
+
+  // Delete failed environment
+  await mcp.containerUse.deleteEnvironment({
+    env_id: "env-abc123"
+  });
+
+  // Spawn new worker with improved prompt
+  const improvedPrompt = `
+    ${originalPrompt}
+
+    PREVIOUS ATTEMPT FAILED:
+    ${failures.join('\n')}
+
+    THIS TIME:
+    - Focus on test coverage for edge cases
+    - Ensure TDD: tests before implementation
+  `;
+
+  const retryEnv = await mcp.containerUse.createEnvironment({
+    title: "developer-backend-US1-retry",
+    config: ".boss/workers/developer-backend/container-config.json"
+  });
+
+  await mcp.containerUse.executeInEnvironment({
+    env_id: retryEnv.env_id,
+    prompt: improvedPrompt,
+    skills: ["nodejs", "stripe", "api-design", "testing"]
+  });
 }
 ```
 
-**Container-Use Commands:**
+**Equivalent Container-Use CLI Commands:**
 
 ```bash
-# Quality gates pass - accept work
+# If quality gates pass:
 container-use merge env-abc123 --delete
 
-# Quality gates fail - keep for debugging
-container-use log env-abc123
-container-use diff env-abc123
-# Fix issues, then continue in same environment
+# If quality gates fail:
+container-use delete env-abc123  # Remove failed attempt
+container-use environment create --title "developer-backend-US1-retry"
+# Retry with improved approach
 ```
 
 ---

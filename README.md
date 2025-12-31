@@ -2,7 +2,7 @@
 
 > Transform business ideas into production-ready code through autonomous, spec-driven development with AI agents.
 
-**BOSS** is a complete orchestration system that automates software development from idea to deployment by combining three powerful technologies: **GitHub's Spec-Kit**, **Container-Use**, and **intelligent multi-agent coordination**.
+**BOSS** is a framework and methodology that transforms Claude Code or Cursor into an autonomous development orchestrator. By configuring your AI assistant with MCP servers, BOSS skills, and worker templates, you get spec-driven development from idea to deployment - combining **GitHub's Spec-Kit**, **Container-Use isolation**, and **local-first infrastructure**.
 
 ---
 
@@ -35,52 +35,76 @@ BOSS provides:
 
 ## 🏗️ Architecture Overview
 
-BOSS orchestrates three powerful technologies:
+### What BOSS Actually Is
+
+**BOSS is NOT a standalone application.**
+
+BOSS is your **Claude Code or Cursor instance** configured to act as an orchestrator through:
+- **MCP Servers** - Container-Use, Plane, GitHub, Knowledge Base
+- **1Password CLI** - Secret management (op CLI, not MCP)
+- **BOSS Skills** - Loaded into Claude Code/Cursor for orchestration capabilities
+- **Worker Templates** - Configurations for spawning specialized container-use agents
+- **Local Infrastructure** - All services run locally via Docker (PostgreSQL, Qdrant, Plane)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    The BOSS Ecosystem                       │
+│              YOUR LOCAL MACHINE (Host)                      │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│  1. Spec-Kit (GitHub)                                       │
-│     └─► Executable specifications & constitutional rules   │
-│                                                             │
-│  2. Container-Use                                           │
-│     └─► Isolated worker execution + 1Password secrets      │
-│                                                             │
-│  3. BOSS Orchestration                                      │
-│     └─► Multi-agent coordination + workflow automation     │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+│  ┌────────────────────────────────────────────────────┐   │
+│  │  Claude Code or Cursor                             │   │
+│  │  (= BOSS Controller when configured)               │   │
+│  │                                                    │   │
+│  │  • Loaded with BOSS skills                         │   │
+│  │  • Connected to MCP servers                        │   │
+│  │  • Orchestrates Spec-Kit workflow (8 phases)       │   │
+│  │  • Spawns workers via Container-Use MCP            │   │
+│  └──────────────┬─────────────────────────────────────┘   │
+│                 │                                           │
+│  ┌──────────────┴─────────────────────────────────────┐   │
+│  │  MCP Servers (all running locally)                 │   │
+│  │  • Container-Use MCP → spawn/manage workers        │   │
+│  │  • Plane MCP → project management (local Docker)   │   │
+│  │  • GitHub MCP → repository operations              │   │
+│  │  • Knowledge Base MCP → PostgreSQL + Qdrant        │   │
+│  │  • 1Password CLI → manual secret setup via op      │   │
+│  └──────────────┬─────────────────────────────────────┘   │
+│                 │                                           │
+│  ┌──────────────┴─────────────────────────────────────┐   │
+│  │  Docker Daemon (local containers)                  │   │
+│  │  • postgres (knowledge base)                       │   │
+│  │  • qdrant (vector database)                        │   │
+│  │  • text-embeddings-inference (local embeddings)    │   │
+│  │  • plane stack (project management)                │   │
+│  │  • worker containers (managed by container-use)    │   │
+│  └──────────────┬─────────────────────────────────────┘   │
+│                 │                                           │
+└─────────────────┼───────────────────────────────────────────┘
+                  │
+                  │ Container-Use spawns workers via MCP
+                  │
+      ┌───────────┼──────────┬──────────┬──────────┐
+      │           │          │          │          │
+      ▼           ▼          ▼          ▼          ▼
+  ┌───────┐  ┌───────┐  ┌───────┐  ┌───────┐  ┌───────┐
+  │Worker1│  │Worker2│  │Worker3│  │Worker4│  │Worker5│
+  │cu/001 │  │cu/002 │  │cu/003 │  │cu/004 │  │cu/005 │
+  │Claude │  │Claude │  │Claude │  │Claude │  │Claude │
+  │+skills│  │+skills│  │+skills│  │+skills│  │+skills│
+  │branch │  │branch │  │branch │  │branch │  │branch │
+  └───────┘  └───────┘  └───────┘  └───────┘  └───────┘
 ```
 
-### How They Work Together
+### How BOSS Orchestrates Work
 
-```
-BOSS Controller (Local Machine - Claude Code/Cursor)
-    │
-    ├─► Spec-Kit Phases (8 phases)
-    │   ├─► Constitution → Principles & rules
-    │   ├─► Clarification → Business requirements
-    │   ├─► Specification → User stories (spec.md)
-    │   ├─► Planning → Technical approach (plan.md)
-    │   ├─► Validation → Constitutional compliance
-    │   ├─► Task Breakdown → [P]arallel markers (tasks.md)
-    │   ├─► Implementation → TDD in containers
-    │   └─► Consolidation → Integration + artifacts
-    │
-    ├─► Container-Use Workers (Isolated Execution)
-    │   ├─► Worker 1 (cu/env-001) - Clarifier
-    │   ├─► Worker 2 (cu/env-002) - Spec-Writer
-    │   ├─► Worker 3 (cu/env-003) - Planner
-    │   ├─► Worker 4 (cu/env-004) - Developer (Secrets: Stripe, DB)
-    │   └─► Worker 5 (cu/env-005) - Reviewer
-    │
-    └─► 1Password Secrets (op:// references)
-        ├─► op://glx/stripe/test-secret-key
-        ├─► op://glx/github/token
-        └─► op://glx/database/test-url
-```
+**Via Container-Use MCP commands** (following [container-use.com/environment-workflow](https://container-use.com/environment-workflow)):
+
+1. **Create** - BOSS spawns worker via `containerUse.createEnvironment()`
+2. **Execute** - Worker runs in isolated container with dedicated Git branch
+3. **Observe** - BOSS monitors via `containerUse.getEnvironmentLog()`
+4. **Validate** - BOSS checks quality gates after worker completes
+5. **Iterate** - If quality gates fail, delete environment and retry with improved prompt
+6. **Merge** - If gates pass, merge branch via `containerUse.mergeEnvironment()`
 
 ---
 
@@ -140,59 +164,79 @@ Complete guide to worker isolation and security:
 
 ## 🚀 Quick Start
 
+### Prerequisites
+
+1. **Install Claude Code or Cursor** on your local machine
+2. **Install Docker Desktop** (for local infrastructure and workers)
+3. **Install Container-Use CLI** (`npm install -g container-use`)
+4. **Install 1Password CLI** (for secret management)
+
 ### The 30-Second Overview
 
 ```bash
-# 1. Bootstrap a new project
+# 1. Bootstrap a new project with BOSS
 boss bootstrap --template nextjs-app-turbo --quality production
+# Creates: .boss/, .specify/, .container-use/, MCP configs, skills
 
-# 2. Start BOSS
-boss start
+# 2. Start local infrastructure
+docker-compose up -d
+# Starts: PostgreSQL, Qdrant, Plane, embeddings service
 
-# 3. Tell BOSS what to build
+# 3. Open project in Claude Code/Cursor
+# Your AI assistant is now configured as BOSS orchestrator!
+
+# 4. Tell BOSS what to build
 You: "Build a task management app for remote teams"
 
-# 4. BOSS handles everything
+# 5. BOSS (your Claude Code/Cursor) handles everything:
 # - Creates constitution & specifications
 # - Plans architecture & breaks into tasks
-# - Spawns parallel workers in containers
-# - Manages secrets via 1Password
-# - Runs tests & quality gates
+# - Spawns parallel workers via Container-Use MCP
+# - Manages secrets via 1Password CLI (op)
+# - Enforces quality gates through iteration
 # - Creates PRs with full documentation
 
-# 5. Review and approve
+# 6. Review and approve
 # - Gate 1: Approve specifications
 # - Gate 2: Review implementation PR
 
-# 6. Deploy to production
+# 7. Deploy to production
 # ✅ Production-ready code with tests & docs
 ```
 
 ### The Complete Flow
 
 ```
-1. Bootstrap (5 minutes)
-   └─► Creates .specify/, .boss/, .container-use/
-   └─► Initializes git, configs, templates
+1. Bootstrap (5-15 minutes)
+   └─► Run: boss bootstrap --template nextjs-app-turbo
+   └─► Creates: .specify/, .boss/, .container-use/, MCP configs
+   └─► Configures: Claude Code/Cursor with BOSS skills & MCP servers
+   └─► Initializes: git, quality gates, templates
 
-2. Start BOSS
+2. Start Infrastructure (1 minute)
+   └─► Run: docker-compose up -d
+   └─► Starts: PostgreSQL, Qdrant, Plane, embeddings (all local)
+
+3. Open in Claude Code/Cursor
+   └─► Your AI assistant loads BOSS configuration
    └─► BOSS: "What would you like to build?"
 
-3. Business Conversation
+4. Business Conversation (Clarification Phase)
    └─► BOSS asks business questions (not tech)
    └─► Clarifies user needs & workflows
+   └─► Spawns Clarifier worker via Container-Use MCP
 
-4. Specification Phase
+5. Specification Phase (Spec-Writer Worker)
    └─► Creates spec.md with user stories
-   └─► Gate 1: You review & approve
+   └─► Gate 1: You review & approve in Plane
 
-5. Planning Phase
+6. Planning Phase (Planner Worker)
    └─► Creates plan.md, data-model.md, contracts/
    └─► Identifies integration needs (Stripe, etc.)
-   └─► Creates secret setup tasks
+   └─► Creates secret-requirements.md with setup instructions
 
-6. Secret Setup (Human Task)
-   └─► Follow detailed instructions
+7. Secret Setup (Human Task)
+   └─► Follow detailed instructions in secret-requirements.md
    └─► Store in 1Password with op:// references
    └─► Configure container-use
    └─► Mark complete in Plane
@@ -296,28 +340,34 @@ BOSS notifies you with detailed instructions
 
 **No more guessing what credentials are needed!**
 
-### 4. Multi-BOSS Coordination
+### 4. Cross-Project Intelligence
 
-**Cross-project intelligence** - BOSSES share knowledge and coordinate work.
+**Shared knowledge base** - Multiple BOSS instances (Claude Code/Cursor projects) learn from each other.
 
 ```
-Knowledge Base (PostgreSQL + Qdrant)
-├── BOSS 1 (Auth Service): Implementing OAuth
-├── BOSS 2 (Dashboard): Needs OAuth integration
-└── BOSS 3 (API Gateway): Needs JWT validation
+Local Knowledge Base (PostgreSQL + Qdrant)
+├── Project 1: auth-service (OAuth implementation)
+├── Project 2: dashboard-app (needs OAuth)
+└── Project 3: api-gateway (needs JWT validation)
 
-BOSS 2 detects dependency:
-  └─► "BOSS 1 is building OAuth API I need"
-      └─► Options:
-          A) Wait for BOSS 1 (recommended)
-          B) Use mock for now
-          C) Coordinate with BOSS 1 to prioritize
+BOSS 2 (Dashboard) queries knowledge base:
+  └─► Query: "OAuth integration patterns"
+      └─► Finds: auth-service has OAuth implementation
+          └─► Status: deployed
+          └─► Endpoints: /oauth/authorize, /oauth/token
+          └─► Code patterns available in knowledge base
 
-You choose C:
-  └─► BOSS 2 asks BOSS 1 to prioritize endpoints
-      └─► BOSS 1 implements needed endpoints first
-          └─► BOSS 2 gets what it needs sooner
+BOSS 2 suggests:
+  └─► "Found existing OAuth service in auth-service!
+
+       Options:
+       A) Use existing auth-service OAuth API (recommended)
+       B) Implement new OAuth from scratch
+
+       If A, I'll add dependency and use established patterns."
 ```
+
+**No real-time BOSS-to-BOSS communication.** Coordination happens through shared knowledge base queries. Each BOSS (Claude Code/Cursor instance) reads/writes to local PostgreSQL + Qdrant.
 
 ---
 
@@ -579,16 +629,19 @@ BOSS succeeds when:
 ### Phase 2: Bootstrap CLI 📋 (Next)
 - [ ] CLI framework (Commander.js)
 - [ ] Template system
-- [ ] Project initialization
-- [ ] Configuration generation
+- [ ] Project initialization (.boss/, .specify/, .container-use/)
+- [ ] MCP server configuration generation
+- [ ] BOSS skills & commands packaging
 - [ ] Git repository setup
+- [ ] docker-compose.yml generation for local infra
 
-### Phase 3: BOSS Controller 📋
-- [ ] Workflow orchestrator
-- [ ] State machine
-- [ ] Worker spawner (container-use integration)
-- [ ] Quality gate enforcer
-- [ ] Knowledge base client
+### Phase 3: BOSS Skills & MCP Servers 📋
+- [ ] BOSS orchestration skills (for Claude Code/Cursor)
+- [ ] Container-Use MCP server integration
+- [ ] Knowledge Base MCP server (PostgreSQL + Qdrant)
+- [ ] Plane MCP server (local instance)
+- [ ] Quality gate enforcement logic
+- [ ] Workflow state management
 
 ### Phase 4: Spec-Kit Automation 📋
 - [ ] 8-phase implementation
@@ -605,11 +658,11 @@ BOSS succeeds when:
 - [ ] Observability tools
 
 ### Phase 6: Knowledge Base 📋
-- [ ] PostgreSQL schema
-- [ ] Qdrant vector store
-- [ ] Voyage AI embeddings
-- [ ] Context assembly
-- [ ] Cross-project search
+- [ ] PostgreSQL schema (projects, artifacts, dependencies)
+- [ ] Qdrant vector store (patterns, specs, decisions)
+- [ ] Local embeddings (HuggingFace text-embeddings-inference)
+- [ ] Context assembly (gatekeeper pattern)
+- [ ] Cross-project search & learning
 
 ### Phase 7: Integrations 📋
 - [ ] GitHub API (PRs, issues)
@@ -682,13 +735,18 @@ git clone https://github.com/your-username/boss
 - **Claude Code:** https://claude.ai/claude-code
 - **Cursor:** https://cursor.sh
 
-### Integrations
+### Local Infrastructure
 
-- **Plane:** https://plane.so (Project management)
+- **Plane:** https://plane.so (Self-hosted project management via Docker)
+- **Qdrant:** https://qdrant.tech (Local vector database via Docker)
+- **PostgreSQL:** https://postgresql.org (Local knowledge base via Docker)
+- **HuggingFace TEI:** https://huggingface.co/docs/text-embeddings-inference (Local embeddings)
+
+### Deployment Options
+
 - **Vercel:** https://vercel.com (Frontend deployments)
 - **Railway:** https://railway.app (Backend deployments)
-- **Qdrant:** https://qdrant.tech (Vector database)
-- **Voyage AI:** https://www.voyageai.com (Embeddings)
+- **Kamal:** https://kamal-deploy.org (Self-hosted deployments)
 
 ---
 

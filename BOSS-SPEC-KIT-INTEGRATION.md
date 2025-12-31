@@ -78,8 +78,8 @@ BOSS transforms Spec-Kit from a **manual methodology** into a **fully automated 
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│                    BOSS Controller                           │
-│                  (Orchestrates Everything)                   │
+│           Claude Code/Cursor (BOSS Configuration)            │
+│              (Orchestrates via MCP Servers)                  │
 └────────────┬─────────────────────────────────────────────────┘
              │
              ├─► Phase 0: Bootstrap
@@ -119,6 +119,103 @@ BOSS transforms Spec-Kit from a **manual methodology** into a **fully automated 
              │
              └─► [GATE 2: Human Review]
                  └─► User reviews PR with all artifacts
+```
+
+---
+
+## How BOSS Orchestrates Spec-Kit Phases
+
+### BOSS = Claude Code/Cursor + MCP Servers
+
+**BOSS is NOT a standalone application.** When the documentation says "BOSS spawns a worker" or "BOSS orchestrates," this means:
+
+**Claude Code or Cursor** (configured with BOSS skills and MCP servers) executes Container-Use MCP commands to spawn isolated worker environments.
+
+### Worker Spawning via Container-Use MCP
+
+```typescript
+// Example: BOSS (Claude Code/Cursor) spawning a Clarifier worker
+
+// 1. BOSS creates worker environment via Container-Use MCP
+const env = await mcp.containerUse.createEnvironment({
+  title: "clarifier-worker",
+  config: ".boss/workers/clarifier/container-config.json"
+});
+// Returns: { env_id: "env-abc123", branch: "container-use/env-abc123" }
+
+// 2. BOSS executes work in the environment
+await mcp.containerUse.executeInEnvironment({
+  env_id: env.env_id,
+  prompt: clarifierPrompt,  // From .boss/workers/clarifier/prompt.md
+  skills: ["business-analysis", "requirements-gathering"],
+  task: "Clarify business requirements for the feature"
+});
+
+// 3. BOSS monitors completion
+const status = await mcp.containerUse.getEnvironmentStatus({
+  env_id: env.env_id
+});
+
+// 4. BOSS retrieves results
+const artifacts = await mcp.containerUse.getEnvironmentArtifacts({
+  env_id: env.env_id,
+  paths: [".specify/specs/001-feature/"]
+});
+
+// 5. BOSS merges if quality gates pass
+await mcp.containerUse.mergeEnvironment({
+  env_id: env.env_id,
+  delete_after_merge: true
+});
+```
+
+### Quality Gate Enforcement via Iteration
+
+BOSS enforces quality gates (TDD, coverage, etc.) through **iteration, not prevention**:
+
+```
+1. Worker completes task in container-use environment
+2. Worker runs quality gates (tests, coverage, lint)
+3. BOSS retrieves results via Container-Use MCP
+
+IF quality gates PASS:
+  ✅ BOSS: "Great work! Merging your branch."
+  └─► mcp.containerUse.mergeEnvironment(env_id)
+  └─► mcp.containerUse.deleteEnvironment(env_id)
+
+IF quality gates FAIL:
+  ❌ BOSS analyzes failure:
+     - Coverage 76% (need 80%)?
+     - Tests not written first?
+     - TypeScript errors?
+
+  └─► BOSS: "Quality gates failed. Retrying with improvements."
+
+  └─► mcp.containerUse.deleteEnvironment(env_id)
+
+  └─► BOSS creates improved prompt:
+      "Implement User Authentication API
+
+       PREVIOUS ATTEMPT FAILED:
+       - Coverage was 76% (need ≥80%)
+       - Missing tests for error cases
+
+       THIS TIME:
+       - Write tests BEFORE implementation (TDD)
+       - Test edge cases: invalid password, rate limiting
+       - Aim for 85%+ coverage"
+
+  └─► BOSS spawns NEW worker with improved prompt
+      mcp.containerUse.createEnvironment({
+        title: "developer-backend-US1-retry",
+        ...improvedConfig
+      })
+
+  └─► Repeat until quality gates pass (max 3 attempts)
+
+  └─► If still failing after 3 attempts:
+      BOSS: "This task needs your help. Review logs:
+             container-use log env-abc123"
 ```
 
 ---

@@ -10,7 +10,8 @@
       "Bash(npm install)",
       "Bash(pnpm:install)",
       "Bash(npm:install)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(git remote add origin:*)"
     ]
   }
 }

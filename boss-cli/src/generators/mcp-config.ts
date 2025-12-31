@@ -29,7 +29,7 @@ export async function generateMCPConfig(projectPath?: string, scope: MCPScope = 
         }
       }
 
-      // Merge with BOSS MCP servers
+      // Merge with BOSS MCP servers (user scope - no project path, so no op run wrapper)
       const bossMCPConfig = getBossMCPConfig();
 
       // Merge configs (preserve existing, add/update BOSS servers)
@@ -53,9 +53,10 @@ export async function generateMCPConfig(projectPath?: string, scope: MCPScope = 
 
   // Generate project-specific MCP config file (project scope)
   if (shouldGenerateProject && projectPath) {
-    const projectMCPPath = path.join(projectPath, '.mcp-servers.json');
+    const projectMCPPath = path.join(projectPath, '.mcp.json');
+    // For project scope, pass projectPath so MCP servers use op run wrapper
     const projectConfig = {
-      mcpServers: getBossMCPConfig()
+      mcpServers: getBossMCPConfig(projectPath)
     };
     
     await fs.writeFile(projectMCPPath, JSON.stringify(projectConfig, null, 2), 'utf8');
@@ -64,30 +65,32 @@ export async function generateMCPConfig(projectPath?: string, scope: MCPScope = 
 
   logger.info('Note: You will need to create secrets in 1Password vault "boss" using op CLI');
   if (shouldGenerateProject && projectPath) {
-    logger.info('Note: Start MCP servers with: op run --env-file=.env -- <your-ide-command>');
+    logger.info('Note: MCP servers are configured to use op run automatically when they start');
     logger.info('See: https://1password.com/blog/securing-mcp-servers-with-1password-stop-credential-exposure-in-your-agent');
   }
 }
 
-function getBossMCPConfig(): Record<string, any> {
+function getBossMCPConfig(projectPath?: string): Record<string, any> {
+  // Determine if we should use op run wrapper (only for project scope where .env exists)
+  const useOpRun = projectPath !== undefined;
+  // Use relative path .env (op run will resolve it relative to current working directory)
+  const envFile = '.env';
+  
   return {
     'container-use': {
+      type: 'stdio',
       command: 'container-use',
-      args: ['mcp'],
-      env: {
-        CONTAINER_USE_HOME: '${HOME}/.container-use'
-      }
+      args: ['stdio'],
+      env: {}
     },
     'github': {
-      command: 'npx',
-      args: ['@modelcontextprotocol/server-github'],
-      // GITHUB_PERSONAL_ACCESS_TOKEN must be available in the environment
-      // When IDE is started with: op run --env-file=.env -- <ide-command>
-      // The IDE process will have GITHUB_PERSONAL_ACCESS_TOKEN set (resolved from 1Password)
-      // Use ${VAR} syntax - some MCP implementations resolve this at runtime from parent env
-      env: {
-        GITHUB_PERSONAL_ACCESS_TOKEN: '${GITHUB_PERSONAL_ACCESS_TOKEN}'
-      }
+      // Use op run to wrap the MCP server command and resolve op:// references from .env
+      // This follows the 1Password blog post pattern: op run --env-file=.env -- <command>
+      command: useOpRun ? 'op' : 'npx',
+      args: useOpRun 
+        ? ['run', `--env-file=${envFile}`, '--', 'npx', '@modelcontextprotocol/server-github']
+        : ['@modelcontextprotocol/server-github'],
+      // No need for env section - op run resolves op:// references and injects them
     },
     'boss-knowledge': {
       command: 'npx',

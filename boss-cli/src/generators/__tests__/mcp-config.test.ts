@@ -33,17 +33,23 @@ describe('mcp-config generator', () => {
     expect(config.mcpServers['boss-knowledge']).toBeDefined();
   });
 
-  it('should reference environment variable in MCP config env section', async () => {
-    await generateMCPConfig();
+  it('should use op run wrapper for GitHub MCP server in project scope', async () => {
+    const testProjectDir = path.join(os.tmpdir(), 'boss-cli-test-op-run');
+    await fs.ensureDir(testProjectDir);
 
-    const configPath = path.join(testHomeDir, '.config', 'claude-code', 'mcp-servers.json');
-    const config = JSON.parse(await fs.readFile(configPath, 'utf8'));
+    await generateMCPConfig(testProjectDir, 'project');
 
-    // MCP config should reference GITHUB_PERSONAL_ACCESS_TOKEN from parent environment
-    // The value comes from parent environment (set by op run --env-file=.env)
-    // Using ${VAR} syntax allows MCP server to resolve it at runtime from parent env
-    expect(config.mcpServers.github.env).toBeDefined();
-    expect(config.mcpServers.github.env.GITHUB_PERSONAL_ACCESS_TOKEN).toBe('${GITHUB_PERSONAL_ACCESS_TOKEN}');
+    const mcpPath = path.join(testProjectDir, '.mcp.json');
+    const config = JSON.parse(await fs.readFile(mcpPath, 'utf8'));
+
+    // For project scope, GitHub MCP server should use op run wrapper
+    // This follows the 1Password blog post pattern: op run --env-file=.env -- <command>
+    expect(config.mcpServers.github.command).toBe('op');
+    expect(config.mcpServers.github.args[0]).toBe('run');
+    expect(config.mcpServers.github.args[1]).toBe('--env-file=.env');
+    expect(config.mcpServers.github.args[2]).toBe('--');
+    expect(config.mcpServers.github.args[3]).toBe('npx');
+    expect(config.mcpServers.github.args[4]).toBe('@modelcontextprotocol/server-github');
   });
 
   it('should generate .env file with op:// references for project scope', async () => {
@@ -58,6 +64,21 @@ describe('mcp-config generator', () => {
     const envContent = await fs.readFile(envPath, 'utf8');
     expect(envContent).toContain('GITHUB_PERSONAL_ACCESS_TOKEN=op://boss/github/token');
     expect(envContent).toContain('op run --env-file=.env');
+  });
+
+  it('should generate .mcp.json file in project directory for project scope', async () => {
+    const testProjectDir = path.join(os.tmpdir(), 'boss-cli-test-project-mcp');
+    await fs.ensureDir(testProjectDir);
+
+    await generateMCPConfig(testProjectDir, 'project');
+
+    const mcpPath = path.join(testProjectDir, '.mcp.json');
+    expect(await fs.pathExists(mcpPath)).toBe(true);
+
+    const config = JSON.parse(await fs.readFile(mcpPath, 'utf8'));
+    expect(config.mcpServers).toBeDefined();
+    expect(config.mcpServers['container-use']).toBeDefined();
+    expect(config.mcpServers['github']).toBeDefined();
   });
 
   it('should merge with existing config', async () => {

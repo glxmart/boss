@@ -126,7 +126,7 @@ export async function promptMCPScope(): Promise<MCPScope> {
           value: 'user'
         },
         {
-          name: 'Project - Install MCP config in project directory (.mcp-servers.json)',
+          name: 'Project - Install MCP config in project directory (.mcp.json)',
           value: 'project'
         },
         {

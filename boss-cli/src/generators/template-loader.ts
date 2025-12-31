@@ -93,11 +93,21 @@ async function loadT3Template(
     }
   }
 
-  // Update package.json with project name
+  // Update package.json with project name and pnpm configuration
   const packageJsonPath = path.join(projectPath, 'package.json');
   if (await fs.pathExists(packageJsonPath)) {
     const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
     packageJson.name = config.name;
+    // Add pnpm configuration to approve esbuild build scripts (prevents warning)
+    if (!packageJson.pnpm) {
+      packageJson.pnpm = {};
+    }
+    if (!packageJson.pnpm.onlyBuiltDependencies) {
+      packageJson.pnpm.onlyBuiltDependencies = [];
+    }
+    if (!packageJson.pnpm.onlyBuiltDependencies.includes('esbuild')) {
+      packageJson.pnpm.onlyBuiltDependencies.push('esbuild');
+    }
     await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));
   }
 }
@@ -227,7 +237,7 @@ function getPackageJsonForTemplate(template: Template, config: ProjectConfig): a
     version: '0.1.0',
     type: 'module',
     scripts: {
-      'prepare': 'husky install',
+      'prepare': 'husky',
       'typecheck': 'tsc --noEmit',
       'lint': 'eslint src',
       'lint:fix': 'eslint src --fix',
@@ -248,6 +258,9 @@ function getPackageJsonForTemplate(template: Template, config: ProjectConfig): a
       '*.{json,md,yml,yaml}': [
         'prettier --write'
       ]
+    },
+    pnpm: {
+      onlyBuiltDependencies: ['esbuild']
     }
   };
 

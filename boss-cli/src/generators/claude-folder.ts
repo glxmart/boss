@@ -69,6 +69,9 @@ async function generateIDEFolder(
 
   // Generate settings.json (optional)
   await generateSettings(idePath);
+
+  // Generate settings.local.json for auto-approving common commands
+  await generateSettingsLocal(idePath);
 }
 
 async function generateCodeStyleRule(claudePath: string): Promise<void> {
@@ -107,6 +110,15 @@ async function generateSettings(claudePath: string): Promise<void> {
   await writeFile(
     path.join(claudePath, 'settings.json'),
     JSON.stringify(settings, null, 2)
+  );
+}
+
+async function generateSettingsLocal(claudePath: string): Promise<void> {
+  // Load settings.local.json template
+  const content = await loadTemplate('claude-folder/settings.local.json');
+  await writeFile(
+    path.join(claudePath, 'settings.local.json'),
+    content
   );
 }
 

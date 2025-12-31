@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(test:*)",
+      "Bash(grep:*)",
+      "Bash(cat:*)",
+      "Bash(ls:*)",
+      "Bash(echo:*)",
+      "Bash(pnpm install)",
+      "Bash(npm install)",
+      "Bash(pnpm:install)",
+      "Bash(npm:install)",
+      "Bash(curl:*)"
+    ]
+  }
+}
+

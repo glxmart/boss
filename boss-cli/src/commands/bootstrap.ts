@@ -184,10 +184,10 @@ export async function bootstrapCommand(options: BootstrapOptions): Promise<void>
 
 async function initializeHuskyAfterPackageJson(projectPath: string): Promise<void> {
   try {
-    // Run husky install to set up git hooks in .git/hooks directory
+    // Run husky to set up git hooks in .git/hooks directory (husky v9+ uses 'husky' instead of 'husky install')
     // This works even if husky isn't installed yet (npx downloads it temporarily)
     // After pnpm install, the prepare script will ensure husky is properly installed
-    await execa('npx', ['husky', 'install'], {
+    await execa('npx', ['husky'], {
       cwd: projectPath,
       stdio: 'pipe'
     });
@@ -196,7 +196,7 @@ async function initializeHuskyAfterPackageJson(projectPath: string): Promise<voi
     // If husky is not available, log warning but continue
     // The hooks are in .husky/ directory and prepare script will install them when dependencies are installed
     logger.warning('Husky initialization skipped (husky not available via npx).');
-    logger.warning('Hooks are in .husky/ directory. Run "pnpm install" to activate hooks (prepare script will run husky install).');
+    logger.warning('Hooks are in .husky/ directory. Run "pnpm install" to activate hooks (prepare script will run husky).');
   }
 }
 

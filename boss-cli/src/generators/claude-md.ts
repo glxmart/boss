@@ -1,7 +1,12 @@
 import path from 'path';
-import { writeFile } from '../utils/file-system.js';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import { writeFile, copyDirectory } from '../utils/file-system.js';
 import { loadTemplate } from '../utils/template-loader.js';
 import type { ProjectConfig } from '../types/index.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export async function generateClaudeMD(
   projectPath: string,
@@ -26,6 +31,15 @@ export async function generateClaudeMD(
   });
 
   await writeFile(path.join(projectPath, 'CLAUDE.md'), content);
+
+  // Copy docs folder from assets to project root
+  const assetsDocsPath = path.join(__dirname, '../../assets/claude-md/docs');
+  const projectDocsPath = path.join(projectPath, 'docs');
+  const { pathExists } = await import('../utils/file-system.js');
+  const docsExists = await pathExists(assetsDocsPath);
+  if (docsExists) {
+    await copyDirectory(assetsDocsPath, projectDocsPath);
+  }
 }
 
 function getTemplateInfo(template: string): { name: string; stack: string[] } {

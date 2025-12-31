@@ -1,6 +1,8 @@
 import path from 'path';
+import { execa } from 'execa';
 import { writeFile, makeExecutable, ensureDirectory } from '../utils/file-system.js';
 import { loadTemplate } from '../utils/template-loader.js';
+import { logger } from '../utils/logger.js';
 import type { QualityPreset } from '../types/index.js';
 
 export async function generateGitHooks(
@@ -27,6 +29,9 @@ export async function generateGitHooks(
 
   // Generate security check script
   await generateSecurityCheckScript(projectPath);
+
+  // Note: Husky initialization happens after package.json is created (in bootstrap.ts)
+  // This ensures package.json with husky dependency exists before initialization
 }
 
 async function generatePreCommitCheckScript(projectPath: string): Promise<void> {

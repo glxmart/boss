@@ -51,14 +51,53 @@
 
 **Checklist for Initial Setup:**
 - [ ] Read `.boss/project-config.json` to check current status
+- [ ] **Verify:** Main branch contains ALL bootstrap files (committed during bootstrap)
+- [ ] **Verify:** Feature branch `feature/boss-initial-setup` exists (created as LAST step during bootstrap)
 - [ ] Confirm you are on `feature/boss-initial-setup` branch (created during bootstrap)
 - [ ] Check if remote repository exists (read project-config.json, NOT git)
 - [ ] If no remote:
   - [ ] Ask user for repository preferences (private/public, org)
-  - [ ] Create GitHub repository using GitHub MCP
-  - [ ] Add remote using Container-Use MCP environment
-  - [ ] Push initial commit using Container-Use MCP
-  - [ ] Update project-config.json with repository info
+  - [ ] Create GitHub repository using GitHub MCP (will create under personal account)
+  - [ ] If organization was requested:
+    - [ ] Ask user: "Repository created under your personal account. Would you like me to transfer it to [org-name] now?"
+    - [ ] If user confirms:
+      - [ ] Transfer repository using GitHub API: `POST /repos/{owner}/{repo}/transfer` with `{"new_owner": "org-name"}`
+      - [ ] Wait for transfer to complete
+      - [ ] Update git remote URL to reflect new owner using Container-Use MCP
+  - [ ] **CRITICAL: Lock main branch and require PRs** - Use GitHub API to set branch protection:
+    - [ ] Make HTTP PUT request to: `https://api.github.com/repos/{owner}/{repo}/branches/main/protection`
+    - [ ] Headers: `Authorization: token {GITHUB_TOKEN}`, `Accept: application/vnd.github.v3+json`
+    - [ ] Body (JSON):
+      ```json
+      {
+        "required_pull_request_reviews": {
+          "required": true,
+          "dismiss_stale_reviews": true,
+          "require_code_owner_reviews": false,
+          "required_approving_review_count": 1
+        },
+        "enforce_admins": true,
+        "required_status_checks": {
+          "strict": true,
+          "contexts": []
+        },
+        "restrictions": null,
+        "allow_force_pushes": false,
+        "allow_deletions": false,
+        "required_linear_history": false,
+        "allow_squash_merge": true,
+        "allow_merge_commit": true,
+        "allow_rebase_merge": true
+      }
+      ```
+    - [ ] Verify protection was set: Check response status is 200
+    - [ ] **DO NOT skip this step** - branch protection is mandatory
+  - [ ] Add remote using Container-Use MCP environment (or update if transferred)
+  - [ ] **Push main branch to remote FIRST** (contains all bootstrap files) - use Container-Use MCP
+  - [ ] Push `feature/boss-initial-setup` branch to remote - use Container-Use MCP
+  - [ ] **After this, NEVER push directly to main** - main branch is protected, use PRs for future changes
+  - [ ] Create PR from `feature/boss-initial-setup` to `main` automatically (for any future work)
+  - [ ] Update project-config.json with repository info (including final owner after transfer)
 - [ ] Mark `initialization.stage = "ready"` in project-config.json
 - [ ] Update `initialization.remoteCreated = true`
 - [ ] Update `initialization.initialSetupComplete = true`
@@ -69,4 +108,8 @@
 - ALWAYS update `.boss/project-config.json` to reflect status changes
 - ALWAYS ask user for repository preferences before creating
 - Default to private repositories unless user specifies otherwise
+- **CRITICAL:** Main branch MUST be protected before any pushes - require PRs for all changes
+- **NEVER push directly to main branch** - always push to feature branch and create PR
+- **ALWAYS create PRs automatically** - never ask user if they want a PR created
+- **MINIMIZE status checks** - only check worker/environment status when necessary, not repeatedly
 

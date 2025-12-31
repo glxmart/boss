@@ -31,6 +31,7 @@ import { loadTemplate } from '../generators/template-loader.js';
 import { generateTemplateDocs } from '../generators/template-docs.js';
 import { applyQualityPreset } from '../presets/quality-presets.js';
 import { addFiles, commit, createBranch } from '../utils/git.js';
+import { execa } from 'execa';
 
 export async function bootstrapCommand(options: BootstrapOptions): Promise<void> {
   logger.section('🤖 BOSS Bootstrap');
@@ -67,12 +68,6 @@ export async function bootstrapCommand(options: BootstrapOptions): Promise<void>
     logger.startSpinner('Copying Spec-Kit structure...');
     await copySpecKitStructure(projectPath);
     logger.stopSpinner(true, 'Spec-Kit structure copied');
-
-    // Commit Spec-Kit to git (critical for container-use)
-    logger.startSpinner('Committing Spec-Kit to git...');
-    await addFiles(projectPath, ['.specify/']);
-    await commit(projectPath, 'Add Spec-Kit templates, scripts, and structure');
-    logger.stopSpinner(true, 'Spec-Kit committed to git');
 
     // Generate project structure
     logger.startSpinner('Generating project structure...');
@@ -125,7 +120,7 @@ export async function bootstrapCommand(options: BootstrapOptions): Promise<void>
     await generateGitHubWorkflows(projectPath, config);
     logger.stopSpinner(true, 'GitHub workflows generated');
 
-    // Generate git hooks
+    // Generate git hooks (creates .husky/ directory and hook files)
     logger.startSpinner('Generating git hooks...');
     await generateGitHooks(projectPath, config.quality);
     logger.stopSpinner(true, 'Git hooks generated');
@@ -142,36 +137,44 @@ export async function bootstrapCommand(options: BootstrapOptions): Promise<void>
     await generateStartBossScript(projectPath);
     logger.stopSpinner(true, 'Critical files generated');
 
-    // Load and apply template
+    // Load and apply template (includes package.json with husky dependency and prepare script)
     logger.startSpinner(`Loading template: ${config.template}...`);
     await loadTemplate(projectPath, config.template, config);
     logger.stopSpinner(true, 'Template applied');
+
+    // Initialize Husky after package.json exists (package.json has husky and prepare script)
+    logger.startSpinner('Initializing Husky git hooks...');
+    await initializeHuskyAfterPackageJson(projectPath);
+    logger.stopSpinner(true, 'Husky initialized');
 
     // Generate template documentation
     logger.startSpinner('Generating template documentation...');
     await generateTemplateDocs(projectPath, config);
     logger.stopSpinner(true, 'Template documentation generated');
 
-    // Commit all bootstrap files
-    logger.startSpinner('Committing bootstrap files...');
+    // CRITICAL: Commit ALL bootstrap files to main branch FIRST
+    // Main branch must contain all bootstrap configuration before feature branch is created
+    logger.startSpinner('Committing all bootstrap files to main branch...');
     await addFiles(projectPath, ['.']);
     await commit(projectPath, 'chore: BOSS bootstrap - initial project structure');
-    logger.stopSpinner(true, 'Bootstrap files committed');
+    logger.stopSpinner(true, 'All bootstrap files committed to main branch');
 
-    // Create feature/boss-initial-setup branch for BOSS work
-    logger.startSpinner('Creating initial setup branch...');
+    // CRITICAL: Create feature/boss-initial-setup branch LAST
+    // This is the final step - main branch is now complete with all bootstrap files
+    logger.startSpinner('Creating feature/boss-initial-setup branch...');
     await createInitialSetupBranch(projectPath);
-    logger.stopSpinner(true, 'Initial setup branch created');
+    logger.stopSpinner(true, 'Feature branch created (bootstrap complete)');
 
     // Success message
     logger.section('✅ Bootstrap Complete!');
     logger.success(`Project "${config.name}" has been bootstrapped successfully!`);
     logger.info(`\nNext steps:`);
     logger.info(`  1. cd ${config.name}`);
-    logger.info(`  2. docker-compose up -d`);
-    logger.info(`  3. Open project in Claude Code/Cursor`);
-    logger.info(`  4. Run: ./start-boss.sh`);
-    logger.info(`  5. BOSS will complete initial setup (GitHub repo, remote, etc.)`);
+    logger.info(`  2. pnpm install (installs dependencies and initializes Husky via prepare script)`);
+    logger.info(`  3. docker-compose up -d`);
+    logger.info(`  4. Open project in Claude Code/Cursor`);
+    logger.info(`  5. Run: ./start-boss.sh`);
+    logger.info(`  6. BOSS will complete initial setup (GitHub repo, remote, branch protection, etc.)`);
 
   } catch (error) {
     logger.error(`Bootstrap failed: ${error instanceof Error ? error.message : String(error)}`);
@@ -179,11 +182,39 @@ export async function bootstrapCommand(options: BootstrapOptions): Promise<void>
   }
 }
 
+async function initializeHuskyAfterPackageJson(projectPath: string): Promise<void> {
+  try {
+    // Run husky install to set up git hooks in .git/hooks directory
+    // This works even if husky isn't installed yet (npx downloads it temporarily)
+    // After pnpm install, the prepare script will ensure husky is properly installed
+    await execa('npx', ['husky', 'install'], {
+      cwd: projectPath,
+      stdio: 'pipe'
+    });
+    // Husky initialized successfully (silent success)
+  } catch (error) {
+    // If husky is not available, log warning but continue
+    // The hooks are in .husky/ directory and prepare script will install them when dependencies are installed
+    logger.warning('Husky initialization skipped (husky not available via npx).');
+    logger.warning('Hooks are in .husky/ directory. Run "pnpm install" to activate hooks (prepare script will run husky install).');
+  }
+}
+
 async function createInitialSetupBranch(projectPath: string): Promise<void> {
   const fs = await import('fs-extra');
+  const { readFile, writeFile } = await import('../utils/file-system.js');
   const projectConfigPath = path.join(projectPath, '.boss', 'project-config.json');
 
+  // CRITICAL: Verify we're on main branch before creating feature branch
+  const { execa } = await import('execa');
+  const { stdout: currentBranch } = await execa('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: projectPath });
+  if (currentBranch.trim() !== 'main' && currentBranch.trim() !== 'master') {
+    logger.warning(`Expected to be on main branch, but on ${currentBranch.trim()}. Switching to main...`);
+    await execa('git', ['checkout', 'main'], { cwd: projectPath });
+  }
+
   // Create and switch to feature/boss-initial-setup branch
+  // This is the LAST step - all bootstrap files are already committed to main
   await createBranch(projectPath, 'feature/boss-initial-setup');
 
   // Early return if project-config.json doesn't exist
@@ -192,7 +223,8 @@ async function createInitialSetupBranch(projectPath: string): Promise<void> {
     return;
   }
 
-  const projectConfig = await fs.readJson(projectConfigPath);
+  const projectConfigContent = await readFile(projectConfigPath);
+  const projectConfig = JSON.parse(projectConfigContent);
   const now = new Date().toISOString();
 
   // Update branch information
@@ -227,12 +259,13 @@ async function createInitialSetupBranch(projectPath: string): Promise<void> {
   // Update metadata
   if (projectConfig.metadata) {
     projectConfig.metadata.lastUpdated = now;
-    projectConfig.metadata.notes = 'Initial setup branch created. Ready for remote repository setup.';
+    projectConfig.metadata.notes = 'Initial setup branch created. All bootstrap files committed to main. Ready for remote repository setup.';
   }
 
-  await fs.writeJson(projectConfigPath, projectConfig, { spaces: 2 });
+  await writeFile(projectConfigPath, JSON.stringify(projectConfig, null, 2));
 
   // Commit the project-config.json update to the feature branch
+  // This is the only commit on the feature branch - all bootstrap files are on main
   await addFiles(projectPath, ['.boss/project-config.json']);
   await commit(projectPath, 'chore: switch to feature/boss-initial-setup branch');
 }

@@ -34,8 +34,8 @@ describe('git utilities', () => {
       const { stdout: userName } = await execa('git', ['config', 'user.name'], { cwd: testDir });
       const { stdout: userEmail } = await execa('git', ['config', 'user.email'], { cwd: testDir });
 
-      expect(userName).toBe('BOSS CLI');
-      expect(userEmail).toBe('boss-cli@localhost');
+      expect(userName).toBe('The BOSS');
+      expect(userEmail).toBe('boss@glxmart.com');
     });
   });
 

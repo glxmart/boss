@@ -22,6 +22,7 @@ program
   .option('--org <org>', 'Organization name')
   .option('--github-repo <repo>', 'GitHub repository name')
   .option('--github-org <org>', 'GitHub organization')
+  .option('--non-interactive', 'Skip confirmation prompts (useful for scripts)')
   .action(async (options) => {
     try {
       await bootstrapCommand(options);

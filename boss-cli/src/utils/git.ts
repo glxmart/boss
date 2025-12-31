@@ -6,9 +6,23 @@ export async function initGitRepository(projectPath: string): Promise<void> {
   logger.startSpinner('Initializing git repository...');
   try {
     await execa('git', ['init'], { cwd: projectPath });
-    // Configure git user for commits (required for test environments)
-    await execa('git', ['config', 'user.name', 'BOSS CLI'], { cwd: projectPath });
-    await execa('git', ['config', 'user.email', 'boss-cli@localhost'], { cwd: projectPath });
+    
+    // Always configure git user for the repository (required for commits)
+    // This ensures commits work even if user hasn't configured git globally
+    try {
+      await execa('git', ['config', 'user.name', 'The BOSS'], { cwd: projectPath });
+      await execa('git', ['config', 'user.email', 'boss@glxmart.com'], { cwd: projectPath });
+    } catch (configError) {
+      // If local config fails, try to set global as fallback
+      try {
+        await execa('git', ['config', '--global', 'user.name', 'The BOSS']);
+        await execa('git', ['config', '--global', 'user.email', 'boss@glxmart.com']);
+      } catch (globalError) {
+        // If both fail, log warning but continue (commit will use env vars)
+        logger.warning('Could not configure git user, will use environment variables for commits');
+      }
+    }
+    
     logger.stopSpinner(true, 'Git repository initialized');
   } catch (error) {
     logger.stopSpinner(false, 'Failed to initialize git repository');
@@ -34,10 +48,10 @@ export async function commit(projectPath: string, message: string): Promise<void
       cwd: projectPath,
       env: {
         ...process.env,
-        GIT_AUTHOR_NAME: 'BOSS CLI',
-        GIT_AUTHOR_EMAIL: 'boss-cli@localhost',
-        GIT_COMMITTER_NAME: 'BOSS CLI',
-        GIT_COMMITTER_EMAIL: 'boss-cli@localhost'
+        GIT_AUTHOR_NAME: 'The BOSS',
+        GIT_AUTHOR_EMAIL: 'boss@glxmart.com',
+        GIT_COMMITTER_NAME: 'The BOSS',
+        GIT_COMMITTER_EMAIL: 'boss@glxmart.com'
       },
       // Retry on failure (handles race conditions)
       timeout: 5000

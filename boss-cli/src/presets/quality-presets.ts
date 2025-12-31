@@ -1,14 +1,19 @@
 import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 import { readFile, writeFile } from '../utils/file-system.js';
 import type { QualityPreset } from '../types/index.js';
 import yaml from 'js-yaml';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export async function applyQualityPreset(
   projectPath: string,
   quality: QualityPreset
 ): Promise<void> {
   // Load preset YAML
-  const presetPath = path.join(__dirname, `../presets/${quality}.yaml`);
+  const presetPath = path.join(__dirname, `${quality}.yaml`);
   const fs = await import('fs-extra');
   
   let preset: any = {};

@@ -1,45 +1,273 @@
 # BOSS: Business-Orchestrated Software System
 
-## What It Is
+**The Complete Vision**
 
-**BOSS** is a framework and methodology that transforms **Claude Code or Cursor** into an autonomous development orchestrator. By configuring your AI assistant with MCP servers, BOSS skills, and worker templates, you get a system that transforms business ideas into production-ready code through coordinated, isolated container-use workers - maintaining human governance and cross-project intelligence.
+---
 
-## The Complete Vision
+## Table of Contents
+
+1. [Quick Start](#quick-start)
+   - [30-Second Overview](#30-second-overview)
+   - [System Architecture Diagram](#system-architecture-diagram)
+   - [Traditional vs BOSS](#traditional-vs-boss)
+
+2. [Core Concepts](#core-concepts)
+   - [What BOSS Is](#what-boss-is)
+   - [The Problem We're Solving](#the-problem-were-solving)
+   - [The BOSS Solution](#the-boss-solution)
+
+3. [Foundation Technologies](#foundation-technologies)
+   - [Spec-Kit: Executable Specifications](#spec-kit-executable-specifications)
+   - [Container-Use: Isolated Worker Execution](#container-use-isolated-worker-execution)
+
+4. [Bootstrap System](#bootstrap-system)
+   - [What Bootstrap Does](#what-bootstrap-does)
+   - [Bootstrap Command](#bootstrap-command)
+   - [What Gets Created](#what-gets-created)
+   - [Bootstrap Templates](#bootstrap-templates)
+
+5. [BOSS Orchestration](#boss-orchestration)
+   - [What BOSS Actually Is](#what-boss-actually-is)
+   - [Why BOSS Runs on Host](#why-boss-runs-on-host)
+   - [BOSS Architecture](#boss-architecture)
+   - [BOSS Capabilities](#boss-capabilities)
+
+6. [Knowledge & Coordination](#knowledge--coordination)
+   - [Cross-Project Intelligence](#cross-project-intelligence)
+   - [Knowledge Engine Gatekeeper Pattern](#knowledge-engine-gatekeeper-pattern)
+   - [Cross-Project Coordination](#cross-project-coordination)
+
+7. [GitHub Integration](#github-integration)
+   - [Native Project Management](#native-project-management)
+   - [Human Gates via GitHub](#human-gates-via-github)
+
+8. [Complete Workflow](#complete-workflow)
+   - [End-to-End Example](#end-to-end-example)
+
+9. [Architecture](#architecture)
+   - [System Architecture](#system-architecture)
+   - [BOSS Components](#boss-components)
+   - [Worker Container](#worker-container)
+   - [Data Model](#data-model)
+
+10. [CLI & Commands](#cli--commands)
+    - [Bootstrap CLI Commands](#bootstrap-cli-commands)
+
+11. [Configuration & Customization](#configuration--customization)
+    - [Custom Worker Prompts](#custom-worker-prompts)
+    - [Custom Quality Gates](#custom-quality-gates)
+    - [Custom Commands](#custom-commands)
+
+12. [Advanced Features](#advanced-features)
+    - [Cross-BOSS Coordination Example](#cross-boss-coordination-example)
+    - [Knowledge Base Query Example](#knowledge-base-query-example)
+    - [Dependency Management Example](#dependency-management-example)
+
+13. [Design Principles & Success Metrics](#design-principles--success-metrics)
+    - [Key Design Principles](#key-design-principles)
+    - [Success Metrics](#success-metrics)
+
+14. [Getting Started](#getting-started)
+    - [Prerequisites](#prerequisites)
+    - [Installation](#installation)
+    - [First Project](#first-project)
+
+15. [Roadmap & Evolution](#roadmap--evolution)
+    - [Development Phases](#development-phases)
+    - [Ecosystem Growth](#ecosystem-growth)
+    - [Why BOSS Will Succeed](#why-boss-will-succeed)
+
+16. [Reference](#reference)
+    - [Technical Deep Dives](#technical-deep-dives)
+
+---
+
+## Quick Start
+
+### 30-Second Overview
+
+**BOSS transforms Claude Code or Cursor into an autonomous development orchestrator** that takes you from business idea to production-ready code through coordinated, isolated container workers - with human governance and cross-project intelligence.
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ BOSS = Claude Code/Cursor + Skills + MCP Servers             │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  1. Bootstrap (5 min)  → Fully configured project           │
+│  2. Describe Idea      → BOSS creates specs (Spec-Kit)      │
+│  3. Approve Specs      → Human gate via GitHub PR           │
+│  4. Auto-Implementation → Parallel workers in containers     │
+│  5. Quality Enforcement → TDD + 80% coverage + mutation      │
+│  6. Review & Deploy    → Production-ready with full docs    │
+│                                                              │
+│  🔐 Secrets: 1Password (op://) - AI never sees values       │
+│  🧠 Knowledge: Compounds across all your projects            │
+│  ⚡ Speed: Idea to PR in ~4 hours for typical CRUD apps     │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**Key Innovation:**
+- **Spec-Kit** (GitHub) provides executable specifications & constitutional governance
+- **Container-Use** provides isolated worker execution with secure secret management
+- **BOSS** orchestrates everything with multi-agent coordination
+
+### System Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────┐
+│              YOUR LOCAL MACHINE (Host)                  │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  ┌───────────────────────────────────────────────┐    │
+│  │  Claude Code or Cursor (= BOSS)              │    │
+│  │  • BOSS Skills (orchestration)                │    │
+│  │  • Spec-Kit workflow (8 phases)               │    │
+│  │  • Quality gate enforcement                   │    │
+│  └──────────────┬────────────────────────────────┘    │
+│                 │                                       │
+│  ┌──────────────┴────────────────────────────────┐    │
+│  │  MCP Servers (all local)                      │    │
+│  │  • Container-Use MCP → spawn/manage workers   │    │
+│  │  • GitHub MCP → repo & project mgmt           │    │
+│  │  • Knowledge Base MCP → PostgreSQL + Qdrant   │    │
+│  │  • 1Password CLI → secret setup (op)          │    │
+│  └──────────────┬────────────────────────────────┘    │
+│                 │                                       │
+│  ┌──────────────┴────────────────────────────────┐    │
+│  │  Docker Daemon (local containers)             │    │
+│  │  • postgres, qdrant, embeddings               │    │
+│  │  • worker containers (via container-use)      │    │
+│  └──────────────┬────────────────────────────────┘    │
+│                 │                                       │
+└─────────────────┼───────────────────────────────────────┘
+                  │
+      ┌───────────┼──────────┬──────────┬──────────┐
+      │           │          │          │          │
+      ▼           ▼          ▼          ▼          ▼
+  ┌───────┐  ┌───────┐  ┌───────┐  ┌───────┐  ┌───────┐
+  │Worker1│  │Worker2│  │Worker3│  │Worker4│  │Worker5│
+  │Clarify│  │ Spec  │  │ Plan  │  │  Dev  │  │Review │
+  │Claude │  │Claude │  │Claude │  │Claude │  │Claude │
+  │+skills│  │+skills│  │+skills│  │+skills│  │+skills│
+  │branch │  │branch │  │branch │  │branch │  │branch │
+  └───────┘  └───────┘  └───────┘  └───────┘  └───────┘
+```
+
+### Traditional vs BOSS
+
+| Aspect | Traditional Development | BOSS Development |
+|--------|------------------------|------------------|
+| **Project Setup** | Hours of manual configuration | 5 minutes with `boss bootstrap` |
+| **Requirements** | Meetings, documents, back-and-forth | Conversational clarification with BOSS |
+| **Specifications** | Manual PRDs, often outdated | Spec-Kit artifacts (executable, versioned) |
+| **Architecture** | Manual design, inconsistent patterns | Constitutional governance + knowledge base |
+| **Implementation** | Manual coding, context switching | Parallel workers in isolated containers |
+| **Testing** | Often afterthought, low coverage | TDD enforced, ≥80% coverage + mutation |
+| **Code Review** | Manual, inconsistent standards | Automated quality gates + human approval |
+| **Integration** | Manual, error-prone | Automated consolidation with tests |
+| **Security** | Secrets in .env files, often committed | 1Password integration, AI never sees values |
+| **Knowledge** | Tribal, forgotten, siloed | Shared knowledge base, compounds over time |
+| **Cross-Project** | Manual coordination, duplicate work | Automatic dependency detection & reuse |
+| **Quality** | Varies by developer/team | Enforced by quality gates, consistent |
+| **Time to PR** | Days to weeks | Hours with BOSS orchestration |
+
+---
+
+## Core Concepts
+
+### What BOSS Is
+
+**BOSS** is a framework and methodology that transforms **Claude Code or Cursor** into an autonomous development orchestrator.
+
+**IMPORTANT: BOSS is NOT a standalone application.**
+
+**BOSS IS:**
+- Your **Claude Code or Cursor instance** configured to act as an orchestrator
+- A set of **BOSS skills** loaded into Claude Code/Cursor for orchestration capabilities
+- **MCP server connections** (Container-Use, GitHub, Knowledge Base)
+- **1Password CLI** for secure secret management (op CLI, not MCP)
+- **Worker templates** defining configurations for spawning specialized container-use agents
+- A **methodology** for spec-driven, autonomous development
+
+When you bootstrap a BOSS project and open it in Claude Code/Cursor, your AI assistant loads the BOSS configuration and becomes the orchestrator.
 
 ### The Problem We're Solving
 
-Modern software development faces:
-- **Manual project setup** - Hours spent configuring tools, linting, testing, git hooks
-- **Context switching overload** - Multiple projects, multiple tech stacks, forgotten decisions
-- **Inconsistent quality** - Different standards across projects
-- **AI assistants that forget** - No organizational memory between conversations
-- **No cross-project coordination** - Dependencies discovered too late
-- **Manual orchestration** - Humans coordinating what should be automated
+Modern software development faces critical challenges:
+
+| Problem | Impact |
+|---------|--------|
+| **Manual project setup** | Hours spent configuring tools, linting, testing, git hooks |
+| **Context switching overload** | Multiple projects, multiple tech stacks, forgotten decisions |
+| **Inconsistent quality** | Different standards across projects, team members |
+| **AI assistants that forget** | No organizational memory between conversations |
+| **No cross-project coordination** | Dependencies discovered too late, duplicate work |
+| **Manual orchestration** | Humans coordinating what should be automated |
+| **Insecure secret management** | .env files committed, credentials exposed to AI |
+| **No testing discipline** | Low coverage, tests written after (or never) |
 
 ### The BOSS Solution
 
-A **two-tier system**:
+A **two-tier system** that addresses all these challenges:
 
-1. **Bootstrap CLI** - Sets up new projects with everything configured (.boss/, .specify/, MCP servers)
-2. **BOSS-Configured Claude Code/Cursor** - Your AI assistant becomes the orchestrator with loaded skills and MCP connections
+**1. Bootstrap CLI** - Sets up new projects with everything configured
+- .boss/ directory with worker configurations
+- .specify/ directory for Spec-Kit artifacts
+- MCP servers configured
+- Quality gates established
+- Tech stack policy enforced
 
-### Foundation Technologies
+**2. BOSS-Configured Claude Code/Cursor** - Your AI assistant becomes the orchestrator
+- Loaded with BOSS skills and MCP connections
+- Runs Spec-Kit's 8 phases automatically
+- Spawns workers in isolated containers
+- Enforces quality gates (TDD, coverage, mutation)
+- Manages secrets via 1Password
+- Builds organizational knowledge
+
+**Result:** From "I have an idea" to "I have production-ready code" - fully automated, fully secure, fully under your control.
+
+---
+
+## Foundation Technologies
 
 BOSS is built on two powerful foundations:
 
-#### 1. Spec-Kit - Executable Specifications
+### Spec-Kit: Executable Specifications
 
 **GitHub's Spec-Kit** - An open-source toolkit for "Spec-Driven Development" that treats specifications as executable, foundational artifacts.
 
-**What Spec-Kit Provides:**
-- **Seven Sequential Phases:** Principles → Specifications → Clarification → Planning → Validation → Task Breakdown → Implementation
-- **Structured Artifacts:** constitution.md, spec.md, plan.md, tasks.md, data-model.md, contracts/, quickstart.md, checklist.md
-- **Test-First Methodology:** TDD is NON-NEGOTIABLE (red → green → refactor)
-- **Parallelization Markers:** Tasks marked with `[P]` can run in parallel
-- **Constitutional Governance:** All work validated against project principles
+#### What Spec-Kit Provides
 
-**How BOSS Transforms Spec-Kit:**
-- ✅ Automates all seven phases with specialized workers
+| Component | Description |
+|-----------|-------------|
+| **Eight Sequential Phases** | Bootstrap → Constitution → Clarification → Specification → Planning → Validation → Task Breakdown → Implementation → Consolidation |
+| **Structured Artifacts** | constitution.md, spec.md, plan.md, tasks.md, data-model.md, contracts/, quickstart.md, checklist.md |
+| **Test-First Methodology** | TDD is NON-NEGOTIABLE (red → green → refactor) |
+| **Parallelization Markers** | Tasks marked with `[P]` can run in parallel |
+| **Constitutional Governance** | All work validated against project principles |
+
+#### How BOSS Transforms Spec-Kit
+
+BOSS automates and enhances every phase of Spec-Kit:
+
+```
+Manual Spec-Kit (GitHub)          BOSS + Spec-Kit
+─────────────────────────────     ──────────────────────────────
+Human writes constitution    →    Architect worker generates
+Human gathers requirements   →    Clarifier worker interviews you
+Human writes specifications  →    Spec-Writer creates artifacts
+Human reviews manually       →    Auto-validation with retry logic
+Human creates tasks          →    Planner generates tasks with [P]
+Human implements             →    Parallel workers in containers
+Human coordinates workers    →    BOSS orchestrates automatically
+Manual quality checks        →    Automated gates (≥80% coverage)
+Manual knowledge sharing     →    Knowledge base compounds
+```
+
+**Enhanced Capabilities:**
+- ✅ Automates all eight phases with specialized workers
 - ✅ Parallel execution based on `[P]` markers
 - ✅ Constitutional auto-validation with retry logic
 - ✅ Knowledge base integration (learns from similar projects)
@@ -48,18 +276,50 @@ BOSS is built on two powerful foundations:
 
 > 📚 **Deep Dive:** See [BOSS-SPEC-KIT-INTEGRATION.md](./BOSS-SPEC-KIT-INTEGRATION.md) for complete phase-by-phase automation details, worker prompts, and constitutional principles.
 
-#### 2. Container-Use - Isolated Worker Execution
+### Container-Use: Isolated Worker Execution
 
 **Container-Use** - A system for running AI agents in isolated Docker containers with dedicated Git branches and secure secret management.
 
-**What Container-Use Provides:**
-- **Isolated Environments:** Each worker in own container + Git branch
-- **Secure Secrets:** 1Password integration (op:// references), AI never sees values
-- **Full Observability:** Complete command history and audit trail
-- **Disposable Execution:** Clean environments, easy rollback
-- **Parallel Workers:** Multiple agents without conflicts
+#### What Container-Use Provides
 
-**How BOSS Leverages Container-Use:**
+| Feature | Benefit |
+|---------|---------|
+| **Isolated Environments** | Each worker in own container + Git branch |
+| **Secure Secrets** | 1Password integration (op:// references), AI never sees values |
+| **Full Observability** | Complete command history and audit trail |
+| **Disposable Execution** | Clean environments, easy rollback |
+| **Parallel Workers** | Multiple agents without conflicts |
+
+#### How BOSS Leverages Container-Use
+
+```
+BOSS Architecture with Container-Use
+────────────────────────────────────────────────────────
+┌─────────────────────────────────────┐
+│ BOSS (Host - Claude Code/Cursor)   │
+│ • Orchestrates via Container-Use MCP │
+│ • Creates workers, monitors progress │
+│ • CANNOT touch files/git directly    │
+└──────────────┬──────────────────────┘
+               │
+               ├─► Container 1 (Clarifier)
+               │   • Full file/git/shell access
+               │   • Isolated branch
+               │   • No secrets needed
+               │
+               ├─► Container 2 (Developer)
+               │   • Full file/git/shell access
+               │   • Isolated branch
+               │   • Secrets: STRIPE_KEY, DB_URL
+               │   • Secrets from 1Password (op://)
+               │
+               └─► Container 3 (Reviewer)
+                   • Full file/git/shell access
+                   • Isolated branch
+                   • No secrets needed
+```
+
+**Integration Benefits:**
 - ✅ BOSS runs locally (Claude Code/Cursor), workers in containers
 - ✅ Each worker gets isolated environment (container-use/env-*)
 - ✅ Secrets injected from 1Password (never exposed to AI)
@@ -71,11 +331,20 @@ BOSS is built on two powerful foundations:
 
 ---
 
-## Part 1: Bootstrap System
+## Bootstrap System
 
-### What It Does
+### What Bootstrap Does
 
 The bootstrap tool initializes new projects with **complete, opinionated configuration** based on project type and quality requirements.
+
+**In 5 minutes you get:**
+- Fully configured project structure
+- All tooling set up (TypeScript, linting, testing, git hooks)
+- BOSS configuration with worker templates
+- Spec-Kit directory structure
+- GitHub workflows
+- Quality gates configured
+- Tech stack policy enforced
 
 ### Bootstrap Command
 
@@ -99,6 +368,8 @@ boss bootstrap --template @myorg/api-service --quality production
 
 ```
 my-project/
+├── CLAUDE.md                       # CRITICAL: Worker instructions (environment-only operations)
+├── start-boss.sh                   # CRITICAL: Launch BOSS with --allowedTools flag (MCP-only)
 ├── .boss/                          # BOSS configuration
 │   ├── config.yaml                 # BOSS settings
 │   ├── CLAUDE.md                   # Perfected instructions for BOSS
@@ -110,29 +381,13 @@ my-project/
 │   │   │   ├── prompt.md          # Worker role prompt
 │   │   │   └── container-config.json  # Container-use config
 │   │   ├── spec-writer/           # Specification agent
-│   │   │   ├── prompt.md
-│   │   │   └── container-config.json
 │   │   ├── planner/               # Planning agent
-│   │   │   ├── prompt.md
-│   │   │   └── container-config.json
 │   │   ├── architect/             # Architecture agent
-│   │   │   ├── prompt.md
-│   │   │   └── container-config.json
 │   │   ├── developer-frontend/    # Frontend developer agent
-│   │   │   ├── prompt.md
-│   │   │   └── container-config.json
 │   │   ├── developer-backend/     # Backend developer agent
-│   │   │   ├── prompt.md
-│   │   │   └── container-config.json
 │   │   ├── developer-fullstack/   # Fullstack developer agent
-│   │   │   ├── prompt.md
-│   │   │   └── container-config.json
 │   │   ├── reviewer/              # Code review agent
-│   │   │   ├── prompt.md
-│   │   │   └── container-config.json
 │   │   └── consolidator/          # Integration agent
-│   │       ├── prompt.md
-│   │       └── container-config.json
 │   ├── quality-gates/             # Quality gate configurations
 │   ├── templates/                 # Worker prompt templates
 │   └── mcp-config.json            # MCP servers for BOSS
@@ -141,19 +396,19 @@ my-project/
 │   └── environment.json           # Default container environment
 │
 ├── .github/
-│   ├── workflows/                 # CI/CD pipelines (based on template)
+│   ├── workflows/                 # CI/CD pipelines
 │   │   ├── quality-gates.yml     # Automated quality checks
 │   │   ├── test.yml              # Test runner
 │   │   └── deploy.yml            # Deployment pipeline
 │   └── PULL_REQUEST_TEMPLATE.md  # PR template
 │
-├── .husky/                        # Git hooks (based on quality preset)
+├── .husky/                        # Git hooks
 │   ├── pre-commit                # Lint, typecheck, test
 │   └── commit-msg                # Conventional commits
 │
-├── src/                           # Application code (based on template)
+├── src/                           # Application code
 ├── tests/                         # Test directory
-├── .specify/                      # Spec-Kit artifacts (GitHub's Spec-Kit)
+├── .specify/                      # Spec-Kit artifacts
 │   ├── memory/
 │   │   └── constitution.md       # Project governing principles (NON-NEGOTIABLE)
 │   ├── specs/                    # Feature specifications
@@ -168,7 +423,7 @@ my-project/
 │   ├── scripts/                  # Automation helpers
 │   └── templates/                # Spec-Kit templates
 │
-├── package.json                   # Dependencies (based on template)
+├── package.json                   # Dependencies
 ├── tsconfig.json                  # TypeScript config
 ├── vitest.config.ts              # Test config
 ├── .eslintrc.js                  # Linting rules
@@ -189,7 +444,94 @@ Template: nextjs-app-turbo
 Quality: enterprise"
 ```
 
-#### 3. BOSS Configuration (`.boss/config.yaml`)
+#### 3. Project CLAUDE.md (Worker Instructions)
+
+**CRITICAL:** Bootstrap creates a `CLAUDE.md` file in the project root containing mandatory operational constraints for workers.
+
+**Why This Exists:**
+- Workers run in isolated container-use environments
+- Workers MUST use environment tools for ALL operations
+- Workers MUST NOT use raw git CLI (breaks environment integrity)
+- Workers MUST inform users how to view their work
+
+**What It Contains:**
+
+```markdown
+# Project: [Project Name]
+
+## CRITICAL: Environment-Only Operations
+
+**ALWAYS use ONLY Environments for ANY and ALL file, code, or shell operations—NO EXCEPTIONS—even for simple or generic requests.**
+
+### What This Means
+- ✅ DO: Use environment tools for ALL operations
+- ❌ DO NOT: Use raw git CLI with environment_run_cmd
+- ❌ DO NOT: Execute file operations outside environment tools
+
+### User Visibility
+You MUST inform the user how to view your work:
+- `container-use log <env_id>` - View command history
+- `container-use checkout <env_id>` - Checkout branch to inspect code
+
+## [Template-Specific Guidelines]
+[Next.js patterns, API design patterns, etc. based on template]
+```
+
+**Template-Specific Content:**
+- `nextjs-app-turbo`: Next.js App Router, Server Components, Tailwind, Prisma
+- `api-service-fastify`: Fastify patterns, OpenAPI, REST design
+- `blank`: Generic TypeScript patterns
+
+See [BOSS-CONTAINER-USE-INTEGRATION.md](./BOSS-CONTAINER-USE-INTEGRATION.md) for complete CLAUDE.md templates.
+
+#### 4. start-boss.sh Helper Script
+
+**CRITICAL:** Bootstrap creates a `start-boss.sh` script that enforces BOSS can ONLY use MCP tools.
+
+**Why This Is Essential:**
+- **Security**: Prevents BOSS from accessing host file system, shell, or git
+- **Enforcement**: Uses `--allowedTools` flag to whitelist only MCP tools
+- **Isolation**: Guarantees BOSS operates exclusively via Container-Use, GitHub, and Knowledge Base MCPs
+
+**The Script:**
+
+```bash
+#!/usr/bin/env bash
+# start-boss.sh - Launch BOSS with MCP-only access
+# Generated by BOSS bootstrap
+
+echo "🤖 Starting BOSS with restricted tool access..."
+echo "  ✅ Container-Use MCP (spawn/manage workers)"
+echo "  ✅ GitHub MCP (ALL GitHub operations)"
+echo "  ✅ Knowledge Base MCP (query context)"
+echo "  ❌ NO host-level tools"
+
+claude --allowedTools \
+mcp__container-use__*,\
+mcp__github__*,\
+mcp__knowledge-base__*
+```
+
+**Usage:**
+
+```bash
+# Launch BOSS (always use this script!)
+./start-boss.sh
+```
+
+**What Gets Blocked:**
+- ❌ Read, Write, Edit, Glob, Grep (host file operations)
+- ❌ Bash (host shell execution)
+- ❌ Direct git commands
+
+**What's Allowed:**
+- ✅ All Container-Use MCP operations (spawn workers, manage environments)
+- ✅ All GitHub MCP operations (PRs, issues, projects, labels, etc.)
+- ✅ All Knowledge Base MCP operations (search, query, insert)
+
+See [BOSS-CONTAINER-USE-INTEGRATION.md](./BOSS-CONTAINER-USE-INTEGRATION.md) for complete tool whitelist.
+
+#### 5. BOSS Configuration (.boss/config.yaml)
 
 ```yaml
 boss:
@@ -374,57 +716,11 @@ templates:
 
 Different quality levels affect hooks, workflows, and gates:
 
-```yaml
-quality_presets:
-  startup:
-    description: Fast iteration, minimal gates
-    hooks:
-      pre-commit: [lint-staged, typecheck]
-    gates:
-      planning: optional
-      architecture: disabled
-      implementation: [typecheck, test]
-      pr: optional
-    ci:
-      - basic-tests
-
-  production:
-    description: Balanced quality and speed
-    hooks:
-      pre-commit: [lint-staged, typecheck, test-affected]
-      commit-msg: [conventional-commits]
-    gates:
-      planning: required
-      architecture: automated
-      implementation: [typecheck, lint, test, coverage:80]
-      pr: required
-    ci:
-      - typecheck
-      - lint
-      - test
-      - security-scan
-
-  enterprise:
-    description: Maximum quality, comprehensive checks
-    hooks:
-      pre-commit: [lint-staged, typecheck, test-affected]
-      pre-push: [test-all, build]
-      commit-msg: [conventional-commits, ticket-reference]
-    gates:
-      planning: required
-      architecture: automated + manual-review
-      implementation: [typecheck, lint, test, coverage:90, mutation:80, security-scan]
-      pr: required + 2-approvers
-    ci:
-      - typecheck
-      - lint
-      - test
-      - mutation-test
-      - security-scan
-      - dependency-check
-      - build
-      - e2e-tests
-```
+| Preset | Description | Hooks | Gates | CI |
+|--------|-------------|-------|-------|-----|
+| **startup** | Fast iteration, minimal gates | lint-staged, typecheck | planning: optional, implementation: [typecheck, test] | basic-tests |
+| **production** | Balanced quality and speed | lint-staged, typecheck, test-affected, conventional-commits | planning: required, architecture: automated, implementation: [typecheck, lint, test, coverage:80] | typecheck, lint, test, security-scan |
+| **enterprise** | Maximum quality, comprehensive checks | lint-staged, typecheck, test-affected, test-all, build, conventional-commits, ticket-reference | planning: required, architecture: automated + manual-review, implementation: [typecheck, lint, test, coverage:90, mutation:80, security-scan], pr: required + 2-approvers | typecheck, lint, test, mutation-test, security-scan, dependency-check, build, e2e-tests |
 
 ### Bootstrap Evolution
 
@@ -463,7 +759,7 @@ boss-bootstrap/
 
 ---
 
-## Part 2: BOSS Orchestration
+## BOSS Orchestration
 
 ### What BOSS Actually Is
 
@@ -481,23 +777,36 @@ When you bootstrap a BOSS project and open it in Claude Code/Cursor, your AI ass
 
 ### Why BOSS Runs on Host (Not in Container)
 
-Claude Code/Cursor must run on the host machine because it needs to:
-- Orchestrate worker containers via **Container-Use MCP**
-- Manage state across the entire workflow
-- Create PRs and manage project boards via **GitHub MCP**
-- Interact with you when needed
-- Query the **Knowledge Base MCP** (shared PostgreSQL + Qdrant)
-- Request secrets via GitHub issues (humans create in 1Password using op CLI)
-- Have full system access (cannot be sandboxed)
+Claude Code/Cursor must run on the host machine to orchestrate via MCP servers.
 
-**Workers run in isolated container-use environments. Claude Code/Cursor (configured as BOSS) coordinates them all via MCP commands.**
+**What BOSS CAN Do (MCP-Only Operations):**
+
+| Capability | How It Works |
+|------------|--------------|
+| **Orchestrate worker containers** | Via Container-Use MCP |
+| **Create PRs, manage issues** | Via GitHub MCP (ALL GitHub operations) |
+| **Query patterns and context** | Via Knowledge Base MCP |
+| **Manage workflow state** | Coordinate workers |
+| **Interact with you** | When needed |
+| **Request secrets** | Via GitHub issues (humans create in 1Password using op CLI) |
+
+**What BOSS CANNOT Do (Host-Level Restrictions):**
+
+| Restriction | Reason |
+|-------------|--------|
+| ❌ **NO direct file operations** | Cannot read, write, or edit files on host |
+| ❌ **NO direct code execution** | Cannot run shell commands, scripts, or build tools |
+| ❌ **NO direct git operations** | Cannot commit, push, or manage git directly |
+
+**BOSS orchestrates ONLY via well-defined MCP interfaces. All actual code/file/git operations happen inside worker containers.**
 
 **Why Workers Use Container-Use:**
-- ✅ Isolation (can't break main branch)
-- ✅ Security (secrets injected, never exposed to AI)
-- ✅ Observability (complete command history)
-- ✅ Disposability (easy to delete and retry)
-- ✅ Parallelization (own branch per worker)
+- ✅ **Full execution capabilities** - Workers CAN execute ALL file/code/shell/git operations
+- ✅ **Isolation** - Can't break main branch or affect host
+- ✅ **Security** - Secrets injected, never exposed to AI models
+- ✅ **Observability** - Complete command history via container-use logs
+- ✅ **Disposability** - Easy to delete and retry
+- ✅ **Parallelization** - Own branch per worker, no conflicts
 
 > 🔐 **Secret Management:** Workers access API credentials via 1Password integration (op:// references). See [BOSS-CONTAINER-USE-INTEGRATION.md](./BOSS-CONTAINER-USE-INTEGRATION.md) for details.
 
@@ -558,7 +867,7 @@ Claude Code/Cursor must run on the host machine because it needs to:
 - `cu/###` = Container-use environment ID
 - Secrets injected from 1Password (op:// references) - never visible to AI
 - Each worker = isolated container + Git branch + Claude Code + role-specific skills
-- BOSS orchestrates via Container-Use MCP commands (see [container-use.com/environment-workflow](https://container-use.com/environment-workflow))
+- BOSS orchestrates via Container-Use MCP commands
 
 ### BOSS Capabilities
 
@@ -636,6 +945,8 @@ Merge & Deploy
 
 BOSS assigns the right workers to the right tasks:
 
+**Example: Task Selection Logic**
+
 ```yaml
 # Example: Task requires frontend + API work
 task:
@@ -660,6 +971,7 @@ worker: developer-frontend
 
 BOSS enforces quality gates configured during bootstrap:
 
+**Passing Gate:**
 ```
 Quality Gate: Implementation
 ├── TypeCheck: ✅ Passed
@@ -672,8 +984,7 @@ Quality Gate: Implementation
 ✅ Quality gate PASSED - Creating PR
 ```
 
-If a gate fails:
-
+**Failing Gate (with Retry):**
 ```
 Quality Gate: Implementation
 ├── TypeCheck: ❌ 3 errors
@@ -737,7 +1048,7 @@ workflow_state:
 
 ---
 
-## Part 3: Knowledge Engine
+## Knowledge & Coordination
 
 ### Cross-Project Intelligence
 
@@ -768,122 +1079,58 @@ Multiple BOSS-configured projects (Claude Code/Cursor instances) share knowledge
 
 **No real-time BOSS-to-BOSS communication.** Each project's Claude Code/Cursor queries the shared local knowledge base independently via Knowledge Base MCP.
 
-### What BOSSES Share
+#### What BOSSES Share
 
-1. **Project Specs & Decisions**
-   - All specifications
-   - Architecture Decision Records (ADRs)
-   - API contracts
-   - Data models
-
-2. **Code Patterns**
-   - Component patterns
-   - API patterns
-   - Testing patterns
-   - Error handling patterns
-
-3. **Organizational Knowledge**
-   - Tech stack decisions
-   - Security patterns
-   - Performance patterns
-   - Deployment patterns
-
-4. **Dependency Information**
-   - Shared libraries
-   - API dependencies
-   - Database schemas
-   - Service contracts
+| Category | Examples |
+|----------|----------|
+| **Project Specs & Decisions** | All specifications, Architecture Decision Records (ADRs), API contracts, Data models |
+| **Code Patterns** | Component patterns, API patterns, Testing patterns, Error handling patterns |
+| **Organizational Knowledge** | Tech stack decisions, Security patterns, Performance patterns, Deployment patterns |
+| **Dependency Information** | Shared libraries, API dependencies, Database schemas, Service contracts |
 
 ### Knowledge Engine Gatekeeper Pattern
 
 **Claude Code/Cursor (BOSS-configured) is the sole accessor to the knowledge base** - workers never query directly:
 
 ```
-1. BOSS (Claude Code/Cursor) receives task
-2. BOSS queries Knowledge Base MCP ONCE
-   └─► mcp.knowledgeBase.search({
-         query: "OAuth implementation patterns",
-         filters: { tech_stack: ["nodejs", "typescript"] }
-       })
-3. BOSS assembles Task Context Package:
-   - Relevant specs from similar projects
-   - Code patterns that worked before
-   - Related architectural decisions
-   - Dependency information
-4. BOSS includes context in worker prompt when spawning via Container-Use MCP
-5. Worker executes with full context (no knowledge base access needed)
-
-Benefits:
-- 1 query instead of 5+ queries (cheaper, faster)
-- Consistent context across all workers
-- Workers remain simple (no KB dependency)
-- Lower embedding/vector search costs
+┌───────────────────────────────────────────────────────────┐
+│ Knowledge Engine Gatekeeper Pattern                       │
+├───────────────────────────────────────────────────────────┤
+│                                                           │
+│ 1. BOSS receives task                                    │
+│     ↓                                                     │
+│ 2. BOSS queries Knowledge Base MCP ONCE                  │
+│    └─► mcp.knowledgeBase.search({                        │
+│          query: "OAuth implementation patterns",          │
+│          filters: { tech_stack: ["nodejs", "typescript"] }│
+│        })                                                 │
+│     ↓                                                     │
+│ 3. BOSS assembles Task Context Package:                  │
+│    • Relevant specs from similar projects                │
+│    • Code patterns that worked before                    │
+│    • Related architectural decisions                     │
+│    • Dependency information                              │
+│     ↓                                                     │
+│ 4. BOSS includes context in worker prompt when spawning  │
+│    via Container-Use MCP                                 │
+│     ↓                                                     │
+│ 5. Worker executes with full context                     │
+│    (no knowledge base access needed)                     │
+│                                                           │
+│ Benefits:                                                 │
+│ • 1 query instead of 5+ queries (cheaper, faster)        │
+│ • Consistent context across all workers                  │
+│ • Workers remain simple (no KB dependency)               │
+│ • Lower embedding/vector search costs                    │
+│                                                           │
+└───────────────────────────────────────────────────────────┘
 ```
 
----
-
-## Part 4: GitHub Project Management
-
-### Native Project Management
-
-BOSS uses GitHub's native project management features:
-
-```
-GitHub Repository: my-app
-├── Pull Requests → Approval gates & code review
-├── Issues → Human tasks & secret setup requests
-├── Projects (Beta) → Visual task tracking
-│   ├── Epic: User Authentication
-│   │   ├── Issue: Password Reset Flow
-│   │   └── Issue: 2FA Implementation
-│   └── Epic: Dashboard
-│
-BOSS creates:
-- PRs for specifications and implementations
-- Issues for human tasks (secret setup, approvals)
-- Project board items automatically
-- Links between PRs, issues, and commits
-- Status updates via PR/issue comments
-```
-
-### Human Gates via GitHub
-
-BOSS uses GitHub PRs and Issues for approval workflow:
-
-```
-1. BOSS creates Planning PR
-2. BOSS creates GitHub Issue: "Review Planning PR #1"
-3. Issue links to PR and includes review checklist
-4. You review the PR on GitHub
-5. You approve/reject via PR review
-6. BOSS detects approval event via GitHub webhook/polling
-7. BOSS continues workflow
-```
-
-**Why GitHub?**
-- ✅ No additional infrastructure (already using GitHub for code)
-- ✅ Native developer workflow (no context switching)
-- ✅ Built-in approval gates (PR reviews)
-- ✅ Audit trail via commits, PRs, and issues
-- ✅ Integration with CI/CD and status checks
-
----
-
-## Part 5: Cross-Project Coordination
-
-### The Multi-Project Problem
-
-You're working on multiple BOSS-configured projects simultaneously:
-
-- **Project A** (auth-service): Building OAuth API
-- **Project B** (dashboard-app): Needs OAuth integration
-- **Project C** (api-gateway): Needs JWT validation
-
-**Without coordination**: Dashboard project starts OAuth implementation, doesn't know auth-service already has it.
-
-### Knowledge Base-Driven Coordination
+### Cross-Project Coordination
 
 **No real-time communication protocol.** Projects coordinate by querying the shared local knowledge base:
+
+**Example: Dashboard Project Discovers Auth Service**
 
 ```
 Dashboard Project (Claude Code/Cursor + BOSS):
@@ -917,7 +1164,7 @@ BOSS (Dashboard):
 
 **Key: No BOSS-to-BOSS messages. Only database queries.**
 
-### Dependency Management via Knowledge Base
+#### Dependency Management via Knowledge Base
 
 Projects record dependencies in shared PostgreSQL database:
 
@@ -969,7 +1216,54 @@ Dashboard Project (later, when user opens it):
 
 ---
 
-## Part 6: The Complete Flow
+## GitHub Integration
+
+### Native Project Management
+
+BOSS uses GitHub's native project management features:
+
+```
+GitHub Repository: my-app
+├── Pull Requests → Approval gates & code review
+├── Issues → Human tasks & secret setup requests
+├── Projects (Beta) → Visual task tracking
+│   ├── Epic: User Authentication
+│   │   ├── Issue: Password Reset Flow
+│   │   └── Issue: 2FA Implementation
+│   └── Epic: Dashboard
+
+BOSS creates:
+- PRs for specifications and implementations
+- Issues for human tasks (secret setup, approvals)
+- Project board items automatically
+- Links between PRs, issues, and commits
+- Status updates via PR/issue comments
+```
+
+### Human Gates via GitHub
+
+BOSS uses GitHub PRs and Issues for approval workflow:
+
+```
+1. BOSS creates Planning PR
+2. BOSS creates GitHub Issue: "Review Planning PR #1"
+3. Issue links to PR and includes review checklist
+4. You review the PR on GitHub
+5. You approve/reject via PR review
+6. BOSS detects approval event via GitHub webhook/polling
+7. BOSS continues workflow
+```
+
+**Why GitHub?**
+- ✅ No additional infrastructure (already using GitHub for code)
+- ✅ Native developer workflow (no context switching)
+- ✅ Built-in approval gates (PR reviews)
+- ✅ Audit trail via commits, PRs, and issues
+- ✅ Integration with CI/CD and status checks
+
+---
+
+## Complete Workflow
 
 ### End-to-End Example
 
@@ -1094,9 +1388,6 @@ BOSS: Great! Let me create a PRD and break this down into user stories.
       - data-model.md: Database schema
       - contracts/: OpenAPI specs
 
-      Review the PR to approve the plan:
-      👉 https://github.com/user/my-app/pull/1
-
       Please review and approve when ready!
 ```
 
@@ -1141,8 +1432,6 @@ BOSS: 🎉 Planning approved! Let me continue.
       GitHub Issues created for tracking:
       👉 Issue #2: Configure Stripe API secrets
       👉 Issue #3: Configure SendGrid API key
-
-      ⏱️  Estimated time: 20 minutes total
 
       Once complete, close the GitHub issues and I'll proceed!
 
@@ -1191,7 +1480,7 @@ BOSS: ✅ Secret setup confirmed!
          Secrets: GITHUB_TOKEN, DATABASE_URL, SENDGRID_API_KEY
          Branch: container-use/env-mno345
 
-      ⏳ Workers in progress... (estimated 30-45 min)
+      ⏳ Workers in progress...
 
       You can monitor progress:
       $ boss status
@@ -1300,116 +1589,7 @@ BOSS: 🎉 PR merged!
 
 ---
 
-## Part 7: Advanced Features
-
-### 1. Cross-BOSS Coordination Example
-
-```
-BOSS 1 (Auth Service):
-  Working on: OAuth implementation
-  Status: 60% complete
-
-BOSS 2 (Dashboard):
-  Planning: OAuth login integration
-
-  ⚠️  Detected: BOSS 1 is implementing OAuth
-
-BOSS 2 to User:
-  "Hey! I noticed BOSS 1 is working on OAuth for the auth service,
-   which is exactly what I need for the dashboard OAuth login.
-
-   Current status: 60% complete, ETA: 1 day
-
-   Should I:
-   A) Wait for BOSS 1 to finish (recommended)
-   B) Implement with mock OAuth for now
-   C) Ask BOSS 1 to prioritize the endpoints I need
-
-   If you choose C, I can coordinate with BOSS 1 to ensure
-   my required endpoints are implemented first."
-
-You: Option C
-
-BOSS 2:
-  "Great! Let me coordinate with BOSS 1..."
-
-  [To BOSS 1] "Hey BOSS 1! I need these OAuth endpoints for
-               the dashboard:
-               - POST /oauth/authorize
-               - POST /oauth/token
-
-               Can you prioritize these?"
-
-BOSS 1:
-  [To BOSS 2] "Acknowledged! I'll implement those first.
-               ETA: 4 hours"
-
-  [To User] "FYI: BOSS 2 needs OAuth endpoints for the dashboard.
-             I've reprioritized to implement those first."
-```
-
-### 2. Knowledge Base Query Example
-
-```
-BOSS 3 (New Project):
-  "I need to implement user authentication..."
-
-  Query knowledge base: "user authentication patterns"
-
-  Results:
-  - Auth Service (BOSS 1): Complete OAuth implementation
-  - Dashboard (BOSS 2): OAuth client integration
-  - API Gateway: JWT validation middleware
-
-BOSS 3 to User:
-  "I found existing authentication patterns in your org!
-
-   BOSS 1 already implemented a complete OAuth service.
-
-   Should I:
-   A) Use BOSS 1's auth service (recommended)
-   B) Implement new auth system
-
-   If A, I'll integrate with the existing OAuth API
-   and follow the same patterns BOSS 1 established."
-```
-
-### 3. Dependency Management Example
-
-```
-You: "BOSS 3, implement the analytics dashboard"
-
-BOSS 3:
-  "Analyzing requirements...
-
-   Dependencies detected:
-   - Needs: User data from Auth Service (BOSS 1)
-   - Needs: Task data from Task Management API (BOSS 2)
-
-   Checking status:
-   ✅ BOSS 1: Auth Service is deployed
-   ⚠️  BOSS 2: Task API is in progress (ETA: 2 days)
-
-   I can:
-   A) Wait for BOSS 2 to complete Task API
-   B) Start with user analytics only
-   C) Implement with mock task data for now
-
-   What would you prefer?"
-
-You: Option A
-
-BOSS 3:
-  "Got it! I've added this to my roadmap.
-
-   BOSS 2 will notify me when Task API is ready.
-
-   In the meantime, should I work on anything else?"
-```
-
----
-
-## Part 8: Technical Architecture
+## Architecture
 
 ### System Architecture
 
@@ -1432,8 +1612,8 @@ BOSS 3:
 └───────────────────────────┼──────────────────────────────────┘
                             │
             ┌───────────────┼───────────────────┐
-            │                               │
-            ▼                               ▼
+            │               │                   │
+            ▼               ▼                   ▼
   ┌──────────────────┐             ┌──────────────┐
   │ Local Knowledge  │             │   GitHub     │
   │     Base         │             │   (Cloud)    │
@@ -1509,9 +1689,9 @@ container-use Environment
 
 ### Data Model
 
-```yaml
-# PostgreSQL Schema
+#### PostgreSQL Schema
 
+```yaml
 organizations:
   - id
   - name
@@ -1565,9 +1745,9 @@ dependencies:
   - status
 ```
 
-```yaml
-# Qdrant Collections
+#### Qdrant Collections
 
+```yaml
 specs:
   - vector: [embedding]
   - metadata:
@@ -1595,9 +1775,9 @@ decisions:
 
 ---
 
-## Part 9: Bootstrap CLI
+## CLI & Commands
 
-### Commands
+### Bootstrap CLI Commands
 
 ```bash
 # Bootstrap new project
@@ -1668,7 +1848,7 @@ boss version
 
 ---
 
-## Part 10: Configuration & Customization
+## Configuration & Customization
 
 ### Custom Worker Prompts
 
@@ -1788,129 +1968,141 @@ export default class DeployPreviewCommand extends Command {
 
 ---
 
-## Part 11: Evolution & Ecosystem
+## Advanced Features
 
-### Bootstrap Template Ecosystem
-
-```
-GitHub: boss-framework/templates
-├── official/
-│   ├── nextjs-app-turbo/
-│   ├── nextjs-app-basic/
-│   ├── api-service-fastify/
-│   ├── api-service-express/
-│   ├── mobile-app-expo/
-│   ├── cli-tool-typescript/
-│   └── blank/
-│
-├── community/
-│   ├── @user1/django-api/
-│   ├── @user2/flutter-app/
-│   ├── @user3/go-microservice/
-│   └── @user4/rust-wasm/
-│
-└── enterprise/
-    ├── @company1/internal-service/
-    └── @company2/cloud-native-app/
-```
-
-**Anyone can contribute templates!**
-
-### BOSS Plugin System (Future)
-
-```typescript
-// .boss/plugins/custom-reviewer.ts
-
-import { Plugin } from '@boss/sdk';
-
-export default class CustomReviewerPlugin extends Plugin {
-  name = 'custom-reviewer';
-
-  async beforeReview(code: Code) {
-    // Custom pre-review logic
-  }
-
-  async review(code: Code) {
-    // Custom review logic
-    return {
-      score: 95,
-      issues: [],
-      suggestions: ['Consider using React.memo here']
-    };
-  }
-
-  async afterReview(result: ReviewResult) {
-    // Custom post-review logic
-  }
-}
-```
-
-### BOSS Marketplace (Future)
+### Cross-BOSS Coordination Example
 
 ```
-boss marketplace search "ai code review"
-boss marketplace install @vendor/ai-reviewer
-boss marketplace list
-boss marketplace update @vendor/ai-reviewer
+BOSS 1 (Auth Service):
+  Working on: OAuth implementation
+  Status: 60% complete
+
+BOSS 2 (Dashboard):
+  Planning: OAuth login integration
+
+  ⚠️  Detected: BOSS 1 is implementing OAuth
+
+BOSS 2 to User:
+  "Hey! I noticed BOSS 1 is working on OAuth for the auth service,
+   which is exactly what I need for the dashboard OAuth login.
+
+   Current status: 60% complete
+
+   Should I:
+   A) Wait for BOSS 1 to finish (recommended)
+   B) Implement with mock OAuth for now
+   C) Ask BOSS 1 to prioritize the endpoints I need
+
+   If you choose C, I can coordinate with BOSS 1 to ensure
+   my required endpoints are implemented first."
+
+You: Option C
+
+BOSS 2:
+  "Great! Let me coordinate with BOSS 1..."
+
+  [To BOSS 1] "Hey BOSS 1! I need these OAuth endpoints for
+               the dashboard:
+               - POST /oauth/authorize
+               - POST /oauth/token
+
+               Can you prioritize these?"
+
+BOSS 1:
+  [To BOSS 2] "Acknowledged! I'll implement those first."
+
+  [To User] "FYI: BOSS 2 needs OAuth endpoints for the dashboard.
+             I've reprioritized to implement those first."
+```
+
+### Knowledge Base Query Example
+
+```
+BOSS 3 (New Project):
+  "I need to implement user authentication..."
+
+  Query knowledge base: "user authentication patterns"
+
+  Results:
+  - Auth Service (BOSS 1): Complete OAuth implementation
+  - Dashboard (BOSS 2): OAuth client integration
+  - API Gateway: JWT validation middleware
+
+BOSS 3 to User:
+  "I found existing authentication patterns in your org!
+
+   BOSS 1 already implemented a complete OAuth service.
+
+   Should I:
+   A) Use BOSS 1's auth service (recommended)
+   B) Implement new auth system
+
+   If A, I'll integrate with the existing OAuth API
+   and follow the same patterns BOSS 1 established."
+```
+
+### Dependency Management Example
+
+```
+You: "BOSS 3, implement the analytics dashboard"
+
+BOSS 3:
+  "Analyzing requirements...
+
+   Dependencies detected:
+   - Needs: User data from Auth Service (BOSS 1)
+   - Needs: Task data from Task Management API (BOSS 2)
+
+   Checking status:
+   ✅ BOSS 1: Auth Service is deployed
+   ⚠️  BOSS 2: Task API is in progress
+
+   I can:
+   A) Wait for BOSS 2 to complete Task API
+   B) Start with user analytics only
+   C) Implement with mock task data for now
+
+   What would you prefer?"
+
+You: Option A
+
+BOSS 3:
+  "Got it! I've added this to my roadmap.
+
+   BOSS 2 will notify me when Task API is ready.
+
+   In the meantime, should I work on anything else?"
 ```
 
 ---
 
-## Key Design Principles
+## Design Principles & Success Metrics
 
-### 1. Local Controller, Remote Workers
+### Key Design Principles
 
-- **BOSS runs locally** (your machine)
-- **Workers run in containers** (isolated, observable)
-- Cannot have container-use spawn container-use (architectural constraint)
+| Principle | Description |
+|-----------|-------------|
+| **1. Local Controller, Remote Workers** | BOSS runs locally (your machine), Workers run in containers (isolated, observable). Cannot have container-use spawn container-use (architectural constraint). |
+| **2. Bootstrap Once, Evolve Forever** | Bootstrap creates perfect initial setup. Templates evolve in GitHub. Pull latest templates anytime. Customize everything. |
+| **3. Opinionated About Tech, Flexible About Business** | Tech stack defined by policy. Business requirements drive features. Quality enforced, not suggested. |
+| **4. Knowledge Compounds** | Every project teaches BOSS. Patterns emerge organically. Future projects benefit from past projects. Organizational intelligence grows. |
+| **5. Human Governance, AI Execution** | Humans decide WHAT and approve QUALITY. AI figures out HOW and executes. Strategic gates, not constant interruptions. |
+| **6. Cross-BOSS Coordination** | BOSSES see each other's work. Dependencies managed proactively. Duplicate work avoided. Optimal scheduling suggested. |
 
-### 2. Bootstrap Once, Evolve Forever
-
-- Bootstrap creates perfect initial setup
-- Templates evolve in GitHub
-- Pull latest templates anytime
-- Customize everything
-
-### 3. Opinionated About Tech, Flexible About Business
-
-- Tech stack defined by policy
-- Business requirements drive features
-- Quality enforced, not suggested
-
-### 4. Knowledge Compounds
-
-- Every project teaches BOSS
-- Patterns emerge organically
-- Future projects benefit from past projects
-- Organizational intelligence grows
-
-### 5. Human Governance, AI Execution
-
-- Humans decide WHAT and approve QUALITY
-- AI figures out HOW and executes
-- Strategic gates, not constant interruptions
-
-### 6. Cross-BOSS Coordination
-
-- BOSSES see each other's work
-- Dependencies managed proactively
-- Duplicate work avoided
-- Optimal scheduling suggested
-
----
-
-## Success Metrics
+### Success Metrics
 
 BOSS succeeds when:
 
-1. **Bootstrap in < 5 minutes** - From empty folder to fully configured project
-2. **Idea to PR in < 4 hours** - For typical CRUD apps
-3. **Zero quality gate failures** - Workers produce production-ready code
-4. **90%+ test coverage** - Automatically achieved
-5. **Zero duplicate work** - BOSSES coordinate effectively
-6. **Knowledge compounds** - Each project makes future projects faster
-7. **Consistent quality** - Same standards across all projects
-8. **You stay strategic** - BOSS handles execution details
+| Metric | Target | Impact |
+|--------|--------|--------|
+| **Bootstrap time** | < 5 minutes | From empty folder to fully configured project |
+| **Idea to PR** | < 4 hours | For typical CRUD apps |
+| **Quality gate failures** | Zero | Workers produce production-ready code |
+| **Test coverage** | 90%+ | Automatically achieved |
+| **Duplicate work** | Zero | BOSSES coordinate effectively |
+| **Knowledge compounds** | Yes | Each project makes future projects faster |
+| **Consistent quality** | Yes | Same standards across all projects |
+| **You stay strategic** | Yes | BOSS handles execution details |
 
 ---
 
@@ -1961,67 +2153,144 @@ boss start
 
 ---
 
-## Roadmap
+## Roadmap & Evolution
 
-### Phase 1: Core (MVP) ✅
-- Bootstrap CLI
-- Template system
-- BOSS controller
-- Worker spawning
-- Basic quality gates
-- GitHub integration
+### Development Phases
 
-### Phase 2: Intelligence 🚧
-- Knowledge base (PostgreSQL + Qdrant)
-- Voyage AI embeddings
-- Context assembly
-- Pattern recognition
+| Phase | Status | Components |
+|-------|--------|------------|
+| **Phase 1: Core (MVP)** | ✅ | Bootstrap CLI, Template system, BOSS controller, Worker spawning, Basic quality gates, GitHub integration |
+| **Phase 2: Intelligence** | 🚧 | Knowledge base (PostgreSQL + Qdrant), Voyage AI embeddings, Context assembly, Pattern recognition |
+| **Phase 3: Coordination** | 📋 | BOSS network, Cross-BOSS messaging, Dependency graph, Roadmap sharing |
+| **Phase 4: GitHub Integration** | 📋 | GitHub Projects automation, Human approval gates via PR reviews, Issue-based task tracking, Status updates via GitHub API |
+| **Phase 5: Ecosystem** | 📋 | Template marketplace, Plugin system, Custom worker types, Community contributions |
 
-### Phase 3: Coordination 📋
-- BOSS network
-- Cross-BOSS messaging
-- Dependency graph
-- Roadmap sharing
+### Ecosystem Growth
 
-### Phase 4: GitHub Integration 📋
-- GitHub Projects automation
-- Human approval gates via PR reviews
-- Issue-based task tracking
-- Status updates via GitHub API
+#### Bootstrap Template Ecosystem
 
-### Phase 5: Ecosystem 📋
-- Template marketplace
-- Plugin system
-- Custom worker types
-- Community contributions
+```
+GitHub: boss-framework/templates
+├── official/
+│   ├── nextjs-app-turbo/
+│   ├── nextjs-app-basic/
+│   ├── api-service-fastify/
+│   ├── api-service-express/
+│   ├── mobile-app-expo/
+│   ├── cli-tool-typescript/
+│   └── blank/
+│
+├── community/
+│   ├── @user1/django-api/
+│   ├── @user2/flutter-app/
+│   ├── @user3/go-microservice/
+│   └── @user4/rust-wasm/
+│
+└── enterprise/
+    ├── @company1/internal-service/
+    └── @company2/cloud-native-app/
+```
 
----
+**Anyone can contribute templates!**
 
-## Why BOSS Will Succeed
+#### BOSS Plugin System (Future)
 
-### 1. Solves Real Pain
-- Project setup takes hours → Now takes 5 minutes
-- Quality inconsistent → Now enforced automatically
-- AI forgets context → Now has organizational memory
-- Manual coordination → Now automated
+```typescript
+// .boss/plugins/custom-reviewer.ts
 
-### 2. Technical Innovation
+import { Plugin } from '@boss/sdk';
+
+export default class CustomReviewerPlugin extends Plugin {
+  name = 'custom-reviewer';
+
+  async beforeReview(code: Code) {
+    // Custom pre-review logic
+  }
+
+  async review(code: Code) {
+    // Custom review logic
+    return {
+      score: 95,
+      issues: [],
+      suggestions: ['Consider using React.memo here']
+    };
+  }
+
+  async afterReview(result: ReviewResult) {
+    // Custom post-review logic
+  }
+}
+```
+
+#### BOSS Marketplace (Future)
+
+```
+boss marketplace search "ai code review"
+boss marketplace install @vendor/ai-reviewer
+boss marketplace list
+boss marketplace update @vendor/ai-reviewer
+```
+
+### Why BOSS Will Succeed
+
+#### 1. Solves Real Pain
+
+| Pain Point | Solution |
+|------------|----------|
+| Project setup takes hours | Now takes 5 minutes |
+| Quality inconsistent | Now enforced automatically |
+| AI forgets context | Now has organizational memory |
+| Manual coordination | Now automated |
+
+#### 2. Technical Innovation
+
 - Bootstrap + orchestration in one system
 - Cross-BOSS coordination (unique!)
 - Knowledge compounds over time
 - Container isolation for safety
 
-### 3. Developer Experience
+#### 3. Developer Experience
+
 - One command to bootstrap
 - Conversational interface
 - Strategic approvals only
 - Full observability
 
-### 4. Extensibility
+#### 4. Extensibility
+
 - Custom templates
 - Custom workers
 - Custom quality gates
 - Plugin system
+
+---
+
+## Reference
+
+### Technical Deep Dives
+
+For detailed implementation information, see:
+
+#### 📚 [BOSS-SPEC-KIT-INTEGRATION.md](./BOSS-SPEC-KIT-INTEGRATION.md)
+
+Complete phase-by-phase automation of GitHub's Spec-Kit:
+- Constitution creation and governance
+- All 8 phases with worker prompts
+- Spec-Kit artifact specifications (spec.md, plan.md, tasks.md, etc.)
+- Test-First methodology enforcement
+- Parallelization with [P] markers
+- Quality gate automation
+
+#### 🔐 [BOSS-CONTAINER-USE-INTEGRATION.md](./BOSS-CONTAINER-USE-INTEGRATION.md)
+
+Worker isolation and secret management with container-use:
+- Container-use environment configurations
+- 1Password integration (op:// references)
+- Secret discovery by agents
+- Worker lifecycle management
+- Integration testing with real APIs
+- Security best practices
+- Troubleshooting guide
 
 ---
 
@@ -2061,30 +2330,3 @@ npm install -g @boss/cli
 boss bootstrap
 boss start
 ```
-
----
-
-## Technical Deep Dives
-
-For detailed implementation information, see:
-
-### 📚 [BOSS-SPEC-KIT-INTEGRATION.md](./BOSS-SPEC-KIT-INTEGRATION.md)
-Complete phase-by-phase automation of GitHub's Spec-Kit:
-- Constitution creation and governance
-- All 8 phases with worker prompts
-- Spec-Kit artifact specifications (spec.md, plan.md, tasks.md, etc.)
-- Test-First methodology enforcement
-- Parallelization with [P] markers
-- Quality gate automation
-
-### 🔐 [BOSS-CONTAINER-USE-INTEGRATION.md](./BOSS-CONTAINER-USE-INTEGRATION.md)
-Worker isolation and secret management with container-use:
-- Container-use environment configurations
-- 1Password integration (op:// references)
-- Secret discovery by agents
-- Worker lifecycle management
-- Integration testing with real APIs
-- Security best practices
-- Troubleshooting guide
-
-**Together, these documents provide the complete technical foundation for building BOSS.**

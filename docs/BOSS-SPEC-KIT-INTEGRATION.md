@@ -1,709 +1,649 @@
 # BOSS + Spec-Kit Integration
 
-## How BOSS Leverages Spec-Kit for Automation
+**How BOSS automates GitHub's Spec-Kit methodology**
 
-This document details how BOSS (Business-Orchestrated Software System) integrates GitHub's Spec-Kit methodology to automate the complete software development lifecycle.
+This document explains how BOSS transforms Spec-Kit from a manual methodology into a fully automated orchestration system while preserving its core principles.
 
 ---
 
-## Spec-Kit Overview
+## Table of Contents
 
-**Spec-Kit** is GitHub's open-source toolkit for "Spec-Driven Development" - a methodology that treats specifications as executable, foundational artifacts rather than temporary scaffolding.
+1. [Quick Start](#quick-start)
+2. [Core Concepts](#core-concepts)
+3. [Workflow Overview](#workflow-overview)
+4. [Phase-by-Phase Guide](#phase-by-phase-guide)
+5. [Worker Implementation](#worker-implementation)
+6. [Quality Gates](#quality-gates)
+7. [Reference](#reference)
 
-### Spec-Kit's Seven Phases
+---
+
+## Quick Start
+
+### The 30-Second Overview
+
+**Spec-Kit** is GitHub's methodology for specification-driven development.
+**BOSS** automates all Spec-Kit phases with AI workers.
 
 ```
-1. Principles      → Establish governing guidelines (constitution)
-2. Specifications  → Document what to build (not how)
-3. Clarification   → Resolve ambiguities
+Manual Spec-Kit                    BOSS + Spec-Kit
+────────────────                   ───────────────
+Human runs commands    →           Workers execute automatically
+Sequential phases      →           Parallel where possible
+Manual validation      →           Automated quality gates
+Single developer       →           Multiple specialized workers
+No cross-project       →           Knowledge base integration
+```
+
+### What You Get
+
+- ✅ **8 automated phases** - From principles to production
+- ✅ **Parallel execution** - Based on `[P]` markers in tasks
+- ✅ **TDD enforced** - Tests before implementation (non-negotiable)
+- ✅ **Quality gates** - Automated validation at every phase
+- ✅ **Knowledge base** - Learn from similar projects
+- ✅ **Human governance** - Approval at strategic decision points
+
+### Key Artifacts Created
+
+| Phase | Artifact | Purpose |
+|-------|----------|---------|
+| 1. Constitution | `constitution.md` | Governing principles (non-negotiable) |
+| 3. Specification | `spec.md` | User stories & acceptance criteria |
+| 4. Planning | `plan.md`, `data-model.md`, `contracts/` | Technical approach |
+| 5. Validation | `validation-report.md` | Constitution compliance |
+| 6. Task Breakdown | `tasks.md` | Ordered tasks with `[P]` markers |
+| 8. Consolidation | `quickstart.md`, `checklist.md` | Delivery artifacts |
+
+---
+
+## Core Concepts
+
+### 1. What is Spec-Kit?
+
+**Spec-Kit** is GitHub's open-source toolkit for "Spec-Driven Development."
+
+**Key Principles:**
+- Specifications are **executable**, not temporary scaffolding
+- Test-First methodology is **non-negotiable**
+- Multi-step refinement (7 phases)
+- Each feature independently testable
+- Constitution governs all decisions
+
+**Spec-Kit Phases:**
+```
+1. Principles      → Establish constitution
+2. Clarification   → Gather requirements
+3. Specification   → Document user stories
 4. Planning        → Define technical approach
-5. Validation      → Audit completeness
-6. Task Breakdown  → Create dependency-ordered tasks with [P]arallel markers
+5. Validation      → Check compliance
+6. Task Breakdown  → Create ordered tasks
 7. Implementation  → Execute with TDD
 ```
 
-### Spec-Kit Directory Structure
+### 2. How BOSS Automates Spec-Kit
+
+**Traditional Spec-Kit:**
+- Human runs `/speckit.*` commands
+- Manual phase progression
+- Single developer implementation
+- No cross-project learning
+
+**BOSS + Spec-Kit:**
+- Workers execute phases automatically
+- Parallel execution where possible
+- Multiple specialized workers
+- Knowledge base integration
+- Automated quality gates
+
+**The Transformation:**
 
 ```
-.specify/
-├── memory/
-│   └── constitution.md          # Project governing principles (NON-NEGOTIABLE)
-│
-├── specs/
-│   └── 001-feature-name/        # Each feature gets a directory
-│       ├── spec.md              # User stories & acceptance criteria
-│       ├── plan.md              # Technical implementation strategy
-│       ├── tasks.md             # Granular task breakdown with [P] markers
-│       ├── research.md          # Technology research & validation
-│       ├── data-model.md        # Database schema & entities
-│       ├── contracts/           # API specs & integration contracts
-│       ├── quickstart.md        # Setup & running instructions
-│       └── checklist.md         # Quality validation criteria
-│
-├── scripts/
-│   ├── check-prerequisites.sh   # Environment validation
-│   ├── common.sh                # Shared utilities
-│   ├── create-new-feature.sh    # Feature scaffolding
-│   ├── setup-plan.sh            # Plan initialization
-│   └── update-claude-md.sh      # CLAUDE.md sync
-│
-└── templates/
-    ├── spec-template.md
-    ├── plan-template.md
-    ├── tasks-template.md
-    ├── checklist-template.md
-    └── commands/                # Command templates
+BOSS (Claude Code/Cursor)
+├─► Phase 1: Architect worker → Creates constitution
+├─► Phase 2: Clarifier worker → Gathers requirements
+├─► Phase 3: Spec-Writer worker → Writes spec.md
+├─► [GATE 1: Human Approval]
+├─► Phase 4: Planner worker → Creates plan.md
+├─► Phase 5: Reviewer worker → Validates compliance
+├─► [AUTO-GATE: Constitution Check]
+├─► Phase 6: Planner worker → Creates tasks.md
+├─► Phase 7: Developer workers → Parallel implementation
+├─► Phase 8: Consolidator worker → Merges & tests
+└─► [GATE 2: Human Review]
 ```
 
-### Spec-Kit Slash Commands
+### 3. BOSS = Claude Code/Cursor + MCPs
 
-```
-/speckit.constitution    # Establish project principles
-/speckit.specify         # Define requirements & user stories
-/speckit.clarify         # Resolve specification ambiguities
-/speckit.plan            # Create technical implementation strategy
-/speckit.analyze         # Validate consistency across artifacts
-/speckit.tasks           # Generate ordered task breakdown
-/speckit.implement       # Execute implementation
-/speckit.checklist       # Create quality validation criteria
-```
+**Important:** BOSS is NOT a standalone application.
 
----
+**BOSS is:**
+- Claude Code or Cursor running on your machine
+- Configured with BOSS skills
+- Connected to MCP servers
 
-## How BOSS Automates Spec-Kit
-
-BOSS transforms Spec-Kit from a **manual methodology** into a **fully automated orchestration system**.
-
-### The BOSS + Spec-Kit Workflow
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│           Claude Code/Cursor (BOSS Configuration)            │
-│              (Orchestrates via MCP Servers)                  │
-└────────────┬─────────────────────────────────────────────────┘
-             │
-             ├─► Phase 0: Bootstrap
-             │   └─► Creates .specify/ structure with templates
-             │
-             ├─► Phase 1: Constitution (Worker: Architect)
-             │   └─► Creates memory/constitution.md
-             │
-             ├─► Phase 2: Clarification (Worker: Clarifier)
-             │   └─► Asks business questions, gathers requirements
-             │
-             ├─► Phase 3: Specification (Worker: Spec-Writer)
-             │   └─► Creates specs/001-feature/spec.md
-             │
-             ├─► [GATE 1: Human Approval]
-             │   └─► User reviews spec.md
-             │
-             ├─► Phase 4: Planning (Worker: Planner)
-             │   └─► Creates plan.md, data-model.md, contracts/
-             │
-             ├─► Phase 5: Validation (Worker: Reviewer)
-             │   └─► Validates against constitution.md
-             │
-             ├─► [AUTO-GATE: Constitution Compliance]
-             │   └─► Automatic check (up to 3 retries)
-             │
-             ├─► Phase 6: Task Breakdown (Worker: Planner)
-             │   └─► Creates tasks.md with [P] parallelization markers
-             │
-             ├─► Phase 7: Implementation (Workers: Developers)
-             │   ├─► Launches parallel workers based on [P] markers
-             │   ├─► Each worker implements with TDD
-             │   └─► Creates quickstart.md, checklist.md
-             │
-             ├─► Phase 8: Consolidation (Worker: Consolidator)
-             │   └─► Merges branches, runs integration tests
-             │
-             └─► [GATE 2: Human Review]
-                 └─► User reviews PR with all artifacts
-```
-
----
-
-## How BOSS Orchestrates Spec-Kit Phases
-
-### BOSS = Claude Code/Cursor + MCP Servers
-
-**BOSS is NOT a standalone application.** When the documentation says "BOSS spawns a worker" or "BOSS orchestrates," this means:
-
-**Claude Code or Cursor** (configured with BOSS skills and MCP servers) executes Container-Use MCP commands to spawn isolated worker environments.
-
-### Worker Spawning via Container-Use MCP
+**When docs say "BOSS spawns a worker":**
 
 ```typescript
-// Example: BOSS (Claude Code/Cursor) spawning a Clarifier worker
-
-// 1. BOSS creates worker environment via Container-Use MCP
+// This is what happens under the hood
 const env = await mcp.containerUse.createEnvironment({
   title: "clarifier-worker",
   config: ".boss/workers/clarifier/container-config.json"
 });
-// Returns: { env_id: "env-abc123", branch: "container-use/env-abc123" }
 
-// 2. BOSS executes work in the environment
 await mcp.containerUse.executeInEnvironment({
   env_id: env.env_id,
-  prompt: clarifierPrompt,  // From .boss/workers/clarifier/prompt.md
-  skills: ["business-analysis", "requirements-gathering"],
-  task: "Clarify business requirements for the feature"
-});
-
-// 3. BOSS monitors completion
-const status = await mcp.containerUse.getEnvironmentStatus({
-  env_id: env.env_id
-});
-
-// 4. BOSS retrieves results
-const artifacts = await mcp.containerUse.getEnvironmentArtifacts({
-  env_id: env.env_id,
-  paths: [".specify/specs/001-feature/"]
-});
-
-// 5. BOSS merges if quality gates pass
-await mcp.containerUse.mergeEnvironment({
-  env_id: env.env_id,
-  delete_after_merge: true
+  prompt: clarifierPrompt,
+  skills: ["business-analysis", "requirements-gathering"]
 });
 ```
 
-### Quality Gate Enforcement via Iteration
+### 4. Quality Gate Strategy
 
-BOSS enforces quality gates (TDD, coverage, etc.) through **iteration, not prevention**:
+BOSS enforces quality through **iteration, not prevention**:
 
 ```
-1. Worker completes task in container-use environment
-2. Worker runs quality gates (tests, coverage, lint)
-3. BOSS retrieves results via Container-Use MCP
+Worker completes task
+  ↓
+Quality gates run automatically
+  ↓
+┌─────────────────────────┐
+│  Quality Gates Pass?    │
+└────┬──────────────┬─────┘
+     │              │
+     ✅             ❌
+     │              │
+Merge branch    Delete environment
+     │              │
+     │         Analyze failure
+     │              │
+     │         Create improved prompt
+     │              │
+     │         Spawn NEW worker
+     │              │
+     │         Retry (max 3 attempts)
+     │              │
+     └──────────────┘
+```
 
-IF quality gates PASS:
-  ✅ BOSS: "Great work! Merging your branch."
-  └─► mcp.containerUse.mergeEnvironment(env_id)
-  └─► mcp.containerUse.deleteEnvironment(env_id)
+**Quality Checks:**
+- ✅ TypeScript: No errors
+- ✅ Lint: No warnings
+- ✅ Tests: All passing
+- ✅ Coverage: ≥ 80%
+- ✅ Mutation: ≥ 80%
+- ✅ Security: No vulnerabilities
 
-IF quality gates FAIL:
-  ❌ BOSS analyzes failure:
-     - Coverage 76% (need 80%)?
-     - Tests not written first?
-     - TypeScript errors?
+### 5. Directory Structure
 
-  └─► BOSS: "Quality gates failed. Retrying with improvements."
-
-  └─► mcp.containerUse.deleteEnvironment(env_id)
-
-  └─► BOSS creates improved prompt:
-      "Implement User Authentication API
-
-       PREVIOUS ATTEMPT FAILED:
-       - Coverage was 76% (need ≥80%)
-       - Missing tests for error cases
-
-       THIS TIME:
-       - Write tests BEFORE implementation (TDD)
-       - Test edge cases: invalid password, rate limiting
-       - Aim for 85%+ coverage"
-
-  └─► BOSS spawns NEW worker with improved prompt
-      mcp.containerUse.createEnvironment({
-        title: "developer-backend-US1-retry",
-        ...improvedConfig
-      })
-
-  └─► Repeat until quality gates pass (max 3 attempts)
-
-  └─► If still failing after 3 attempts:
-      BOSS: "This task needs your help. Review logs:
-             container-use log env-abc123"
+```
+.specify/
+├── memory/
+│   └── constitution.md              # NON-NEGOTIABLE principles
+│
+├── specs/
+│   └── 001-feature-name/
+│       ├── spec.md                  # User stories (Phase 3)
+│       ├── plan.md                  # Technical approach (Phase 4)
+│       ├── data-model.md            # Database schema (Phase 4)
+│       ├── contracts/               # API specs (Phase 4)
+│       │   └── api.yaml
+│       ├── validation-report.md     # Compliance (Phase 5)
+│       ├── tasks.md                 # Task breakdown (Phase 6)
+│       ├── quickstart.md            # Setup guide (Phase 8)
+│       └── checklist.md             # Quality validation (Phase 8)
+│
+├── scripts/                         # Automation helpers
+└── templates/                       # Spec-Kit templates
 ```
 
 ---
 
-## Phase-by-Phase Integration
+## Workflow Overview
+
+### Complete BOSS + Spec-Kit Flow
+
+```
+┌──────────────────────────────────────────────────────────┐
+│  Phase 0: Bootstrap                                      │
+│  Creates .specify/ structure with templates              │
+└──────────────────────────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────┐
+│  Phase 1: Constitution                                   │
+│  Worker: Architect                                       │
+│  Output: constitution.md (governing principles)          │
+└──────────────────────────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────┐
+│  Phase 2: Clarification                                  │
+│  Worker: Clarifier                                       │
+│  Output: Requirement summary (business questions)        │
+└──────────────────────────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────┐
+│  Phase 3: Specification                                  │
+│  Worker: Spec-Writer                                     │
+│  Output: spec.md (user stories + acceptance criteria)    │
+└──────────────────────────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────┐
+│  🚦 GATE 1: Human Approval                               │
+│  User reviews spec.md and approves via PR                │
+└──────────────────────────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────┐
+│  Phase 4: Planning                                       │
+│  Worker: Planner                                         │
+│  Output: plan.md, data-model.md, contracts/             │
+└──────────────────────────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────┐
+│  Phase 5: Validation                                     │
+│  Worker: Reviewer                                        │
+│  Output: validation-report.md                            │
+└──────────────────────────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────┐
+│  🤖 AUTO-GATE: Constitution Compliance                   │
+│  Automatic check (up to 3 retries if failed)            │
+└──────────────────────────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────┐
+│  Phase 6: Task Breakdown                                 │
+│  Worker: Planner                                         │
+│  Output: tasks.md (with [P] parallelization markers)     │
+└──────────────────────────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────┐
+│  Phase 7: Implementation (PARALLEL)                      │
+│  Workers: Developers (Frontend, Backend, Fullstack)      │
+│  Output: Code + tests (following TDD)                    │
+│  Note: Multiple workers run in parallel based on [P]     │
+└──────────────────────────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────┐
+│  Phase 8: Consolidation                                  │
+│  Worker: Consolidator                                    │
+│  Output: quickstart.md, checklist.md, main PR           │
+└──────────────────────────────────────────────────────────┘
+                         ↓
+┌──────────────────────────────────────────────────────────┐
+│  🚦 GATE 2: Human Review                                 │
+│  User reviews PR with all artifacts and approves         │
+└──────────────────────────────────────────────────────────┘
+                         ↓
+                    Merge & Deploy
+```
+
+### Parallel Execution Example
+
+**Phase 7 with 3 user stories:**
+
+```
+US1: Login (T010-T020)           [Sequential - TDD]
+  Worker 1 (Fullstack)
+  ├─ Write tests first
+  ├─ Implement features
+  └─ Integration tests
+
+US2: Registration (T021-T028)    [P] Parallel with US3
+  Worker 2 (Backend)
+  ├─ Write tests first
+  ├─ Implement features
+  └─ Integration tests
+
+US3: Password Reset (T029-T035)  [P] Parallel with US2
+  Worker 3 (Backend)
+  ├─ Write tests first
+  ├─ Implement features
+  └─ Integration tests
+```
+
+**Timeline:**
+- Traditional: 3 stories × 2 hours = 6 hours
+- BOSS parallel: max(2h, 2h, 2h) = 2 hours
+
+---
+
+## Phase-by-Phase Guide
 
 ### Phase 0: Bootstrap
 
-**BOSS Action:** Creates complete .specify/ structure during project bootstrap
+**Action:** BOSS creates `.specify/` structure during project bootstrap
 
+**Command:**
 ```bash
 boss bootstrap --template nextjs-app-turbo --quality production
+```
 
-# Creates:
+**Created:**
+```
 .specify/
 ├── memory/
-│   └── constitution.md (from template)
+│   └── constitution.md (template)
 ├── specs/ (empty, ready for features)
-├── scripts/ (all spec-kit scripts)
+├── scripts/ (all automation scripts)
 └── templates/ (all spec-kit templates)
 ```
 
 **Worker:** None (BOSS direct action)
 
-**Artifacts:**
-- Empty `.specify/` structure
-- Constitution template
-- All spec-kit scripts
-- All spec-kit templates
-
 ---
 
 ### Phase 1: Constitution
 
-**BOSS Action:** Spawns Architect worker to establish project constitution
+**Purpose:** Establish project governing principles
 
 **Worker:** `architect`
 
-**Worker Prompt:**
-```markdown
-# Constitution Architect
+**Input:**
+- Bootstrap template
+- Quality preset
+- Tech stack policy
 
-You are establishing the project constitution based on the bootstrap configuration.
-
-## Your Task
-
-Create `.specify/memory/constitution.md` following the spec-kit constitution template.
-
-## Input Context
-
-- Bootstrap template: ${template}
-- Quality preset: ${quality_preset}
-- Tech stack policy: ${tech_stack_policy}
-- Project type: ${project_type}
-
-## Required Sections
-
-1. **Architectural Principles**
-   - Based on project type (web app, API, CLI, etc.)
-   - Component structure (library-first, modular, etc.)
-
-2. **Interface Requirements**
-   - API patterns (REST, GraphQL, gRPC)
-   - CLI interface standards
-   - Frontend patterns
-
-3. **Development Methodology**
-   - Test-First (NON-NEGOTIABLE)
-   - TDD cycle: red → green → refactor
-   - Human approval between test definition and implementation
-
-4. **Testing Standards**
-   - Unit testing (≥80% coverage)
-   - Integration testing (contract validation)
-   - Mutation testing (≥80% score)
-   - E2E testing (critical paths)
-
-5. **Cross-Cutting Concerns**
-   - Logging (structured)
-   - Error handling patterns
-   - Versioning (MAJOR.MINOR.BUILD)
-   - Simplicity (YAGNI principles)
-
-6. **Technology Stack**
-   - Allowed technologies: ${allowed_stack}
-   - Prohibited technologies: ${prohibited_stack}
-   - Rationale for each decision
-
-7. **Quality Gates**
-   - Pre-commit hooks
-   - CI/CD requirements
-   - Security scanning
-   - Performance benchmarks
-
-## Output
-
-Create `memory/constitution.md` with all sections populated based on the bootstrap configuration.
-
-This constitution is **NON-NEGOTIABLE** and will govern all future development.
-```
-
-**Artifacts Created:**
+**Output:**
 - `.specify/memory/constitution.md`
 
-**No Gate:** Constitution is based on bootstrap config (pre-approved)
+**Constitution Sections:**
+
+1. **Architectural Principles** - Component structure, patterns
+2. **Interface Requirements** - API design, CLI standards
+3. **Development Methodology** - Test-First (NON-NEGOTIABLE)
+4. **Testing Standards** - Unit (≥80%), Integration, Mutation (≥80%)
+5. **Cross-Cutting Concerns** - Logging, errors, versioning
+6. **Technology Stack** - Allowed/prohibited with rationale
+7. **Quality Gates** - Pre-commit, CI/CD, security
+
+**Example Constitution:**
+
+```markdown
+# Project Constitution
+
+## Development Methodology
+
+### Test-First (NON-NEGOTIABLE)
+- All code MUST be written using TDD
+- Cycle: Red (write failing test) → Green (make it pass) → Refactor
+- No implementation without tests first
+
+## Testing Standards
+- Unit test coverage: ≥80%
+- Mutation testing score: ≥80%
+- Integration tests for all API endpoints
+- E2E tests for critical user paths
+
+## Technology Stack
+
+### Allowed
+- TypeScript (strict mode)
+- Next.js 15 (App Router)
+- Prisma ORM
+- Vitest (testing)
+
+### Prohibited
+- JavaScript (must use TypeScript)
+- Jest (use Vitest)
+- Class components (use functional)
+
+### Rationale
+- TypeScript: Type safety prevents runtime errors
+- Vitest: Faster, better DX than Jest
+```
+
+**Gate:** None (based on bootstrap config)
 
 ---
 
 ### Phase 2: Clarification
 
-**BOSS Action:** Spawns Clarifier worker to gather business requirements
+**Purpose:** Gather business requirements through conversation
 
 **Worker:** `clarifier`
 
-**Worker Prompt:**
-```markdown
-# Business Clarifier
+**Role:**
+- Ask **business** questions (not technical)
+- Understand users and their needs
+- Document pain points and workflows
 
-You gather business requirements through conversation, NOT technical decisions.
-
-## Your Role
-
-Ask questions to understand:
+**Questions to Ask:**
 - **Who** are the users?
 - **What** problems do they face?
 - **Why** does this solution matter?
 - **How** do they work today?
 
-DO NOT ask about:
+**NOT to Ask:**
 - Technology choices (governed by constitution)
-- Architecture patterns (will be planned later)
-- Implementation details (not your concern)
+- Architecture patterns (planned later)
+- Implementation details (not relevant yet)
 
-## Conversation Structure
-
-1. Start with: "Tell me about your users and their needs"
-2. Ask follow-up questions about:
-   - User personas
-   - Workflows
-   - Pain points
-   - Success criteria
-3. Summarize understanding
-4. Confirm with user
-
-## Output
-
-Create a summary document with:
-- User personas
-- Current workflow
-- Problems to solve
-- Success criteria
-- Business constraints
-
-This will be input for the Specification phase.
-```
-
-**Artifacts Created:**
+**Output:**
 - `.specify/specs/000-requirements/clarification.md`
 
-**No Gate:** Conversational phase, no approval needed
+**Example Output:**
+
+```markdown
+# Requirement Clarification
+
+## User Personas
+- **Team Leads** - Manage 5-10 people, need visibility
+- **Team Members** - Execute tasks, need clarity
+
+## Current Workflow
+1. Manager assigns tasks verbally
+2. Tasks tracked in spreadsheet
+3. Status updates in daily standup
+
+## Problems
+- Tasks get lost in spreadsheets
+- No visibility into progress
+- Difficult to track dependencies
+
+## Success Criteria
+- 95% of tasks tracked digitally
+- Real-time progress visibility
+- < 2 minutes to assign a task
+```
+
+**Gate:** None (conversational phase)
 
 ---
 
 ### Phase 3: Specification
 
-**BOSS Action:** Spawns Spec-Writer worker to create spec.md
+**Purpose:** Create formal specification with user stories
 
 **Worker:** `spec-writer`
 
 **Input:**
 - Clarification summary
-- Constitution.md
-- Knowledge base (similar specs from other projects)
+- Constitution
+- Knowledge base (similar specs)
 
-**Worker Prompt:**
+**Output:**
+- `.specify/specs/001-${feature}/spec.md`
+
+**Spec Structure:**
+
 ```markdown
-# Specification Writer
+# Feature: Task Management
 
-You create feature specifications following the spec-kit spec-template.md.
-
-## Input
-
-- Clarification summary: ${clarification_summary}
-- Constitution: ${constitution}
-- Similar specs from knowledge base: ${similar_specs}
-
-## Your Task
-
-Create `.specify/specs/001-${feature_name}/spec.md` following this structure:
-
-### 1. Metadata
-- Feature Branch: feature/${feature_name}
-- Created: ${date}
+## Metadata
+- Branch: feature/task-management
 - Status: Draft
-- Input: From clarification phase
+- Created: 2024-01-15
 
-### 2. User Scenarios & Testing
+## User Stories
 
-For each user journey, create:
+### US1 (P1): Task Creation
+As a team lead, I need to create tasks so team members know what to do.
 
-**User Story** (P1, P2, P3 priority)
-- Journey description in plain language
-- Priority justification
-- Independent testing approach
-- Acceptance scenarios (Given/When/Then)
+**Priority:** P1 - Foundational feature
+**Testing:** Can test task creation independently
 
-Example:
+**Scenarios:**
+- Given valid task data, When I create task, Then task saved with ID
+- Given missing title, When I create task, Then error shown
+- Given invalid assignee, When I create task, Then validation error
+
+**Edge Cases:**
+- Very long task descriptions (>10,000 chars)
+- Special characters in title
+- Assigning to user not in team
+
+### US2 (P2): Task Assignment
+As a team lead, I need to assign tasks to specific members.
+
+**Priority:** P2 - Depends on US1
+**Testing:** Can test assignment flow independently
+
+[Scenarios...]
+
+## Requirements
+
+### Functional
+- FR-001: System shall support task creation with title, description, assignee
+- FR-002: System shall validate assignee exists in team
+- FR-003: System shall send notification on assignment
+
+### Non-Functional
+- NFR-001: Task creation shall complete in <200ms
+- NFR-002: Support 1000 concurrent task creations
+
+## Key Entities
+- Task (id, title, description, assignee_id, status, created_at)
+- User (id, name, email, team_id)
+
+## Success Criteria
+- SC-001: 95% of tasks tracked digitally within 1 week
+- SC-002: Task creation takes <2 minutes
+- SC-003: 0 lost tasks (100% persistence)
 ```
-**US1 (P1): User Authentication**
-As a team member, I need to log in securely so I can access team tasks.
-
-Priority: P1 - Blocks all other features
-Testing: Can deploy and test login flow independently
-
-Scenarios:
-- Given valid credentials, When user logs in, Then dashboard loads
-- Given invalid password, When user logs in, Then error message shown
-- Given unverified email, When user logs in, Then verification prompt shown
-```
-
-Include **Edge Cases** subsection for boundary conditions.
-
-### 3. Requirements
-
-**Functional Requirements**
-- FR-001: System shall support email/password authentication
-- FR-002: System shall send verification emails
-- FR-003: System shall rate-limit failed login attempts
-- [NEEDS CLARIFICATION: Session timeout duration?]
-
-**Key Entities**
-- User (id, email, password_hash, verified, created_at)
-- Session (id, user_id, token, expires_at)
-
-### 4. Success Criteria
-
-**Measurable Outcomes**
-- SC-001: 95% of users can log in within 3 seconds
-- SC-002: Zero security vulnerabilities in auth flow
-- SC-003: 99.9% uptime for auth service
-
-## Constitution Compliance
-
-Ensure the spec:
-- Follows architectural principles from constitution
-- Respects technology constraints
-- Adheres to quality standards
-- Aligns with development methodology
-
-## Output
-
-Create complete `spec.md` with all sections populated.
-Each user story MUST be independently testable and deployable.
-```
-
-**Artifacts Created:**
-- `.specify/specs/001-${feature_name}/spec.md`
 
 **Gate:** **GATE 1 - Human Approval**
 
-```
-BOSS: 🚦 GATE 1: Specification Approval
-
-I've created a complete specification for ${feature_name}:
-
-📄 Specification:
-   - ${user_story_count} user stories
-   - ${requirement_count} functional requirements
-   - ${entity_count} key entities
-   - ${success_criteria_count} success criteria
-
-Review the specification:
-👉 .specify/specs/001-${feature_name}/spec.md
-
-I've also created a PR for review:
-👉 PR #1: Specification for ${feature_name}
-
-You can track progress via:
-👉 TASK-001: Review Specification
-
-Please approve to proceed with planning!
-```
+BOSS creates PR for review. User approves via GitHub PR review.
 
 ---
 
 ### Phase 4: Planning
 
-**BOSS Action:** Spawns Planner worker to create technical plan
+**Purpose:** Create technical implementation plan
 
 **Worker:** `planner`
 
 **Input:**
 - Approved spec.md
-- Constitution.md
+- Constitution
 - Tech stack policy
-- Knowledge base (similar plans, architectural patterns)
+- Knowledge base (similar plans)
 
-**Worker Prompt:**
+**Output:**
+- `.specify/specs/001-${feature}/plan.md`
+- `.specify/specs/001-${feature}/data-model.md`
+- `.specify/specs/001-${feature}/contracts/`
+
+**Plan Sections:**
+
+1. **Summary** - One-sentence requirement, high-level approach
+2. **Technical Context** - 9 key questions answered
+3. **Constitution Check** - Validate against each principle
+4. **Project Structure** - File organization
+5. **Architecture Decisions** - ADRs for major choices
+6. **Data Model** - Entity relationships
+7. **API Contracts** - OpenAPI specifications
+
+**Technical Context (9 Questions):**
+
+1. Language/Version?
+2. Dependencies?
+3. Storage?
+4. Testing Framework?
+5. Target Platform?
+6. Project Type?
+7. Performance Goals?
+8. Constraints?
+9. Scale/Scope?
+
+**Example plan.md:**
+
 ```markdown
-# Technical Planner
+# Implementation Plan: Task Management
 
-You create technical implementation plans following spec-kit plan-template.md.
+## Summary
+Enable team leads to create and assign tasks digitally.
 
-## Input
+Technical Approach: REST API with PostgreSQL, Next.js frontend
 
-- Specification: ${spec_md}
-- Constitution: ${constitution}
-- Tech stack policy: ${tech_stack_policy}
-- Similar plans: ${similar_plans}
-- Architectural patterns: ${arch_patterns}
+## Technical Context
 
-## Your Task
+1. **Language:** TypeScript 5.x (from constitution)
+2. **Dependencies:** Prisma, Next.js, Vitest
+3. **Storage:** PostgreSQL (from tech stack policy)
+4. **Testing:** Vitest (from constitution)
+5. **Platform:** Web application
+6. **Type:** Greenfield feature in existing app
+7. **Performance:** <200ms task creation, 1000 concurrent users
+8. **Constraints:** Must integrate with existing auth system
+9. **Scale:** 10,000 tasks/month initially
 
-Create `.specify/specs/001-${feature_name}/plan.md` following this structure:
-
-### 1. Header
-- Branch: feature/${feature_name}
-- Date: ${date}
-- Spec: Link to spec.md
-- Input: Approved specification
-
-### 2. Summary
-- Primary requirement (one sentence)
-- Technical approach (high-level)
-
-### 3. Technical Context
-
-Answer these 9 questions:
-
-1. **Language/Version**: ${language} ${version} (from tech stack policy)
-2. **Dependencies**: ${dependencies} (check constitution for allowed packages)
-3. **Storage**: ${database} (from tech stack policy)
-4. **Testing Framework**: ${test_framework} (from constitution)
-5. **Target Platform**: ${platform} (web, mobile, CLI, API)
-6. **Project Type**: ${project_type} (greenfield, brownfield, enhancement)
-7. **Performance Goals**: ${performance_goals} (from spec success criteria)
-8. **Constraints**: ${constraints} (from constitution and spec)
-9. **Scale/Scope**: ${scale} (users, data, requests)
-
-### 4. Constitution Check
-
-Validate plan against constitution:
+## Constitution Check
 
 | Principle | Compliance | Notes |
 |-----------|------------|-------|
-| Architectural approach | ✅ | Follows library-first pattern |
-| Interface requirements | ✅ | REST API per constitution |
-| Test-first methodology | ✅ | TDD cycle planned |
-| Testing standards | ⚠️  | Need mutation testing setup |
-| Tech stack | ✅ | All allowed technologies |
+| Architectural | ✅ | REST API pattern per constitution |
+| Test-First | ✅ | TDD planned for all endpoints |
+| Tech Stack | ✅ | All allowed technologies |
+| Testing Standards | ✅ | Unit + integration + E2E planned |
 
-If any ⚠️ or ❌, document in Complexity Tracking section with:
-- Violation type
-- Necessity rationale
-- Rejected alternatives
+## Architecture Decisions
 
-### 5. Project Structure
+### ADR-001: REST vs GraphQL
+**Decision:** REST API
+**Rationale:**
+- Constitution specifies REST
+- Simpler for this use case
+- Existing auth uses REST
+**Alternatives:** GraphQL (more complex, not needed)
+**Consequences:** Need versioning strategy
 
-**Documentation**
-```
-.specify/specs/001-${feature_name}/
-├── spec.md              ✅ Complete
-├── plan.md              ← You're creating this
-├── tasks.md             ← Next phase
-├── research.md          ← Create if needed
-├── data-model.md        ← Create now
-├── quickstart.md        ← Implementation phase
-├── checklist.md         ← Implementation phase
-└── contracts/           ← Create API specs now
-    └── auth-api.yaml
-```
-
-**Source Code** (choose based on project type)
-
-For Web Application:
-```
-src/
-├── backend/
-│   ├── models/          # Data models
-│   ├── services/        # Business logic
-│   ├── api/            # API routes
-│   └── lib/            # Utilities
-├── frontend/
-│   ├── components/     # React components
-│   ├── pages/          # Next.js pages
-│   ├── hooks/          # Custom hooks
-│   └── lib/            # Utilities
-└── shared/
-    └── types/          # Shared TypeScript types
-```
-
-### 6. Architecture Decisions
-
-For each major decision, create an ADR:
-
-**ADR-001: Authentication Strategy**
-- Decision: JWT tokens with httpOnly cookies
-- Rationale: Balance security and UX
-- Alternatives considered: Session-based, OAuth only
-- Consequences: Need token refresh mechanism
-
-### 7. Data Model Design
-
-Create `data-model.md`:
+## Data Model
 
 ```yaml
-entities:
-  User:
-    attributes:
-      id: uuid (PK)
-      email: string (unique, indexed)
-      password_hash: string
-      verified: boolean
-      created_at: timestamp
-    relationships:
-      sessions: hasMany(Session)
+Task:
+  id: uuid (PK)
+  title: string (max 200)
+  description: text
+  assignee_id: uuid (FK → User)
+  status: enum (pending, in_progress, done)
+  created_at: timestamp
+  updated_at: timestamp
 
-  Session:
-    attributes:
-      id: uuid (PK)
-      user_id: uuid (FK)
-      token: string (unique)
-      expires_at: timestamp
-    relationships:
-      user: belongsTo(User)
+User:
+  id: uuid (PK)
+  name: string
+  email: string
+  team_id: uuid (FK → Team)
 ```
 
-### 8. API Contracts
+## API Contracts
 
-Create `contracts/auth-api.yaml` (OpenAPI):
+See `contracts/task-api.yaml` (OpenAPI 3.0)
 
-```yaml
-openapi: 3.0.0
-info:
-  title: Auth API
-  version: 1.0.0
-
-paths:
-  /auth/login:
-    post:
-      summary: User login
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email: string
-                password: string
-      responses:
-        200:
-          description: Login successful
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  token: string
-                  user: object
-        401:
-          description: Invalid credentials
+Key endpoints:
+- POST /api/tasks - Create task
+- GET /api/tasks/:id - Get task
+- PATCH /api/tasks/:id - Update task
+- POST /api/tasks/:id/assign - Assign task
 ```
 
-## Constitution Compliance Check
-
-Before completing the plan:
-1. Verify all technology choices against tech stack policy
-2. Confirm testing approach follows Test-First methodology
-3. Validate architecture against principles
-4. Document any violations with rationale
-
-## Output
-
-Create complete `plan.md`, `data-model.md`, and `contracts/` directory.
-```
-
-**Artifacts Created:**
-- `.specify/specs/001-${feature_name}/plan.md`
-- `.specify/specs/001-${feature_name}/data-model.md`
-- `.specify/specs/001-${feature_name}/contracts/auth-api.yaml`
-- `.specify/specs/001-${feature_name}/research.md` (if needed)
+**Gate:** None (will be validated next phase)
 
 ---
 
 ### Phase 5: Validation
 
-**BOSS Action:** Spawns Reviewer worker to validate plan against constitution
+**Purpose:** Validate plan against constitution
 
 **Worker:** `reviewer`
 
@@ -712,79 +652,35 @@ Create complete `plan.md`, `data-model.md`, and `contracts/` directory.
 - constitution.md
 - spec.md
 
-**Worker Prompt:**
+**Output:**
+- `.specify/specs/001-${feature}/validation-report.md`
+
+**Validation Checklist:**
+
 ```markdown
-# Plan Reviewer
-
-You validate the technical plan against the project constitution.
-
-## Input
-
-- Plan: ${plan_md}
-- Constitution: ${constitution}
-- Spec: ${spec_md}
-
-## Your Task
-
-Validate the plan against each constitutional principle:
-
-### 1. Architectural Compliance
+## Architectural Compliance
 - [ ] Follows specified architectural approach
 - [ ] Component structure adheres to principles
 - [ ] Proper separation of concerns
 
-### 2. Interface Requirements
-- [ ] API design matches constitutional standards
-- [ ] Error handling follows patterns
-- [ ] Response formats are consistent
-
-### 3. Test-First Methodology
+## Test-First Methodology
 - [ ] TDD approach clearly defined
 - [ ] Test structure planned
 - [ ] Coverage goals specified
 
-### 4. Testing Standards
+## Testing Standards
 - [ ] Unit tests planned (≥80% coverage)
 - [ ] Integration tests defined
 - [ ] Mutation testing included (≥80%)
-- [ ] E2E tests for critical paths
 
-### 5. Technology Stack
+## Technology Stack
 - [ ] All dependencies are allowed
 - [ ] No prohibited technologies used
 - [ ] Rationale provided for choices
+```
 
-### 6. Cross-Cutting Concerns
-- [ ] Logging strategy defined
-- [ ] Error handling patterns specified
-- [ ] Versioning approach documented
-- [ ] Simplicity maintained (YAGNI)
+**Validation Result:**
 
-### 7. Quality Gates
-- [ ] Pre-commit hooks planned
-- [ ] CI/CD pipeline defined
-- [ ] Security scanning included
-- [ ] Performance benchmarks set
-
-## Validation Levels
-
-**PASS** ✅
-- All constitutional principles followed
-- Plan can proceed to task breakdown
-
-**PASS WITH WARNINGS** ⚠️
-- Minor deviations documented with rationale
-- Alternatives considered and rejected
-- Plan can proceed with monitoring
-
-**FAIL** ❌
-- Constitutional violations without justification
-- Missing critical components
-- Plan must be revised
-
-## Output
-
-Validation report:
 ```yaml
 validation_result: PASS | PASS_WITH_WARNINGS | FAIL
 
@@ -795,1048 +691,660 @@ compliance:
   testing: PASS_WITH_WARNINGS
   tech_stack: PASS
   cross_cutting: PASS
-  quality_gates: PASS
 
 warnings:
-  - "Mutation testing setup needs clarification in tasks phase"
+  - "Mutation testing setup needs clarification"
 
 violations: []
-
-recommendations:
-  - "Consider adding performance monitoring to logging strategy"
-  - "Add security headers to API contract"
 
 approved: true
 retry_count: 0
 ```
 
-If FAIL: Provide specific feedback for Planner to revise.
-```
-
-**Artifacts Created:**
-- `.specify/specs/001-${feature_name}/validation-report.md`
-
 **Gate:** **AUTO-GATE - Constitution Compliance**
 
-```
-BOSS: 🤖 AUTO-GATE: Constitution Compliance Check
-
-Running automated validation...
-
-Result: ✅ PASSED (with 1 warning)
-
-Compliance Report:
-  ✅ Architectural principles: PASS
-  ✅ Interface requirements: PASS
-  ✅ Test-first methodology: PASS
-  ⚠️  Testing standards: PASS_WITH_WARNINGS
-      └─ Mutation testing setup needs clarification
-  ✅ Technology stack: PASS
-  ✅ Cross-cutting concerns: PASS
-  ✅ Quality gates: PASS
-
-Recommendations:
-  - Add performance monitoring to logging strategy
-  - Add security headers to API contract
-
-Proceeding to task breakdown phase...
-```
-
-**If FAIL:** Retry up to 3 times with feedback, then escalate to human.
+- ✅ **PASS**: Proceed to task breakdown
+- ⚠️ **PASS_WITH_WARNINGS**: Proceed with monitoring
+- ❌ **FAIL**: Retry (up to 3 times), then escalate to human
 
 ---
 
 ### Phase 6: Task Breakdown
 
-**BOSS Action:** Spawns Planner worker to create tasks.md
+**Purpose:** Create granular, ordered task list
 
 **Worker:** `planner`
 
 **Input:**
 - Approved plan.md
 - spec.md (user stories)
-- constitution.md
+- Constitution
 
-**Worker Prompt:**
-```markdown
-# Task Breakdown Specialist
+**Output:**
+- `.specify/specs/001-${feature}/tasks.md`
 
-You create granular, ordered task breakdowns following spec-kit tasks-template.md.
-
-## Input
-
-- Plan: ${plan_md}
-- Spec: ${spec_md}
-- Constitution: ${constitution}
-- Similar task breakdowns: ${similar_tasks}
-
-## Your Task
-
-Create `.specify/specs/001-${feature_name}/tasks.md` following this structure:
-
-### Metadata
-- Description: Task breakdown for ${feature_name}
-- Input: plan.md, spec.md
-- Prerequisites: Environment setup, dependencies installed
-
-### Task Format
-
-Each task follows this format:
+**Task Format:**
 
 ```
-[ID] [P?] [Story] Description with specific file paths
+[ID] [P?] [Story] Description with file paths
 
-Examples:
-[T001] [P] [SETUP] Initialize PostgreSQL schema with User and Session tables
-[T002] [P] [SETUP] Configure Prisma client with connection pooling
-[T003] [US1] Write failing test for POST /auth/login with valid credentials
-[T004] [US1] Implement login endpoint to make test pass → src/api/auth/login.ts
+[T001] [P] [SETUP] Initialize PostgreSQL schema
+[T002] [P] [SETUP] Configure Prisma client
+[T003] [US1] Write failing test: POST /api/tasks returns 201
+[T004] [US1] Implement endpoint to make test pass → src/api/tasks/create.ts
 ```
 
 **Fields:**
-- `[ID]`: Unique identifier (T001, T002, ...)
-- `[P]`: Parallelization flag (can run in parallel with other [P] tasks)
-- `[Story]`: User story reference (US1, US2, ...) or SETUP, POLISH
-- Description: Specific implementation detail with file paths
+- `[ID]` - Unique identifier (T001, T002, ...)
+- `[P]` - Parallelization flag (can run parallel)
+- `[Story]` - User story (US1, US2) or SETUP, POLISH
+- Description - Specific action with file paths
 
-### Phase Structure
+**Phase Structure:**
 
-#### Phase 1: Setup [P] (Non-blocking infrastructure)
+```markdown
+## Phase 1: Setup [P]
+All tasks can run in parallel
 
-```
-[T001] [P] [SETUP] Initialize PostgreSQL schema with User and Session tables
-[T002] [P] [SETUP] Configure Prisma client with connection pooling
-[T003] [P] [SETUP] Set up JWT token generation utility → src/lib/jwt.ts
-[T004] [P] [SETUP] Configure bcrypt for password hashing → src/lib/password.ts
-[T005] [P] [SETUP] Set up test database with Docker Compose
-```
+[T001] [P] [SETUP] Initialize PostgreSQL schema with Task table
+[T002] [P] [SETUP] Configure Prisma client → src/lib/prisma.ts
+[T003] [P] [SETUP] Set up test database with Docker
+[T004] [P] [SETUP] Configure API error handling → src/api/middleware/errors.ts
 
-All Phase 1 tasks marked [P] - can run in parallel.
+## Phase 2: Foundation
+Sequential - each builds on previous
 
-#### Phase 2: Foundation (MUST complete before user stories)
+[T005] [FOUNDATION] Create Task model → src/models/task.ts
+[T006] [FOUNDATION] Create API contract tests → tests/contracts/task.test.ts
 
-```
-[T006] [FOUNDATION] Create User model with Prisma → src/models/user.ts
-[T007] [FOUNDATION] Create Session model with Prisma → src/models/session.ts
-[T008] [FOUNDATION] Write contract tests for auth API → tests/contracts/auth.test.ts
-[T009] [FOUNDATION] Set up API error handling middleware → src/api/middleware/errors.ts
-```
+## Phase 3: User Story 1 - Task Creation
+Sequential TDD cycle
 
-Sequential execution - each builds on previous.
-
-#### Phase 3: User Story 1 - User Authentication
-
-**Goal:** Users can log in with email/password
-
-**Independent Test:** Can deploy auth service standalone and test login flow
-
-**Tasks:**
-
-```
-# Tests (TDD - write first)
-[T010] [US1] Write failing test: POST /auth/login with valid credentials returns 200 + token
-[T011] [US1] Write failing test: POST /auth/login with invalid password returns 401
-[T012] [US1] Write failing test: POST /auth/login with unverified email returns 403
-[T013] [US1] Write failing test: Rate limiting after 5 failed attempts
+# Tests (write first)
+[T007] [US1] Write failing test: POST /api/tasks with valid data returns 201
+[T008] [US1] Write failing test: POST /api/tasks with missing title returns 400
+[T009] [US1] Write failing test: POST /api/tasks with invalid assignee returns 404
 
 # Implementation (make tests pass)
-[T014] [US1] Implement login endpoint → src/api/auth/login.ts
-     Dependencies: T010, T011, T012, T013
-[T015] [US1] Implement user lookup by email → src/services/user.service.ts
-     Dependencies: T014
-[T016] [US1] Implement password verification → src/services/auth.service.ts
-     Dependencies: T015
-[T017] [US1] Implement JWT token generation on successful login
-     Dependencies: T016
-[T018] [US1] Implement rate limiting with Redis → src/middleware/rate-limit.ts
-     Dependencies: T013
+[T010] [US1] Implement create endpoint → src/api/tasks/create.ts
+     Dependencies: T007, T008, T009
+[T011] [US1] Implement task validation service → src/services/task.service.ts
+     Dependencies: T010
+[T012] [US1] Integration test: Full task creation flow
+     Dependencies: T010, T011
 
-# Integration
-[T019] [US1] Integration test: Full login flow with database
-     Dependencies: T014-T018
+## Phase 4: User Story 2 - Task Assignment [P]
+Can run parallel with US1
 
-# Checkpoint
-[T020] [US1] Verify: Can deploy auth service and test login independently
-```
+[T013] [P] [US2] Write failing test: POST /api/tasks/:id/assign
+[T014] [P] [US2] Implement assign endpoint → src/api/tasks/assign.ts
+[T015] [P] [US2] Integration test: Assignment flow
 
-#### Phase 4: User Story 2 - User Registration [P]
+## Dependencies
 
-**Note:** Can run in parallel with US1 (marked [P])
-
-```
-# Tests
-[T021] [P] [US2] Write failing test: POST /auth/register with valid data creates user
-[T022] [P] [US2] Write failing test: POST /auth/register with duplicate email returns 409
-[T023] [P] [US2] Write failing test: Email verification sent on registration
-
-# Implementation
-[T024] [P] [US2] Implement registration endpoint → src/api/auth/register.ts
-     Dependencies: T021, T022, T023
-[T025] [P] [US2] Implement user creation service → src/services/user.service.ts
-     Dependencies: T024
-[T026] [P] [US2] Implement email verification service → src/services/email.service.ts
-     Dependencies: T025
-[T027] [P] [US2] Integration test: Full registration flow
-     Dependencies: T024-T026
-
-# Checkpoint
-[T028] [P] [US2] Verify: Registration works independently
-```
-
-#### Phase 5: User Story 3 - Password Reset [P]
-
-```
-# Tests
-[T029] [P] [US3] Write failing test: POST /auth/forgot-password sends reset email
-[T030] [P] [US3] Write failing test: POST /auth/reset-password with valid token updates password
-
-# Implementation
-[T031] [P] [US3] Implement forgot-password endpoint → src/api/auth/forgot-password.ts
-[T032] [P] [US3] Implement reset-password endpoint → src/api/auth/reset-password.ts
-[T033] [P] [US3] Implement reset token generation → src/services/token.service.ts
-[T034] [P] [US3] Integration test: Password reset flow
-
-# Checkpoint
-[T035] [P] [US3] Verify: Password reset works independently
-```
-
-#### Phase 6: Polish (Cross-cutting improvements)
-
-```
-[T036] [POLISH] Add comprehensive API documentation → docs/api.md
-[T037] [POLISH] Add quickstart guide → .specify/specs/001-auth/quickstart.md
-[T038] [POLISH] Create deployment checklist → .specify/specs/001-auth/checklist.md
-[T039] [POLISH] Refactor common error messages → src/lib/errors.ts
-[T040] [POLISH] Add security headers to all endpoints
-[T041] [POLISH] Add request logging middleware
-[T042] [POLISH] Final security audit with npm audit
-```
-
-## Task Dependencies
-
-Document dependencies explicitly:
-
-```yaml
 dependencies:
-  T014:  # Login endpoint
-    depends_on: [T010, T011, T012, T013]  # All tests must be written first
-  T015:  # User lookup
-    depends_on: [T014]  # Needs login endpoint structure
-  T019:  # Integration test
-    depends_on: [T014, T015, T016, T017, T018]  # All implementation complete
+  T010:  # Create endpoint
+    depends_on: [T007, T008, T009]  # All tests first
+  T012:  # Integration
+    depends_on: [T010, T011]  # All implementation done
 ```
 
-## Parallelization Strategy
+**Parallelization Rules:**
 
-Tasks marked `[P]` can run in parallel IF:
+Tasks marked `[P]` can run parallel IF:
 1. No dependencies on each other
 2. Work on different files
 3. Independently testable
 
-**Example:**
-- T001-T005 (Setup): All [P] - different infrastructure pieces
-- T024-T028 (US2) and T029-T035 (US3): Can run in parallel
-
-**Sequential:**
-- T010-T019 (US1): Must run in sequence (TDD cycle)
-- T036-T042 (Polish): Run after all user stories complete
-
-## Output
-
-Create complete `tasks.md` with:
-- All phases defined
-- All tasks with IDs, [P] markers, story tags
-- Specific file paths for implementation
-- Explicit dependencies
-- Checkpoints for independent testing
-```
-
-**Artifacts Created:**
-- `.specify/specs/001-${feature_name}/tasks.md`
-
-**No Gate:** Task breakdown approved implicitly (plan was approved)
+**Gate:** None (plan was approved)
 
 ---
 
 ### Phase 7: Implementation
 
-**BOSS Action:** Launches parallel workers based on [P] markers
+**Purpose:** Execute tasks with TDD methodology
 
 **Workers:** `developer-frontend`, `developer-backend`, `developer-fullstack`
 
 **Parallelization Logic:**
 
 ```typescript
-// BOSS analyzes tasks.md and creates execution plan
+// BOSS analyzes tasks.md for parallel execution
 
-interface Task {
-  id: string;           // T001
-  parallel: boolean;    // [P] flag
-  story: string;        // US1, US2, SETUP, etc.
-  description: string;
-  dependencies: string[];
-  filePath?: string;
-}
-
-// Group tasks by phase and parallelization
 const executionPlan = {
   phase1_setup: {
-    tasks: [T001, T002, T003, T004, T005],
+    tasks: [T001, T002, T003, T004],
     parallel: true,          // All marked [P]
-    workers: 5               // Spawn 5 workers
-  },
-
-  phase2_foundation: {
-    tasks: [T006, T007, T008, T009],
-    parallel: false,         // Sequential
-    workers: 1
+    workers: 4
   },
 
   phase3_us1: {
-    tasks: [T010-T020],
-    parallel: false,         // TDD cycle - sequential
+    tasks: [T007-T012],
+    parallel: false,         // TDD - sequential
     workers: 1,
-    worker_type: 'developer-fullstack'
+    worker_type: 'developer-backend'
   },
 
   phase4_us2: {
-    tasks: [T021-T028],
-    parallel: true,          // Can run parallel with US3
+    tasks: [T013-T015],
+    parallel: true,          // Can run with US1
     workers: 1,
     worker_type: 'developer-backend'
-  },
-
-  phase4_us3: {
-    tasks: [T029-T035],
-    parallel: true,          // Can run parallel with US2
-    workers: 1,
-    worker_type: 'developer-backend'
-  },
-
-  phase6_polish: {
-    tasks: [T036-T042],
-    parallel: false,         // After all stories
-    workers: 1
   }
 };
 ```
 
-**Worker Assignment:**
-
-BOSS assigns workers based on task requirements:
+**TDD Cycle (Example: US1):**
 
 ```typescript
-// Analyze task to determine required skills
-function getRequiredSkills(task: Task): string[] {
-  const skills: string[] = [];
-
-  if (task.filePath?.includes('frontend/') || task.filePath?.includes('components/')) {
-    skills.push('react', 'nextjs', 'tailwind');
-  }
-
-  if (task.filePath?.includes('backend/') || task.filePath?.includes('api/')) {
-    skills.push('nodejs', 'api-design', 'prisma');
-  }
-
-  if (task.filePath?.includes('models/') || task.filePath?.includes('database/')) {
-    skills.push('database', 'prisma', 'postgres');
-  }
-
-  if (task.story === 'SETUP') {
-    skills.push('devops', 'infrastructure');
-  }
-
-  return skills;
-}
-
-// Select worker with matching skills
-function selectWorker(skills: string[]): WorkerType {
-  const hasReact = skills.includes('react');
-  const hasNode = skills.includes('nodejs');
-
-  if (hasReact && hasNode) return 'developer-fullstack';
-  if (hasReact) return 'developer-frontend';
-  if (hasNode) return 'developer-backend';
-
-  return 'developer-fullstack';  // Default
-}
-```
-
-**Worker Prompt (Example: Developer-Fullstack for US1):**
-
-```markdown
-# Developer - User Story 1: User Authentication
-
-You are implementing User Story 1 following Test-Driven Development.
-
-## Context
-
-- **Feature**: User Authentication
-- **Spec**: ${spec_md}
-- **Plan**: ${plan_md}
-- **Tasks**: T010-T020 (Login flow)
-- **Constitution**: ${constitution}
-- **Similar implementations**: ${similar_code_patterns}
-
-## Your Tasks (Sequential TDD)
-
-### 1. Write Tests FIRST [T010-T013]
-
-**T010:** Write failing test for valid login
-```typescript
-// tests/api/auth/login.test.ts
-describe('POST /auth/login', () => {
-  it('returns 200 + token with valid credentials', async () => {
-    // Arrange
-    const user = await createTestUser({
-      email: 'test@example.com',
-      password: 'Password123!',
-      verified: true
-    });
-
-    // Act
+// 1. Write failing test [T007]
+describe('POST /api/tasks', () => {
+  it('creates task with valid data', async () => {
     const response = await request(app)
-      .post('/auth/login')
+      .post('/api/tasks')
       .send({
-        email: 'test@example.com',
-        password: 'Password123!'
+        title: 'Test task',
+        description: 'Test description',
+        assignee_id: testUser.id
       });
 
-    // Assert
-    expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty('token');
-    expect(response.body.token).toBeTruthy();
+    expect(response.status).toBe(201);
+    expect(response.body).toHaveProperty('id');
   });
 });
-```
+// Run: ❌ FAIL (endpoint doesn't exist)
 
-Run test: ❌ FAIL (endpoint doesn't exist)
+// 2. Write more failing tests [T008, T009]
+// All tests fail
 
-**T011:** Write failing test for invalid password
-```typescript
-it('returns 401 with invalid password', async () => {
-  await createTestUser({
-    email: 'test@example.com',
-    password: 'Password123!'
+// 3. Implement to make tests pass [T010]
+export async function createTask(req: Request, res: Response) {
+  const { title, description, assignee_id } = req.body;
+
+  const task = await prisma.task.create({
+    data: { title, description, assignee_id }
   });
 
-  const response = await request(app)
-    .post('/auth/login')
-    .send({
-      email: 'test@example.com',
-      password: 'WrongPassword'
-    });
-
-  expect(response.status).toBe(401);
-  expect(response.body.error).toBe('Invalid credentials');
-});
-```
-
-Run test: ❌ FAIL
-
-**T012:** Write failing test for unverified email
-
-**T013:** Write failing test for rate limiting
-
-### 2. Implement to Make Tests Pass [T014-T018]
-
-**T014:** Implement login endpoint
-```typescript
-// src/api/auth/login.ts
-export async function loginHandler(req: Request, res: Response) {
-  const { email, password } = req.body;
-
-  // Will implement in next tasks
-  const user = await findUserByEmail(email);  // T015
-  const isValid = await verifyPassword(password, user.password_hash);  // T016
-  const token = await generateToken(user);  // T017
-
-  return res.json({ token });
+  return res.status(201).json(task);
 }
-```
+// Run: ✅ PASS (basic test passes)
 
-Run tests: ❌ FAIL (services not implemented)
-
-**T015:** Implement user lookup service
-```typescript
-// src/services/user.service.ts
-export async function findUserByEmail(email: string) {
-  return await prisma.user.findUnique({
-    where: { email }
-  });
+// 4. Add validation [T011]
+export async function validateTask(data: TaskInput) {
+  if (!data.title) throw new Error('Title required');
+  // ... more validation
 }
+// Run: ✅ ALL PASS
+
+// 5. Integration test [T012]
+// Tests full flow with real database
+// Run: ✅ PASS
 ```
 
-Run tests: ❌ FAIL (password verification not implemented)
-
-**T016:** Implement password verification
-```typescript
-// src/services/auth.service.ts
-import bcrypt from 'bcryptjs';
-
-export async function verifyPassword(
-  password: string,
-  hash: string
-): Promise<boolean> {
-  return await bcrypt.compare(password, hash);
-}
-```
-
-Run tests: ❌ FAIL (token generation not implemented)
-
-**T017:** Implement JWT token generation
-```typescript
-// src/lib/jwt.ts
-import jwt from 'jsonwebtoken';
-
-export async function generateToken(user: User): Promise<string> {
-  return jwt.sign(
-    { userId: user.id, email: user.email },
-    process.env.JWT_SECRET!,
-    { expiresIn: '24h' }
-  );
-}
-```
-
-Run tests: ✅ PASS (tests T010, T011 passing)
-
-**T018:** Implement rate limiting
-```typescript
-// src/middleware/rate-limit.ts
-import rateLimit from 'express-rate-limit';
-
-export const loginRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,  // 15 minutes
-  max: 5,                     // 5 requests
-  message: 'Too many login attempts'
-});
-```
-
-Run tests: ✅ ALL PASS (T010-T013)
-
-### 3. Integration Test [T019]
-
-```typescript
-// tests/integration/auth-flow.test.ts
-describe('Authentication Flow', () => {
-  it('complete login flow with database', async () => {
-    // Create user in real test database
-    const user = await prisma.user.create({
-      data: {
-        email: 'integration@test.com',
-        password_hash: await bcrypt.hash('Password123!', 10),
-        verified: true
-      }
-    });
-
-    // Test full flow
-    const response = await request(app)
-      .post('/auth/login')
-      .send({
-        email: 'integration@test.com',
-        password: 'Password123!'
-      });
-
-    expect(response.status).toBe(200);
-
-    // Verify token is valid
-    const decoded = jwt.verify(response.body.token, process.env.JWT_SECRET!);
-    expect(decoded.userId).toBe(user.id);
-
-    // Verify session created in database
-    const session = await prisma.session.findFirst({
-      where: { userId: user.id }
-    });
-    expect(session).toBeTruthy();
-  });
-});
-```
-
-Run: ✅ PASS
-
-### 4. Checkpoint [T020]
-
-Verify independently deployable:
-- [ ] All tests passing (unit + integration)
-- [ ] Coverage ≥ 80%
-- [ ] Can start auth service standalone
-- [ ] Can test login flow end-to-end
-- [ ] Mutation score ≥ 80%
-
-Run quality gate checks:
-```bash
-pnpm typecheck  # ✅
-pnpm lint       # ✅
-pnpm test       # ✅ 47 tests passing
-pnpm coverage   # ✅ 89% coverage
-pnpm mutation   # ✅ 84% mutation score
-```
-
-## Constitution Compliance
-
-Your implementation MUST follow:
-- ✅ Test-First (NON-NEGOTIABLE): Tests written before implementation
-- ✅ TDD Cycle: Red → Green → Refactor
-- ✅ Coverage: ≥80% (achieved 89%)
-- ✅ Mutation: ≥80% (achieved 84%)
-- ✅ Tech Stack: Only allowed dependencies
-- ✅ Code Quality: ESLint passing
-
-## Output
-
-When complete:
-1. Create PR for User Story 1
-2. Include test results in PR description
-3. Include coverage report
-4. Link to spec.md and tasks.md
-5. Tag checkpoint: ✅ T020
-
-Then report to BOSS:
-```yaml
-worker_id: worker_001
-status: completed
-user_story: US1
-tasks_completed: [T010, T011, T012, T013, T014, T015, T016, T017, T018, T019, T020]
-pr_number: 2
-test_results:
-  total: 47
-  passing: 47
-  failing: 0
-  coverage: 89%
-  mutation: 84%
-quality_gate: PASSED
-```
-```
-
-**Artifacts Created:**
-- Implementation code (src/)
-- Test code (tests/)
-- Integration tests (tests/integration/)
-- Coverage reports
-- PR with implementation
-
-**Quality Gate (Automatic):**
-
-Each worker must pass quality gates before PR:
+**Quality Gate (Per Worker):**
 
 ```
-Quality Gate: User Story 1 Implementation
+Quality Gate: US1 Implementation
 
 Running checks...
   ✅ TypeCheck: 0 errors
   ✅ Lint: 0 warnings
-  ✅ Tests: 47/47 passing
-  ✅ Coverage: 89% (required: 80%)
-  ✅ Mutation: 84% (required: 80%)
+  ✅ Tests: 24/24 passing
+  ✅ Coverage: 87% (required: 80%)
+  ✅ Mutation: 82% (required: 80%)
   ✅ Security: 0 vulnerabilities
   ✅ Build: successful
 
 Quality Gate: PASSED ✅
 
-Creating PR #2: User Story 1 - User Authentication
+Creating PR #2: User Story 1 - Task Creation
 ```
+
+**Gate:** Automatic per worker (must pass before PR)
 
 ---
 
 ### Phase 8: Consolidation
 
-**BOSS Action:** Spawns Consolidator worker to merge all branches
+**Purpose:** Merge all work and create final artifacts
 
 **Worker:** `consolidator`
 
 **Input:**
-- All worker PRs (PR #2, #3, #4, ...)
-- tasks.md with checkpoints
-- Constitution.md
+- All worker PRs
+- tasks.md
+- Constitution
 
-**Worker Prompt:**
-```markdown
-# Consolidator
+**Tasks:**
 
-You merge parallel work and ensure everything integrates correctly.
+1. **Merge Branches**
+   ```bash
+   git checkout -b integration/run_001
+   git merge container-use/worker_001  # US1
+   git merge container-use/worker_002  # US2
+   # Resolve conflicts if any
+   ```
 
-## Input
+2. **Integration Tests**
+   ```typescript
+   // Test complete system
+   describe('Complete Task Management', () => {
+     it('supports full task lifecycle', async () => {
+       // Create task
+       const createRes = await request(app)
+         .post('/api/tasks')
+         .send({ title: 'Test', assignee_id: user.id });
 
-- Worker PRs: ${prs}
-- Tasks: ${tasks_md}
-- Constitution: ${constitution}
+       // Assign task
+       const assignRes = await request(app)
+         .post(`/api/tasks/${createRes.body.id}/assign`)
+         .send({ assignee_id: newUser.id });
 
-## Your Tasks
+       // Verify in database
+       const task = await prisma.task.findUnique({
+         where: { id: createRes.body.id }
+       });
+       expect(task.assignee_id).toBe(newUser.id);
+     });
+   });
+   ```
 
-### 1. Merge Branches
+3. **Create Final Artifacts**
 
-Merge all worker branches into integration branch:
+   **quickstart.md:**
+   ```markdown
+   # Task Management - Quick Start
 
-```bash
-git checkout -b integration/run_${run_id}
-git merge container-use/worker_001  # US1
-git merge container-use/worker_002  # US2
-git merge container-use/worker_003  # US3
-```
+   ## Prerequisites
+   - Node.js 22+
+   - PostgreSQL 16
 
-### 2. Resolve Conflicts
+   ## Setup
+   1. `pnpm install`
+   2. Copy `.env.example` to `.env`
+   3. `pnpm prisma migrate dev`
+   4. `pnpm dev`
 
-If conflicts, analyze and resolve:
-- Prefer newer implementation if both valid
-- Consult knowledge base for patterns
-- Maintain constitutional compliance
-- Document resolution in commit message
+   ## Test
+   ```bash
+   curl -X POST http://localhost:3000/api/tasks \
+     -H "Content-Type: application/json" \
+     -d '{"title":"Test task","assignee_id":"..."}'
+   ```
 
-### 3. Integration Tests
+   Expected: `{"id":"...","title":"Test task",...}`
+   ```
 
-Run full integration test suite:
+   **checklist.md:**
+   ```markdown
+   # Quality Checklist
 
-```typescript
-// tests/integration/complete-auth-flow.test.ts
-describe('Complete Authentication System', () => {
-  it('supports full user lifecycle', async () => {
-    // Register
-    const registerRes = await request(app)
-      .post('/auth/register')
-      .send({ email: 'user@test.com', password: 'Pass123!' });
+   ## Code Quality
+   - [x] TypeScript strict mode
+   - [x] ESLint passing (0 errors)
+   - [x] No `any` types
 
-    expect(registerRes.status).toBe(201);
+   ## Testing
+   - [x] Unit tests: 47/47 passing
+   - [x] Integration: 12/12 passing
+   - [x] E2E: 5/5 passing
+   - [x] Coverage: 89% (≥80%)
+   - [x] Mutation: 84% (≥80%)
 
-    // Verify email (mock)
-    await verifyEmail(registerRes.body.userId);
+   ## Security
+   - [x] npm audit: 0 vulnerabilities
+   - [x] Input validation on all endpoints
+   - [x] SQL injection prevention (Prisma)
 
-    // Login
-    const loginRes = await request(app)
-      .post('/auth/login')
-      .send({ email: 'user@test.com', password: 'Pass123!' });
+   ## Documentation
+   - [x] API documented (OpenAPI)
+   - [x] README complete
+   - [x] Quickstart guide
+   ```
 
-    expect(loginRes.status).toBe(200);
-    expect(loginRes.body.token).toBeTruthy();
+4. **Final Quality Gate**
+   ```bash
+   pnpm typecheck      # ✅
+   pnpm lint           # ✅
+   pnpm test           # ✅ 64 tests
+   pnpm coverage       # ✅ 89%
+   pnpm mutation       # ✅ 84%
+   pnpm build          # ✅
+   ```
 
-    // Password reset flow
-    const forgotRes = await request(app)
-      .post('/auth/forgot-password')
-      .send({ email: 'user@test.com' });
+5. **Create Main PR**
+   ```
+   PR #7: Complete Task Management Feature
 
-    expect(forgotRes.status).toBe(200);
+   Summary:
+   - 2 user stories implemented
+   - 24 tasks completed
+   - 64 tests (all passing)
+   - 89% coverage
+   - 84% mutation score
 
-    // Verify all database records created correctly
-    const user = await prisma.user.findUnique({
-      where: { email: 'user@test.com' },
-      include: { sessions: true }
-    });
+   Individual PRs:
+   - PR #2: Task Creation ✅
+   - PR #3: Task Assignment ✅
 
-    expect(user).toBeTruthy();
-    expect(user.sessions.length).toBeGreaterThan(0);
-  });
-});
-```
+   Documentation:
+   - Quickstart: .specify/specs/001-tasks/quickstart.md
+   - Checklist: .specify/specs/001-tasks/checklist.md
 
-### 4. Create Final Artifacts
-
-**quickstart.md**
-```markdown
-# Authentication Service - Quick Start
-
-## Prerequisites
-- Node.js 22+
-- PostgreSQL 16
-- Redis 7
-
-## Setup
-
-1. Clone repository
-2. Install dependencies: `pnpm install`
-3. Copy `.env.example` to `.env`
-4. Start database: `docker-compose up -d`
-5. Run migrations: `pnpm prisma migrate dev`
-6. Start service: `pnpm dev`
-
-## Testing
-
-Run: `curl -X POST http://localhost:3000/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"Password123!"}'`
-
-Expected: `{"token":"eyJ..."}`
-
-## API Documentation
-
-See `docs/api.md` or visit http://localhost:3000/docs
-```
-
-**checklist.md**
-```markdown
-# Authentication Service - Quality Checklist
-
-## Code Quality
-- [x] All TypeScript types defined
-- [x] No `any` types used
-- [x] ESLint passing (0 errors, 0 warnings)
-- [x] Prettier formatted
-
-## Testing
-- [x] Unit tests: 47 tests, 100% passing
-- [x] Integration tests: 12 tests, 100% passing
-- [x] E2E tests: 5 tests, 100% passing
-- [x] Coverage: 89% (requirement: 80%)
-- [x] Mutation score: 84% (requirement: 80%)
-
-## Security
-- [x] npm audit: 0 vulnerabilities
-- [x] Passwords hashed with bcrypt
-- [x] JWT tokens secure (httpOnly, secure flags)
-- [x] Rate limiting implemented
-- [x] Input validation on all endpoints
-- [x] SQL injection prevention (Prisma ORM)
-
-## Documentation
-- [x] API documented (OpenAPI spec)
-- [x] README.md complete
-- [x] Quickstart guide created
-- [x] Deployment guide included
-
-## Performance
-- [x] Login endpoint: <100ms avg
-- [x] Database queries optimized
-- [x] Connection pooling configured
-- [x] Load tested: 1000 concurrent users
-
-## Constitution Compliance
-- [x] Test-First methodology followed
-- [x] All allowed technologies used
-- [x] Architectural principles followed
-- [x] Quality gates passed
-```
-
-### 5. Final Quality Gate
-
-Run complete quality check:
-
-```bash
-pnpm typecheck      # All types valid
-pnpm lint           # 0 errors
-pnpm test           # All tests passing
-pnpm test:e2e       # E2E tests passing
-pnpm coverage       # ≥80%
-pnpm mutation       # ≥80%
-pnpm audit          # 0 vulnerabilities
-pnpm build          # Successful
-```
-
-### 6. Create Main PR
-
-Create consolidated PR with:
-- All user stories implemented
-- All quality gates passed
-- Quickstart guide
-- Quality checklist
-- API documentation
-- Link to all individual PRs
-- Link to spec.md, plan.md, tasks.md
-
-## Output
-
-```yaml
-consolidation_result:
-  status: completed
-  integration_branch: integration/run_2024_001
-  merged_prs: [2, 3, 4]
-  conflicts_resolved: 0
-
-  tests:
-    unit: 47 passing
-    integration: 12 passing
-    e2e: 5 passing
-    total_coverage: 89%
-    mutation_score: 84%
-
-  artifacts:
-    - .specify/specs/001-auth/quickstart.md
-    - .specify/specs/001-auth/checklist.md
-    - docs/api.md
-
-  quality_gate: PASSED
-
-  main_pr: 7
-  main_pr_url: https://github.com/user/my-app/pull/7
-```
-```
-
-**Artifacts Created:**
-- `.specify/specs/001-${feature_name}/quickstart.md`
-- `.specify/specs/001-${feature_name}/checklist.md`
-- `docs/api.md` (or other documentation)
-- Main PR with all implementations
+   Preview: https://my-app-pr7.vercel.app
+   ```
 
 **Gate:** **GATE 2 - Human Review**
 
+User reviews PR with all artifacts and approves.
+
+---
+
+## Worker Implementation
+
+### Worker Selection
+
+BOSS selects workers based on task requirements:
+
+```typescript
+function selectWorker(task: Task): WorkerType {
+  const skills = analyzeTaskSkills(task);
+
+  const hasReact = skills.includes('react');
+  const hasNode = skills.includes('nodejs');
+  const hasDB = skills.includes('database');
+
+  if (hasReact && hasNode) return 'developer-fullstack';
+  if (hasReact) return 'developer-frontend';
+  if (hasNode || hasDB) return 'developer-backend';
+
+  return 'developer-fullstack';  // Default
+}
+
+function analyzeTaskSkills(task: Task): string[] {
+  const skills = [];
+
+  if (task.filePath?.includes('components/')) {
+    skills.push('react', 'nextjs', 'tailwind');
+  }
+
+  if (task.filePath?.includes('api/')) {
+    skills.push('nodejs', 'api-design');
+  }
+
+  if (task.filePath?.includes('models/')) {
+    skills.push('database', 'prisma');
+  }
+
+  return skills;
+}
 ```
-BOSS: 🚦 GATE 2: Implementation Review
 
-I've completed the implementation of ${feature_name}!
+### Worker Prompts
 
-📊 Summary:
-   - 3 user stories implemented
-   - 42 tasks completed
-   - 64 tests written (all passing)
-   - 89% code coverage
-   - 84% mutation score
-   - 0 security vulnerabilities
+Each worker receives detailed context:
 
-Individual PRs:
-   - PR #2: User Story 1 - Login ✅
-   - PR #3: User Story 2 - Registration ✅
-   - PR #4: User Story 3 - Password Reset ✅
+```markdown
+# Developer - User Story 1: Task Creation
 
-Main PR: PR #7 (consolidated)
-👉 https://github.com/user/my-app/pull/7
+## Context
+- Feature: Task Management
+- Spec: [spec.md content]
+- Plan: [plan.md content]
+- Tasks: T007-T012
+- Constitution: [constitution principles]
+- Similar code: [patterns from knowledge base]
 
-Preview Deployment:
-👉 https://my-app-pr7.vercel.app
+## Your Tasks (TDD Cycle)
 
-Documentation:
-   - Quickstart: .specify/specs/001-auth/quickstart.md
-   - Checklist: .specify/specs/001-auth/checklist.md
-   - API Docs: docs/api.md
+### 1. Write Tests FIRST [T007-T009]
+[Failing test examples...]
 
-Quality Checklist:
-   ✅ All tests passing
-   ✅ Coverage ≥ 80%
-   ✅ Mutation score ≥ 80%
-   ✅ No security vulnerabilities
-   ✅ Constitution compliant
-   ✅ Documentation complete
+### 2. Implement [T010-T011]
+[Implementation to make tests pass...]
 
-Please review and approve to merge!
+### 3. Integration Test [T012]
+[Full flow test...]
+
+### 4. Checkpoint
+- [ ] All tests passing
+- [ ] Coverage ≥ 80%
+- [ ] Can deploy independently
+- [ ] Mutation score ≥ 80%
+
+## Constitution Compliance
+- ✅ Test-First (NON-NEGOTIABLE)
+- ✅ TDD Cycle: Red → Green → Refactor
+- ✅ Coverage ≥ 80%
+- ✅ Allowed tech stack only
+
+## Output
+When complete:
+1. Create PR
+2. Include test results
+3. Link to spec/tasks
 ```
 
 ---
 
-## Complete Spec-Kit Integration Summary
+## Quality Gates
 
-### Artifacts Created Throughout Workflow
+### Gate Types
+
+| Gate | Type | Phase | Trigger |
+|------|------|-------|---------|
+| **Gate 1** | Human | After Specification | Manual PR approval |
+| **Auto-Gate** | Automated | After Validation | Automatic (3 retries) |
+| **Worker Gates** | Automated | During Implementation | Per worker completion |
+| **Gate 2** | Human | After Consolidation | Manual PR approval |
+
+### Quality Checks
+
+**Every Worker Must Pass:**
+
+```yaml
+TypeCheck:
+  command: pnpm typecheck
+  threshold: 0 errors
+
+Lint:
+  command: pnpm lint
+  threshold: 0 errors, 0 warnings
+
+Tests:
+  command: pnpm test
+  threshold: 100% passing
+
+Coverage:
+  command: pnpm coverage
+  threshold: ≥ 80%
+
+Mutation:
+  command: pnpm mutation
+  threshold: ≥ 80%
+
+Security:
+  command: pnpm audit
+  threshold: 0 high/critical vulnerabilities
+
+Build:
+  command: pnpm build
+  threshold: successful
+```
+
+### Retry Strategy
 
 ```
-.specify/
-├── memory/
-│   └── constitution.md                        [Phase 1: Constitution]
-│
-├── specs/
-│   └── 001-user-authentication/
-│       ├── spec.md                            [Phase 3: Specification]
-│       ├── plan.md                            [Phase 4: Planning]
-│       ├── data-model.md                      [Phase 4: Planning]
-│       ├── contracts/
-│       │   └── auth-api.yaml                  [Phase 4: Planning]
-│       ├── research.md                        [Phase 4: Planning, if needed]
-│       ├── validation-report.md               [Phase 5: Validation]
-│       ├── tasks.md                           [Phase 6: Task Breakdown]
-│       ├── quickstart.md                      [Phase 8: Consolidation]
-│       └── checklist.md                       [Phase 8: Consolidation]
-│
-├── scripts/
-│   ├── check-prerequisites.sh                 [Phase 0: Bootstrap]
-│   ├── common.sh                              [Phase 0: Bootstrap]
-│   ├── create-new-feature.sh                  [Phase 0: Bootstrap]
-│   ├── setup-plan.sh                          [Phase 0: Bootstrap]
-│   └── update-claude-md.sh                    [Phase 0: Bootstrap]
-│
-└── templates/
-    ├── spec-template.md                       [Phase 0: Bootstrap]
-    ├── plan-template.md                       [Phase 0: Bootstrap]
-    ├── tasks-template.md                      [Phase 0: Bootstrap]
-    └── checklist-template.md                  [Phase 0: Bootstrap]
+Worker fails quality gate
+  ↓
+Analyze failure:
+- What checks failed?
+- Why did they fail?
+- What needs improvement?
+  ↓
+Create improved prompt:
+"PREVIOUS ATTEMPT FAILED:
+- Coverage was 76% (need ≥80%)
+- Missing tests for error cases
+
+THIS TIME:
+- Write tests for all edge cases
+- Test error handling thoroughly
+- Aim for 85%+ coverage"
+  ↓
+Delete failed environment
+  ↓
+Spawn NEW worker with improved prompt
+  ↓
+Retry (max 3 attempts)
+  ↓
+Still failing?
+  → Escalate to human
 ```
 
-### Spec-Kit Principles Enforced by BOSS
+---
+
+## Reference
+
+### Complete Artifact List
+
+```
+Phase 0: Bootstrap
+├─ .specify/memory/ (directory)
+├─ .specify/specs/ (directory)
+├─ .specify/scripts/ (automation)
+└─ .specify/templates/ (spec-kit templates)
+
+Phase 1: Constitution
+└─ .specify/memory/constitution.md
+
+Phase 2: Clarification
+└─ .specify/specs/000-requirements/clarification.md
+
+Phase 3: Specification
+└─ .specify/specs/001-feature/spec.md
+
+Phase 4: Planning
+├─ .specify/specs/001-feature/plan.md
+├─ .specify/specs/001-feature/data-model.md
+├─ .specify/specs/001-feature/contracts/
+└─ .specify/specs/001-feature/research.md (if needed)
+
+Phase 5: Validation
+└─ .specify/specs/001-feature/validation-report.md
+
+Phase 6: Task Breakdown
+└─ .specify/specs/001-feature/tasks.md
+
+Phase 7: Implementation
+├─ src/ (implementation code)
+├─ tests/ (test code)
+└─ Multiple PRs (one per worker)
+
+Phase 8: Consolidation
+├─ .specify/specs/001-feature/quickstart.md
+├─ .specify/specs/001-feature/checklist.md
+└─ Main PR (consolidated)
+```
+
+### Spec-Kit Principles Enforced
 
 | Principle | How BOSS Enforces |
 |-----------|-------------------|
-| **Specifications are executable** | Spec.md drives entire implementation, not just guides it |
-| **Test-First (NON-NEGOTIABLE)** | Constitution enforces TDD, quality gates verify |
-| **Multi-step refinement** | Seven sequential phases, not one-shot generation |
-| **Independent testability** | Each user story has checkpoint, can deploy standalone |
-| **Dependency-ordered tasks** | Tasks.md with explicit dependencies, BOSS respects order |
-| **Parallelization** | [P] markers in tasks.md, BOSS spawns parallel workers |
-| **Constitution governs** | All phases validated against constitution.md |
-| **Continuous dialogue** | Human gates at planning and review, not fire-and-forget |
+| **Specifications executable** | spec.md drives entire implementation |
+| **Test-First mandatory** | Constitution enforces, quality gates verify |
+| **Multi-step refinement** | 8 sequential phases |
+| **Independent testability** | Checkpoints in each user story |
+| **Dependency-ordered** | tasks.md with explicit dependencies |
+| **Parallelization** | `[P]` markers → parallel workers |
+| **Constitution governs** | All phases validated against constitution |
+| **Human governance** | Strategic gates (planning, review) |
+
+### Key Innovations
+
+1. **Automated Phase Progression**
+   - Traditional: Manual `/speckit.*` commands
+   - BOSS: Automatic worker progression
+
+2. **Parallel Execution**
+   - Traditional: Sequential by single dev
+   - BOSS: Multiple workers based on `[P]` markers
+
+3. **Knowledge Base**
+   - Traditional: Each project from scratch
+   - BOSS: Learn from similar projects
+
+4. **Constitutional Compliance**
+   - Traditional: Manual validation
+   - BOSS: Automated with retry
+
+5. **Quality Gates**
+   - Traditional: Manual checks
+   - BOSS: Automated (type/lint/test/coverage/mutation)
+
+6. **Cross-Project Learning**
+   - Traditional: Patterns stay in project
+   - BOSS: All indexed in knowledge base
+
+### Benefits Summary
+
+1. **Consistency** - Every project follows same structure
+2. **Quality** - Constitution enforced automatically
+3. **Speed** - Parallel workers finish faster
+4. **Learning** - Knowledge compounds across projects
+5. **Traceability** - Complete audit trail (spec → code)
+6. **Reproducibility** - Can replay from artifacts
+7. **Governance** - Human approval at strategic points
+8. **Automation** - Remove toil, keep oversight
+
+### Task Format Reference
+
+```
+[ID] [P?] [Story] Description with file paths
+
+Components:
+- [T001]     → Unique task identifier
+- [P]        → Parallel flag (optional)
+- [SETUP]    → Story tag (SETUP, US1, US2, POLISH, FOUNDATION)
+- Initialize → Action description
+- → path.ts  → File path (optional but recommended)
+
+Examples:
+[T001] [P] [SETUP] Initialize database → prisma/schema.prisma
+[T005] [US1] Write failing test → tests/api/tasks.test.ts
+[T006] [US1] Implement endpoint → src/api/tasks.ts
+[T010] [P] [US2] Write tests → tests/api/assign.test.ts
+[T015] [POLISH] Add documentation → docs/api.md
+```
+
+### Dependencies Format
+
+```yaml
+dependencies:
+  T006:  # Task ID
+    depends_on: [T005]  # Must complete T005 first
+
+  T012:  # Integration test
+    depends_on: [T006, T007, T008]  # All implementation done
+```
 
 ---
 
-## Key Innovations in BOSS's Spec-Kit Automation
+## Summary
 
-### 1. Automated Phase Progression
+**BOSS + Spec-Kit provides automated, spec-driven development:**
 
-**Traditional Spec-Kit:** Human manually runs slash commands
-**BOSS:** Automatically progresses through phases with workers
+1. ✅ **8 Automated Phases** - From constitution to consolidation
+2. ✅ **Parallel Execution** - Based on `[P]` markers in tasks
+3. ✅ **TDD Enforced** - Tests before implementation (non-negotiable)
+4. ✅ **Quality Gates** - Automated validation at every phase
+5. ✅ **Knowledge Base** - Learn from similar projects
+6. ✅ **Human Governance** - Approval at strategic decision points
+7. ✅ **Complete Traceability** - Audit trail from spec to code
+8. ✅ **Constitutional Compliance** - All work validated against principles
 
-### 2. Parallel Worker Execution
-
-**Traditional Spec-Kit:** Sequential implementation by single developer
-**BOSS:** Analyzes [P] markers and spawns parallel workers for independent user stories
-
-### 3. Knowledge Base Integration
-
-**Traditional Spec-Kit:** Each project starts from scratch
-**BOSS:** Queries knowledge base for similar specs, plans, patterns
-
-### 4. Constitutional Compliance Automation
-
-**Traditional Spec-Kit:** Human ensures compliance
-**BOSS:** Auto-gate validates every plan against constitution with retry
-
-### 5. Quality Gates Integration
-
-**Traditional Spec-Kit:** Manual quality checks
-**BOSS:** Automated quality gates (typecheck, lint, test, coverage, mutation, security)
-
-### 6. Cross-Project Learning
-
-**Traditional Spec-Kit:** Patterns stay within project
-**BOSS:** All specs, plans, patterns indexed in knowledge base for future projects
+**Spec-Kit provides the methodology. BOSS makes it autonomous.** 🚀
 
 ---
 
-## Benefits of BOSS + Spec-Kit Integration
-
-1. **Consistency:** Every project follows exact same Spec-Kit structure
-2. **Quality:** Constitutional principles enforced automatically
-3. **Speed:** Parallel workers complete implementation faster
-4. **Learning:** Knowledge compounds across projects
-5. **Traceability:** Complete audit trail from spec → plan → tasks → code
-6. **Reproducibility:** Can replay entire workflow from spec-kit artifacts
-7. **Governance:** Human approval at strategic gates (planning, review)
-8. **Automation:** Removes manual toil, but keeps human oversight
-
----
-
-## Next Steps for BOSS Implementation
-
-To fully automate Spec-Kit, BOSS needs:
-
-### 1. Spec-Kit Template Integration
-- Include all spec-kit templates in bootstrap
-- Customize templates based on project type
-- Pre-populate constitution based on tech stack policy
-
-### 2. Worker Prompts
-- Create detailed prompts for each phase
-- Include spec-kit structure knowledge
-- Enforce template compliance
-
-### 3. Quality Gate Integration
-- Validate all artifacts against templates
-- Check constitution compliance automatically
-- Verify independent testability at checkpoints
-
-### 4. Task Execution Engine
-- Parse tasks.md for dependencies
-- Respect parallelization markers [P]
-- Spawn workers based on required skills
-- Enforce TDD cycle (tests before implementation)
-
-### 5. Knowledge Base Enhancement
-- Index all spec-kit artifacts
-- Enable semantic search across specs, plans, tasks
-- Surface similar patterns to workers
-- Learn from successful implementations
-
----
-
-This integration makes Spec-Kit **executable and autonomous** while maintaining its core principles of specification-driven development, test-first methodology, and human governance at strategic decision points.
+**Next:** See [BOSS-CONTAINER-USE-INTEGRATION.md](./BOSS-CONTAINER-USE-INTEGRATION.md) for how workers execute securely in isolated environments with secret management.

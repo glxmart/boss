@@ -1,206 +1,530 @@
 # BOSS + Container-Use Integration
 
-## How BOSS Leverages Container-Use for Isolated Agent Execution
+**How BOSS executes AI workers in secure, isolated environments**
 
-This document details how BOSS (Business-Orchestrated Software System) uses **container-use** to execute AI workers in isolated, secure, and observable environments with proper secret management.
+This document explains how BOSS uses **container-use** to run AI workers safely with complete isolation, secure secret management, and full observability.
 
 ---
 
-## Container-Use Overview
+## Table of Contents
 
-**Container-Use** is a system for running AI agents in isolated Docker containers with dedicated Git branches, enabling safe experimentation and clean separation of work.
+1. [Quick Start](#quick-start)
+2. [Core Concepts](#core-concepts)
+3. [Architecture](#architecture)
+4. [Secret Management](#secret-management)
+5. [Worker Configuration](#worker-configuration)
+6. [Worker Lifecycle](#worker-lifecycle)
+7. [Security Best Practices](#security-best-practices)
+8. [Troubleshooting](#troubleshooting)
+9. [Reference](#reference)
 
-### Core Concepts
+---
+
+## Quick Start
+
+### The 30-Second Overview
+
+**BOSS runs on your host. Workers run in containers.**
 
 ```
 ┌─────────────────────────────────────────┐
-│    Container-Use Environment            │
-├─────────────────────────────────────────┤
+│  BOSS (Host Machine)                    │
+│  Claude Code/Cursor + MCP Servers       │
 │                                         │
-│  Git Branch: container-use/env-abc123  │
-│  Container: Isolated Docker runtime    │
-│  History: Complete command log          │
-│  Secrets: Injected via environment vars │
+│  ✅ Orchestrates via MCPs               │
+│  ❌ NO direct file/code/git execution   │
+└──────────────┬──────────────────────────┘
+               │
+               │ Spawns Workers
+               ▼
+┌─────────────────────────────────────────┐
+│  Workers (Docker Containers)            │
 │                                         │
+│  ✅ ALL file/code/shell/git operations  │
+│  ✅ Isolated branch per worker          │
+│  ✅ Secrets from 1Password              │
+│  ✅ Complete command history logged     │
 └─────────────────────────────────────────┘
 ```
 
-**Key Properties:**
-1. **Isolation** - Each environment has its own branch and container
-2. **Observability** - Complete history of commands and changes
-3. **Disposability** - Can be deleted and recreated easily
-4. **Security** - Secrets injected, never exposed to AI models
-5. **Reproducibility** - Full audit trail of all work
+### Key Benefits
 
-### Container-Use Workflow
+- ✅ **Isolated execution** - Each worker in own container + Git branch
+- ✅ **Secure secrets** - 1Password integration, AI never sees values
+- ✅ **Full observability** - Complete command history
+- ✅ **Agent discovery** - Workers identify and document credential needs
+- ✅ **Parallel execution** - Multiple workers without conflicts
 
-```
-1. Create Environment (with "Dangerous" Mode)
-   └─► New Git branch + Docker container spawned
-   └─► Worker has FULL permissions inside container
-   └─► BOSS configures egress rules (network restrictions)
+### Essential Files (Created by Bootstrap)
 
-2. Execute Work
-   └─► Agent runs commands in isolated container
-   └─► Can execute any command, install any tool
-   └─► Limited to configured external API access
+When you run `boss bootstrap`, these files are created:
 
-3. Observe Results
-   ├─► container-use log <env-id>      # Command history
-   ├─► container-use diff <env-id>     # Code changes
-   └─► container-use terminal <env-id> # Interactive inspection
+| File | Purpose |
+|------|---------|
+| `CLAUDE.md` | BOSS operational constraints (MUST follow) |
+| `start-boss.sh` | Launches BOSS with MCP-only access |
+| `.container-use/environment.json` | Default worker configuration |
 
-4. Make Decision
-   ├─► container-use merge <env-id>    # Accept work
-   ├─► Resume with same env-id         # Iterate
-   └─► container-use delete <env-id>   # Discard
-```
+---
 
-### "Dangerous" Mode Explained
+## Core Concepts
 
-**Workers run with full permissions inside their isolated containers:**
-- ✅ Can execute any shell command (`sudo`, `rm -rf`, etc.)
-- ✅ Can install any package or tool
-- ✅ Can modify any file in the workspace
-- ✅ No filesystem restrictions within the container
-- ✅ Full root access inside the sandboxed environment
+### 1. BOSS vs Workers
 
-**Security is provided by:**
-1. **Container isolation** - Worker cannot affect host machine or other workers
-2. **Egress control** - BOSS restricts which external services each worker can access
-3. **Branch isolation** - Each worker has own Git branch, cannot modify main
-4. **Observable execution** - Complete command history logged
-5. **Disposable environments** - Failed workers deleted and recreated
+#### BOSS (Orchestrator)
+
+**Where:** Runs on host machine (Claude Code/Cursor)
+
+**Can Do:**
+- ✅ Spawn workers via Container-Use MCP
+- ✅ Manage GitHub (PRs, issues, projects) via GitHub MCP
+- ✅ Query knowledge base via Knowledge Base MCP
+- ✅ Request secrets via GitHub issues
+
+**Cannot Do:**
+- ❌ Execute code/files/git directly on host
+- ❌ Access secrets directly
+
+**Why:** Security & isolation
+
+#### Workers (Executors)
+
+**Where:** Run in isolated Docker containers
+
+**Can Do:**
+- ✅ ALL file/code/shell/git operations
+- ✅ Install packages, run commands
+- ✅ Access secrets from 1Password
+- ✅ Run tests with real API credentials
+
+**Cannot Do:**
+- ❌ Affect host machine
+- ❌ Access other workers
+- ❌ Modify main branch (each has own branch)
+
+**Why:** Full development capabilities in safe environment
+
+### 2. "Dangerous" Mode
+
+Workers run with **full permissions** inside their isolated containers.
+
+**What This Means:**
+- ✅ Can execute ANY shell command (`sudo`, `rm -rf`, etc.)
+- ✅ Can install ANY package or tool
+- ✅ Can modify ANY file in workspace
+- ✅ Full root access inside container
+
+**Security Layers:**
+
+1. **Container Isolation** - Cannot affect host or other workers
+2. **Branch Isolation** - Each worker has own Git branch
+3. **Egress Control** - BOSS restricts network access per worker
+4. **Observable** - Complete command history logged
+5. **Disposable** - Failed workers deleted and recreated
 
 **Example Egress Configuration:**
+
 ```json
 {
-  "egress_rules": {
-    "allow": [
-      "api.stripe.com",           // Payment API
-      "api.sendgrid.com",         // Email API
-      "registry.npmjs.org",       // NPM packages
-      "github.com"                // Git operations
-    ],
-    "deny": [
-      "*.amazonaws.com",          // Block AWS (frontend worker doesn't need)
-      "*.s3.amazonaws.com"
+  "network": {
+    "allowed_hosts": [
+      "api.stripe.com",
+      "api.sendgrid.com",
+      "registry.npmjs.org",
+      "github.com"
     ]
   }
 }
 ```
 
-**Why "Dangerous" Mode:**
-- Enables Claude to use full development capabilities
-- No permission errors blocking legitimate operations
-- Simpler worker configuration (no complex permission rules)
-- Security through isolation, not restriction
+> **Note:** Wildcards supported (e.g., `*.amazonaws.com`)
+
+### 3. Container-Use Workflow
+
+```
+1. Create Environment
+   └─► BOSS spawns container via Container-Use MCP
+   └─► New Git branch created: container-use/env-abc123
+   └─► Secrets injected from 1Password
+
+2. Execute Work
+   └─► Worker runs with full permissions inside container
+   └─► Can execute any development operation
+   └─► Network access controlled by egress rules
+
+3. Observe
+   └─► container-use log <env-id>      # Command history
+   └─► container-use diff <env-id>     # Code changes
+   └─► container-use terminal <env-id> # Interactive shell
+
+4. Complete
+   └─► container-use merge <env-id>    # Accept work
+   └─► container-use delete <env-id>   # Discard work
+```
+
+### 4. Critical: CLAUDE.md
+
+Every BOSS project has a `CLAUDE.md` file with **mandatory constraints**.
+
+**Key Rules:**
+- ✅ **ALWAYS** use environment tools for ALL operations
+- ❌ **NEVER** use raw git CLI commands
+- ❌ **NEVER** execute operations outside environment
+- ✅ **ALWAYS** inform user how to view your work
+
+**Why:** Environment tools handle git automatically. Manual git operations break isolation.
+
+### 5. Critical: start-boss.sh
+
+Bootstrap creates a script that launches BOSS with **MCP-only access**.
+
+**Purpose:** Enforce that BOSS can ONLY use MCP tools
+
+**What It Does:**
+```bash
+claude --allowedTools \
+  mcp__container-use__*,\
+  mcp__github__*,\
+  mcp__knowledge-base__*
+```
+
+**What Gets Blocked:**
+- ❌ Read, Write, Edit, Glob, Grep (host file operations)
+- ❌ Bash (host shell execution)
+- ❌ Direct git commands
 
 ---
 
-## How BOSS Uses Container-Use
+## Architecture
 
-**BOSS = Claude Code/Cursor configured with MCP servers.**
-
-Claude Code/Cursor runs on the **host machine** and orchestrates **workers in container-use environments** via the **Container-Use MCP server**.
-
-### BOSS Orchestration via Container-Use MCP
+### System Overview
 
 ```
-┌─────────────────────────────────────────────────┐
-│  Claude Code/Cursor (Host Machine)              │
-│  = BOSS when configured with:                   │
-│  • BOSS skills                                  │
-│  • Container-Use MCP ← Uses this to spawn workers │
-│  • GitHub MCP                                   │
-│  • Knowledge Base MCP                           │
-│  • 1Password CLI (op) - humans create secrets  │
-└────────────┬────────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│            BOSS (Host Machine)                       │
+│                                                      │
+│  Claude Code/Cursor configured with:                │
+│  • Container-Use MCP  ← Spawn/manage workers       │
+│  • GitHub MCP         ← ALL GitHub operations      │
+│  • Knowledge Base MCP ← Query context              │
+│  • 1Password CLI (op) ← Manual secret setup        │
+│                                                      │
+│  Capabilities:                                       │
+│  ✅ Orchestrate workers                             │
+│  ✅ Manage GitHub (PRs, issues, projects)           │
+│  ✅ Query knowledge base                            │
+│  ✅ Request secrets via issues                      │
+│  ❌ NO host-level code/file/git execution           │
+└────────────┬─────────────────────────────────────────┘
              │
-             │ Container-Use MCP Commands:
-             │ • createEnvironment()
-             │ • executeInEnvironment()
-             │ • getEnvironmentStatus()
-             │ • mergeEnvironment()
-             │ • deleteEnvironment()
-             │
-             ▼
-┌────────────────────────────────────────────────┐
-│  Container-Use (manages Docker containers)     │
-│                                                │
-│  Environment 1: env-abc123                     │
-│  ├─ Branch: container-use/env-abc123          │
-│  ├─ Container: Docker (isolated)               │
-│  └─ Worker: Claude Code + skills + secrets    │
-│                                                │
-│  Environment 2: env-def456                     │
-│  ├─ Branch: container-use/env-def456          │
-│  ├─ Container: Docker (isolated)               │
-│  └─ Worker: Claude Code + skills + secrets    │
-└────────────────────────────────────────────────┘
-```
-
-### Architecture
-
-```
-┌───────────────────────────────────────────────────────┐
-│                 BOSS Controller                       │
-│              (Host Machine - Local)                   │
-│                                                       │
-│  Runs on: Claude Code or Cursor                      │
-│  Role: Orchestrator, not worker                      │
-│  Access: Full system, GitHub, Knowledge Base         │
-└────────────┬──────────────────────────────────────────┘
-             │
-             │ spawns workers via container-use
+             │ Container-Use MCP Commands
              │
     ┌────────┼────────┬─────────┬─────────┐
     │        │        │         │         │
     ▼        ▼        ▼         ▼         ▼
 ┌────────┐┌────────┐┌────────┐┌────────┐┌────────┐
 │Worker 1││Worker 2││Worker 3││Worker 4││Worker 5│
+│env-001 ││env-002 ││env-003 ││env-004 ││env-005 │
 │        ││        ││        ││        ││        │
-│Clarify ││Spec    ││Plan    ││Dev     ││Review  │
+│Backend ││Frontend││Planner ││Review  ││Consol. │
 │        ││        ││        ││        ││        │
-│cu/env-1││cu/env-2││cu/env-3││cu/env-4││cu/env-5│
+│Branch: ││Branch: ││Branch: ││Branch: ││Branch: │
+│cu/001  ││cu/002  ││cu/003  ││cu/004  ││cu/005  │
 │        ││        ││        ││        ││        │
-│Secrets ││Secrets ││Secrets ││Secrets ││Secrets │
-│injected││injected││injected││injected││injected│
+│Secrets:││Secrets:││Secrets:││Secrets:││Secrets:│
+│Stripe  ││Vercel  ││None    ││GitHub  ││Vercel  │
+│DB      ││GitHub  ││        ││        ││GitHub  │
 └────────┘└────────┘└────────┘└────────┘└────────┘
 ```
 
-**Why This Architecture:**
-- ✅ BOSS needs full system access (GitHub, Knowledge Base)
-- ✅ Workers need isolation (can't break main branch)
-- ✅ Workers run "dangerously" inside containers (full permissions)
-- ✅ BOSS controls egress rules (network restrictions per container)
-- ✅ Workers need secrets (API keys for integrations)
-- ✅ Each worker has own branch (parallel work possible)
-- ✅ BOSS can observe and coordinate all workers
+### Container-Use Environment Structure
 
-**Container Security Model:**
-- Workers have **full permissions** inside their isolated containers
-- Claude can execute any command, install any tool, modify any file
-- Security comes from **container isolation**, not permission restrictions
-- BOSS controls **egress rules** (which external services workers can access)
-- Example: Backend worker can access Stripe API but not AWS
-- Humans create secrets in 1Password when BOSS requests via GitHub
+```
+container-use/env-abc123/
+├── Git Branch: container-use/env-abc123
+├── Container: Isolated Docker runtime
+├── Secrets: Injected from 1Password (op://)
+├── History: Complete command log
+└── Capabilities:
+    ✅ Full file/code/shell/git operations
+    ✅ Install packages, run tests
+    ✅ Access external APIs (controlled egress)
+    ✅ Everything a human developer can do
+```
 
 ---
 
-## Container-Use Configuration for BOSS Workers
+## Secret Management
 
-BOSS creates different container-use configurations for each worker type.
+### Overview
 
-### Default Configuration (`.container-use/environment.json`)
+**CRITICAL:** 1Password does NOT offer an MCP server. Secret management is manual.
+
+**The Flow:**
+
+```
+1. Planning Phase
+   └─► BOSS detects integration needs (Stripe, SendGrid, etc.)
+   └─► BOSS creates secret-requirements.md
+   └─► BOSS creates GitHub issue with setup instructions
+
+2. Human Action Required
+   └─► Generate secrets in service (Stripe Dashboard, AWS IAM, etc.)
+   └─► Store in 1Password vault
+   └─► Configure container-use with op:// references
+   └─► Comment "done" on GitHub issue
+
+3. Implementation Phase
+   └─► BOSS verifies secrets configured
+   └─► Container-use resolves secrets via op CLI
+   └─► Workers receive secrets as environment variables
+   └─► AI models NEVER see actual values
+
+4. Execution
+   └─► Workers access secrets via process.env
+   └─► Container-use strips secrets from logs
+   └─► Safe to review command history
+```
+
+### 1Password Reference Format
+
+```
+Format: op://vault-name/item-name/field-name
+
+Examples:
+op://glx/github/token
+op://glx/stripe/test-secret-key
+op://glx/database/connection-url
+op://glx/sendgrid/api-key
+op://glx/aws/access-key
+```
+
+### Agent Secret Discovery
+
+**A critical BOSS capability:** Agents automatically identify required secrets during planning.
+
+#### How It Works
+
+**Phase 4: Planning**
+
+1. **Planner Analyzes Spec**
+   - Scans spec.md for mentioned services
+   - Identifies API integrations
+   - Determines authentication methods
+
+2. **Creates Secret Requirements Document**
+   - `.specify/specs/001-feature/secret-requirements.md`
+   - Lists all required secrets with op:// references
+   - Provides step-by-step setup instructions
+   - Documents scopes and permissions needed
+
+3. **Creates Human Tasks**
+   - GitHub issue: "Configure [Service] API Secrets"
+   - Includes estimated time (usually 10-20 minutes)
+   - Links to secret-requirements.md
+   - Blocks implementation until completed
+
+#### Example: Stripe Integration
+
+**Scenario:** User story requires payment processing
+
+**secret-requirements.md (Generated by Planner):**
+
+```markdown
+# Secret Requirements for Payment Integration
+
+This feature requires Stripe API integration.
+
+## Required Secrets
+
+### 1. Stripe Test Secret Key
+
+**Purpose:** Authenticate API requests to Stripe in test mode
+
+**1Password Setup:**
+- Vault: `glx`
+- Item: `stripe`
+- Field: `test-secret-key`
+- Reference: `op://glx/stripe/test-secret-key`
+
+**How to Generate:**
+1. Go to https://dashboard.stripe.com/test/apikeys
+2. Click "Developers" → "API keys"
+3. Copy "Secret key" (starts with `sk_test_`)
+4. Store in 1Password at `glx/stripe/test-secret-key`
+
+**Scopes Required:**
+- Read/Write: Customers, PaymentIntents, Subscriptions
+- Webhook endpoint creation
+
+**Configure Container-Use:**
+```bash
+container-use config secret set STRIPE_SECRET_KEY op://glx/stripe/test-secret-key
+```
+
+### 2. Stripe Webhook Secret
+
+**Purpose:** Verify webhook signatures
+
+**1Password Setup:**
+- Vault: `glx`
+- Item: `stripe`
+- Field: `webhook-secret`
+- Reference: `op://glx/stripe/webhook-secret`
+
+**How to Generate:**
+1. Go to Stripe Dashboard → Developers → Webhooks
+2. Click "Add endpoint"
+3. Select events: payment_intent.succeeded, customer.subscription.*
+4. Copy webhook signing secret (starts with `whsec_`)
+5. Store in 1Password at `glx/stripe/webhook-secret`
+
+**Configure Container-Use:**
+```bash
+container-use config secret set STRIPE_WEBHOOK_SECRET op://glx/stripe/webhook-secret
+```
+
+## Verification
+
+After setup:
+```bash
+container-use config secret list
+# Expected output (values masked):
+# STRIPE_SECRET_KEY: op://glx/stripe/test-secret-key
+# STRIPE_WEBHOOK_SECRET: op://glx/stripe/webhook-secret
+```
+
+## Integration Tests
+
+Workers will use these secrets for integration tests:
+```typescript
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const paymentIntent = await stripe.paymentIntents.create({...});
+```
+
+## Timeline
+
+**Human action required before Phase 7 (Implementation)**
+
+Estimated time: 15 minutes
+```
+
+**plan.md (Human Task Added):**
+
+```markdown
+## Prerequisites
+
+**Human Task [HT-001]: Configure Stripe API Secrets**
+
+Status: 🔴 BLOCKED - Requires human action
+
+Documentation: `.specify/specs/001-payments/secret-requirements.md`
+
+Steps:
+1. Generate Stripe test secret key
+2. Store in 1Password: `op://glx/stripe/test-secret-key`
+3. Generate Stripe webhook secret
+4. Store in 1Password: `op://glx/stripe/webhook-secret`
+5. Run: `container-use config secret set STRIPE_SECRET_KEY op://glx/stripe/test-secret-key`
+6. Run: `container-use config secret set STRIPE_WEBHOOK_SECRET op://glx/stripe/webhook-secret`
+7. Verify: `container-use config secret list`
+8. Close GitHub issue #12
+
+Estimated Time: 15 minutes
+
+**Implementation cannot proceed until HT-001 is complete.**
+```
+
+**GitHub Issue (Created by BOSS):**
+
+```
+Title: Configure Stripe API Secrets
+
+This feature requires Stripe integration. Please set up the required secrets.
+
+📋 Documentation: .specify/specs/001-payments/secret-requirements.md
+
+⏱️ Estimated time: 15 minutes
+
+✅ Checklist:
+- [ ] Generate Stripe test secret key
+- [ ] Store in 1Password (op://glx/stripe/test-secret-key)
+- [ ] Generate Stripe webhook secret
+- [ ] Store in 1Password (op://glx/stripe/webhook-secret)
+- [ ] Configure container-use secrets
+- [ ] Verify with `container-use config secret list`
+
+Once complete, comment "done" and close this issue.
+```
+
+### Common Secret Patterns
+
+#### GitHub
+
+```yaml
+GITHUB_TOKEN:
+  reference: op://glx/github/token
+  purpose: Create PRs, push commits, manage issues
+  scope: repo, workflow
+  generate: Settings → Developer settings → Personal access tokens
+```
+
+#### Database
+
+```yaml
+DATABASE_URL:
+  reference: op://glx/database/test-url
+  purpose: Integration tests with real database
+  format: postgresql://user:password@host:port/database
+  generate: Create dedicated test database with limited permissions
+```
+
+#### Email (SendGrid)
+
+```yaml
+SENDGRID_API_KEY:
+  reference: op://glx/sendgrid/api-key
+  purpose: Send transactional emails
+  scope: Mail Send (full access)
+  generate: Settings → API Keys → Create API Key
+```
+
+#### Cloud Storage (AWS S3)
+
+```yaml
+AWS_ACCESS_KEY_ID:
+  reference: op://glx/aws/access-key
+AWS_SECRET_ACCESS_KEY:
+  reference: op://glx/aws/secret-key
+
+purpose: Upload files to S3
+scope: s3:PutObject, s3:GetObject (bucket-specific)
+generate: IAM → Users → Create access key
+```
+
+### Security Benefits
+
+- ✅ Secrets stored securely in 1Password
+- ✅ AI models never see actual values
+- ✅ op:// references safe to commit
+- ✅ Automatic secret stripping from logs
+- ✅ Centralized management
+- ✅ Easy rotation (update in 1Password, workers get new values)
+
+---
+
+## Worker Configuration
+
+### Default Configuration
+
+**File:** `.container-use/environment.json`
 
 ```json
 {
   "base_image": "node:22-slim",
   "setup_commands": [
     "apt-get update",
-    "apt-get install -y git curl build-essential",
-    "curl -fsSL https://get.docker.com | sh"
+    "apt-get install -y git curl build-essential"
   ],
   "install_commands": [
     "npm install -g pnpm",
@@ -210,58 +534,39 @@ BOSS creates different container-use configurations for each worker type.
     "NODE_ENV": "development",
     "CI": "true"
   },
-  "secrets": {
-    "GITHUB_TOKEN": "op://vault/github/token",
-    "ANTHROPIC_API_KEY": "op://vault/anthropic/api-key",
-    "DATABASE_URL": "op://vault/database/connection-url"
+  "secrets": [
+    "GITHUB_TOKEN=op://glx/github/token",
+    "ANTHROPIC_API_KEY=op://glx/anthropic/api-key",
+    "DATABASE_URL=op://glx/database/connection-url"
+  ],
+  "network": {
+    "allowed_hosts": [
+      "registry.npmjs.org",
+      "github.com",
+      "api.anthropic.com"
+    ]
   }
 }
 ```
 
 ### Worker-Specific Configurations
 
-BOSS maintains different configurations for different worker types:
+BOSS maintains different configs for different worker types in `.boss/workers/*/container-config.json`.
 
-#### 1. Clarifier Worker
+#### Clarifier / Spec-Writer / Planner
 
 ```json
 {
   "base_image": "node:22-slim",
   "environment_variables": {
     "WORKER_ROLE": "clarifier",
-    "INTERACTION_MODE": "conversational"
-  },
-  "secrets": {}  // No secrets needed for clarification
-}
-```
-
-#### 2. Spec-Writer Worker
-
-```json
-{
-  "base_image": "node:22-slim",
-  "environment_variables": {
-    "WORKER_ROLE": "spec-writer",
     "SPEC_KIT_MODE": "true"
   },
-  "secrets": {}  // No secrets needed for writing specs
+  "secrets": []  // No external API access needed
 }
 ```
 
-#### 3. Planner Worker
-
-```json
-{
-  "base_image": "node:22-slim",
-  "environment_variables": {
-    "WORKER_ROLE": "planner",
-    "SPEC_KIT_MODE": "true"
-  },
-  "secrets": {}  // No secrets needed for planning
-}
-```
-
-#### 4. Developer Worker (Frontend)
+#### Developer (Frontend)
 
 ```json
 {
@@ -278,14 +583,21 @@ BOSS maintains different configurations for different worker types:
     "WORKER_ROLE": "developer-frontend",
     "NODE_ENV": "test"
   },
-  "secrets": {
-    "GITHUB_TOKEN": "op://vault/github/token",
-    "VERCEL_TOKEN": "op://vault/vercel/token"
+  "secrets": [
+    "GITHUB_TOKEN=op://glx/github/token",
+    "VERCEL_TOKEN=op://glx/vercel/token"
+  ],
+  "network": {
+    "allowed_hosts": [
+      "registry.npmjs.org",
+      "github.com",
+      "api.vercel.com"
+    ]
   }
 }
 ```
 
-#### 5. Developer Worker (Backend)
+#### Developer (Backend)
 
 ```json
 {
@@ -301,21 +613,28 @@ BOSS maintains different configurations for different worker types:
   ],
   "environment_variables": {
     "WORKER_ROLE": "developer-backend",
-    "NODE_ENV": "test",
-    "DATABASE_URL": "postgresql://test:test@localhost:5432/testdb"
+    "NODE_ENV": "test"
   },
-  "secrets": {
-    "GITHUB_TOKEN": "op://vault/github/token",
-    "STRIPE_SECRET_KEY": "op://vault/stripe/test-secret-key",
-    "STRIPE_WEBHOOK_SECRET": "op://vault/stripe/webhook-secret",
-    "SENDGRID_API_KEY": "op://vault/sendgrid/api-key",
-    "AWS_ACCESS_KEY_ID": "op://vault/aws/access-key",
-    "AWS_SECRET_ACCESS_KEY": "op://vault/aws/secret-key"
+  "secrets": [
+    "GITHUB_TOKEN=op://glx/github/token",
+    "STRIPE_SECRET_KEY=op://glx/stripe/test-secret-key",
+    "STRIPE_WEBHOOK_SECRET=op://glx/stripe/webhook-secret",
+    "SENDGRID_API_KEY=op://glx/sendgrid/api-key",
+    "DATABASE_URL=op://glx/database/test-url"
+  ],
+  "network": {
+    "allowed_hosts": [
+      "registry.npmjs.org",
+      "github.com",
+      "api.stripe.com",
+      "api.sendgrid.com",
+      "*.postgres.database.azure.com"
+    ]
   }
 }
 ```
 
-#### 6. Developer Worker (Fullstack)
+#### Developer (Fullstack)
 
 ```json
 {
@@ -333,18 +652,27 @@ BOSS maintains different configurations for different worker types:
     "WORKER_ROLE": "developer-fullstack",
     "NODE_ENV": "test"
   },
-  "secrets": {
-    "GITHUB_TOKEN": "op://vault/github/token",
-    "STRIPE_SECRET_KEY": "op://vault/stripe/test-secret-key",
-    "STRIPE_WEBHOOK_SECRET": "op://vault/stripe/webhook-secret",
-    "VERCEL_TOKEN": "op://vault/vercel/token",
-    "DATABASE_URL": "op://vault/database/test-url",
-    "SENDGRID_API_KEY": "op://vault/sendgrid/api-key"
+  "secrets": [
+    "GITHUB_TOKEN=op://glx/github/token",
+    "STRIPE_SECRET_KEY=op://glx/stripe/test-secret-key",
+    "VERCEL_TOKEN=op://glx/vercel/token",
+    "DATABASE_URL=op://glx/database/test-url",
+    "SENDGRID_API_KEY=op://glx/sendgrid/api-key"
+  ],
+  "network": {
+    "allowed_hosts": [
+      "registry.npmjs.org",
+      "github.com",
+      "api.stripe.com",
+      "api.vercel.com",
+      "api.sendgrid.com",
+      "*.postgres.database.azure.com"
+    ]
   }
 }
 ```
 
-#### 7. Reviewer Worker
+#### Reviewer / Consolidator
 
 ```json
 {
@@ -355,541 +683,137 @@ BOSS maintains different configurations for different worker types:
   ],
   "environment_variables": {
     "WORKER_ROLE": "reviewer",
-    "REVIEW_MODE": "strict"
-  },
-  "secrets": {
-    "GITHUB_TOKEN": "op://vault/github/token"
-  }
-}
-```
-
-#### 8. Consolidator Worker
-
-```json
-{
-  "base_image": "node:22-slim",
-  "install_commands": [
-    "npm install -g pnpm",
-    "pnpm install"
-  ],
-  "environment_variables": {
-    "WORKER_ROLE": "consolidator",
     "NODE_ENV": "test"
   },
-  "secrets": {
-    "GITHUB_TOKEN": "op://vault/github/token",
-    "VERCEL_TOKEN": "op://vault/vercel/token"
+  "secrets": [
+    "GITHUB_TOKEN=op://glx/github/token"
+  ],
+  "network": {
+    "allowed_hosts": [
+      "registry.npmjs.org",
+      "github.com"
+    ]
   }
 }
 ```
 
 ---
 
-## Secret Management with 1Password CLI
+## Worker Lifecycle
 
-**IMPORTANT:** 1Password does NOT offer an MCP server. Instead:
-1. BOSS requests secrets via GitHub (issues, PR comments)
-2. Humans manually create secrets in 1Password
-3. Humans configure container-use with `op://` references
-4. Container-use workers resolve secrets via the op CLI at runtime
+### 1. Creation (BOSS Spawns Worker)
 
-### How BOSS Requests Secrets
-
-When planning detects required integrations (Stripe, SendGrid, AWS, etc.), BOSS:
-1. Creates detailed setup instructions in `.specify/specs/.../secret-requirements.md`
-2. Creates GitHub issue: "Configure [Service] API Secrets"
-3. Waits for human to complete setup and comment "done" on the issue
-4. Proceeds with implementation once secrets are available
-
-### 1Password Secret References
-
-Container-use supports `op://` references that point to secrets in 1Password vaults:
-
-```
-Format: op://vault-name/item-name/field-name
-
-Examples:
-op://vault/github/token
-op://vault/stripe/test-secret-key
-op://vault/stripe/webhook-secret
-op://vault/database/connection-url
-op://vault/sendgrid/api-key
-op://vault/aws/access-key
-```
-
-### How Secrets Work in Container-Use
-
-```
-1. BOSS detects integration requirements (e.g., Stripe)
-   └─► Creates GitHub issue with secret setup instructions
-   └─► Example: "Issue #42: Configure Stripe API Secrets"
-
-2. Human creates secrets in 1Password
-   └─► Follows step-by-step instructions from BOSS
-   └─► Stores in 1Password: op://glx/stripe/test-secret-key
-   └─► Comments "done" on GitHub issue
-
-3. Human configures container-use
-   └─► Runs: container-use config secret set STRIPE_SECRET_KEY op://glx/stripe/test-secret-key
-   └─► Configuration file (.container-use/environment.json) contains op:// references (safe to commit)
-
-4. BOSS spawns worker with secrets
-   └─► container-use reads op:// references from config
-   └─► 1Password CLI (op) resolves actual values at runtime
-   └─► Injected as environment variables inside container
-
-5. Worker Execution
-   └─► Worker runs "dangerously" (full permissions inside container)
-   └─► BOSS controls egress (network access to specific APIs only)
-   └─► Worker accesses secrets via process.env
-   └─► AI model NEVER sees actual secret values
-
-6. Logging & Output
-   └─► container-use strips secrets from logs
-   └─► Safe to review command history
-```
-
-**Security Benefits:**
-- ✅ Secrets stored securely in 1Password
-- ✅ AI models never see actual secret values
-- ✅ References (op://) safe to commit to git
-- ✅ Automatic secret stripping from logs
-- ✅ Centralized secret management
-- ✅ Easy rotation (update in 1Password, workers get new values)
-
----
-
-## Agent Secret Discovery & Planning
-
-A critical BOSS capability: **agents identify required secrets during planning and create tasks for humans to set them up**.
-
-### How It Works
-
-#### Phase 4: Planning
-
-When the Planner worker creates the technical plan, it also:
-
-1. **Analyzes Integration Requirements**
-   - Scans spec.md for mentioned services (Stripe, SendGrid, AWS, etc.)
-   - Identifies API integrations needed
-   - Determines authentication methods
-
-2. **Creates Secret Requirements Document**
-   - Lists all required secrets
-   - Documents scope and permissions needed
-   - Provides setup instructions for humans
-
-3. **Adds Tasks to Plan**
-   - Creates tasks for human to generate secrets
-   - Includes op:// references that need to be created
-   - Documents where to add secrets in 1Password
-
-### Example: Stripe Integration
-
-**Scenario:** User story requires Stripe payment integration
-
-#### Planner Identifies Requirements
-
-```yaml
-# .specify/specs/001-payments/secret-requirements.md
-
-# Secret Requirements for Payment Integration
-
-This feature requires Stripe API integration. The following secrets must be configured before implementation can begin.
-
-## Required Secrets
-
-### 1. Stripe Test Secret Key
-
-**Purpose:** Authenticate API requests to Stripe in test mode
-
-**1Password Setup:**
-- Vault: `glx` (your project vault)
-- Item Name: `stripe`
-- Field Name: `test-secret-key`
-- Reference: `op://glx/stripe/test-secret-key`
-
-**How to Generate:**
-1. Log in to Stripe Dashboard: https://dashboard.stripe.com/test/apikeys
-2. Click "Developers" → "API keys"
-3. Under "Standard keys", find "Secret key" (starts with `sk_test_`)
-4. Click "Reveal test key" and copy the value
-5. Store in 1Password at `glx/stripe/test-secret-key`
-
-**Scopes Required:**
-- Read/Write access to Customers
-- Read/Write access to PaymentIntents
-- Read/Write access to Subscriptions
-- Webhook endpoint creation
-
-**Configure in Container-Use:**
-```bash
-container-use config secret set STRIPE_SECRET_KEY op://glx/stripe/test-secret-key
-```
-
-### 2. Stripe Webhook Secret
-
-**Purpose:** Verify webhook signatures from Stripe
-
-**1Password Setup:**
-- Vault: `glx`
-- Item Name: `stripe`
-- Field Name: `webhook-secret`
-- Reference: `op://glx/stripe/webhook-secret`
-
-**How to Generate:**
-1. Go to Stripe Dashboard → Developers → Webhooks
-2. Click "Add endpoint"
-3. Enter endpoint URL (will be provided after deployment)
-4. Select events to listen for:
-   - payment_intent.succeeded
-   - payment_intent.payment_failed
-   - customer.subscription.created
-   - customer.subscription.updated
-   - customer.subscription.deleted
-5. After creating endpoint, reveal webhook signing secret (starts with `whsec_`)
-6. Store in 1Password at `glx/stripe/webhook-secret`
-
-**Configure in Container-Use:**
-```bash
-container-use config secret set STRIPE_WEBHOOK_SECRET op://glx/stripe/webhook-secret
-```
-
-### 3. Stripe Publishable Key (Optional - Frontend)
-
-**Purpose:** Initialize Stripe.js on the client side
-
-**Note:** This is NOT a secret (safe to expose in client-side code), but documented for completeness.
-
-**How to Get:**
-- Same location as secret key
-- Starts with `pk_test_`
-- Can be committed directly to code (not via 1Password)
-
-## Secret Verification
-
-After configuring all secrets, verify they're available:
-
-```bash
-# List configured secrets (values will be masked)
-container-use config secret list
-
-# Expected output:
-# STRIPE_SECRET_KEY: op://glx/stripe/test-secret-key
-# STRIPE_WEBHOOK_SECRET: op://glx/stripe/webhook-secret
-```
-
-## Integration Tests
-
-The developer worker will need these secrets to run integration tests:
+**BOSS uses Container-Use MCP:**
 
 ```typescript
-// tests/integration/stripe.test.ts
-describe('Stripe Integration', () => {
-  it('creates a payment intent', async () => {
-    // STRIPE_SECRET_KEY available as process.env.STRIPE_SECRET_KEY
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: 1000,
-      currency: 'usd'
-    });
-
-    expect(paymentIntent.status).toBe('requires_payment_method');
-  });
-});
-```
-
-## Security Notes
-
-- ✅ Never commit actual secret values to git
-- ✅ Always use test keys for development
-- ✅ Rotate keys if accidentally exposed
-- ✅ Use restricted API keys when possible
-- ✅ Monitor API key usage in Stripe Dashboard
-
-## Timeline
-
-**Human Action Required:** Before Phase 7 (Implementation)
-
-The implementation phase cannot proceed until these secrets are configured. Please complete setup and close the GitHub issue.
-```
-
-#### Added to plan.md
-
-```markdown
-## Phase 6: Task Breakdown
-
-### Prerequisites
-
-Before implementation tasks can begin, the following secrets must be configured:
-
-**Human Task [HT-001]: Configure Stripe API Secrets**
-
-Status: 🔴 BLOCKED - Requires human action
-
-Description: Set up Stripe test API keys in 1Password and configure container-use secret references.
-
-Documentation: See `.specify/specs/001-payments/secret-requirements.md`
-
-Required Actions:
-1. Generate Stripe test secret key
-2. Store in 1Password: `op://glx/stripe/test-secret-key`
-3. Generate Stripe webhook secret
-4. Store in 1Password: `op://glx/stripe/webhook-secret`
-5. Run: `container-use config secret set STRIPE_SECRET_KEY op://glx/stripe/test-secret-key`
-6. Run: `container-use config secret set STRIPE_WEBHOOK_SECRET op://glx/stripe/webhook-secret`
-7. Verify: `container-use config secret list`
-
-Acceptance Criteria:
-- [ ] Both secrets stored in 1Password vault `glx`
-- [ ] Container-use configured with op:// references
-- [ ] Secrets verified with `container-use config secret list`
-- [ ] GitHub issue closed to confirm completion
-
-Estimated Time: 15 minutes
-
-**Implementation tasks cannot proceed until HT-001 is complete.**
-```
-
-#### BOSS Notification to User
-
-```
-BOSS: 🚦 GATE 1: Planning Approval Required
-
-      I've created a complete plan, but I've identified that this feature
-      requires Stripe API integration.
-
-      📋 Secret Setup Required:
-
-      Before implementation can begin, you need to configure Stripe secrets.
-
-      I've created detailed instructions:
-      👉 .specify/specs/001-payments/secret-requirements.md
-
-      Human Task: Configure Stripe API Secrets
-      👉 GitHub Issue: #12
-
-      This includes:
-      - How to generate Stripe test keys
-      - Where to store them in 1Password (op://glx/stripe/...)
-      - How to configure container-use
-      - Verification steps
-
-      ⏱️  Estimated time: 15 minutes
-
-      Once you've completed the setup and closed issue #12,
-      I can proceed with implementation!
-```
-
----
-
-## Common Secret Patterns
-
-### GitHub Integration
-
-```yaml
-secrets:
-  GITHUB_TOKEN:
-    reference: op://glx/github/token
-    purpose: Create PRs, push commits, manage issues
-    scope: repo, workflow
-    generate: Settings → Developer settings → Personal access tokens
-```
-
-### Database Access
-
-```yaml
-secrets:
-  DATABASE_URL:
-    reference: op://glx/database/test-url
-    purpose: Connect to test database for integration tests
-    format: postgresql://user:password@host:port/database
-    generate: Create dedicated test database with limited permissions
-```
-
-### Email Services (SendGrid)
-
-```yaml
-secrets:
-  SENDGRID_API_KEY:
-    reference: op://glx/sendgrid/api-key
-    purpose: Send transactional emails
-    scope: Mail Send (full access)
-    generate: Settings → API Keys → Create API Key
-```
-
-### Cloud Storage (AWS S3)
-
-```yaml
-secrets:
-  AWS_ACCESS_KEY_ID:
-    reference: op://glx/aws/access-key
-  AWS_SECRET_ACCESS_KEY:
-    reference: op://glx/aws/secret-key
-  AWS_REGION:
-    value: us-east-1  # Not a secret, can be in config
-
-  purpose: Upload files to S3
-  scope: s3:PutObject, s3:GetObject, s3:DeleteObject (bucket-specific)
-  generate: IAM → Users → Create access key
-```
-
-### Authentication Services (Auth0)
-
-```yaml
-secrets:
-  AUTH0_DOMAIN:
-    value: your-tenant.auth0.com  # Not secret
-  AUTH0_CLIENT_ID:
-    value: your_client_id  # Not secret
-  AUTH0_CLIENT_SECRET:
-    reference: op://glx/auth0/client-secret
-
-  purpose: Validate JWT tokens, manage users
-  scope: read:users, update:users
-  generate: Applications → Your App → Settings
-```
-
----
-
-## Worker Lifecycle with Container-Use
-
-### 1. Worker Creation via Container-Use MCP
-
-**BOSS (Claude Code/Cursor) uses Container-Use MCP to spawn workers:**
-
-```typescript
-// Example: BOSS spawning a Backend Developer worker
-
-// 1. BOSS queries Knowledge Base MCP for relevant context
+// 1. BOSS queries Knowledge Base for context
 const context = await mcp.knowledgeBase.search({
   query: "Stripe integration patterns",
   filters: { tech_stack: ["nodejs", "typescript"] }
 });
 
-// 2. BOSS creates worker environment via Container-Use MCP
+// 2. BOSS creates worker environment
 const env = await mcp.containerUse.createEnvironment({
   title: "developer-backend-US1",
   config: ".boss/workers/developer-backend/container-config.json"
 });
 // Returns: { env_id: "env-abc123", branch: "container-use/env-abc123" }
 
-// 3. BOSS assembles worker prompt (includes knowledge base context)
+// 3. BOSS assembles prompt with context
 const workerPrompt = `
 # Backend Developer - User Story 1: Stripe Payment Integration
 
-${context}  // Relevant patterns from knowledge base
+${context}  // Patterns from knowledge base
 
 ## Your Task
-Implement Stripe payment integration following TDD methodology.
+Implement Stripe payment integration following TDD.
 
 ## Quality Gates
 - Tests written BEFORE implementation
 - Coverage ≥ 80%
-- All TypeScript checks pass
 - Integration tests with real Stripe test API
 
-## Available Secrets (injected via 1Password)
-- STRIPE_SECRET_KEY (op://glx/stripe/test-secret-key)
-- DATABASE_URL (op://glx/database/test-url)
+## Available Secrets
+- STRIPE_SECRET_KEY (injected from 1Password)
+- DATABASE_URL (injected from 1Password)
 `;
 
-// 4. BOSS executes work in environment via Container-Use MCP
+// 4. BOSS executes work via Container-Use MCP
 await mcp.containerUse.executeInEnvironment({
   env_id: env.env_id,
   prompt: workerPrompt,
-  skills: ["nodejs", "stripe", "api-design", "testing"],
-  max_iterations: 50
+  skills: ["nodejs", "stripe", "api-design", "testing"]
 });
 ```
 
-**What Happens Under the Hood:**
-
-Container-Use MCP translates these calls into container-use CLI commands:
+**Equivalent Container-Use CLI:**
 
 ```bash
-# Equivalent container-use CLI commands (abstracted by MCP)
-
-# 1. Load config from .boss/workers/developer-backend/container-config.json
 container-use config load .boss/workers/developer-backend/container-config.json
-
-# 2. Create environment
 container-use environment create --title "developer-backend-US1"
 # Returns: env-abc123
-
-# 3. Claude Code/Cursor runs inside the container
-# With the worker prompt loaded
-# With skills activated
-# With secrets injected from 1Password
+# Worker executes inside container with prompt + skills + secrets
 ```
 
-### 2. Worker Execution
+### 2. Execution (Worker Runs)
 
 ```
-Inside container-use environment: env-abc123
-├── Git branch: container-use/env-abc123
-├── Container: Isolated Docker runtime
-├── Secrets: Injected from 1Password
-│   ├── STRIPE_SECRET_KEY=sk_test_xxxxx (from op://glx/stripe/test-secret-key)
-│   ├── DATABASE_URL=postgresql://... (from op://glx/database/test-url)
-│   └── GITHUB_TOKEN=ghp_xxxxx (from op://glx/github/token)
-│
-└── Worker executes:
-    1. Write failing tests (uses STRIPE_SECRET_KEY for test setup)
-    2. Implement feature (uses STRIPE_SECRET_KEY for API calls)
-    3. Run integration tests (secrets available in process.env)
-    4. Commit changes to branch
+Container: env-abc123
+Branch: container-use/env-abc123
+
+Secrets Injected:
+├── STRIPE_SECRET_KEY=sk_test_xxxxx (from op://glx/stripe/test-secret-key)
+├── DATABASE_URL=postgresql://... (from op://glx/database/test-url)
+└── GITHUB_TOKEN=ghp_xxxxx (from op://glx/github/token)
+
+Worker Executes:
+1. Write failing tests (uses STRIPE_SECRET_KEY)
+2. Implement feature (calls Stripe API)
+3. Run integration tests (secrets in process.env)
+4. Commit changes to branch
 ```
 
-### 3. Worker Observation via Container-Use MCP
+### 3. Observation (BOSS Monitors)
 
-**BOSS monitors worker progress via MCP:**
+**Via Container-Use MCP:**
 
 ```typescript
-// BOSS checking worker status
-
-// 1. Get environment status
+// Check status
 const status = await mcp.containerUse.getEnvironmentStatus({
   env_id: "env-abc123"
 });
-// Returns: { status: "running", last_activity: "2024-01-15T10:30:00Z" }
 
-// 2. Retrieve logs
+// Get logs
 const logs = await mcp.containerUse.getEnvironmentLog({
   env_id: "env-abc123",
-  lines: 50  // Last 50 lines
+  lines: 50
 });
 
-// 3. Check code changes
+// Check diff
 const diff = await mcp.containerUse.getEnvironmentDiff({
   env_id: "env-abc123"
 });
 
-// 4. Get test results
+// Get artifacts (test results, coverage)
 const artifacts = await mcp.containerUse.getEnvironmentArtifacts({
   env_id: "env-abc123",
   paths: ["coverage/", "test-results.json"]
 });
 ```
 
-**For Manual Inspection (if needed):**
+**Manual (Container-Use CLI):**
 
 ```bash
-# User can manually inspect using container-use CLI
-container-use log env-abc123
-container-use diff env-abc123
-container-use terminal env-abc123  # Interactive shell
+container-use log env-abc123          # Command history
+container-use diff env-abc123         # Code changes
+container-use terminal env-abc123     # Interactive shell
 ```
 
-### 4. Worker Completion via Container-Use MCP
+### 4. Completion (Quality Gates)
 
-**BOSS completes worker via MCP after quality gates:**
+**BOSS evaluates quality gates:**
 
 ```typescript
-// Example: Worker completes successfully
-
-// 1. BOSS retrieves quality gate results
 const qualityGates = await mcp.containerUse.getQualityGateResults({
   env_id: "env-abc123"
 });
@@ -897,32 +821,33 @@ const qualityGates = await mcp.containerUse.getQualityGateResults({
 if (qualityGates.allPassed) {
   // ✅ Quality gates PASSED
 
-  // 2. Merge worker branch via Container-Use MCP
   await mcp.containerUse.mergeEnvironment({
     env_id: "env-abc123",
     target_branch: "main",
     delete_after_merge: true
   });
 
-  // BOSS logs completion
-  console.log(`Worker env-abc123 completed successfully!
+  console.log(`✅ Worker completed successfully!
     Coverage: ${qualityGates.coverage}%
-    Tests: ${qualityGates.testsPass ? 'PASS' : 'FAIL'}
-    Branch merged and cleaned up.`);
+    Tests: PASS
+    Branch merged and cleaned up`);
 
 } else {
   // ❌ Quality gates FAILED
 
-  // BOSS analyzes failure
   const failures = qualityGates.failures;
-  // ["Coverage: 76% (need 80%)", "Missing tests for error cases"]
 
   // Delete failed environment
   await mcp.containerUse.deleteEnvironment({
     env_id: "env-abc123"
   });
 
-  // Spawn new worker with improved prompt
+  // Retry with improved prompt
+  const retryEnv = await mcp.containerUse.createEnvironment({
+    title: "developer-backend-US1-retry",
+    config: ".boss/workers/developer-backend/container-config.json"
+  });
+
   const improvedPrompt = `
     ${originalPrompt}
 
@@ -934,85 +859,65 @@ if (qualityGates.allPassed) {
     - Ensure TDD: tests before implementation
   `;
 
-  const retryEnv = await mcp.containerUse.createEnvironment({
-    title: "developer-backend-US1-retry",
-    config: ".boss/workers/developer-backend/container-config.json"
-  });
-
   await mcp.containerUse.executeInEnvironment({
     env_id: retryEnv.env_id,
-    prompt: improvedPrompt,
-    skills: ["nodejs", "stripe", "api-design", "testing"]
+    prompt: improvedPrompt
   });
 }
 ```
 
-**Equivalent Container-Use CLI Commands:**
+**Container-Use CLI:**
 
 ```bash
-# If quality gates pass:
+# Success
 container-use merge env-abc123 --delete
 
-# If quality gates fail:
-container-use delete env-abc123  # Remove failed attempt
+# Failure
+container-use delete env-abc123
 container-use environment create --title "developer-backend-US1-retry"
-# Retry with improved approach
 ```
 
----
+### 5. Parallel Workers
 
-## Parallel Worker Execution
-
-BOSS launches multiple workers in parallel, each in their own container-use environment:
+BOSS launches multiple workers simultaneously:
 
 ```
-Phase 7: Implementation (Parallel Workers)
+Phase 7: Implementation
 
 Worker 1: env-001 (developer-fullstack)
 ├── Branch: container-use/env-001
 ├── Task: [T010-T020] User Authentication
 ├── Secrets: GITHUB_TOKEN, STRIPE_SECRET_KEY, DATABASE_URL
-└── Status: In Progress
+└── Status: ⏳ Running
 
 Worker 2: env-002 (developer-backend)
 ├── Branch: container-use/env-002
 ├── Task: [T021-T028] User Registration
 ├── Secrets: GITHUB_TOKEN, SENDGRID_API_KEY, DATABASE_URL
-└── Status: In Progress
+└── Status: ⏳ Running
 
-Worker 3: env-003 (developer-backend)
+Worker 3: env-003 (developer-frontend)
 ├── Branch: container-use/env-003
-├── Task: [T029-T035] Password Reset
-├── Secrets: GITHUB_TOKEN, SENDGRID_API_KEY, DATABASE_URL
-└── Status: Completed ✅
-
-Worker 4: env-004 (developer-frontend)
-├── Branch: container-use/env-004
-├── Task: [T036-T042] Dashboard UI
+├── Task: [T029-T035] Dashboard UI
 ├── Secrets: GITHUB_TOKEN, VERCEL_TOKEN
-└── Status: In Progress
+└── Status: ✅ Completed
 
-Worker 5: env-005 (reviewer)
-├── Branch: container-use/env-005
-├── Task: Review all implementations
+Worker 4: env-004 (reviewer)
+├── Branch: container-use/env-004
+├── Task: Review implementations
 ├── Secrets: GITHUB_TOKEN
-└── Status: Waiting
+└── Status: ⏸️ Waiting
+
+Benefits:
+✅ Each worker isolated (own branch + container)
+✅ No conflicts between parallel work
+✅ Each has required secrets for their tasks
+✅ Full observability of all actions
 ```
 
-**Benefits:**
-- ✅ Each worker isolated in own environment
-- ✅ No conflicts between workers
-- ✅ Each has required secrets for their tasks
-- ✅ Can work on different files simultaneously
-- ✅ Full observability of each worker's actions
+### 6. Integration Tests with Real APIs
 
----
-
-## Secret Injection for Integration Tests
-
-Workers use injected secrets to run integration tests against real services in test mode.
-
-### Example: Stripe Integration Test
+Workers use injected secrets for integration tests:
 
 ```typescript
 // tests/integration/stripe-payment.test.ts
@@ -1024,16 +929,12 @@ describe('Stripe Payment Integration', () => {
   let stripe: Stripe;
 
   beforeAll(() => {
-    // Secret injected by container-use from op://glx/stripe/test-secret-key
+    // Secret injected from op://glx/stripe/test-secret-key
     const secretKey = process.env.STRIPE_SECRET_KEY;
-
     if (!secretKey) {
       throw new Error('STRIPE_SECRET_KEY not configured');
     }
-
-    stripe = new Stripe(secretKey, {
-      apiVersion: '2023-10-16'
-    });
+    stripe = new Stripe(secretKey, { apiVersion: '2023-10-16' });
   });
 
   it('creates a payment intent', async () => {
@@ -1045,46 +946,11 @@ describe('Stripe Payment Integration', () => {
 
     expect(paymentIntent.id).toMatch(/^pi_/);
     expect(paymentIntent.amount).toBe(1000);
-    expect(paymentIntent.currency).toBe('usd');
     expect(paymentIntent.status).toBe('requires_payment_method');
-  });
-
-  it('creates a customer', async () => {
-    const customer = await stripe.customers.create({
-      email: 'test@example.com',
-      description: 'Test customer'
-    });
-
-    expect(customer.id).toMatch(/^cus_/);
-    expect(customer.email).toBe('test@example.com');
-  });
-
-  it('attaches payment method to customer', async () => {
-    // Create test customer
-    const customer = await stripe.customers.create({
-      email: 'test@example.com'
-    });
-
-    // Create test payment method
-    const paymentMethod = await stripe.paymentMethods.create({
-      type: 'card',
-      card: {
-        token: 'tok_visa'  // Stripe test token
-      }
-    });
-
-    // Attach to customer
-    const attached = await stripe.paymentMethods.attach(
-      paymentMethod.id,
-      { customer: customer.id }
-    );
-
-    expect(attached.customer).toBe(customer.id);
   });
 
   it('verifies webhook signature', async () => {
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
     if (!webhookSecret) {
       throw new Error('STRIPE_WEBHOOK_SECRET not configured');
     }
@@ -1117,13 +983,10 @@ Running integration tests...
 
 ✅ Stripe Payment Integration
   ✅ creates a payment intent (342ms)
-  ✅ creates a customer (156ms)
-  ✅ attaches payment method to customer (289ms)
   ✅ verifies webhook signature (45ms)
 
-Test Summary:
-  4 passed, 0 failed
-  Coverage: 94%
+Test Summary: 2 passed, 0 failed
+Coverage: 94%
 
 Integration tests use real Stripe API in test mode.
 Secrets injected securely via container-use.
@@ -1136,27 +999,27 @@ Secrets injected securely via container-use.
 ### 1. Never Commit Secrets
 
 ```yaml
-# ✅ GOOD - .container-use/environment.json
+# ✅ GOOD - References only
 {
-  "secrets": {
-    "STRIPE_SECRET_KEY": "op://glx/stripe/test-secret-key",
-    "DATABASE_URL": "op://glx/database/test-url"
-  }
+  "secrets": [
+    "STRIPE_SECRET_KEY=op://glx/stripe/test-secret-key",
+    "DATABASE_URL=op://glx/database/test-url"
+  ]
 }
 
-# ❌ BAD - Never do this
+# ❌ BAD - Actual values
 {
-  "secrets": {
-    "STRIPE_SECRET_KEY": "sk_test_51ABC123...",
-    "DATABASE_URL": "postgresql://user:password@host/db"
-  }
+  "secrets": [
+    "STRIPE_SECRET_KEY=sk_test_51ABC123...",
+    "DATABASE_URL=postgresql://user:password@host/db"
+  ]
 }
 ```
 
-### 2. Use Test Keys for Development
+### 2. Use Test Keys
 
 ```yaml
-# ✅ GOOD - Separate test and production keys
+# ✅ GOOD - Separate environments
 test:
   STRIPE_SECRET_KEY: op://glx/stripe/test-secret-key  # sk_test_*
 
@@ -1169,16 +1032,12 @@ production:
 
 ### 3. Minimal Permissions
 
-```yaml
-# ✅ GOOD - Restricted AWS IAM policy
+```json
+# ✅ GOOD - Restricted AWS policy
 {
-  "Version": "2012-10-17",
   "Statement": [{
     "Effect": "Allow",
-    "Action": [
-      "s3:PutObject",
-      "s3:GetObject"
-    ],
+    "Action": ["s3:PutObject", "s3:GetObject"],
     "Resource": "arn:aws:s3:::my-bucket/uploads/*"
   }]
 }
@@ -1194,94 +1053,39 @@ production:
 ### 4. Secret Rotation
 
 ```yaml
-# When rotating secrets:
+When rotating secrets:
 1. Generate new secret in service (Stripe, AWS, etc.)
 2. Update in 1Password
-3. Workers automatically get new value
+3. Workers automatically get new value (no code changes!)
 4. Revoke old secret after verification
-
-# No code changes needed!
 ```
 
-### 5. Audit Secret Access
+### 5. Audit Access
 
 ```bash
-# Review which workers accessed which secrets
+# Review secret access in logs
 container-use log env-001 | grep "STRIPE"
 
-# Monitor 1Password access logs
+# Monitor 1Password access
 op signin
 op item get stripe --vault glx --format json
 ```
 
----
+### 6. Network Restrictions
 
-## BOSS Commands for Container-Use Management
-
-### Setup Commands
-
-```bash
-# Initialize container-use for project
-boss init
-
-# Configure default environment
-boss config environment --base-image node:22-slim
-
-# Add secrets
-boss config secret add STRIPE_SECRET_KEY op://glx/stripe/test-secret-key
-boss config secret add DATABASE_URL op://glx/database/test-url
-
-# List secrets (values masked)
-boss config secret list
+```json
+{
+  "network": {
+    "allowed_hosts": [
+      "api.stripe.com",              // Specific service
+      "*.sendgrid.com",              // Wildcard for service
+      "registry.npmjs.org"           // Package registry
+    ]
+  }
+}
 ```
 
-### Worker Management Commands
-
-```bash
-# List all active workers
-boss workers
-
-# Example output:
-# ID        Role                Task          Status      Branch
-# env-001   developer-backend   US1-auth      running     container-use/env-001
-# env-002   developer-frontend  US2-dashboard running     container-use/env-002
-# env-003   reviewer            review-all    completed   container-use/env-003
-
-# View worker logs
-boss logs env-001
-
-# Inspect worker changes
-boss diff env-001
-
-# Enter worker environment
-boss terminal env-001
-
-# Kill worker
-boss kill env-001
-```
-
-### Workflow Commands
-
-```bash
-# Check overall status
-boss status
-
-# Example output:
-# Workflow: run_2024_001
-# Phase: Implementation (7/8)
-# Workers: 3 running, 2 completed, 0 failed
-#
-# Active Workers:
-#   env-001: User Authentication (80% complete)
-#   env-002: User Registration (60% complete)
-#   env-004: Dashboard UI (45% complete)
-
-# Pause workflow (stops spawning new workers)
-boss pause
-
-# Resume workflow
-boss resume
-```
+**Deny by default:** Only whitelist required services.
 
 ---
 
@@ -1289,139 +1093,149 @@ boss resume
 
 ### Secret Not Available
 
-```bash
-# Symptom: Worker fails with "STRIPE_SECRET_KEY is not defined"
+**Symptom:** Worker fails with "STRIPE_SECRET_KEY is not defined"
 
-# Check secret configuration
+**Solution:**
+
+```bash
+# 1. Check secret configuration
 container-use config secret list
 
-# Verify 1Password CLI is authenticated
+# 2. Verify 1Password CLI authenticated
 op signin
 op item get stripe --vault glx
 
-# Verify secret reference is correct
+# 3. Verify reference correct
 container-use config secret set STRIPE_SECRET_KEY op://glx/stripe/test-secret-key
 
-# Test secret resolution
+# 4. Test resolution in container
 container-use terminal env-001
 echo $STRIPE_SECRET_KEY  # Should show actual value
 ```
 
 ### Worker Branch Conflicts
 
+**Symptom:** Worker cannot merge branch
+
+**Solution:**
+
 ```bash
-# Symptom: Worker cannot merge branch
-
-# Check for conflicts
-container-use diff env-001
-
 # Option 1: Resolve manually
 container-use checkout env-001
 # Fix conflicts in IDE
 git add .
 git commit -m "Resolve conflicts"
 
-# Option 2: Restart worker
+# Option 2: Restart worker (BOSS will spawn new worker)
 container-use delete env-001
-# BOSS will spawn new worker with updated base
 ```
 
 ### Integration Tests Failing
 
-```bash
-# Symptom: Tests pass locally but fail in container
+**Symptom:** Tests pass locally but fail in container
 
-# Check environment parity
+**Solution:**
+
+```bash
+# 1. Enter container
 container-use terminal env-001
 
-# Verify secrets available
+# 2. Verify secrets available
 env | grep STRIPE
 env | grep DATABASE
 
-# Check network access
+# 3. Check network access
 curl https://api.stripe.com/v1/customers -u $STRIPE_SECRET_KEY:
 
-# Inspect logs
+# 4. Inspect logs
 container-use log env-001 | grep ERROR
+```
+
+### Permission Denied Errors
+
+**Symptom:** Worker cannot execute commands
+
+**Solution:**
+
+Workers run in "dangerous" mode with full permissions. If you see permission errors:
+
+```bash
+# This should NOT happen in container-use
+# Workers have root access inside containers
+
+# If it does happen, check:
+1. Verify "dangerous" mode enabled in config
+2. Check container-use version (ensure latest)
+3. Restart Docker daemon
+```
+
+### Worker Hangs
+
+**Symptom:** Worker stuck, no progress
+
+**Solution:**
+
+```bash
+# 1. Check logs
+container-use log env-001
+
+# 2. Enter container
+container-use terminal env-001
+
+# 3. Kill stuck processes
+ps aux | grep node
+kill -9 <pid>
+
+# 4. If unrecoverable, delete and retry
+container-use delete env-001
 ```
 
 ---
 
-## Benefits of Container-Use Integration
+## Reference
 
-### 1. Security
-- ✅ Secrets never exposed to AI models
-- ✅ Automatic secret stripping from logs
-- ✅ Isolated environments prevent credential leakage
-- ✅ Centralized secret management in 1Password
+### BOSS Workflow Integration
 
-### 2. Observability
-- ✅ Complete command history for each worker
-- ✅ Git branch per worker for code inspection
-- ✅ Live monitoring with container-use terminal
-- ✅ Full audit trail of all changes
-
-### 3. Reproducibility
-- ✅ Exact environment recreated for debugging
-- ✅ Configuration committed to git
-- ✅ Deterministic builds across workers
-- ✅ Easy rollback to previous states
-
-### 4. Parallelization
-- ✅ Multiple workers in isolated environments
-- ✅ No conflicts between parallel work
-- ✅ Each worker has own branch
-- ✅ Consolidation phase merges cleanly
-
-### 5. Iteration
-- ✅ Resume workers in same environment
-- ✅ Iterate on failed work without losing progress
-- ✅ Disposable environments for experimentation
-- ✅ Clean main branch always maintained
-
----
-
-## Integration with BOSS Workflow
-
-### Phase 0: Bootstrap
+#### Phase 0: Bootstrap
 
 ```bash
 boss bootstrap --template nextjs-app-turbo
 
-# Creates:
-# - .container-use/environment.json (default config)
-# - Worker-specific configs in .boss/workers/*/container-config.json
+Creates:
+├── CLAUDE.md (worker instructions)
+├── start-boss.sh (launches BOSS with --allowedTools)
+├── .container-use/environment.json (default config)
+└── .boss/workers/*/container-config.json (worker configs)
 ```
 
-### Phase 1-3: No Secrets Needed
+#### Phase 1-3: No Secrets Needed
 
-Workers (Clarifier, Spec-Writer, Planner) don't need external API access.
+Clarifier, Spec-Writer, Planner workers don't need external APIs.
 
 ```json
 {
-  "secrets": {}  // Empty - no secrets required
+  "secrets": []
 }
 ```
 
-### Phase 4: Planning - Secret Discovery
+#### Phase 4: Planning - Secret Discovery
 
 Planner analyzes integrations and creates:
 - `secret-requirements.md` with setup instructions
-- Human tasks for secret generation
-- op:// references to be created
+- Human tasks (HT-*) for secret generation
+- GitHub issues to track completion
 
-### Phase 5-6: Validation & Task Breakdown
+#### Phase 5-6: Validation & Task Breakdown
 
-Reviewer validates plan includes secret setup tasks.
-Task breakdown includes HT-* (Human Task) items for secrets.
+Reviewer validates plan includes secret setup.
+Tasks include HT-* prerequisites.
 
-### Phase 7: Implementation - Secrets Required
+#### Phase 7: Implementation - Secrets Required
 
-**BOSS checks for secrets before spawning workers:**
+BOSS verifies all secrets configured before spawning workers.
 
 ```typescript
 async function beforeImplementation() {
-  // 1. Check all required secrets are configured
   const requiredSecrets = await getRequiredSecrets();
   const configuredSecrets = await getConfiguredSecrets();
 
@@ -1432,90 +1246,213 @@ async function beforeImplementation() {
   if (missing.length > 0) {
     throw new Error(
       `Missing secrets: ${missing.join(', ')}\n` +
-      `Please complete secret setup tasks (HT-*) before proceeding.`
+      `Please complete HT-* tasks before proceeding.`
     );
   }
 
-  // 2. Verify secrets can be resolved
-  for (const secret of configuredSecrets) {
-    const value = await resolveSecret(secret);
-    if (!value) {
-      throw new Error(`Secret ${secret} could not be resolved from 1Password`);
-    }
-  }
-
-  // 3. Spawn workers
   await spawnWorkers();
 }
 ```
 
-### Phase 8: Consolidation
+#### Phase 8: Consolidation
 
 Consolidator merges all worker branches:
 
 ```bash
-# Consolidator runs in its own container-use environment
 container-use environment create --title "consolidator"
 
-# Merges all worker branches
-git merge container-use/env-001  # Worker 1
-git merge container-use/env-002  # Worker 2
-git merge container-use/env-003  # Worker 3
+git merge container-use/env-001
+git merge container-use/env-002
+git merge container-use/env-003
 
-# Runs final integration tests (with secrets)
-pnpm test:integration
+pnpm test:integration  # With secrets
 
-# Creates PR
-gh pr create --title "Complete Feature Implementation"
+gh pr create --title "Complete Implementation"
 ```
+
+### CLAUDE.md Templates
+
+#### Next.js App Template
+
+```markdown
+# Project: [Name]
+
+## CRITICAL: Environment-Only Operations
+
+**ALWAYS use ONLY Environments for ALL operations—NO EXCEPTIONS.**
+
+- ✅ DO: Use environment tools
+- ❌ DO NOT: Use raw git CLI
+- ❌ DO NOT: Execute outside environment
+
+### User Visibility
+
+You MUST inform user how to view work:
+- `container-use log <env_id>`
+- `container-use checkout <env_id>`
+
+## Next.js Guidelines
+
+- App Router (app/ directory)
+- Server Components by default
+- Tailwind CSS for styling
+- Prisma for database
+- Vitest for testing
+
+## Quality Standards
+
+- TDD: Tests BEFORE implementation
+- Coverage ≥ 80%
+- No console.logs in production
+```
+
+#### API Service Template
+
+```markdown
+# Project: [Name]
+
+## CRITICAL: Environment-Only Operations
+
+[Same as Next.js template]
+
+## Fastify Guidelines
+
+- RESTful endpoints (OpenAPI 3.0)
+- Plugin-based architecture
+- Prisma for data access
+- JSON Schema validation
+- Repository pattern
+
+## Quality Standards
+
+- TDD: Tests BEFORE implementation
+- Coverage ≥ 80%
+- OpenAPI spec up-to-date
+```
+
+#### Blank Template
+
+```markdown
+# Project: [Name]
+
+## CRITICAL: Environment-Only Operations
+
+[Same as other templates]
+
+## TypeScript Guidelines
+
+- Strict mode enabled
+- Vitest for testing
+- ESLint + Prettier
+- Conventional commits
+
+## Quality Standards
+
+- TDD: Tests BEFORE implementation
+- Coverage ≥ 80%
+```
+
+### start-boss.sh Script
+
+```bash
+#!/usr/bin/env bash
+# start-boss.sh - Launch BOSS with restricted tool access
+
+set -e
+
+echo "🤖 Starting BOSS with restricted tool access..."
+echo "  ✅ Container-Use MCP"
+echo "  ✅ GitHub MCP"
+echo "  ✅ Knowledge Base MCP"
+echo "  ❌ NO host-level tools"
+
+claude --allowedTools \
+mcp__container-use__environment_add_service,\
+mcp__container-use__environment_checkpoint,\
+mcp__container-use__environment_config,\
+mcp__container-use__environment_create,\
+mcp__container-use__environment_file_delete,\
+mcp__container-use__environment_file_edit,\
+mcp__container-use__environment_file_list,\
+mcp__container-use__environment_file_read,\
+mcp__container-use__environment_file_write,\
+mcp__container-use__environment_open,\
+mcp__container-use__environment_run_cmd,\
+mcp__container-use__environment_update_metadata,\
+mcp__github__*,\
+mcp__knowledge-base__*
+```
+
+### BOSS Commands
+
+```bash
+# Worker Management
+boss workers              # List active workers
+boss logs <env-id>        # View worker logs
+boss diff <env-id>        # View worker changes
+boss terminal <env-id>    # Enter worker container
+boss kill <env-id>        # Kill worker
+
+# Secret Management
+boss config secret add <name> <op-ref>
+boss config secret list   # Values masked
+boss config secret remove <name>
+
+# Workflow
+boss status               # Overall status
+boss pause                # Pause workflow
+boss resume               # Resume workflow
+```
+
+### Benefits Summary
+
+1. **Security**
+   - ✅ Secrets never exposed to AI
+   - ✅ Automatic log stripping
+   - ✅ Isolated environments
+   - ✅ Centralized 1Password management
+
+2. **Observability**
+   - ✅ Complete command history
+   - ✅ Git branch per worker
+   - ✅ Live monitoring
+   - ✅ Full audit trail
+
+3. **Reproducibility**
+   - ✅ Exact environment recreation
+   - ✅ Configuration in git
+   - ✅ Deterministic builds
+   - ✅ Easy rollback
+
+4. **Parallelization**
+   - ✅ Multiple isolated workers
+   - ✅ No conflicts
+   - ✅ Own branch per worker
+   - ✅ Clean consolidation
+
+5. **Iteration**
+   - ✅ Resume in same environment
+   - ✅ Iterate on failures
+   - ✅ Disposable experiments
+   - ✅ Main branch protected
 
 ---
 
 ## Summary
 
-**BOSS + Container-Use Integration provides:**
+**BOSS + Container-Use provides secure, observable, multi-agent development:**
 
-1. ✅ **Isolated Execution** - Each worker in own container + branch
+1. ✅ **Isolated Execution** - Workers in containers with dedicated branches
 2. ✅ **Secure Secrets** - 1Password integration, AI never sees values
 3. ✅ **Agent Discovery** - Workers identify and document secret needs
-4. ✅ **Human-in-Loop** - Secret setup tasks for humans with instructions
+4. ✅ **Human-in-Loop** - Secret setup via GitHub issues with instructions
 5. ✅ **Integration Testing** - Secrets available for real API tests
-6. ✅ **Full Observability** - Complete audit trail of all work
+6. ✅ **Full Observability** - Complete audit trail
 7. ✅ **Parallel Execution** - Multiple workers without conflicts
-8. ✅ **Clean Workflow** - Disposable environments, main branch protected
+8. ✅ **Clean Workflow** - Disposable environments, protected main branch
 
-**Container-use is the foundation that makes BOSS's multi-agent orchestration secure, observable, and reproducible.**
+**Container-use is the foundation that makes BOSS's multi-agent orchestration secure, observable, and reproducible.** 🚀
 
 ---
 
-## Next Steps
-
-To implement BOSS with container-use:
-
-1. **Container-Use Setup**
-   - Install container-use CLI
-   - Configure default environment
-   - Set up 1Password CLI integration
-
-2. **Worker Configurations**
-   - Create configs for each worker type
-   - Define required secrets per worker
-   - Test secret injection
-
-3. **Secret Management**
-   - Establish 1Password vault structure
-   - Document op:// reference conventions
-   - Create secret setup templates
-
-4. **Integration Testing**
-   - Set up test accounts for services
-   - Generate test API keys
-   - Verify integration test patterns
-
-5. **BOSS Implementation**
-   - Implement worker spawning logic
-   - Add secret requirement detection
-   - Create human task generation
-   - Build consolidation workflow
-
-**Result:** A fully automated, secure, and observable multi-agent development system powered by container-use! 🚀
+**Next:** See [BOSS-SPEC-KIT-INTEGRATION.md](./BOSS-SPEC-KIT-INTEGRATION.md) for how BOSS orchestrates the complete Spec-Kit workflow with these workers.

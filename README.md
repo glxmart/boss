@@ -93,6 +93,31 @@ BOSS is your **Claude Code or Cursor instance** configured to act as an orchestr
   └───────┘  └───────┘  └───────┘  └───────┘  └───────┘
 ```
 
+### CRITICAL: BOSS Operational Constraints
+
+**What BOSS CAN Do (MCP-Only Operations):**
+- ✅ **Container-Use MCP** - Spawn workers, execute in containers, manage environments
+- ✅ **GitHub MCP** - Create/manage PRs, issues, projects, labels, milestones, comments, reviews (ALL GitHub operations)
+- ✅ **Knowledge Base MCP** - Query patterns, search artifacts, retrieve context
+- ✅ **Orchestration Logic** - Coordinate workers, enforce quality gates, manage workflow state
+
+**What BOSS CANNOT Do (Host-Level Restrictions):**
+- ❌ **NO direct file operations** - Cannot read, write, or edit files on host
+- ❌ **NO direct code execution** - Cannot run shell commands, scripts, or build tools
+- ❌ **NO direct git operations** - Cannot commit, push, or manage git directly
+
+**What Workers CAN Do (Full Execution Inside Containers):**
+- ✅ **ALL file operations** - Read, write, edit any files in their workspace
+- ✅ **ALL code execution** - Run shell commands, build tools, tests, scripts
+- ✅ **ALL git operations** - Commit, push, manage branches (via environment tools)
+- ✅ **Full development capabilities** - Everything a human developer can do
+
+**Why This Architecture:**
+- **Security** - Workers isolated in containers, BOSS cannot accidentally modify host
+- **Control** - BOSS orchestrates via well-defined MCP interfaces
+- **Observability** - All worker actions logged via container-use
+- **Flexibility** - GitHub MCP gives BOSS full project management capabilities
+
 ### How BOSS Orchestrates Work
 
 **Via Container-Use MCP commands** (following [container-use.com/environment-workflow](https://container-use.com/environment-workflow)):
@@ -103,6 +128,27 @@ BOSS is your **Claude Code or Cursor instance** configured to act as an orchestr
 4. **Validate** - BOSS checks quality gates after worker completes
 5. **Iterate** - If quality gates fail, delete environment and retry with improved prompt
 6. **Merge** - If gates pass, merge branch via `containerUse.mergeEnvironment()`
+
+### Starting BOSS Securely
+
+Bootstrap creates a `start-boss.sh` script that launches BOSS with restricted tool access:
+
+```bash
+# Launch BOSS with MCP-only access
+./start-boss.sh
+```
+
+This script uses the `--allowedTools` flag to ensure BOSS can ONLY use:
+- ✅ Container-Use MCP (spawn/manage workers)
+- ✅ GitHub MCP (ALL GitHub operations)
+- ✅ Knowledge Base MCP (query context)
+
+And CANNOT use:
+- ❌ Host file system tools (Read, Write, Edit, Glob, Grep)
+- ❌ Host shell execution (Bash)
+- ❌ Direct git operations
+
+**Always use `start-boss.sh` to ensure BOSS operates exclusively via MCPs.**
 
 ---
 

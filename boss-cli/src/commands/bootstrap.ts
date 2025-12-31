@@ -5,11 +5,12 @@ import {
   promptTemplate,
   promptQualityPreset,
   promptGitHubConfig,
+  promptMCPScope,
   confirmBootstrap,
   TEMPLATES,
   QUALITY_PRESETS
 } from '../utils/prompts.js';
-import { validateProjectName, validateTemplate, validateQualityPreset } from '../utils/validators.js';
+import { validateProjectName, validateTemplate, validateQualityPreset, validateMCPScope } from '../utils/validators.js';
 import { validateProjectDirectory } from '../utils/validators.js';
 import type { BootstrapOptions, ProjectConfig } from '../types/index.js';
 import { initGitRepository } from '../utils/git.js';
@@ -105,7 +106,18 @@ export async function bootstrapCommand(options: BootstrapOptions): Promise<void>
 
     // Generate MCP config
     logger.startSpinner('Generating MCP configuration...');
-    await generateMCPConfig();
+    let mcpScope: 'user' | 'project' | 'both' = 'both';
+    if (options.mcpScope) {
+      const validation = validateMCPScope(options.mcpScope);
+      if (!validation.valid) {
+        logger.error(validation.error || 'Invalid MCP scope');
+        process.exit(1);
+      }
+      mcpScope = options.mcpScope as 'user' | 'project' | 'both';
+    } else if (!options.nonInteractive) {
+      mcpScope = await promptMCPScope();
+    }
+    await generateMCPConfig(projectPath, mcpScope);
     logger.stopSpinner(true, 'MCP configuration generated');
 
     // Generate GitHub workflows

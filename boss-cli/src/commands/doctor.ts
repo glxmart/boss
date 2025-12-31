@@ -173,17 +173,18 @@ async function checkMCPConfig(): Promise<CheckResult> {
   const path = await import('path');
   const fs = await import('fs-extra');
   
-  const configPaths = [
-    path.join(os.homedir(), '.config', 'claude-code', 'mcp-servers.json'),
-    path.join(os.homedir(), '.cursor', 'mcp-servers.json')
-  ];
-
-  for (const configPath of configPaths) {
-    if (await fs.pathExists(configPath)) {
-      return { name: 'MCP Config', status: 'pass', message: `Found: ${configPath}` };
-    }
+  // Check Claude Code first (default/preferred)
+  const claudeCodePath = path.join(os.homedir(), '.config', 'claude-code', 'mcp-servers.json');
+  if (await fs.pathExists(claudeCodePath)) {
+    return { name: 'MCP Config', status: 'pass', message: `Found: ${claudeCodePath}` };
+  }
+  
+  // Fall back to Cursor
+  const cursorPath = path.join(os.homedir(), '.cursor', 'mcp-servers.json');
+  if (await fs.pathExists(cursorPath)) {
+    return { name: 'MCP Config', status: 'pass', message: `Found: ${cursorPath}` };
   }
 
-  return { name: 'MCP Config', status: 'warning', message: 'Not found (will be created during bootstrap)' };
+  return { name: 'MCP Config', status: 'warning', message: 'Not found (will be created during bootstrap - defaults to Claude Code)' };
 }
 

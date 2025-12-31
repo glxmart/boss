@@ -1,5 +1,6 @@
 import path from 'path';
-import { copyDirectory, writeFile } from '../utils/file-system.js';
+import { copyDirectory, writeFile, readFile } from '../utils/file-system.js';
+import { loadTemplate as loadAssetTemplate } from '../utils/template-loader.js';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import type { Template, ProjectConfig } from '../types/index.js';
@@ -27,6 +28,9 @@ export async function loadTemplate(
     // Create minimal template structure
     await createMinimalTemplate(projectPath, template, config);
   }
+
+  // Ensure .env is always in .gitignore (for all templates)
+  await ensureEnvInGitignore(projectPath);
 }
 
 async function loadT3Template(
@@ -134,109 +138,17 @@ async function createMinimalTemplate(
   );
 
   // Create vitest.config.ts
-  const vitestConfig = `import { defineConfig } from 'vitest/config';
-
-export default defineConfig({
-  test: {
-    globals: true,
-    environment: 'node',
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html'],
-      thresholds: {
-        lines: ${config.quality === 'startup' ? 60 : config.quality === 'production' ? 80 : 90},
-        functions: ${config.quality === 'startup' ? 60 : config.quality === 'production' ? 80 : 90},
-        branches: ${config.quality === 'startup' ? 60 : config.quality === 'production' ? 80 : 90},
-        statements: ${config.quality === 'startup' ? 60 : config.quality === 'production' ? 80 : 90}
-      }
-    }
-  }
-});
-`;
+  const coverageThreshold = config.quality === 'startup' ? 60 : config.quality === 'production' ? 80 : 90;
+  const vitestConfig = await loadAssetTemplate('template-loader/vitest.config.ts', {
+    coverageThreshold
+  });
   await writeFile(path.join(projectPath, 'vitest.config.ts'), vitestConfig);
 
   // Create ESLint configuration (ESLint 9 flat config format)
-  let eslintConfigContent: string;
-  if (template === 'nextjs-app-turbo') {
-    // React/Next.js specific config
-    eslintConfigContent = `import js from '@eslint/js';
-import tseslint from 'typescript-eslint';
-import react from 'eslint-plugin-react';
-import reactHooks from 'eslint-plugin-react-hooks';
-import globals from 'globals';
-
-export default tseslint.config(
-  js.configs.recommended,
-  ...tseslint.configs.recommended,
-  {
-    files: ['**/*.{ts,tsx,js,jsx}'],
-    plugins: {
-      react,
-      'react-hooks': reactHooks,
-    },
-    languageOptions: {
-      ecmaVersion: 2022,
-      sourceType: 'module',
-      parserOptions: {
-        ecmaFeatures: {
-          jsx: true,
-        },
-      },
-      globals: {
-        ...globals.node,
-        ...globals.browser,
-        ...globals.es2021,
-      },
-    },
-    settings: {
-      react: {
-        version: 'detect',
-      },
-    },
-    rules: {
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-      '@typescript-eslint/no-explicit-any': 'warn',
-      'react/react-in-jsx-scope': 'off',
-      'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'warn',
-    },
-  },
-  {
-    ignores: ['dist/**', 'node_modules/**', 'coverage/**', '.next/**', 'build/**'],
-  }
-);
-`;
-  } else {
-    // Standard Node.js config
-    eslintConfigContent = `import js from '@eslint/js';
-import tseslint from 'typescript-eslint';
-import globals from 'globals';
-
-export default tseslint.config(
-  js.configs.recommended,
-  ...tseslint.configs.recommended,
-  {
-    files: ['**/*.{ts,js}'],
-    languageOptions: {
-      ecmaVersion: 2022,
-      sourceType: 'module',
-      globals: {
-        ...globals.node,
-        ...globals.es2021,
-      },
-    },
-    rules: {
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-      '@typescript-eslint/explicit-function-return-type': 'off',
-      '@typescript-eslint/no-explicit-any': 'warn',
-    },
-  },
-  {
-    ignores: ['dist/**', 'node_modules/**', 'coverage/**', 'build/**'],
-  }
-);
-`;
-  }
+  const eslintTemplate = template === 'nextjs-app-turbo' 
+    ? 'template-loader/eslint.config.react.js'
+    : 'template-loader/eslint.config.node.js';
+  const eslintConfigContent = await loadAssetTemplate(eslintTemplate);
   await writeFile(
     path.join(projectPath, 'eslint.config.js'),
     eslintConfigContent
@@ -258,59 +170,11 @@ export default tseslint.config(
   );
 
   // Create Prettier ignore file
-  const prettierIgnore = `node_modules
-dist
-coverage
-.next
-build
-*.min.js
-*.min.css
-`;
+  const prettierIgnore = await loadAssetTemplate('template-loader/prettierignore');
   await writeFile(path.join(projectPath, '.prettierignore'), prettierIgnore);
 
   // Create .gitignore
-  const gitignore = `# Dependencies
-node_modules/
-.pnp
-.pnp.js
-
-# Build outputs
-dist/
-build/
-*.tsbuildinfo
-
-# Testing
-coverage/
-.nyc_output/
-
-# Environment variables
-.env
-.env.local
-.env.*.local
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-
-# Temporary files
-*.tmp
-*.temp
-`;
+  const gitignore = await loadAssetTemplate('template-loader/gitignore');
   await writeFile(path.join(projectPath, '.gitignore'), gitignore);
 
   // Create src directory structure
@@ -319,64 +183,42 @@ pnpm-debug.log*
   await fs.ensureDir(path.join(projectPath, 'tests'));
 
   // Create basic index.ts file
-  const indexTs = `/**
- * ${config.name}
- * 
- * Generated by BOSS CLI
- */
-
-export function main(): void {
-  console.log('Hello from ${config.name}!');
-}
-
-// Uncomment to run when this file is executed directly
-// main();
-`;
+  const indexTs = await loadAssetTemplate('template-loader/index.ts', { config });
   await writeFile(path.join(projectPath, 'src', 'index.ts'), indexTs);
 
   // Create basic test file
-  const testFile = `import { describe, it, expect } from 'vitest';
-import { main } from '../src/index.js';
-
-describe('${config.name}', () => {
-  it('should have a main function', () => {
-    expect(main).toBeDefined();
-    expect(typeof main).toBe('function');
-  });
-});
-`;
+  const testFile = await loadAssetTemplate('template-loader/index.test.ts', { config });
   await writeFile(path.join(projectPath, 'tests', 'index.test.ts'), testFile);
 
   // Create README
-  const readme = `# ${config.name}
-
-BOSS project bootstrapped with template: ${template}
-
-## Getting Started
-
-\`\`\`bash
-# Install dependencies
-pnpm install
-
-# Start infrastructure
-docker-compose up -d
-
-# Run tests
-pnpm test
-
-# Start BOSS
-./start-boss.sh
-\`\`\`
-
-## Project Structure
-
-- \`.boss/\` - BOSS configuration
-- \`.specify/\` - Spec-Kit structure
-- \`.container-use/\` - Container-use configuration
-- \`src/\` - Source code
-- \`tests/\` - Tests
-`;
+  const readme = await loadAssetTemplate('template-loader/README.md', { config, template });
   await writeFile(path.join(projectPath, 'README.md'), readme);
+}
+
+async function ensureEnvInGitignore(projectPath: string): Promise<void> {
+  const fs = await import('fs-extra');
+  const gitignorePath = path.join(projectPath, '.gitignore');
+  
+  // If .gitignore doesn't exist, create it with .env
+  if (!(await fs.pathExists(gitignorePath))) {
+    await writeFile(gitignorePath, '# Environment variables (1Password secret references)\n.env\n.env.local\n.env.*.local\n');
+    return;
+  }
+
+  // Read existing .gitignore
+  let content = await readFile(gitignorePath);
+  
+  // Check if .env patterns are already present (more specific check)
+  // Look for .env on its own line (not as part of another word)
+  const hasEnvPattern = /^\.env$/m.test(content) || /^\.env\*$/m.test(content) || /^\.env\./m.test(content);
+  
+  // If .env is not in gitignore, add it
+  if (!hasEnvPattern) {
+    // Add .env patterns if they don't exist
+    const envSection = '\n# Environment variables (1Password secret references)\n.env\n.env.local\n.env.*.local\n';
+    const updatedContent = content.trimEnd() + envSection;
+    await writeFile(gitignorePath, updatedContent);
+  }
 }
 
 function getPackageJsonForTemplate(template: Template, config: ProjectConfig): any {

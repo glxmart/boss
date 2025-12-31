@@ -33,13 +33,31 @@ describe('mcp-config generator', () => {
     expect(config.mcpServers['boss-knowledge']).toBeDefined();
   });
 
-  it('should use op://boss/ format for secrets', async () => {
+  it('should reference environment variable in MCP config env section', async () => {
     await generateMCPConfig();
 
     const configPath = path.join(testHomeDir, '.config', 'claude-code', 'mcp-servers.json');
     const config = JSON.parse(await fs.readFile(configPath, 'utf8'));
 
-    expect(config.mcpServers.github.env.GITHUB_PERSONAL_ACCESS_TOKEN).toBe('op://boss/github/token');
+    // MCP config should reference GITHUB_PERSONAL_ACCESS_TOKEN from parent environment
+    // The value comes from parent environment (set by op run --env-file=.env)
+    // Using ${VAR} syntax allows MCP server to resolve it at runtime from parent env
+    expect(config.mcpServers.github.env).toBeDefined();
+    expect(config.mcpServers.github.env.GITHUB_PERSONAL_ACCESS_TOKEN).toBe('${GITHUB_PERSONAL_ACCESS_TOKEN}');
+  });
+
+  it('should generate .env file with op:// references for project scope', async () => {
+    const testProjectDir = path.join(os.tmpdir(), 'boss-cli-test-project');
+    await fs.ensureDir(testProjectDir);
+
+    await generateMCPConfig(testProjectDir, 'project');
+
+    const envPath = path.join(testProjectDir, '.env');
+    expect(await fs.pathExists(envPath)).toBe(true);
+
+    const envContent = await fs.readFile(envPath, 'utf8');
+    expect(envContent).toContain('GITHUB_PERSONAL_ACCESS_TOKEN=op://boss/github/token');
+    expect(envContent).toContain('op run --env-file=.env');
   });
 
   it('should merge with existing config', async () => {

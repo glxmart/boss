@@ -2,6 +2,8 @@ export type Template = 'nextjs-app-turbo' | 'api-service-fastify' | 'blank' | 't
 
 export type QualityPreset = 'startup' | 'production' | 'enterprise';
 
+export type MCPScope = 'user' | 'project' | 'both';
+
 export interface BootstrapOptions {
   template?: Template;
   quality?: QualityPreset;
@@ -12,6 +14,7 @@ export interface BootstrapOptions {
   interactive?: boolean;
   nonInteractive?: boolean;
   projectPath?: string; // Optional absolute path for project directory (for testing)
+  mcpScope?: MCPScope; // MCP config scope: 'user' (global IDE), 'project' (project directory), or 'both'
 }
 
 export interface ProjectConfig {

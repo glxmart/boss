@@ -51,3 +51,11 @@ export function validateQualityPreset(quality: string): { valid: boolean; error?
   return { valid: true };
 }
 
+export function validateMCPScope(scope: string): { valid: boolean; error?: string } {
+  const validScopes = ['user', 'project', 'both'];
+  if (!validScopes.includes(scope)) {
+    return { valid: false, error: `Invalid MCP scope: ${scope}. Must be one of: ${validScopes.join(', ')}` };
+  }
+  return { valid: true };
+}
+

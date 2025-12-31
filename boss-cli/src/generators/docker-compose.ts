@@ -1,60 +1,9 @@
 import path from 'path';
 import { writeFile } from '../utils/file-system.js';
+import { loadTemplate } from '../utils/template-loader.js';
 
 export async function generateDockerCompose(projectPath: string): Promise<void> {
-  const dockerCompose = `version: '3.8'
-
-services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: boss-postgres
-    environment:
-      POSTGRES_USER: boss
-      POSTGRES_PASSWORD: bosssecret
-      POSTGRES_DB: boss_knowledge
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U boss"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  qdrant:
-    image: qdrant/qdrant:latest
-    container_name: boss-qdrant
-    ports:
-      - "6333:6333"
-      - "6334:6334"
-    volumes:
-      - qdrant_data:/qdrant/storage
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  embeddings:
-    image: ghcr.io/huggingface/text-embeddings-inference:latest
-    container_name: boss-embeddings
-    ports:
-      - "8080:80"
-    environment:
-      - MODEL_ID=BAAI/bge-large-en-v1.5
-      - MAX_BATCH_SIZE=32
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-volumes:
-  postgres_data:
-  qdrant_data:
-`;
-
+  const dockerCompose = await loadTemplate('docker-compose/docker-compose.yml');
   await writeFile(
     path.join(projectPath, 'docker-compose.yml'),
     dockerCompose

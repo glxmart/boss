@@ -1,5 +1,5 @@
 import inquirer from 'inquirer';
-import type { Template, QualityPreset, TemplateInfo, QualityPresetInfo } from '../types/index.js';
+import type { Template, QualityPreset, MCPScope, TemplateInfo, QualityPresetInfo } from '../types/index.js';
 
 export const TEMPLATES: Record<Template, TemplateInfo> = {
   'nextjs-app-turbo': {
@@ -112,6 +112,32 @@ export async function promptQualityPreset(): Promise<QualityPreset> {
     }
   ]);
   return quality;
+}
+
+export async function promptMCPScope(): Promise<MCPScope> {
+  const { scope } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'scope',
+      message: 'MCP configuration scope:',
+      choices: [
+        {
+          name: 'User (Global) - Install MCP config in IDE settings (~/.cursor or ~/.config/claude-code)',
+          value: 'user'
+        },
+        {
+          name: 'Project - Install MCP config in project directory (.mcp-servers.json)',
+          value: 'project'
+        },
+        {
+          name: 'Both - Install in both user and project locations',
+          value: 'both'
+        }
+      ],
+      default: 'both'
+    }
+  ]);
+  return scope;
 }
 
 export async function promptGitHubConfig(): Promise<{ repo?: string; org?: string }> {

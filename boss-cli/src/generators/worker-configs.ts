@@ -1,18 +1,9 @@
 import path from 'path';
-import { writeFile, ensureDirectory } from '../utils/file-system.js';
+import { promises as fsPromises } from 'fs';
+import { execa } from 'execa';
+import { writeFile, ensureDirectory, copyDirectory } from '../utils/file-system.js';
+import { loadTemplate, discoverWorkers, getAssetPath } from '../utils/template-loader.js';
 import type { ProjectConfig } from '../types/index.js';
-
-const WORKERS = [
-  'architect',
-  'clarifier',
-  'spec-writer',
-  'planner',
-  'reviewer',
-  'developer-frontend',
-  'developer-backend',
-  'developer-fullstack',
-  'consolidator'
-];
 
 const WORKER_PHASES: Record<string, string> = {
   'architect': 'Phase 1: Constitution',
@@ -30,7 +21,10 @@ export async function generateWorkerConfigs(
   projectPath: string,
   config: ProjectConfig
 ): Promise<void> {
-  for (const worker of WORKERS) {
+  // Dynamically discover workers from assets/worker-configs/
+  const workers = await discoverWorkers();
+  
+  for (const worker of workers) {
     const workerPath = path.join(projectPath, '.boss', 'workers', worker);
     await ensureDirectory(workerPath);
 
@@ -39,6 +33,13 @@ export async function generateWorkerConfigs(
 
     // Generate container-config.json
     await generateWorkerContainerConfig(workerPath, worker);
+
+    // Generate CLAUDE.md
+    await generateWorkerClaudeMD(workerPath, worker, config);
+
+    // Detect which IDE is available and only generate that folder
+    const ideFolder = await detectIDE();
+    await generateWorkerIDEFolder(workerPath, worker, ideFolder);
   }
 }
 
@@ -48,53 +49,16 @@ async function generateWorkerPrompt(
   config: ProjectConfig
 ): Promise<void> {
   const phase = WORKER_PHASES[workerName] || 'Unknown Phase';
+  const workerRoleDescription = getWorkerRoleDescription(workerName);
+  const artifactRequirements = getArtifactRequirements(workerName);
   
-  const prompt = `# ${workerName} Worker
-
-## Phase: ${phase}
-
-## Your Role
-
-${getWorkerRoleDescription(workerName)}
-
-## Spec-Kit Integration
-
-- Spec-Kit templates are available in \`.specify/templates/\`
-- Spec-Kit scripts are available in \`.specify/scripts/\`
-- Use Spec-Kit templates as reference for artifact format
-- Follow Spec-Kit structure and conventions
-
-## Artifact Requirements
-
-${getArtifactRequirements(workerName)}
-
-## Quality Requirements
-
-- Test-First (NON-NEGOTIABLE) - TDD cycle: red → green → refactor
-- BDD (Behavior-Driven Development) - Mandatory layer, Given/When/Then in specs and tests
-- Feature Documentation (NON-NEGOTIABLE) - Every feature must have complete documentation
-- Coverage ≥80%
-- Mutation testing ≥80%
-
-## Constitution Compliance
-
-- All work must comply with \`.specify/memory/constitution.md\`
-- Validate against constitution before completing work
-- Report any violations or warnings
-
-## Knowledge Base Integration
-
-- Query knowledge base for similar patterns before starting
-- Use existing patterns when available
-- Document new patterns for future use
-
-## Container-Use Constraints
-
-- Environment-only operations mandate
-- DO NOT use git CLI directly
-- All file, code, and shell operations must use container-use environments
-- Inform user how to view work: \`container-use log <env_id>\` AND \`container-use checkout <env_id>\`
-`;
+  const prompt = await loadTemplate(`worker-configs/${workerName}/prompt.md`, {
+    workerName,
+    phase,
+    workerRoleDescription,
+    artifactRequirements,
+    config
+  });
 
   await writeFile(path.join(workerPath, 'prompt.md'), prompt);
 }
@@ -129,39 +93,113 @@ function getArtifactRequirements(workerName: string): string {
   return requirements[workerName] || '- Complete assigned tasks following Spec-Kit format';
 }
 
+async function detectIDE(): Promise<'.claude' | '.cursor'> {
+  const os = await import('os');
+  const fs = await import('fs-extra');
+  // Use process.env.HOME if available (for testing), otherwise fall back to os.homedir()
+  const homeDir = process.env.HOME || os.homedir();
+  
+  // Check for Claude Code config directory first (default/preferred)
+  const claudeCodeDir = path.join(homeDir, '.config', 'claude-code');
+  if (await fs.pathExists(claudeCodeDir)) {
+    return '.claude';
+  }
+  
+  // Check for Cursor config directory
+  const cursorDir = path.join(homeDir, '.cursor');
+  if (await fs.pathExists(cursorDir)) {
+    return '.cursor';
+  }
+  
+  // Check for CLI commands as fallback
+  try {
+    await execa('claude', ['--version'], { reject: false });
+    return '.claude';
+  } catch {
+    try {
+      await execa('cursor', ['--version'], { reject: false });
+      return '.cursor';
+    } catch {
+      // Neither detected, default to Claude Code
+      return '.claude';
+    }
+  }
+}
+
 async function generateWorkerContainerConfig(
   workerPath: string,
   workerName: string
 ): Promise<void> {
-  const config = {
-    base_image: 'node:22-slim',
-    setup_commands: [
-      'apt-get update',
-      'apt-get install -y bash git curl build-essential'
-    ],
-    install_commands: [
-      'npm install -g pnpm',
-      'pnpm install'
-    ],
-    environment_variables: {
-      WORKER_ROLE: workerName,
-      NODE_ENV: 'test',
-      SPEC_KIT_MODE: 'true',
-      SPEC_KIT_PATH: '.specify',
-      PATH: '$PATH:.specify/scripts'
-    },
-    secrets: [],
-    network: {
-      allowed_hosts: [
-        'registry.npmjs.org',
-        'github.com'
-      ]
-    }
-  };
-
+  const configContent = await loadTemplate(`worker-configs/${workerName}/container-config.json`, {
+    workerName
+  });
+  // Parse and stringify to ensure valid JSON after interpolation
+  const config = JSON.parse(configContent);
   await writeFile(
     path.join(workerPath, 'container-config.json'),
     JSON.stringify(config, null, 2)
   );
+}
+
+async function generateWorkerClaudeMD(
+  workerPath: string,
+  workerName: string,
+  config: ProjectConfig
+): Promise<void> {
+  const workerRoleDescription = getWorkerRoleDescription(workerName);
+  
+  const claudeMD = await loadTemplate(`worker-configs/${workerName}/CLAUDE.md`, {
+    workerName,
+    workerRoleDescription,
+    config
+  });
+  
+  await writeFile(path.join(workerPath, 'CLAUDE.md'), claudeMD);
+}
+
+async function generateWorkerIDEFolder(
+  workerPath: string,
+  workerName: string,
+  folderName: '.claude' | '.cursor'
+): Promise<void> {
+  const idePath = path.join(workerPath, folderName);
+  await ensureDirectory(path.join(idePath, 'commands'));
+  await ensureDirectory(path.join(idePath, 'skills'));
+  await ensureDirectory(path.join(idePath, 'agents'));
+
+  // Copy any existing files from assets (if they exist)
+  // Assets use .claude/ as the source, but we copy to both .claude/ and .cursor/
+  const fs = await import('fs-extra');
+  const assetClaudePath = getAssetPath(`worker-configs/${workerName}/.claude`);
+
+  if (await fs.pathExists(assetClaudePath)) {
+    // Copy commands, skills, and agents files if they exist
+    for (const subfolder of ['commands', 'skills', 'agents']) {
+      const assetSubfolder = path.join(assetClaudePath, subfolder);
+      const destSubfolder = path.join(idePath, subfolder);
+      
+      if (await fs.pathExists(assetSubfolder)) {
+        const files = await fsPromises.readdir(assetSubfolder);
+        for (const file of files) {
+          if (file !== '.gitkeep' && file !== '.DS_Store') {
+            const assetFilePath = path.join(assetSubfolder, file);
+            const stat = await fsPromises.stat(assetFilePath);
+            if (stat.isFile()) {
+              try {
+                const content = await loadTemplate(
+                  `worker-configs/${workerName}/.claude/${subfolder}/${file}`,
+                  { workerName }
+                );
+                await writeFile(path.join(destSubfolder, file), content);
+              } catch (error) {
+                // If template loading fails, just copy the file directly
+                await fs.copy(assetFilePath, path.join(destSubfolder, file));
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 }
 

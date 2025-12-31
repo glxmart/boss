@@ -1,0 +1,27 @@
+name: Production
+description: Balanced quality & speed
+
+gates:
+  coverage: 80
+  mutation: 80
+  lint: true
+  typecheck: true
+  test: true
+  security: true
+
+git_hooks:
+  pre_commit:
+    - lint-staged
+    - typecheck
+    - test-affected
+  commit_msg:
+    type: conventional-commits
+
+ci:
+  checks:
+    - typecheck
+    - lint
+    - test
+    - coverage
+    - security-scan
+

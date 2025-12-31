@@ -1,0 +1,33 @@
+name: Enterprise
+description: Maximum quality, comprehensive checks
+
+gates:
+  coverage: 90
+  mutation: 80
+  lint: true
+  typecheck: true
+  test: true
+  security: true
+  dependency_check: true
+
+git_hooks:
+  pre_commit:
+    - lint-staged
+    - typecheck
+    - test-affected
+    - test-all
+    - build
+  commit_msg:
+    type: conventional-commits-with-ticket
+
+ci:
+  checks:
+    - typecheck
+    - lint
+    - test
+    - mutation-test
+    - security-scan
+    - dependency-check
+    - build
+    - e2e-tests
+

@@ -27,6 +27,7 @@ import { generateClaudeMD } from '../generators/claude-md.js';
 import { generateClaudeFolder } from '../generators/claude-folder.js';
 import { generateStartBossScript } from '../generators/start-boss-sh.js';
 import { loadTemplate } from '../generators/template-loader.js';
+import { generateTemplateDocs } from '../generators/template-docs.js';
 import { applyQualityPreset } from '../presets/quality-presets.js';
 import { addFiles, commit } from '../utils/git.js';
 
@@ -133,6 +134,11 @@ export async function bootstrapCommand(options: BootstrapOptions): Promise<void>
     logger.startSpinner(`Loading template: ${config.template}...`);
     await loadTemplate(projectPath, config.template, config);
     logger.stopSpinner(true, 'Template applied');
+
+    // Generate template documentation
+    logger.startSpinner('Generating template documentation...');
+    await generateTemplateDocs(projectPath, config);
+    logger.stopSpinner(true, 'Template documentation generated');
 
     // Commit all bootstrap files
     logger.startSpinner('Committing bootstrap files...');

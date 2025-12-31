@@ -17,6 +17,7 @@ export async function generateProjectStructure(
     '.github',
     '.github/workflows',
     '.husky',
+    'scripts',
     'src',
     'tests',
     'docs'

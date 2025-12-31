@@ -186,5 +186,46 @@ describe('Bootstrap Integration Tests', () => {
 
     expect(await fileExists(projectName, '.git')).toBe(true);
   });
+
+  it('should generate template documentation', async () => {
+    const options = {
+      template: 'blank' as const,
+      quality: 'startup' as const,
+      name: projectName,
+      nonInteractive: true,
+      projectPath: getTestProjectPath(projectName)
+    };
+
+    await bootstrapCommand(options);
+
+    expect(await fileExists(projectName, 'docs/TEMPLATE.md')).toBe(true);
+    
+    const content = await readProjectFile(projectName, 'docs/TEMPLATE.md');
+    expect(content).toContain('Template Documentation: Blank');
+    expect(content).toContain(projectName);
+    expect(content).toContain('startup');
+    expect(content).toContain('Available Scripts');
+    expect(content).toContain('Next Steps');
+  });
+
+  it('should generate template-specific documentation for nextjs template', async () => {
+    const options = {
+      template: 'nextjs-app-turbo' as const,
+      quality: 'production' as const,
+      name: projectName,
+      nonInteractive: true,
+      projectPath: getTestProjectPath(projectName)
+    };
+
+    await bootstrapCommand(options);
+
+    expect(await fileExists(projectName, 'docs/TEMPLATE.md')).toBe(true);
+    
+    const content = await readProjectFile(projectName, 'docs/TEMPLATE.md');
+    expect(content).toContain('Template Documentation: Next.js App (Turbo)');
+    expect(content).toContain('Next.js');
+    expect(content).toContain('React');
+    expect(content).toContain('production');
+  });
 });
 

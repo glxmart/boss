@@ -40,11 +40,11 @@ BOSS provides:
 **BOSS is NOT a standalone application.**
 
 BOSS is your **Claude Code or Cursor instance** configured to act as an orchestrator through:
-- **MCP Servers** - Container-Use, Plane, GitHub, Knowledge Base
-- **1Password CLI** - Secret management (op CLI, not MCP)
+- **MCP Servers** - Container-Use, GitHub, Knowledge Base
+- **1Password CLI** - Secret management (op CLI for manual secret setup)
 - **BOSS Skills** - Loaded into Claude Code/Cursor for orchestration capabilities
 - **Worker Templates** - Configurations for spawning specialized container-use agents
-- **Local Infrastructure** - All services run locally via Docker (PostgreSQL, Qdrant, Plane)
+- **Local Infrastructure** - All services run locally via Docker (PostgreSQL, Qdrant, embeddings)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -64,10 +64,9 @@ BOSS is your **Claude Code or Cursor instance** configured to act as an orchestr
 │  ┌──────────────┴─────────────────────────────────────┐   │
 │  │  MCP Servers (all running locally)                 │   │
 │  │  • Container-Use MCP → spawn/manage workers        │   │
-│  │  • Plane MCP → project management (local Docker)   │   │
-│  │  • GitHub MCP → repository operations              │   │
+│  │  • GitHub MCP → repo operations & project mgmt     │   │
 │  │  • Knowledge Base MCP → PostgreSQL + Qdrant        │   │
-│  │  • 1Password CLI → manual secret setup via op      │   │
+│  │  • 1Password CLI (op) → manual secret setup        │   │
 │  └──────────────┬─────────────────────────────────────┘   │
 │                 │                                           │
 │  ┌──────────────┴─────────────────────────────────────┐   │
@@ -75,7 +74,6 @@ BOSS is your **Claude Code or Cursor instance** configured to act as an orchestr
 │  │  • postgres (knowledge base)                       │   │
 │  │  • qdrant (vector database)                        │   │
 │  │  • text-embeddings-inference (local embeddings)    │   │
-│  │  • plane stack (project management)                │   │
 │  │  • worker containers (managed by container-use)    │   │
 │  └──────────────┬─────────────────────────────────────┘   │
 │                 │                                           │
@@ -122,7 +120,7 @@ Comprehensive overview of the BOSS system covering:
 - ✅ Complete workflow (8 phases)
 - ✅ Worker management & coordination
 - ✅ Knowledge engine & cross-BOSS communication
-- ✅ Plane integration for project management
+- ✅ GitHub integration for project management
 - ✅ End-to-end examples with real scenarios
 - ✅ Advanced features (cross-BOSS coordination, dependency management)
 
@@ -180,7 +178,7 @@ boss bootstrap --template nextjs-app-turbo --quality production
 
 # 2. Start local infrastructure
 docker-compose up -d
-# Starts: PostgreSQL, Qdrant, Plane, embeddings service
+# Starts: PostgreSQL, Qdrant, embeddings service
 
 # 3. Open project in Claude Code/Cursor
 # Your AI assistant is now configured as BOSS orchestrator!
@@ -215,7 +213,7 @@ You: "Build a task management app for remote teams"
 
 2. Start Infrastructure (1 minute)
    └─► Run: docker-compose up -d
-   └─► Starts: PostgreSQL, Qdrant, Plane, embeddings (all local)
+   └─► Starts: PostgreSQL, Qdrant, embeddings (all local)
 
 3. Open in Claude Code/Cursor
    └─► Your AI assistant loads BOSS configuration
@@ -228,7 +226,7 @@ You: "Build a task management app for remote teams"
 
 5. Specification Phase (Spec-Writer Worker)
    └─► Creates spec.md with user stories
-   └─► Gate 1: You review & approve in Plane
+   └─► Gate 1: You review & approve via GitHub PR
 
 6. Planning Phase (Planner Worker)
    └─► Creates plan.md, data-model.md, contracts/
@@ -239,7 +237,7 @@ You: "Build a task management app for remote teams"
    └─► Follow detailed instructions in secret-requirements.md
    └─► Store in 1Password with op:// references
    └─► Configure container-use
-   └─► Mark complete in Plane
+   └─► Mark complete via GitHub issue comment
 
 7. Implementation Phase
    └─► Spawns parallel workers (5 max)
@@ -327,14 +325,13 @@ Planner Worker analyzes spec.md:
           ├─► What scopes/permissions needed
           └─► op:// references to create
 
-      └─► Creates Human Task: HT-001
-          └─► "Configure Stripe API Secrets"
-          └─► Status: BLOCKED - Needs human action
+      └─► Creates GitHub Issue: "Configure Stripe API Secrets"
+          └─► Label: needs-human-action
           └─► Estimated: 15 minutes
 
 BOSS notifies you with detailed instructions
   └─► You complete setup (follow step-by-step guide)
-      └─► Mark task complete in Plane
+      └─► Close GitHub issue or add comment: "Secrets configured"
           └─► Workers now have secrets available
 ```
 
@@ -634,12 +631,12 @@ BOSS succeeds when:
 - [ ] BOSS skills & commands packaging
 - [ ] Git repository setup
 - [ ] docker-compose.yml generation for local infra
+- [ ] `boss doctor` - Health check command for prerequisites
 
 ### Phase 3: BOSS Skills & MCP Servers 📋
 - [ ] BOSS orchestration skills (for Claude Code/Cursor)
 - [ ] Container-Use MCP server integration
-- [ ] Knowledge Base MCP server (PostgreSQL + Qdrant)
-- [ ] Plane MCP server (local instance)
+- [ ] Knowledge Base MCP server (PostgreSQL + Qdrant) or unified BOSS MCP
 - [ ] Quality gate enforcement logic
 - [ ] Workflow state management
 
@@ -665,8 +662,7 @@ BOSS succeeds when:
 - [ ] Cross-project search & learning
 
 ### Phase 7: Integrations 📋
-- [ ] GitHub API (PRs, issues)
-- [ ] Plane integration (project management)
+- [ ] GitHub API (PRs, issues, project boards)
 - [ ] 1Password CLI (secret resolution)
 - [ ] Vercel/Railway (deployments)
 
@@ -737,7 +733,6 @@ git clone https://github.com/your-username/boss
 
 ### Local Infrastructure
 
-- **Plane:** https://plane.so (Self-hosted project management via Docker)
 - **Qdrant:** https://qdrant.tech (Local vector database via Docker)
 - **PostgreSQL:** https://postgresql.org (Local knowledge base via Docker)
 - **HuggingFace TEI:** https://huggingface.co/docs/text-embeddings-inference (Local embeddings)

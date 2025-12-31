@@ -112,9 +112,8 @@ Claude Code/Cursor runs on the **host machine** and orchestrates **workers in co
 │  = BOSS when configured with:                   │
 │  • BOSS skills                                  │
 │  • Container-Use MCP ← Uses this to spawn workers │
-│  • Knowledge Base MCP                           │
-│  • Plane MCP                                    │
 │  • GitHub MCP                                   │
+│  • Knowledge Base MCP                           │
 │  • 1Password CLI (op) - humans create secrets  │
 └────────────┬────────────────────────────────────┘
              │
@@ -150,7 +149,7 @@ Claude Code/Cursor runs on the **host machine** and orchestrates **workers in co
 │                                                       │
 │  Runs on: Claude Code or Cursor                      │
 │  Role: Orchestrator, not worker                      │
-│  Access: Full system, GitHub, Plane, Knowledge Base  │
+│  Access: Full system, GitHub, Knowledge Base         │
 └────────────┬──────────────────────────────────────────┘
              │
              │ spawns workers via container-use
@@ -171,7 +170,7 @@ Claude Code/Cursor runs on the **host machine** and orchestrates **workers in co
 ```
 
 **Why This Architecture:**
-- ✅ BOSS needs full system access (GitHub, Plane, Knowledge Base)
+- ✅ BOSS needs full system access (GitHub, Knowledge Base)
 - ✅ Workers need isolation (can't break main branch)
 - ✅ Workers run "dangerously" inside containers (full permissions)
 - ✅ BOSS controls egress rules (network restrictions per container)
@@ -613,7 +612,7 @@ describe('Stripe Integration', () => {
 
 **Human Action Required:** Before Phase 7 (Implementation)
 
-The implementation phase cannot proceed until these secrets are configured. Please complete setup and confirm in Plane task.
+The implementation phase cannot proceed until these secrets are configured. Please complete setup and close the GitHub issue.
 ```
 
 #### Added to plan.md
@@ -646,7 +645,7 @@ Acceptance Criteria:
 - [ ] Both secrets stored in 1Password vault `glx`
 - [ ] Container-use configured with op:// references
 - [ ] Secrets verified with `container-use config secret list`
-- [ ] Task marked complete in Plane
+- [ ] GitHub issue closed to confirm completion
 
 Estimated Time: 15 minutes
 
@@ -668,8 +667,8 @@ BOSS: 🚦 GATE 1: Planning Approval Required
       I've created detailed instructions:
       👉 .specify/specs/001-payments/secret-requirements.md
 
-      Human Task: HT-001 - Configure Stripe API Secrets
-      👉 Plane: https://plane.so/workspace/project/HT-001
+      Human Task: Configure Stripe API Secrets
+      👉 GitHub Issue: #12
 
       This includes:
       - How to generate Stripe test keys
@@ -679,7 +678,7 @@ BOSS: 🚦 GATE 1: Planning Approval Required
 
       ⏱️  Estimated time: 15 minutes
 
-      Once you've completed the setup and marked HT-001 complete in Plane,
+      Once you've completed the setup and closed issue #12,
       I can proceed with implementation!
 ```
 

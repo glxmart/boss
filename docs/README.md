@@ -28,7 +28,7 @@ Complete documentation for the Business-Orchestrated Software System (BOSS).
 | Document | Purpose |
 |----------|---------|
 | **[BOSS-HOST-SETUP.md](./BOSS-HOST-SETUP.md)** | Complete host machine setup (Docker, 1Password, Container-Use, MCP servers) |
-| **[DOCKER-SETUP.md](./DOCKER-SETUP.md)** | Local infrastructure setup (PostgreSQL, Qdrant, Plane, embeddings) |
+| **[DOCKER-SETUP.md](./DOCKER-SETUP.md)** | Local infrastructure setup (PostgreSQL, Qdrant, embeddings) |
 
 ---
 
@@ -90,7 +90,7 @@ Complete documentation for the Business-Orchestrated Software System (BOSS).
 **BOSS is NOT a standalone application.**
 
 BOSS is **Claude Code or Cursor** configured to act as an orchestrator through:
-- **MCP Servers** - Container-Use, Plane, GitHub, Knowledge Base
+- **MCP Servers** - Container-Use, GitHub, Knowledge Base
 - **1Password CLI** - Secret management
 - **BOSS Skills** - Orchestration capabilities
 - **Worker Templates** - Container configurations
@@ -212,10 +212,13 @@ container-use delete <env-id>
 
 ### Local Infrastructure
 
-- [Plane](https://plane.so) - Project management (Docker)
 - [Qdrant](https://qdrant.tech) - Vector database (Docker)
 - [PostgreSQL](https://postgresql.org) - Knowledge base (Docker)
 - [HuggingFace TEI](https://huggingface.co/docs/text-embeddings-inference) - Embeddings (Docker)
+
+### Project Management
+
+- [GitHub Projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects) - Native project boards (cloud)
 
 ---
 

@@ -11,8 +11,8 @@ Complete guide to setting up your local machine to run BOSS (Business-Orchestrat
 ### What You're Setting Up
 
 1. **Claude Code or Cursor** - Your AI assistant (becomes BOSS when configured)
-2. **Local Infrastructure** - Docker containers (PostgreSQL, Qdrant, Plane, embeddings)
-3. **MCP Servers** - Connections for BOSS to orchestrate (Container-Use, Knowledge Base, Plane, GitHub)
+2. **Local Infrastructure** - Docker containers (PostgreSQL, Qdrant, embeddings)
+3. **MCP Servers** - Connections for BOSS to orchestrate (Container-Use, GitHub, Knowledge Base)
 4. **Container-Use CLI** - Tool for spawning isolated worker environments
 5. **1Password CLI** - Secret management (op CLI - humans create secrets when BOSS requests)
 6. **BOSS Skills & Config** - Loaded into Claude Code/Cursor via bootstrap
@@ -35,10 +35,9 @@ Complete guide to setting up your local machine to run BOSS (Business-Orchestrat
 │  ┌──────────────┴────────────────────────────────┐    │
 │  │  MCP Servers (all local)                      │    │
 │  │  • Container-Use MCP                          │    │
-│  │  • Knowledge Base MCP                         │    │
-│  │  • Plane MCP                                  │    │
 │  │  • GitHub MCP                                 │    │
-│  │  • 1Password CLI (op) - manual secret setup  │    │
+│  │  • Knowledge Base MCP                         │    │
+│  │  • 1Password CLI (op) - manual secret setup   │    │
 │  └──────────────┬────────────────────────────────┘    │
 │                 │                                       │
 │  ┌──────────────┴────────────────────────────────┐    │
@@ -46,7 +45,6 @@ Complete guide to setting up your local machine to run BOSS (Business-Orchestrat
 │  │  • postgres (knowledge base)                  │    │
 │  │  • qdrant (vector DB)                         │    │
 │  │  • text-embeddings-inference (local)          │    │
-│  │  • plane stack (project mgmt)                 │    │
 │  │  • worker containers (via container-use)      │    │
 │  └──────────────┬────────────────────────────────┘    │
 │                 │                                       │
@@ -262,13 +260,6 @@ docker-compose ps
 # boss-postgres       Up (healthy)
 # boss-qdrant         Up (healthy)
 # boss-embeddings     Up (healthy)
-# boss-plane-web      Up
-# boss-plane-api      Up (healthy)
-# boss-plane-db       Up (healthy)
-# boss-plane-redis    Up (healthy)
-# boss-plane-minio    Up (healthy)
-# boss-plane-worker   Up
-# boss-plane-beat     Up
 ```
 
 **Services Started:**
@@ -278,9 +269,6 @@ docker-compose ps
 | PostgreSQL | 5432 | Knowledge base (projects, artifacts, dependencies) |
 | Qdrant | 6333, 6334 | Vector database for embeddings |
 | HuggingFace TEI | 8080 | Local embeddings (BAAI/bge-large-en-v1.5) |
-| Plane Web | 3000 | Project management UI |
-| Plane API | 8000 | Project management API |
-| MinIO | 9000, 9090 | Object storage for Plane |
 
 **First-Time Setup:**
 
@@ -288,12 +276,6 @@ docker-compose ps
 # Wait for services to initialize (2-5 minutes)
 # Check logs if needed:
 docker-compose logs -f embeddings  # Model downloads ~1GB
-
-# Access Plane and create account
-open http://localhost:3000
-# 1. Create admin account
-# 2. Create workspace (e.g., "my-organization")
-# 3. Create first project
 
 # Initialize knowledge base (one-time)
 docker-compose exec postgres psql -U boss -d boss_knowledge -f /docker-entrypoint-initdb.d/init.sql
@@ -878,26 +860,6 @@ Create/edit `~/.config/claude-code/mcp-servers.json`:
       }
     },
 
-    "1password": {
-      "command": "op",
-      "args": ["plugin", "mcp"],
-      "env": {
-        "OP_VAULT": "glx"
-      }
-    },
-
-    "plane": {
-      "command": "npx",
-      "args": ["@boss/mcp-plane"],
-      "env": {
-        "PLANE_API_URL": "http://localhost:8000",
-        "PLANE_WORKSPACE": "your-workspace-slug"
-      },
-      "secrets": {
-        "PLANE_API_KEY": "op://glx/plane/api-key"
-      }
-    },
-
     "github": {
       "command": "npx",
       "args": ["@modelcontextprotocol/server-github"],
@@ -909,20 +871,19 @@ Create/edit `~/.config/claude-code/mcp-servers.json`:
 }
 ```
 
-**Note on 1Password:** 1Password does NOT offer an MCP server. Instead:
+**Important: 1Password CLI for Secret Management**
+
+1Password CLI (`op`) is used for secret management - there is **NO 1Password MCP server**.
+
+**Secret Management Workflow:**
 1. Install 1Password CLI (`op`)
-2. When BOSS requests secrets (via GitHub issues/PRs), create them manually in 1Password
-3. Use `op://` references in container-use configs
-4. Container-use workers will resolve secrets via the op CLI
-
-**Official Communication:**
-- BOSS requests secrets via GitHub project (issues, PR comments)
-- Humans create secrets in 1Password and configure container-use
-- Workers run with full permissions inside isolated containers
-- BOSS controls egress rules (network restrictions) per container
-
-```
-```
+2. BOSS identifies secret needs during planning phase
+3. BOSS creates GitHub issue with detailed setup instructions
+4. Human creates secrets in 1Password vault manually using `op` CLI
+5. Human configures container-use with `op://` references
+6. Container-use workers resolve secrets at runtime via `op` CLI
+7. Workers run with full permissions inside isolated containers
+8. BOSS controls egress rules (network restrictions) per worker
 
 #### Cursor MCP Configuration
 
@@ -930,23 +891,21 @@ Create/edit `~/.cursor/mcp-servers.json` (same structure as above).
 
 ### MCP Server Summary
 
-**Local Services (Docker Compose):**
+**MCP Servers (Connected to Claude Code/Cursor):**
 - `boss-knowledge` → PostgreSQL + Qdrant + HuggingFace TEI (all local)
-- `plane` → Local Plane instance (http://localhost:8000)
+- `github` → GitHub API for repo operations & project management
+- `container-use` → Container-Use CLI for worker spawning
 
-**External Services:**
-- `github` → GitHub API (cloud)
-- `container-use` → Container-Use CLI (local)
-
-**Secrets Management:**
-- **1Password CLI** (`op`) - NOT an MCP server
-- Humans manually create secrets when BOSS requests via GitHub
-- All sensitive values use `op://` references in container-use configs
-- Container-use workers resolve secrets at runtime via the op CLI
-- Example references:
-  - `PLANE_API_KEY`: op://glx/plane/api-key
+**Secret Management (Not an MCP Server):**
+- **1Password CLI** (`op`) - Manual secret resolution
+- BOSS identifies secret needs → creates GitHub issue with instructions
+- Humans create secrets in 1Password vault using `op` CLI
+- Container-use configs reference secrets via `op://` format
+- Workers resolve secrets at runtime via `op` CLI
+- Example `op://` references:
   - `GITHUB_PERSONAL_ACCESS_TOKEN`: op://glx/github/token
-- Database credentials are hardcoded for local dev (change for production)
+  - `STRIPE_SECRET_KEY`: op://glx/stripe/test-secret-key
+  - `DATABASE_URL`: op://glx/database/test-url
 
 ---
 

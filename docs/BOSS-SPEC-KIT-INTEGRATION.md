@@ -493,7 +493,7 @@ Review the specification:
 I've also created a PR for review:
 👉 PR #1: Specification for ${feature_name}
 
-And a Plane task:
+You can track progress via:
 👉 TASK-001: Review Specification
 
 Please approve to proceed with planning!

@@ -311,25 +311,21 @@ tech_stack_policy:
   reasoning: "See tech-stack-decisions.md"
 
 integrations:
-  plane:
-    enabled: true
-    workspace: my-workspace
-
   github:
     enabled: true
     repo: user/my-project
+    projects: true  # Use GitHub Projects for task management
 
   knowledge_base:
     enabled: true
     share_embeddings: true
 
   mcp_servers:
-    - aios-specs
-    - aios-workflows
-    - aios-knowledge
-    - plane
+    - boss-specs
+    - boss-workflows
+    - boss-knowledge
     - container-use
-    - 1password
+    - github
 ```
 
 ### Bootstrap Templates
@@ -476,7 +472,7 @@ boss-bootstrap/
 **BOSS IS:**
 - Your **Claude Code or Cursor instance** configured to act as an orchestrator
 - A set of **BOSS skills** loaded into Claude Code/Cursor for orchestration capabilities
-- **MCP server connections** (Container-Use, Plane, GitHub, Knowledge Base)
+- **MCP server connections** (Container-Use, GitHub, Knowledge Base)
 - **1Password CLI** for secure secret management (op CLI, not MCP)
 - **Worker templates** defining configurations for spawning specialized container-use agents
 - A **methodology** for spec-driven, autonomous development
@@ -488,11 +484,10 @@ When you bootstrap a BOSS project and open it in Claude Code/Cursor, your AI ass
 Claude Code/Cursor must run on the host machine because it needs to:
 - Orchestrate worker containers via **Container-Use MCP**
 - Manage state across the entire workflow
-- Create PRs via **GitHub MCP**
+- Create PRs and manage project boards via **GitHub MCP**
 - Interact with you when needed
 - Query the **Knowledge Base MCP** (shared PostgreSQL + Qdrant)
-- Access **Plane MCP** for project management
-- Request secrets via GitHub (humans create in 1Password using op CLI)
+- Request secrets via GitHub issues (humans create in 1Password using op CLI)
 - Have full system access (cannot be sandboxed)
 
 **Workers run in isolated container-use environments. Claude Code/Cursor (configured as BOSS) coordinates them all via MCP commands.**
@@ -526,9 +521,8 @@ Claude Code/Cursor must run on the host machine because it needs to:
 │  │  MCP Servers (all local)                      │    │
 │  │                                               │    │
 │  │  • Container-Use MCP → spawn/manage workers   │    │
+│  │  • GitHub MCP → repo ops & project mgmt       │    │
 │  │  • Knowledge Base MCP → PostgreSQL + Qdrant   │    │
-│  │  • Plane MCP → project mgmt (local Docker)    │    │
-│  │  • GitHub MCP → repo operations               │    │
 │  │  • 1Password CLI → manual secret setup (op)   │    │
 │  └──────────────┬────────────────────────────────┘    │
 │                 │                                       │
@@ -538,7 +532,6 @@ Claude Code/Cursor must run on the host machine because it needs to:
 │  │  • postgres (knowledge base)                  │    │
 │  │  • qdrant (vectors)                           │    │
 │  │  • text-embeddings-inference (embeddings)     │    │
-│  │  • plane stack (project management)           │    │
 │  │  • worker containers (via container-use)      │    │
 │  └──────────────┬────────────────────────────────┘    │
 │                 │                                       │
@@ -829,43 +822,50 @@ Benefits:
 
 ---
 
-## Part 4: Plane Integration
+## Part 4: GitHub Project Management
 
-### Project Management Sync
+### Native Project Management
 
-BOSS integrates with Plane for project management:
+BOSS uses GitHub's native project management features:
 
 ```
-Plane Workspace
-├── Project: my-app
+GitHub Repository: my-app
+├── Pull Requests → Approval gates & code review
+├── Issues → Human tasks & secret setup requests
+├── Projects (Beta) → Visual task tracking
 │   ├── Epic: User Authentication
-│   │   ├── Story: Password Reset
-│   │   │   ├── Task: Email service
-│   │   │   └── Task: Reset flow
-│   │   └── Story: 2FA
+│   │   ├── Issue: Password Reset Flow
+│   │   └── Issue: 2FA Implementation
 │   └── Epic: Dashboard
 │
-BOSS syncs:
-- Creates epics from PRD
-- Creates stories from specs
-- Creates tasks from breakdown
-- Updates status automatically
-- Notifies on approvals needed
+BOSS creates:
+- PRs for specifications and implementations
+- Issues for human tasks (secret setup, approvals)
+- Project board items automatically
+- Links between PRs, issues, and commits
+- Status updates via PR/issue comments
 ```
 
-### Human Gates via Plane
+### Human Gates via GitHub
 
-BOSS uses Plane for approval workflow:
+BOSS uses GitHub PRs and Issues for approval workflow:
 
 ```
 1. BOSS creates Planning PR
-2. BOSS creates Plane task: "Review Planning PR"
-3. BOSS assigns to you
-4. You review in Plane
-5. You approve/reject in Plane
-6. BOSS detects approval
+2. BOSS creates GitHub Issue: "Review Planning PR #1"
+3. Issue links to PR and includes review checklist
+4. You review the PR on GitHub
+5. You approve/reject via PR review
+6. BOSS detects approval event via GitHub webhook/polling
 7. BOSS continues workflow
 ```
+
+**Why GitHub?**
+- ✅ No additional infrastructure (already using GitHub for code)
+- ✅ Native developer workflow (no context switching)
+- ✅ Built-in approval gates (PR reviews)
+- ✅ Audit trail via commits, PRs, and issues
+- ✅ Integration with CI/CD and status checks
 
 ---
 
@@ -1012,7 +1012,7 @@ $ boss start
 
 ✓ Loading configuration
 ✓ Connecting to knowledge base
-✓ Connecting to Plane workspace
+✓ Connecting to GitHub via MCP
 ✓ Registering with BOSS network
 
 ✅ BOSS is ready!
@@ -1094,15 +1094,15 @@ BOSS: Great! Let me create a PRD and break this down into user stories.
       - data-model.md: Database schema
       - contracts/: OpenAPI specs
 
-      And a Plane task for review:
-      👉 https://plane.so/my-workspace/my-app/TASK-001
+      Review the PR to approve the plan:
+      👉 https://github.com/user/my-app/pull/1
 
       Please review and approve when ready!
 ```
 
 #### Step 4: You Review the Plan
 
-You review the PR and Plane task, approve in Plane.
+You review the PR on GitHub and approve it via PR review.
 
 #### Step 5: BOSS Continues
 
@@ -1138,17 +1138,17 @@ BOSS: 🎉 Planning approved! Let me continue.
          - Reference: op://glx/sendgrid/api-key
          - Instructions: .specify/specs/001-task-mgmt/secret-requirements.md
 
-      Tasks created in Plane:
-      👉 HT-001: Configure Stripe API secrets
-      👉 HT-002: Configure SendGrid API key
+      GitHub Issues created for tracking:
+      👉 Issue #2: Configure Stripe API secrets
+      👉 Issue #3: Configure SendGrid API key
 
       ⏱️  Estimated time: 20 minutes total
 
-      Once complete, mark tasks done in Plane and I'll proceed!
+      Once complete, close the GitHub issues and I'll proceed!
 
       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-You: [Completes secret setup and marks tasks done]
+You: [Completes secret setup and closes GitHub issues]
 
 BOSS: ✅ Secret setup confirmed!
 
@@ -1432,16 +1432,18 @@ BOSS 3:
 └───────────────────────────┼──────────────────────────────────┘
                             │
             ┌───────────────┼───────────────────┐
-            │               │                   │
-            ▼               ▼                   ▼
-  ┌──────────────────┐ ┌─────────────┐ ┌──────────────┐
-  │ Local Knowledge  │ │ Plane       │ │   GitHub     │
-  │     Base         │ │ (Docker)    │ │   (Cloud)    │
-  ├──────────────────┤ └─────────────┘ └──────────────┘
-  │ PostgreSQL (🐳)  │
-  │ Qdrant (🐳)      │
-  │ HF TEI (🐳)      │ ← Local embeddings
-  └──────────────────┘    (all Docker containers)
+            │                               │
+            ▼                               ▼
+  ┌──────────────────┐             ┌──────────────┐
+  │ Local Knowledge  │             │   GitHub     │
+  │     Base         │             │   (Cloud)    │
+  ├──────────────────┤             └──────────────┘
+  │ PostgreSQL (🐳)  │                  │
+  │ Qdrant (🐳)      │             Project boards
+  │ HF TEI (🐳)      │             Issues & PRs
+  └──────────────────┘
+   ↑ Local embeddings
+   (all Docker containers)
 ```
 
 ### BOSS Components
@@ -1473,16 +1475,13 @@ Claude Code/Cursor (configured as BOSS)
     │   ├── Context assembly (gatekeeper pattern)
     │   └── Cross-project search
     │
-    ├── Plane MCP
-    │   ├── Epic/Story/Task creation
-    │   ├── Status synchronization
-    │   ├── Approval workflow triggers
-    │   └── Roadmap queries
-    │
     └── GitHub MCP
         ├── PR creation & management
+        ├── Issue creation & tracking (for human tasks)
+        ├── Project board automation
         ├── Branch operations
-        ├── Status checks
+        ├── Status checks & approval workflows
+        ├── Roadmap queries via Projects API
         └── Deployment triggers
 
 **1Password CLI (Not MCP):**
@@ -1609,8 +1608,8 @@ Options:
   --quality <preset>      Quality preset (startup|production|enterprise)
   --name <name>           Project name
   --org <org>             Organization name
-  --plane-workspace <id>  Plane workspace ID
   --github-repo <repo>    GitHub repository
+  --github-org <org>      GitHub organization
 
 # Examples:
 boss bootstrap
@@ -1927,8 +1926,7 @@ BOSS succeeds when:
 - Claude Code or Cursor
 
 # Optional
-- 1Password CLI (for secrets)
-- Plane account (for project management)
+- 1Password CLI (for secrets management)
 ```
 
 ### Installation
@@ -1985,11 +1983,11 @@ boss start
 - Dependency graph
 - Roadmap sharing
 
-### Phase 4: Integration 📋
-- Plane integration
-- Human approval gates via Plane
-- Project sync
-- Status updates
+### Phase 4: GitHub Integration 📋
+- GitHub Projects automation
+- Human approval gates via PR reviews
+- Issue-based task tracking
+- Status updates via GitHub API
 
 ### Phase 5: Ecosystem 📋
 - Template marketplace

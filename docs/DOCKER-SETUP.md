@@ -11,11 +11,12 @@ This docker-compose configuration runs the minimal BOSS infrastructure locally. 
   - Model: `BAAI/bge-large-en-v1.5` (1024 dimensions)
   - Replaces Voyage AI with open-source alternative
 
-### Project Management
+### Project Management via GitHub
 - **GitHub** - Pull requests, issues, projects, discussions (already required for code)
-  - ✅ No additional infrastructure
+  - ✅ No additional infrastructure needed
   - ✅ Native developer workflow
   - ✅ Built-in approval gates (PR reviews)
+  - ✅ Built-in project boards (GitHub Projects)
   - ✅ See [BOSS-GITHUB-INTEGRATION.md](./BOSS-GITHUB-INTEGRATION.md)
 
 ## Quick Start
@@ -36,9 +37,9 @@ docker-compose ps
 ### 2. Wait for Services to Initialize
 
 First startup takes 2-5 minutes:
-- PostgreSQL databases initialize
+- PostgreSQL database initializes
 - Embeddings model downloads (~1GB)
-- Plane services start and migrate database
+- Qdrant vector store starts
 
 Check readiness:
 
@@ -94,23 +95,18 @@ Update your Claude Code/Cursor MCP configuration:
 }
 ```
 
-**Note on 1Password:** 1Password does NOT offer an MCP server. Instead:
-1. Install 1Password CLI (`op`)
-2. When BOSS requests secrets (via GitHub issues/PRs), create them manually in 1Password
-3. Use `op://` references in container-use worker configurations
-4. Container-use workers will resolve secrets via the op CLI at runtime
+**Note on 1Password:** 1Password CLI (`op`) is used for secret management - there is NO 1Password MCP server.
 
 **Secret Management Workflow:**
-- BOSS requests secrets via GitHub project (issues, PR comments)
-- Humans create secrets in 1Password vault
-- Humans configure container-use with `op://` references
-- Workers run with full permissions inside isolated containers
-- BOSS controls egress rules (network restrictions) per worker
+1. BOSS identifies secret needs during planning phase
+2. BOSS creates GitHub issue with detailed setup instructions
+3. Human creates secrets in 1Password vault manually using `op` CLI
+4. Human configures container-use with `op://` references
+5. Container-use workers resolve secrets at runtime via `op` CLI
+6. Workers run with full permissions inside isolated containers
+7. BOSS controls egress rules (network restrictions) per worker
 
-```
-```
-
-**Note:** GitHub MCP is used for project management (issues, PRs, project boards). See [BOSS-GITHUB-INTEGRATION.md](./BOSS-GITHUB-INTEGRATION.md) for details.
+**Note:** GitHub MCP handles repository operations and project management (issues, PRs, project boards). See [BOSS-GITHUB-INTEGRATION.md](./BOSS-GITHUB-INTEGRATION.md) for details.
 
 ## Database Initialization
 
@@ -230,7 +226,7 @@ docker-compose logs -f
 # Specific service
 docker-compose logs -f postgres
 docker-compose logs -f embeddings
-docker-compose logs -f plane-api
+docker-compose logs -f qdrant
 ```
 
 ### Resource Usage
@@ -250,9 +246,6 @@ docker system df
 ```bash
 # Knowledge base
 docker-compose exec postgres pg_dump -U boss boss_knowledge > backup_kb.sql
-
-# Plane database
-docker-compose exec plane-db pg_dump -U plane plane > backup_plane.sql
 ```
 
 #### Restore PostgreSQL
@@ -260,9 +253,6 @@ docker-compose exec plane-db pg_dump -U plane plane > backup_plane.sql
 ```bash
 # Knowledge base
 docker-compose exec -T postgres psql -U boss boss_knowledge < backup_kb.sql
-
-# Plane database
-docker-compose exec -T plane-db psql -U plane plane < backup_plane.sql
 ```
 
 #### Backup Qdrant
@@ -305,17 +295,17 @@ docker-compose run embeddings /bin/bash
 # Inside container: model will download to /data
 ```
 
-### Plane Not Accessible
+### Qdrant Not Accessible
 
 ```bash
-# Check all Plane services are running
-docker-compose ps | grep plane
+# Check Qdrant is running
+docker-compose ps | grep qdrant
 
-# Check API health
-curl http://localhost:8000/api/health
+# Check Qdrant health
+curl http://localhost:6333/healthz
 
-# Restart Plane stack
-docker-compose restart plane-web plane-api plane-worker plane-beat
+# Restart Qdrant
+docker-compose restart qdrant
 ```
 
 ### Port Conflicts
@@ -448,9 +438,9 @@ For production use:
 docker-compose ps
 
 # Detailed health status
-for service in postgres qdrant embeddings plane-api; do
+for service in postgres qdrant embeddings; do
   echo "=== $service ==="
-  docker-compose exec $service health-check-command
+  docker-compose logs --tail=20 $service
 done
 ```
 
@@ -490,10 +480,9 @@ After infrastructure is running:
 
 1. **Initialize Knowledge Base** - Run SQL initialization scripts
 2. **Create Qdrant Collections** - Set up vector collections
-3. **Configure Plane** - Create workspace and first project
-4. **Update MCP Servers** - Point to local infrastructure
-5. **Bootstrap Your First Project** - Run `boss bootstrap`
-6. **Test Integration** - Verify Claude Code/Cursor can access all MCPs
+3. **Update MCP Servers** - Point to local infrastructure
+4. **Bootstrap Your First Project** - Run `boss bootstrap`
+5. **Test Integration** - Verify Claude Code/Cursor can access all MCPs
 
 ## Support
 

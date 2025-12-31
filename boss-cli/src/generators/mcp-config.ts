@@ -13,46 +13,63 @@ export async function generateMCPConfig(projectPath?: string, scope: MCPScope = 
     await generateMCPEnvFile(projectPath);
   }
 
-  // Generate global IDE MCP config (user scope)
+  // Generate global IDE MCP config (user scope) - ALWAYS generate for both IDEs
   if (shouldGenerateUser) {
-    const configPath = await detectMCPConfigPath();
+    const homeDir = process.env.HOME || os.homedir();
+    const bossMCPConfig = getBossMCPConfig(); // User scope - no op run wrapper
+
+    // Generate Claude Code global config
+    const claudeCodePath = path.join(homeDir, '.config', 'claude-code', 'mcp-servers.json');
+    await fs.ensureDir(path.dirname(claudeCodePath));
     
-    if (configPath) {
-      // Read existing config if present
-      let existingConfig: any = {};
-      if (await fs.pathExists(configPath)) {
-        try {
-          const content = await fs.readFile(configPath, 'utf8');
-          existingConfig = JSON.parse(content);
-        } catch (error) {
-          logger.warning(`Failed to parse existing MCP config: ${error}`);
-        }
+    let claudeExistingConfig: any = {};
+    if (await fs.pathExists(claudeCodePath)) {
+      try {
+        const content = await fs.readFile(claudeCodePath, 'utf8');
+        claudeExistingConfig = JSON.parse(content);
+      } catch (error) {
+        logger.warning(`Failed to parse existing Claude Code MCP config: ${error}`);
       }
-
-      // Merge with BOSS MCP servers (user scope - no project path, so no op run wrapper)
-      const bossMCPConfig = getBossMCPConfig();
-
-      // Merge configs (preserve existing, add/update BOSS servers)
-      const mergedConfig = {
-        mcpServers: {
-          ...(existingConfig.mcpServers || {}),
-          ...bossMCPConfig
-        }
-      };
-
-      // Ensure directory exists
-      await fs.ensureDir(path.dirname(configPath));
-
-      // Write global config
-      await fs.writeFile(configPath, JSON.stringify(mergedConfig, null, 2), 'utf8');
-      logger.info(`MCP configuration written to: ${configPath}`);
-    } else {
-      logger.warning('Could not detect Claude Code or Cursor config directory. Global MCP config will not be created automatically.');
     }
+
+    const claudeMergedConfig = {
+      mcpServers: {
+        ...(claudeExistingConfig.mcpServers || {}),
+        ...bossMCPConfig
+      }
+    };
+
+    await fs.writeFile(claudeCodePath, JSON.stringify(claudeMergedConfig, null, 2), 'utf8');
+    logger.info(`Claude Code MCP configuration written to: ${claudeCodePath}`);
+
+    // Generate Cursor global config
+    const cursorPath = path.join(homeDir, '.cursor', 'mcp-servers.json');
+    await fs.ensureDir(path.dirname(cursorPath));
+    
+    let cursorExistingConfig: any = {};
+    if (await fs.pathExists(cursorPath)) {
+      try {
+        const content = await fs.readFile(cursorPath, 'utf8');
+        cursorExistingConfig = JSON.parse(content);
+      } catch (error) {
+        logger.warning(`Failed to parse existing Cursor MCP config: ${error}`);
+      }
+    }
+
+    const cursorMergedConfig = {
+      mcpServers: {
+        ...(cursorExistingConfig.mcpServers || {}),
+        ...bossMCPConfig
+      }
+    };
+
+    await fs.writeFile(cursorPath, JSON.stringify(cursorMergedConfig, null, 2), 'utf8');
+    logger.info(`Cursor MCP configuration written to: ${cursorPath}`);
   }
 
-  // Generate project-specific MCP config file (project scope)
+  // Generate project-specific MCP config file (project scope) - ALWAYS generate for both IDEs
   if (shouldGenerateProject && projectPath) {
+    // Generate .mcp.json (works for both Claude Code and Cursor)
     const projectMCPPath = path.join(projectPath, '.mcp.json');
     // For project scope, pass projectPath so MCP servers use op run wrapper
     const projectConfig = {
@@ -61,6 +78,19 @@ export async function generateMCPConfig(projectPath?: string, scope: MCPScope = 
     
     await fs.writeFile(projectMCPPath, JSON.stringify(projectConfig, null, 2), 'utf8');
     logger.info(`Project MCP configuration written to: ${projectMCPPath}`);
+
+    // Always generate IDE-specific configs for both Claude Code and Cursor
+    // Generate .claude/mcp.json
+    const claudeMCPPath = path.join(projectPath, '.claude', 'mcp.json');
+    await fs.ensureDir(path.dirname(claudeMCPPath));
+    await fs.writeFile(claudeMCPPath, JSON.stringify(projectConfig, null, 2), 'utf8');
+    logger.info(`Claude Code MCP configuration written to: ${claudeMCPPath}`);
+
+    // Generate .cursor/mcp.json
+    const cursorMCPPath = path.join(projectPath, '.cursor', 'mcp.json');
+    await fs.ensureDir(path.dirname(cursorMCPPath));
+    await fs.writeFile(cursorMCPPath, JSON.stringify(projectConfig, null, 2), 'utf8');
+    logger.info(`Cursor MCP configuration written to: ${cursorMCPPath}`);
   }
 
   logger.info('Note: You will need to create secrets in 1Password vault "boss" using op CLI');
@@ -128,16 +158,36 @@ GITHUB_PERSONAL_ACCESS_TOKEN=op://boss/github/token
   logger.info(`MCP environment file written to: ${envPath}`);
 }
 
-async function detectMCPConfigPath(): Promise<string | null> {
+async function detectIDE(): Promise<'.claude' | '.cursor'> {
   // Use process.env.HOME if available (for testing), otherwise fall back to os.homedir()
   const homeDir = process.env.HOME || os.homedir();
   
-  // Always default to Claude Code (create directory if needed)
-  const claudeCodePath = path.join(homeDir, '.config', 'claude-code', 'mcp-servers.json');
-  const claudeCodeDir = path.dirname(claudeCodePath);
+  // Check for Claude Code config directory first (default/preferred)
+  const claudeCodeDir = path.join(homeDir, '.config', 'claude-code');
+  if (await fs.pathExists(claudeCodeDir)) {
+    return '.claude';
+  }
   
-  // Ensure Claude Code directory exists (default)
-  await fs.ensureDir(claudeCodeDir);
-  return claudeCodePath;
+  // Check for Cursor config directory
+  const cursorDir = path.join(homeDir, '.cursor');
+  if (await fs.pathExists(cursorDir)) {
+    return '.cursor';
+  }
+  
+  // Check for CLI commands as fallback
+  const { execa } = await import('execa');
+  try {
+    await execa('claude', ['--version'], { reject: false });
+    return '.claude';
+  } catch {
+    try {
+      await execa('cursor', ['--version'], { reject: false });
+      return '.cursor';
+    } catch {
+      // Neither detected, default to Claude Code
+      return '.claude';
+    }
+  }
 }
+
 

@@ -46,6 +46,74 @@ This project uses Spec-Kit for specification-driven development with the followi
 - All operations must go through container-use MCP
 - Inform user: `container-use log <env_id>` AND `container-use checkout <env_id>`
 
+## Branch Management & Workflow
+
+**MANDATORY WORKFLOW FOR EVERY CHANGE:**
+
+1. **Create New Branch** - ALWAYS create a new branch for every change/feature/task
+   - Use container-use MCP to create environments (each environment = new branch)
+   - Container-use automatically creates branches: `container-use/env-<id>`
+   - These branches are created locally and will be pushed to remote
+
+2. **Spawn Workers via Container-Use**
+   - Use `container-use` MCP to spawn workers for all implementation tasks
+   - Each worker runs in an isolated container with its own branch
+   - Container-use manages all git operations (commits, branches) automatically
+   - **DO NOT** use git CLI directly - container-use handles everything
+
+3. **Review & Approve Work**
+   - Use `container-use log <env_id>` to review worker activity
+   - Use `container-use diff <env_id>` to review code changes
+   - Use `container-use checkout <env_id>` to test locally
+   - Wait for human approval before merging
+
+4. **Merge Approved Work**
+   - After approval, use `container-use merge <env_id>` to merge worker changes
+   - Container-use will merge the worker's branch into the target branch
+   - This consolidates all worker changes into a single branch
+
+5. **Push Branch to Remote**
+   - After merging worker changes, push the branch to remote repository
+   - Use GitHub MCP to push the branch: `mcp__github__*` tools
+
+6. **Create Pull Request**
+   - Use GitHub MCP to create a PR from the branch
+   - Include details about the changes, workers used, and quality gate results
+   - Link to related specifications or issues
+
+**IMPORTANT NOTES:**
+- Container-use creates remote branches locally - BOSS must use container-use MCP to manage all worker changes
+- Never use git CLI directly - container-use handles all branch operations
+- Each worker environment = isolated branch = isolated work
+- All worker branches must be merged via container-use before creating PR
+- The final PR should contain all approved worker changes merged together
+
+## GitHub Repository Requirements
+
+**CRITICAL: Repository Privacy Policy**
+
+- **ALL GitHub repositories MUST be created as PRIVATE** - NO EXCEPTIONS
+- **NEVER create public repositories** - This is a security requirement
+- When using GitHub MCP to create repositories, ALWAYS set `private: true`
+- This applies to:
+  - Initial repository creation during bootstrap
+  - Any new repositories created for projects, features, or sub-projects
+  - Forked repositories (if applicable)
+
+**Repository Creation Example:**
+```typescript
+// ✅ CORRECT - Always use private: true
+await mcp.github.createRepository({
+  name: "project-name",
+  description: "BOSS project",
+  private: true,  // MANDATORY - Never false
+  // ... other settings
+});
+
+// ❌ WRONG - Never create public repos
+// private: false  // FORBIDDEN
+```
+
 ## Project Structure
 
 - `.boss/` - BOSS orchestration configuration

@@ -112,7 +112,7 @@ BOSS is your **Claude Code or Cursor instance** configured to act as an orchestr
 
 This repository contains three comprehensive documents that together define the complete BOSS system:
 
-### 1. 🎨 [BOSS-ENHANCED-VISION.md](./BOSS-ENHANCED-VISION.md)
+### 1. 🎨 [BOSS-ENHANCED-VISION.md](./docs/BOSS-ENHANCED-VISION.md)
 
 **The Big Picture** - Read this first!
 
@@ -128,7 +128,7 @@ Comprehensive overview of the BOSS system covering:
 
 **Start here to understand what BOSS is and what it can do.**
 
-### 2. 📋 [BOSS-SPEC-KIT-INTEGRATION.md](./BOSS-SPEC-KIT-INTEGRATION.md)
+### 2. 📋 [BOSS-SPEC-KIT-INTEGRATION.md](./docs/BOSS-SPEC-KIT-INTEGRATION.md)
 
 **Spec-Driven Development** - Implementation methodology
 
@@ -144,7 +144,7 @@ Deep dive into how BOSS automates GitHub's Spec-Kit:
 
 **Read this to understand the specification-driven workflow.**
 
-### 3. 🔐 [BOSS-CONTAINER-USE-INTEGRATION.md](./BOSS-CONTAINER-USE-INTEGRATION.md)
+### 3. 🔐 [BOSS-CONTAINER-USE-INTEGRATION.md](./docs/BOSS-CONTAINER-USE-INTEGRATION.md)
 
 **Secure Worker Execution** - Isolation & secret management
 
@@ -792,7 +792,9 @@ Autonomous, Spec-Driven Development at Scale
 
 **Ready to build the future of software development?**
 
-Start by reading **[BOSS-ENHANCED-VISION.md](./BOSS-ENHANCED-VISION.md)** to see the complete vision! 🚀
+Start by reading **[BOSS-ENHANCED-VISION.md](./docs/BOSS-ENHANCED-VISION.md)** to see the complete vision! 🚀
+
+📖 **[Complete Documentation](./docs/)** - All guides and detailed documentation
 
 ---
 

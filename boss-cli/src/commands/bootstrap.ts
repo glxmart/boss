@@ -30,7 +30,7 @@ import { generateStartBossScript } from '../generators/start-boss-sh.js';
 import { loadTemplate } from '../generators/template-loader.js';
 import { generateTemplateDocs } from '../generators/template-docs.js';
 import { applyQualityPreset } from '../presets/quality-presets.js';
-import { addFiles, commit } from '../utils/git.js';
+import { addFiles, commit, createBranch } from '../utils/git.js';
 
 export async function bootstrapCommand(options: BootstrapOptions): Promise<void> {
   logger.section('🤖 BOSS Bootstrap');
@@ -158,6 +158,11 @@ export async function bootstrapCommand(options: BootstrapOptions): Promise<void>
     await commit(projectPath, 'chore: BOSS bootstrap - initial project structure');
     logger.stopSpinner(true, 'Bootstrap files committed');
 
+    // Create feature/boss-initial-setup branch for BOSS work
+    logger.startSpinner('Creating initial setup branch...');
+    await createInitialSetupBranch(projectPath);
+    logger.stopSpinner(true, 'Initial setup branch created');
+
     // Success message
     logger.section('✅ Bootstrap Complete!');
     logger.success(`Project "${config.name}" has been bootstrapped successfully!`);
@@ -166,11 +171,70 @@ export async function bootstrapCommand(options: BootstrapOptions): Promise<void>
     logger.info(`  2. docker-compose up -d`);
     logger.info(`  3. Open project in Claude Code/Cursor`);
     logger.info(`  4. Run: ./start-boss.sh`);
+    logger.info(`  5. BOSS will complete initial setup (GitHub repo, remote, etc.)`);
 
   } catch (error) {
     logger.error(`Bootstrap failed: ${error instanceof Error ? error.message : String(error)}`);
     throw error;
   }
+}
+
+async function createInitialSetupBranch(projectPath: string): Promise<void> {
+  const fs = await import('fs-extra');
+  const projectConfigPath = path.join(projectPath, '.boss', 'project-config.json');
+
+  // Create and switch to feature/boss-initial-setup branch
+  await createBranch(projectPath, 'feature/boss-initial-setup');
+
+  // Early return if project-config.json doesn't exist
+  const configExists = await fs.pathExists(projectConfigPath);
+  if (!configExists) {
+    return;
+  }
+
+  const projectConfig = await fs.readJson(projectConfigPath);
+  const now = new Date().toISOString();
+
+  // Update branch information
+  projectConfig.currentBranch = 'feature/boss-initial-setup';
+  if (projectConfig.repository?.branches) {
+    projectConfig.repository.branches['feature/boss-initial-setup'] = {
+      exists: true,
+      lastCommit: null
+    };
+  }
+
+  // Update initialization status
+  projectConfig.initialization.stage = 'remote-setup';
+  projectConfig.initialization.status = 'in-progress';
+
+  // Mark branch creation operation as completed
+  const branchOp = projectConfig.initialization.operationsRequired?.find(
+    (op: { operation: string }) => op.operation === 'create-initial-setup-branch'
+  );
+  if (branchOp) {
+    branchOp.status = 'completed';
+    branchOp.completedAt = now;
+  }
+
+  // Update current workflow
+  projectConfig.currentWorkflow = {
+    stage: 'initialization',
+    phase: 'remote-setup',
+    status: 'awaiting-remote-creation'
+  };
+
+  // Update metadata
+  if (projectConfig.metadata) {
+    projectConfig.metadata.lastUpdated = now;
+    projectConfig.metadata.notes = 'Initial setup branch created. Ready for remote repository setup.';
+  }
+
+  await fs.writeJson(projectConfigPath, projectConfig, { spaces: 2 });
+
+  // Commit the project-config.json update to the feature branch
+  await addFiles(projectPath, ['.boss/project-config.json']);
+  await commit(projectPath, 'chore: switch to feature/boss-initial-setup branch');
 }
 
 async function collectConfiguration(options: BootstrapOptions): Promise<ProjectConfig> {

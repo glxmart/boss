@@ -16,3 +16,45 @@ All file, code, and shell operations MUST use container-use environments.
 - All operations must go through container-use MCP
 - Inform user: \`container-use log <env_id>\` AND \`container-use checkout <env_id>\`
 
+## Project Status & Configuration
+
+**CRITICAL:** Always check `.boss/project-config.json` to understand project state before starting work.
+
+**Read project-config.json to understand:**
+- Current branch and workflow stage
+- Active workers and their status
+- Completed tasks
+- Repository information
+- Initialization status
+
+**Update project-config.json when:**
+- Starting work: Add your environment ID to `workflow.activeWorkers`
+- Completing work: Add a summary to `workers.summaries` with:
+  - Environment ID
+  - Tasks completed
+  - Files changed
+  - Tests written/updated
+  - Documentation created
+  - Any blockers or issues encountered
+- After merging: Remove from `workflow.activeWorkers` and add to `workflow.completedTasks`
+
+**Example worker summary format:**
+```json
+{
+  "envId": "env-abc123",
+  "workerType": "${workerName}",
+  "completedAt": "2026-01-15T10:30:00Z",
+  "tasksCompleted": ["T010", "T011", "T012"],
+  "filesChanged": ["src/components/UserCard.tsx", "tests/components/UserCard.test.tsx"],
+  "testsWritten": 5,
+  "testsUpdated": 2,
+  "documentationCreated": ["docs/components/UserCard.md"],
+  "notes": "Implemented UserCard component with TDD and Storybook"
+}
+```
+
+**IMPORTANT:**
+- NEVER use git commands to check project status - read project-config.json instead
+- ALWAYS update project-config.json when completing work
+- Keep summaries concise but informative for BOSS to track progress
+

@@ -1,0 +1,21 @@
+{
+  "base_image": "node:22-slim",
+  "setup_commands": [
+    "apt-get update",
+    "apt-get install -y bash git curl"
+  ],
+  "install_commands": [],
+  "environment_variables": {
+    "WORKER_ROLE": "${workerName}",
+    "SPEC_KIT_MODE": "true",
+    "SPEC_KIT_PATH": ".specify",
+    "PATH": "$PATH:.specify/scripts"
+  },
+  "secrets": [],
+  "network": {
+    "allowed_hosts": [
+      "github.com"
+    ]
+  }
+}
+

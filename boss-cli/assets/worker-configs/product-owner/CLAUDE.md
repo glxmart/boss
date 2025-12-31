@@ -32,9 +32,8 @@ All file, code, and shell operations MUST use container-use environments.
 - Completing work: Add a summary to `workers.summaries` with:
   - Environment ID
   - Tasks completed
-  - Files changed
-  - Tests written/updated
-  - Documentation created
+  - Artifacts created (prioritized user stories, acceptance criteria)
+  - Business value delivered
   - Any blockers or issues encountered
 - After merging: Remove from `workflow.activeWorkers` and add to `workflow.completedTasks`
 
@@ -44,12 +43,10 @@ All file, code, and shell operations MUST use container-use environments.
   "envId": "env-abc123",
   "workerType": "${workerName}",
   "completedAt": "2026-01-15T10:30:00Z",
-  "tasksCompleted": ["T010", "T011", "T012"],
-  "filesChanged": ["src/api/users.ts", "tests/api/users.test.ts"],
-  "testsWritten": 5,
-  "testsUpdated": 2,
-  "documentationCreated": ["docs/api/users.md"],
-  "notes": "Implemented user authentication endpoints with TDD"
+  "tasksCompleted": ["User story prioritization", "Acceptance criteria validation"],
+  "artifactsCreated": [".specify/specs/001-feature/spec.md"],
+  "priorities": {"P1": 3, "P2": 5, "P3": 2},
+  "notes": "Prioritized user stories and validated acceptance criteria for feature"
 }
 ```
 

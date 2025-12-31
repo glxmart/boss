@@ -32,9 +32,9 @@ All file, code, and shell operations MUST use container-use environments.
 - Completing work: Add a summary to `workers.summaries` with:
   - Environment ID
   - Tasks completed
-  - Files changed
-  - Tests written/updated
-  - Documentation created
+  - Artifacts created (test files, test reports)
+  - Test coverage metrics
+  - Mutation testing scores
   - Any blockers or issues encountered
 - After merging: Remove from `workflow.activeWorkers` and add to `workflow.completedTasks`
 
@@ -44,12 +44,11 @@ All file, code, and shell operations MUST use container-use environments.
   "envId": "env-abc123",
   "workerType": "${workerName}",
   "completedAt": "2026-01-15T10:30:00Z",
-  "tasksCompleted": ["T010", "T011", "T012"],
-  "filesChanged": ["src/api/users.ts", "tests/api/users.test.ts"],
-  "testsWritten": 5,
-  "testsUpdated": 2,
-  "documentationCreated": ["docs/api/users.md"],
-  "notes": "Implemented user authentication endpoints with TDD"
+  "tasksCompleted": ["BDD test suite", "Integration tests"],
+  "artifactsCreated": ["tests/feature.test.ts", "tests/integration.test.ts"],
+  "testCoverage": "85%",
+  "mutationScore": "82%",
+  "notes": "Created comprehensive test suite with BDD tests matching spec.md"
 }
 ```
 

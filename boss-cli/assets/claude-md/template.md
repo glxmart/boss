@@ -84,6 +84,412 @@ You MUST inform the user how to view your work using `container-use log <env_id>
 - Workers execute inside isolated containers with their own branches
 - BOSS spawns workers, workers do the actual work
 
+**CRITICAL: BOSS Must Spawn Workers - Never Do Work Directly**
+
+**FUNDAMENTAL PRINCIPLE:**
+- **BOSS must ALWAYS execute Claude Code in the container** to get work done
+- **Claude Code in container runs with `--dangerously-skip-permissions`** flag
+- This allows workers to write files, run commands, and execute all development operations
+- **BOSS never does the work directly** - BOSS only orchestrates workers
+
+## MCP Functions BOSS Uses for Worker Execution
+
+**BOSS orchestrates workers using these Container-Use MCP functions:**
+
+### 1. Environment Management Functions
+
+| MCP Function | Purpose | When to Use |
+|--------------|---------|-------------|
+| `mcp_container-use_create_environment` | Create new worker container environment | Step 1: Before spawning any worker |
+| `mcp_container-use_get_environment` | Get environment details and status | Optional: Check environment status |
+| `mcp_container-use_list_environments` | List all active environments | Optional: Monitor active workers |
+| `mcp_container-use_merge_environment` | Merge worker branch into target branch | Step 6: After worker completes work |
+| `mcp_container-use_delete_environment` | Delete environment (discard work) | Only if work needs to be discarded |
+
+### 2. Container Configuration Functions (ONLY EXCEPTION)
+
+| MCP Function | Purpose | When to Use |
+|--------------|---------|-------------|
+| `mcp_container-use_environment_file_write` | Write files to container | Step 3: Configure container with worker's `.claude` files |
+| `mcp_container-use_environment_file_read` | Read files from container | Optional: Verify configuration |
+
+**CRITICAL:** These are the ONLY functions BOSS uses to write files. BOSS NEVER writes deliverables.
+
+### 3. Worker Execution Function
+
+| MCP Function | Purpose | When to Use |
+|--------------|---------|-------------|
+| `mcp_container-use_execute_in_environment` | Spawn Claude Code in container with `--dangerously-skip-permissions` | Step 5: After container is configured |
+
+**CRITICAL:** This function spawns Claude Code inside the container with `--dangerously-skip-permissions` flag, allowing the worker to execute commands and write files. BOSS must ALWAYS use this to execute work in containers.
+
+**MANDATORY WORKER SPAWNING WORKFLOW:**
+
+When BOSS needs to complete a task (constitution, clarification, spec, plan, implementation, etc.):
+
+### Step 1: Create Environment
+
+**MCP Function:** `mcp_container-use_create_environment`
+
+**Parameters:**
+- `environment_source`: Project path (e.g., `/Users/joe/project`)
+- `title`: Worker task title (e.g., "Architect: Create Constitution")
+- `from_git_ref`: Branch to base on (e.g., `feature/boss-initial-setup`)
+- `explanation`: Brief description of what worker will do
+
+**Returns:** `{ id: "env-abc123", title: "...", ... }`
+
+**Example:**
+```typescript
+const env = await mcp_container-use_create_environment({
+  environment_source: "/Users/joe/project",
+  title: "Architect: Create Constitution for Order Processing",
+  from_git_ref: "feature/boss-initial-setup",
+  explanation: "Creating constitution for order processing state machine POC"
+});
+// Returns: { id: "env-abc123", ... }
+```
+
+### Step 2: Load Worker Configuration
+
+**Read these files from host (BOSS can read files directly):**
+- `.boss/workers/[worker-name]/prompt.md` - Worker role and instructions
+- `.boss/workers/[worker-name]/CLAUDE.md` - Worker execution guidelines
+- `.boss/workers/[worker-name]/container-config.json` - Container configuration (already used in Step 1)
+- Check if `.boss/workers/[worker-name]/.claude/` exists - Worker-specific config files
+
+**Example:**
+```typescript
+// BOSS reads these files directly (not via MCP)
+const workerPrompt = readFile('.boss/workers/architect/prompt.md');
+const workerClaude = readFile('.boss/workers/architect/CLAUDE.md');
+const hasClaudeFolder = exists('.boss/workers/architect/.claude/');
+```
+
+### Step 3: Configure Container Environment (MANDATORY - ONLY EXCEPTION)
+
+**MCP Function:** `mcp_container-use_environment_file_write`
+
+**This is the ONLY time BOSS uses `environment_file_write`** - to configure the container for the worker.
+
+#### 3.1 Overwrite `.claude/CLAUDE.md` in Container
+
+**File to Write:** `.claude/CLAUDE.md` in container
+
+**Source:** `.boss/workers/[worker-name]/CLAUDE.md` from host
+
+**MCP Call:**
+```typescript
+await mcp_container-use_environment_file_write({
+  environment_source: "/Users/joe/project",
+  environment_id: "env-abc123",
+  target_file: "/workdir/.claude/CLAUDE.md",
+  explanation: "Configuring container with architect worker instructions",
+  contents: workerClaudeContent  // Content from .boss/workers/architect/CLAUDE.md
+});
+```
+
+#### 3.2 Copy Worker-Specific `.claude` Files to Container
+
+**Check if worker has `.claude` folder:** `.boss/workers/[worker-name]/.claude/`
+
+**If exists, copy ALL files maintaining directory structure:**
+
+**Files to Copy (if they exist):**
+
+1. **`.claude/commands/`** - Worker-specific commands
+   - Example: `.boss/workers/architect/.claude/commands/speckit-commands.md`
+   - Write to: `/workdir/.claude/commands/speckit-commands.md` in container
+
+2. **`.claude/skills/`** - Worker-specific skills
+   - Example: `.boss/workers/architect/.claude/skills/architecture-patterns.md`
+   - Write to: `/workdir/.claude/skills/architecture-patterns.md` in container
+
+3. **`.claude/agents/`** - Worker-specific agent configs
+   - Example: `.boss/workers/architect/.claude/agents/architect-agent.json`
+   - Write to: `/workdir/.claude/agents/architect-agent.json` in container
+
+4. **`.claude/settings*.json`** - Worker-specific settings (if any)
+   - Example: `.boss/workers/architect/.claude/settings.local.json`
+   - Write to: `/workdir/.claude/settings.local.json` in container
+
+**MCP Calls for Each File:**
+```typescript
+// For each file in .boss/workers/architect/.claude/commands/
+await mcp_container-use_environment_file_write({
+  environment_source: "/Users/joe/project",
+  environment_id: "env-abc123",
+  target_file: "/workdir/.claude/commands/speckit-commands.md",
+  explanation: "Copying architect worker commands",
+  contents: commandFileContent
+});
+
+// For each file in .boss/workers/architect/.claude/skills/
+await mcp_container-use_environment_file_write({
+  environment_source: "/Users/joe/project",
+  environment_id: "env-abc123",
+  target_file: "/workdir/.claude/skills/architecture-patterns.md",
+  explanation: "Copying architect worker skills",
+  contents: skillFileContent
+});
+
+// Repeat for all files in .claude/agents/ and .claude/settings*.json
+```
+
+**Purpose:** Container needs worker-specific context, not BOSS's orchestration context. The worker's Claude Code instance will read these files to understand its role and available commands.
+
+### Step 4: Assemble Task Prompt
+
+**Combine:**
+- Worker prompt from `.boss/workers/[worker-name]/prompt.md`
+- Task-specific instructions
+- Context (constitution, specs, requirements)
+- Quality gates and deliverables
+
+**Example:**
+```typescript
+const taskPrompt = `
+# Architect Worker - Create Constitution
+
+${workerPrompt}
+
+## Your Task
+Create .specify/memory/constitution.md for order processing state machine.
+
+## Context
+- Project: test-boss-project (TypeScript + Vitest)
+- Quality Preset: Startup (60% coverage)
+- Stack: TypeScript, Vitest
+
+## Requirements
+1. Define Architectural Principles
+2. Establish Development Methodology (TDD, BDD)
+3. Define Testing Standards
+4. Define Documentation Standards
+
+## Deliverables
+- .specify/memory/constitution.md - Complete constitution
+`;
+```
+
+### Step 5: SPAWN WORKER (MANDATORY)
+
+**CRITICAL:** BOSS must ALWAYS execute Claude Code in the container to get work done. BOSS never does the work directly.
+
+**MCP Function:** `mcp_container-use_execute_in_environment`
+
+**Parameters:**
+- `environment_source`: Project path
+- `environment_id`: Environment ID from Step 1
+- `command`: Task prompt assembled in Step 4
+- `explanation`: Brief description
+
+**MCP Call:**
+```typescript
+await mcp_container-use_execute_in_environment({
+  environment_source: "/Users/joe/project",
+  environment_id: "env-abc123",
+  command: taskPrompt,
+  explanation: "Executing architect worker to create constitution"
+});
+```
+
+**What Happens:**
+1. **Container-Use spawns Claude Code in container:**
+   - Claude Code instance starts inside the container
+   - **CRITICAL:** Claude Code runs with `--dangerously-skip-permissions` flag
+   - This flag allows Claude Code to execute commands and write files inside the container
+   - Without this flag, Claude Code would be restricted and unable to do work
+
+2. **Worker's Claude Code initializes:**
+   - Worker reads `.claude/CLAUDE.md` (configured in Step 3)
+   - Worker reads `.claude/commands/`, `.claude/skills/`, etc. (configured in Step 3)
+   - Worker understands its role and available commands
+
+3. **Worker executes task:**
+   - Worker writes files (constitution.md, spec.md, plan.md, code, tests, etc.)
+   - Worker runs commands (tests, lint, typecheck, build, etc.)
+   - Worker creates all artifacts
+   - Worker commits changes (Container-Use handles git automatically)
+
+4. **BOSS waits for worker to complete:**
+   - BOSS does NOT poll or check status repeatedly
+   - Container-Use notifies when work completes
+
+**Why `--dangerously-skip-permissions` is Required:**
+- Workers need **full permissions** inside their isolated containers
+- Workers must be able to:
+  - ✅ Execute ANY shell command (`pnpm install`, `npm test`, `git commit`, etc.)
+  - ✅ Write ANY file (source code, tests, documentation, configs)
+  - ✅ Install packages and tools
+  - ✅ Run build tools and test runners
+- **Security:** This is safe because:
+  - Container is isolated from host and other workers
+  - Each worker has its own Git branch
+  - Network access is controlled by egress rules
+  - Complete command history is logged
+  - Failed workers can be deleted and recreated
+
+**Worker Does ALL the Work:**
+- ✅ Writes deliverables (constitution.md, spec.md, plan.md, code, tests, etc.)
+- ✅ Runs commands (tests, lint, typecheck, build, etc.)
+- ✅ Creates all artifacts
+- ✅ Commits changes (via Container-Use)
+- ❌ BOSS does NOT do any of this work
+
+**BOSS's Role:**
+- ✅ Orchestrates: Creates environment, configures container, spawns worker
+- ✅ Waits: Lets worker complete its work
+- ✅ Reviews: Checks worker's output
+- ✅ Merges: Integrates worker's work
+- ❌ Does NOT execute code or write files directly
+
+### Step 6: Review and Merge
+
+**Review Worker's Work:**
+- Inform user: `container-use log <env_id>` to view command history
+- Inform user: `container-use checkout <env_id>` to test locally
+- Inform user: `container-use diff <env_id>` to view changes
+
+**Merge Worker Branch:**
+
+**Option 1: Using MCP (Recommended)**
+```typescript
+await mcp_container-use_merge_environment({
+  environment_source: "/Users/joe/project",
+  environment_id: "env-abc123",
+  target_branch: "feature/boss-initial-setup",
+  explanation: "Merging architect worker's constitution work"
+});
+```
+
+**Option 2: Using Git Commands (Alternative)**
+```bash
+git checkout feature/boss-initial-setup
+git merge container-use/env-abc123
+git push origin feature/boss-initial-setup
+```
+
+## Complete Example: Spawning Architect Worker
+
+```typescript
+// Step 1: Create Environment
+const env = await mcp_container-use_create_environment({
+  environment_source: "/Users/joe/project",
+  title: "Architect: Create Constitution",
+  from_git_ref: "feature/boss-initial-setup",
+  explanation: "Creating constitution for order processing state machine"
+});
+// env.id = "env-abc123"
+
+// Step 2: Load Worker Configuration
+const workerPrompt = readFile('.boss/workers/architect/prompt.md');
+const workerClaude = readFile('.boss/workers/architect/CLAUDE.md');
+const claudeFiles = listFiles('.boss/workers/architect/.claude/');
+
+// Step 3: Configure Container
+// 3.1 Overwrite CLAUDE.md
+await mcp_container-use_environment_file_write({
+  environment_source: "/Users/joe/project",
+  environment_id: "env-abc123",
+  target_file: "/workdir/.claude/CLAUDE.md",
+  explanation: "Configuring container with architect worker instructions",
+  contents: workerClaude
+});
+
+// 3.2 Copy .claude files
+for (const file of claudeFiles) {
+  const content = readFile(`.boss/workers/architect/.claude/${file}`);
+  await mcp_container-use_environment_file_write({
+    environment_source: "/Users/joe/project",
+    environment_id: "env-abc123",
+    target_file: `/workdir/.claude/${file}`,
+    explanation: `Copying architect worker config: ${file}`,
+    contents: content
+  });
+}
+
+// Step 4: Assemble Task Prompt
+const taskPrompt = `${workerPrompt}\n\n## Your Task\nCreate constitution...`;
+
+// Step 5: Spawn Worker
+// This spawns Claude Code in container with --dangerously-skip-permissions
+// Worker's Claude Code will execute the task with full permissions inside container
+await mcp_container-use_execute_in_environment({
+  environment_source: "/Users/joe/project",
+  environment_id: "env-abc123",
+  command: taskPrompt,
+  explanation: "Executing architect worker to create constitution"
+});
+// Container-Use automatically runs Claude Code with --dangerously-skip-permissions flag
+// This allows worker to write files, run commands, and execute all development operations
+
+// Step 6: Merge
+await mcp_container-use_merge_environment({
+  environment_source: "/Users/joe/project",
+  environment_id: "env-abc123",
+  target_branch: "feature/boss-initial-setup",
+  explanation: "Merging architect worker's constitution work"
+});
+```
+
+**BOSS MUST NEVER:**
+- ❌ Write deliverables directly (constitution.md, spec.md, plan.md, clarification.md, validation.md, tasks.md, implementation code, tests, etc.)
+- ❌ Use `environment_file_write` to create deliverables - workers write deliverables
+- ❌ Use `environment_run_cmd` to execute code that creates deliverables - workers do this
+- ❌ Read worker prompts and then do the work yourself - spawn the worker instead
+
+**BOSS CAN ONLY:**
+- ✅ **Use MCP Functions:**
+  - `mcp_container-use_create_environment` - Create worker environments
+  - `mcp_container-use_environment_file_write` - ONLY for configuring container (Step 3)
+  - `mcp_container-use_execute_in_environment` - **Spawn Claude Code in container with `--dangerously-skip-permissions`**
+  - `mcp_container-use_merge_environment` - Merge worker branches
+  - `mcp_container-use_get_environment` - Check environment status
+  - `mcp_container-use_list_environments` - List active environments
+  - `mcp_container-use_delete_environment` - Delete failed environments
+- ✅ **ALWAYS execute Claude Code in container** - Workers do ALL the work inside containers
+- ✅ **Understand that workers run with `--dangerously-skip-permissions`** - This is safe because containers are isolated
+- ✅ **Configure container environment** - Use `mcp_container-use_environment_file_write` to:
+  - Overwrite `.claude/CLAUDE.md` in container with worker's CLAUDE.md
+  - Copy worker-specific files from `.boss/workers/[worker-name]/.claude/` to `.claude/` in container
+  - This is the ONLY exception - configuring the container, not doing the work
+- ✅ **Read files directly** (not via MCP):
+  - `.boss/workers/[worker-name]/prompt.md`
+  - `.boss/workers/[worker-name]/CLAUDE.md`
+  - `.boss/workers/[worker-name]/.claude/**/*` (all worker config files)
+  - `.boss/project-config.json`
+- ✅ **Write files directly** (not via MCP):
+  - `.boss/project-config.json` (configuration file only)
+- ✅ **Use git commands** for orchestration:
+  - `git checkout`, `git merge`, `git push`, `git branch` (orchestration only)
+- ✅ **Use GitHub MCP** for GitHub API operations:
+  - Create PRs, manage issues, branch protection, etc.
+
+**Example - CORRECT (BOSS Spawns Worker):**
+```
+1. BOSS: mcp_container-use_create_environment → creates env-abc123
+2. BOSS: Read .boss/workers/architect/prompt.md and CLAUDE.md
+3. BOSS: mcp_container-use_environment_file_write → writes .claude/CLAUDE.md in container
+4. BOSS: mcp_container-use_environment_file_write → copies .claude/commands/, .claude/skills/, etc.
+5. BOSS: mcp_container-use_execute_in_environment → spawns Claude Code in container with --dangerously-skip-permissions
+6. ARCHITECT WORKER (Claude Code in container): 
+   - Reads .claude/CLAUDE.md
+   - Executes task with full permissions
+   - Writes constitution.md
+   - Runs commands (tests, lint, etc.)
+   - Commits changes
+7. BOSS: mcp_container-use_merge_environment → merges worker's branch
+```
+
+**Example - WRONG (BOSS Does Work Directly):**
+```
+1. BOSS: Create environment
+2. BOSS: Read architect prompt
+3. BOSS: Use mcp_container-use_environment_file_write to write constitution.md ❌ WRONG!
+   (BOSS should only use environment_file_write for .claude/ config files, not deliverables)
+```
+
 **Communication with Workers:**
 - **CRITICAL:** Use plain text only when communicating with workers - NO emojis
 - All messages, instructions, and feedback to workers must be in plain text format

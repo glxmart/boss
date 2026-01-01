@@ -104,14 +104,60 @@ These workers can be spawned at any phase as needed:
 - Container configs are in `.boss/workers/[worker-name]/container-config.json`
 - Worker instructions are in `.boss/workers/[worker-name]/CLAUDE.md`
 
-**Worker Execution:**
-1. Create environment using `mcp_container-use_create_environment`
-2. Load worker prompt from `.boss/workers/[worker-name]/prompt.md`
-3. Execute worker using `mcp_container-use_execute_in_environment`
-4. Worker runs in isolated container with its own branch
-5. Review work using `container-use log <env_id>` and `container-use checkout <env_id>`
-6. Merge worker branch after approval using `mcp_container-use_merge_environment`
-7. Update `project-config.json` with worker summary
+**Worker Execution (MANDATORY - BOSS Must Spawn Workers):**
+
+**CRITICAL:** BOSS must ALWAYS spawn workers using `mcp_container-use_execute_in_environment`. BOSS must NEVER write deliverables directly.
+
+1. **Create environment** using `mcp_container-use_create_environment`
+   - Load worker config from `.boss/workers/[worker-name]/container-config.json`
+
+2. **Load worker configuration:**
+   - Read `.boss/workers/[worker-name]/prompt.md` to understand worker's role and instructions
+   - Read `.boss/workers/[worker-name]/CLAUDE.md` for execution guidelines
+   - Check for worker-specific `.claude` folder: `.boss/workers/[worker-name]/.claude/`
+
+3. **Configure container environment (MANDATORY - ONLY EXCEPTION):**
+   - **This is the ONLY time BOSS uses `environment_file_write`** - to configure the container for the worker
+   - **Overwrite `.claude/CLAUDE.md` in container:**
+     - Read `.boss/workers/[worker-name]/CLAUDE.md`
+     - Use `mcp_container-use_environment_file_write` to write to `.claude/CLAUDE.md` in container
+     - Container needs worker's instructions, not BOSS's orchestration instructions
+   - **Copy worker-specific `.claude` files to container:**
+     - If `.boss/workers/[worker-name]/.claude/` exists, copy all files maintaining directory structure:
+       - `.claude/commands/` - Worker-specific commands (e.g., Spec-Kit commands for architect)
+       - `.claude/skills/` - Worker-specific skills
+       - `.claude/agents/` - Worker-specific agent configs
+       - `.claude/settings*.json` - Worker-specific settings (if any)
+     - Use `mcp_container-use_environment_file_write` for each file
+   - **Why:** Container's Claude Code needs worker role context, not BOSS orchestrator context
+
+4. **Assemble task prompt:**
+   - Combine worker prompt with specific task instructions
+   - Include context (constitution, specs, requirements)
+   - Include quality gates and deliverables
+
+5. **Execute worker using `mcp_container-use_execute_in_environment`** (MANDATORY)
+   - Worker runs in isolated container with its own branch
+   - Container has worker-specific `.claude/CLAUDE.md` and `.claude/` config files
+   - **WORKER writes all deliverables** (constitution.md, spec.md, plan.md, code, tests, etc.)
+   - **BOSS does NOT write deliverables** - BOSS only orchestrates
+
+6. **Review work** using `container-use log <env_id>` and `container-use checkout <env_id>`
+
+7. **Merge worker branch** using `mcp_container-use_merge_environment` or git commands
+
+8. **Update `project-config.json`** with worker summary
+
+**BOSS MUST NEVER:**
+- ❌ Write deliverables directly (constitution.md, spec.md, plan.md, code, tests, etc.)
+- ❌ Use `environment_file_write` to create deliverables - workers write deliverables
+- ❌ Use `environment_run_cmd` to execute code that creates deliverables - workers do this
+- ❌ Read worker prompts and then do the work yourself - spawn the worker instead
+
+**BOSS CAN ONLY use `environment_file_write` for:**
+- ✅ **Configuring container environment** - Overwrite `.claude/CLAUDE.md` with worker's CLAUDE.md
+- ✅ **Copying worker config files** - Copy `.boss/workers/[worker-name]/.claude/` files to `.claude/` in container
+- ✅ This is the ONLY exception - configuring the container, not doing the work
 
 **Communication Guidelines:**
 - **CRITICAL:** Use plain text only when communicating with workers - NO emojis

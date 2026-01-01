@@ -14,19 +14,61 @@
    - Update `project-config.json` with new worker in `workflow.activeWorkers`
    - **DO NOT check environment status repeatedly** - only check when needed
 
-3. **Spawn Worker**
-   - Use `mcp_container-use_execute_in_environment` to run worker
+3. **Configure Container Environment (MANDATORY - BEFORE Spawning Worker)**
+   - **CRITICAL:** This is the ONLY exception where BOSS uses `environment_file_write`
+   - **Purpose:** Configure container with worker-specific context, not BOSS's orchestration context
+   - **Load worker configuration:**
+     - Read `.boss/workers/[worker-name]/prompt.md` to understand worker's role
+     - Read `.boss/workers/[worker-name]/CLAUDE.md` for execution guidelines
+     - Check for worker-specific `.claude` folder: `.boss/workers/[worker-name]/.claude/`
+   - **Overwrite `.claude/CLAUDE.md` in container:**
+     - Read `.boss/workers/[worker-name]/CLAUDE.md`
+     - Use `mcp_container-use_environment_file_write` to write to `.claude/CLAUDE.md` in container
+     - Container needs worker's instructions, not BOSS's orchestration instructions
+   - **Copy worker-specific `.claude` files to container:**
+     - If `.boss/workers/[worker-name]/.claude/` exists, copy all files maintaining directory structure:
+       - `.claude/commands/` - Worker-specific commands (e.g., Spec-Kit commands for architect)
+       - `.claude/skills/` - Worker-specific skills
+       - `.claude/agents/` - Worker-specific agent configs
+       - `.claude/settings*.json` - Worker-specific settings (if any)
+     - Use `mcp_container-use_environment_file_write` for each file
+   - **Why:** Container's Claude Code needs worker role context, not BOSS orchestrator context
+
+4. **Spawn Worker (MANDATORY - BOSS Never Does Work Directly)**
+   - **CRITICAL:** Use `mcp_container-use_execute_in_environment` to run worker
+   - **BOSS MUST NEVER write deliverables directly** (constitution.md, spec.md, plan.md, code, tests, etc.)
+   - **BOSS MUST NEVER use `environment_file_write` to create deliverables** - workers write all deliverables
+   - **BOSS MUST NEVER use `environment_run_cmd` to execute code that creates deliverables** - workers do this
    - Worker runs in isolated container with its own branch
+   - Container has worker-specific `.claude/CLAUDE.md` and `.claude/` config files
+   - Worker does ALL the actual work (writes files, runs commands, creates code)
    - Container-Use manages all git operations automatically
    - **DO NOT** use git CLI directly
    - **DO NOT poll worker status** - Container-Use will notify when work completes
    - **Only check status once** after worker execution completes, not repeatedly
+   
+   **Correct Workflow:**
+   ```
+   1. BOSS creates environment
+   2. BOSS loads worker prompt from .boss/workers/[worker-name]/prompt.md
+   3. BOSS configures container: overwrites .claude/CLAUDE.md and copies .claude/ files
+   4. BOSS calls mcp_container-use_execute_in_environment with task prompt
+   5. WORKER (in container) writes all deliverables
+   6. BOSS reviews and merges
+   ```
+   
+   **WRONG - BOSS Doing Work Directly:**
+   ```
+   1. BOSS creates environment
+   2. BOSS reads worker prompt
+   3. BOSS uses environment_file_write to write deliverables ❌ WRONG!
+   ```
 
-4. **Review Work (Optional - for user visibility)**
+5. **Review Work (Optional - for user visibility)**
    - Inform user how to review: `container-use log <env_id>`, `container-use diff <env_id>`, `container-use checkout <env_id>`
    - **DO NOT wait for approval** - proceed automatically
 
-5. **Merge Worker Changes (AUTOMATIC)**
+6. **Merge Worker Changes (AUTOMATIC)**
    - **AUTOMATICALLY** use `mcp_container-use_merge_environment` to merge worker's branch
    - Container-Use merges worker's branch into target branch (usually `feature/boss-initial-setup`)
    - **DO NOT check worker status repeatedly** - only check once after merge completes
@@ -35,13 +77,13 @@
      - Add summary to `workers.summaries`
      - Add to `workflow.completedTasks`
 
-6. **Push Branch to Remote (AUTOMATIC)**
+7. **Push Branch to Remote (AUTOMATIC)**
    - **AUTOMATICALLY** push feature branch to remote using git commands
    - Use: `git push origin <feature-branch-name>` or `git push -u origin <feature-branch-name>`
    - **NEVER push to main branch directly** - husky pre-push hooks block this (enforced for everyone)
    - **DO NOT ask user for confirmation** - push automatically
 
-7. **Create Pull Request (AUTOMATIC - MANDATORY - NO EXCEPTIONS)**
+8. **Create Pull Request (AUTOMATIC - MANDATORY - NO EXCEPTIONS)**
    - **AUTOMATICALLY** use GitHub MCP to create PR from feature branch to main
    - **CRITICAL:** Main branch is protected - direct pushes are blocked
    - **DO NOT ask user if they want PR created** - always create it automatically

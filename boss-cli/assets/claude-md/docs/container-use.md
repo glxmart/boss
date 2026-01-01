@@ -36,19 +36,40 @@
    - Branch naming convention: `container-use/<env-id>` (e.g., `container-use/env-abc123`)
    - **Git hooks are active in Container-Use environments** - commits will be validated
 
-2. **Worker Spawning**
-   - Use `mcp_container-use_execute_in_environment` to run workers
-   - Each worker runs in its own isolated environment/container
+2. **Container Configuration (MANDATORY - BEFORE Worker Spawning)**
+   - **CRITICAL:** This is the ONLY exception where BOSS uses `environment_file_write`
+   - **Purpose:** Configure container with worker-specific context, not BOSS's orchestration context
+   - **Overwrite `.claude/CLAUDE.md` in container:**
+     - Read `.boss/workers/[worker-name]/CLAUDE.md`
+     - Use `mcp_container-use_environment_file_write` to write to `.claude/CLAUDE.md` in container
+     - Container needs worker's instructions, not BOSS's orchestration instructions
+   - **Copy worker-specific `.claude` files to container:**
+     - Check if `.boss/workers/[worker-name]/.claude/` exists
+     - If exists, copy all files maintaining directory structure:
+       - `.claude/commands/` - Worker-specific commands
+       - `.claude/skills/` - Worker-specific skills
+       - `.claude/agents/` - Worker-specific agent configs
+       - `.claude/settings*.json` - Worker-specific settings (if any)
+     - Use `mcp_container-use_environment_file_write` for each file
+   - **Why:** Container's Claude Code needs worker role context, not BOSS orchestrator context
+
+3. **Worker Spawning (MANDATORY for BOSS)**
+   - **CRITICAL:** BOSS must use `mcp_container-use_execute_in_environment` to spawn workers
+   - **BOSS must NEVER write deliverables directly** using `environment_file_write` or `environment_run_cmd`
+   - **Workers write all deliverables** (constitution.md, spec.md, plan.md, code, tests, etc.)
+   - Each worker runs in its own isolated environment/container with worker-specific `.claude` config
    - Workers can access secrets from 1Password (configured in container-config.json)
    - All git operations happen automatically within the environment
+   - **BOSS's role:** Orchestrate (create environment, configure container, spawn worker, review, merge)
+   - **Worker's role:** Execute (write files, run commands, create code)
 
-3. **Environment Management**
+4. **Environment Management**
    - `mcp_container-use_list_environments` - List all active environments
    - `mcp_container-use_get_environment` - Get environment details
    - `mcp_container-use_delete_environment` - Delete environment (discards work)
    - `mcp_container-use_merge_environment` - Merge environment branch into target branch
 
-4. **Work Review**
+5. **Work Review**
    - Use `container-use log <env_id>` (CLI) to view command history
    - Use `container-use diff <env_id>` (CLI) to view code changes
    - Use `container-use checkout <env_id>` (CLI) to test locally
@@ -58,10 +79,15 @@
 - **[DO]** ALWAYS create environments for any file/code/shell operation
 - **[DO]** ALWAYS use Container-Use MCP tools (never git CLI)
 - **[DO]** ALWAYS inform user how to view work via container-use CLI
+- **[DO]** Configure container environment BEFORE spawning worker:
+  - Overwrite `.claude/CLAUDE.md` with worker's CLAUDE.md
+  - Copy worker-specific `.claude/` files to container
+  - This is the ONLY exception where BOSS uses `environment_file_write`
 - **[DO]** For large files, use shell commands (heredoc/cat) instead of `environment_file_write` with large content
 - **[DON'T]** NEVER use git CLI directly
 - **[DON'T]** NEVER modify .git directory manually
 - **[DON'T]** NEVER execute operations outside environments
+- **[DON'T]** NEVER use `environment_file_write` to create deliverables - workers write deliverables
 - **[DON'T]** NEVER use `environment_file_write` with very large content (>1000 lines) - use shell commands instead
 
 ## Efficient File Operations

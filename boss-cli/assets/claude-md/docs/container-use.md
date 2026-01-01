@@ -16,16 +16,16 @@
 - **package.json includes `prepare` script** - Runs `husky install` automatically when dependencies are installed
 
 **NEVER:**
-- ❌ Use `--no-verify` flag to skip hooks (Container-Use commits will fail if hooks fail)
-- ❌ Bypass commit message validation
-- ❌ Skip pre-commit checks
-- ❌ Commit with invalid message format
+- NOT OK Use `--no-verify` flag to skip hooks (Container-Use commits will fail if hooks fail)
+- NOT OK Bypass commit message validation
+- NOT OK Skip pre-commit checks
+- NOT OK Commit with invalid message format
 
 **ALWAYS:**
-- ✅ Let git hooks run automatically (Container-Use respects hooks - they cannot be bypassed)
-- ✅ Use proper Conventional Commits format: `<type>(<scope>): <description>`
-- ✅ Ensure hooks pass before committing (commits will be rejected if hooks fail)
-- ✅ Run `pnpm install` after bootstrap to ensure Husky is fully set up
+- OK Let git hooks run automatically (Container-Use respects hooks - they cannot be bypassed)
+- OK Use proper Conventional Commits format: `<type>(<scope>): <description>`
+- OK Ensure hooks pass before committing (commits will be rejected if hooks fail)
+- OK Run `pnpm install` after bootstrap to ensure Husky is fully set up
 
 ## How Container-Use Works
 

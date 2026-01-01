@@ -39,9 +39,9 @@ cat .boss/workers/architect/container-config.json
 ```
 
 **Common Mistakes to Avoid:**
-- ❌ **DO NOT** search for `.boss/workers/*.yaml` - workers are directories, not YAML files
-- ❌ **DO NOT** read `.boss/workers/[worker-name]/README.md` - use `prompt.md` instead
-- ❌ **DO NOT** read `.container-use/config.yaml` - read `.container-use/environment.json` instead
+- NOT OK **DO NOT** search for `.boss/workers/*.yaml` - workers are directories, not YAML files
+- NOT OK **DO NOT** read `.boss/workers/[worker-name]/README.md` - use `prompt.md` instead
+- NOT OK **DO NOT** read `.container-use/config.yaml` - read `.container-use/environment.json` instead
 
 ## Phase-Specific Workers
 
@@ -119,17 +119,24 @@ These workers can be spawned at any phase as needed:
 3. **Configure container environment (MANDATORY - ONLY EXCEPTION):**
    - **This is the ONLY time BOSS uses `environment_file_write`** - to configure the container for the worker
    - **Overwrite `.claude/CLAUDE.md` in container:**
-     - Read `.boss/workers/[worker-name]/CLAUDE.md`
-     - Use `mcp_container-use_environment_file_write` to write to `.claude/CLAUDE.md` in container
+     - Read `.boss/workers/[worker-name]/CLAUDE.md` from host
+     - Use `mcp_container-use_environment_file_write` to write to `/workdir/.claude/CLAUDE.md` in container
+     - **CRITICAL PATH:** Host `.boss/workers/architect/CLAUDE.md` → Container `/workdir/.claude/CLAUDE.md`
      - Container needs worker's instructions, not BOSS's orchestration instructions
    - **Copy worker-specific `.claude` files to container:**
-     - If `.boss/workers/[worker-name]/.claude/` exists, copy all files maintaining directory structure:
-       - `.claude/commands/` - Worker-specific commands (e.g., Spec-Kit commands for architect)
-       - `.claude/skills/` - Worker-specific skills
-       - `.claude/agents/` - Worker-specific agent configs
-       - `.claude/settings*.json` - Worker-specific settings (if any)
+     - If `.boss/workers/[worker-name]/.claude/` exists, copy all files maintaining directory structure
+     - **CRITICAL PATH TRANSFORMATION:**
+       - Remove `.boss/workers/[worker-name]/` prefix
+       - Keep `.claude/` structure
+       - Example: `.boss/workers/architect/.claude/commands/file.md` → `/workdir/.claude/commands/file.md`
+     - Copy all subdirectories:
+       - `.claude/commands/` → `/workdir/.claude/commands/`
+       - `.claude/skills/` → `/workdir/.claude/skills/`
+       - `.claude/agents/` → `/workdir/.claude/agents/`
+       - `.claude/settings*.json` → `/workdir/.claude/settings*.json`
      - Use `mcp_container-use_environment_file_write` for each file
-   - **Why:** Container's Claude Code needs worker role context, not BOSS orchestrator context
+   - **Why:** Container's Claude Code reads from `/workdir/.claude/` by convention - we must copy files there
+   - **Why NOT environment variables:** Claude Code reads from `.claude/` folder by convention, cannot be changed with env vars
 
 4. **Assemble task prompt:**
    - Combine worker prompt with specific task instructions
@@ -149,15 +156,15 @@ These workers can be spawned at any phase as needed:
 8. **Update `project-config.json`** with worker summary
 
 **BOSS MUST NEVER:**
-- ❌ Write deliverables directly (constitution.md, spec.md, plan.md, code, tests, etc.)
-- ❌ Use `environment_file_write` to create deliverables - workers write deliverables
-- ❌ Use `environment_run_cmd` to execute code that creates deliverables - workers do this
-- ❌ Read worker prompts and then do the work yourself - spawn the worker instead
+- NOT OK Write deliverables directly (constitution.md, spec.md, plan.md, code, tests, etc.)
+- NOT OK Use `environment_file_write` to create deliverables - workers write deliverables
+- NOT OK Use `environment_run_cmd` to execute code that creates deliverables - workers do this
+- NOT OK Read worker prompts and then do the work yourself - spawn the worker instead
 
 **BOSS CAN ONLY use `environment_file_write` for:**
-- ✅ **Configuring container environment** - Overwrite `.claude/CLAUDE.md` with worker's CLAUDE.md
-- ✅ **Copying worker config files** - Copy `.boss/workers/[worker-name]/.claude/` files to `.claude/` in container
-- ✅ This is the ONLY exception - configuring the container, not doing the work
+- OK **Configuring container environment** - Overwrite `.claude/CLAUDE.md` with worker's CLAUDE.md
+- OK **Copying worker config files** - Copy `.boss/workers/[worker-name]/.claude/` files to `.claude/` in container
+- OK This is the ONLY exception - configuring the container, not doing the work
 
 **Communication Guidelines:**
 - **CRITICAL:** Use plain text only when communicating with workers - NO emojis

@@ -6,6 +6,7 @@
   ],
   "install_commands": [
     "npm install -g pnpm",
+    "npm install -g @anthropic-ai/claude-code",
     "pnpm install"
   ],
   "environment_variables": {
@@ -15,11 +16,15 @@
     "SPEC_KIT_PATH": ".specify",
     "PATH": "$PATH:.specify/scripts"
   },
-  "secrets": [],
+  "secrets": [
+    "CLAUDE_CODE_OAUTH_TOKEN=op://glx/claude-code/oauth-token"
+  ],
   "network": {
     "allowed_hosts": [
       "registry.npmjs.org",
-      "github.com"
+      "github.com",
+      "api.anthropic.com",
+      "claude.ai"
     ]
   }
 }

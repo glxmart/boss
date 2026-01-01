@@ -22,17 +22,24 @@
      - Read `.boss/workers/[worker-name]/CLAUDE.md` for execution guidelines
      - Check for worker-specific `.claude` folder: `.boss/workers/[worker-name]/.claude/`
    - **Overwrite `.claude/CLAUDE.md` in container:**
-     - Read `.boss/workers/[worker-name]/CLAUDE.md`
-     - Use `mcp_container-use_environment_file_write` to write to `.claude/CLAUDE.md` in container
+     - Read `.boss/workers/[worker-name]/CLAUDE.md` from host
+     - Use `mcp_container-use_environment_file_write` to write to `/workdir/.claude/CLAUDE.md` in container
+     - **CRITICAL PATH:** Host `.boss/workers/architect/CLAUDE.md` → Container `/workdir/.claude/CLAUDE.md`
      - Container needs worker's instructions, not BOSS's orchestration instructions
    - **Copy worker-specific `.claude` files to container:**
-     - If `.boss/workers/[worker-name]/.claude/` exists, copy all files maintaining directory structure:
-       - `.claude/commands/` - Worker-specific commands (e.g., Spec-Kit commands for architect)
-       - `.claude/skills/` - Worker-specific skills
-       - `.claude/agents/` - Worker-specific agent configs
-       - `.claude/settings*.json` - Worker-specific settings (if any)
+     - If `.boss/workers/[worker-name]/.claude/` exists, copy all files maintaining directory structure
+     - **CRITICAL PATH TRANSFORMATION:**
+       - Host: `.boss/workers/architect/.claude/commands/file.md`
+       - Container: `/workdir/.claude/commands/file.md`
+       - Remove `.boss/workers/architect/` prefix, keep `.claude/` structure
+     - Copy all subdirectories:
+       - `.claude/commands/` → `/workdir/.claude/commands/`
+       - `.claude/skills/` → `/workdir/.claude/skills/`
+       - `.claude/agents/` → `/workdir/.claude/agents/`
+       - `.claude/settings*.json` → `/workdir/.claude/settings*.json`
      - Use `mcp_container-use_environment_file_write` for each file
-   - **Why:** Container's Claude Code needs worker role context, not BOSS orchestrator context
+   - **Why:** Container's Claude Code reads from `/workdir/.claude/` by convention - we must copy files there
+   - **Why NOT environment variables:** Claude Code reads from `.claude/` folder by convention, cannot be changed
 
 4. **Spawn Worker (MANDATORY - BOSS Never Does Work Directly)**
    - **CRITICAL:** Use `mcp_container-use_execute_in_environment` to run worker
@@ -61,7 +68,7 @@
    ```
    1. BOSS creates environment
    2. BOSS reads worker prompt
-   3. BOSS uses environment_file_write to write deliverables ❌ WRONG!
+   3. BOSS uses environment_file_write to write deliverables NOT OK WRONG!
    ```
 
 5. **Review Work (Optional - for user visibility)**
@@ -118,16 +125,16 @@ After worker completes their work:
 4. **Update project-config.json** - Mark workflow as complete, add PR link, then commit and push: `git add .boss/project-config.json && git commit -m "chore: update project-config.json" && git push`
 
 **DO NOT:**
-- ❌ Ask user "Should I create a PR?" - **ALWAYS create it automatically**
-- ❌ Ask user "Ready to create PR?" - **ALWAYS create it automatically**
-- ❌ Wait for user approval before pushing or creating PR
-- ❌ Skip PR creation - **PR creation is MANDATORY**
-- ❌ Push directly to main branch - **main is protected, use PRs only**
-- ❌ Check worker/environment status repeatedly - only check once when needed
+- NOT OK Ask user "Should I create a PR?" - **ALWAYS create it automatically**
+- NOT OK Ask user "Ready to create PR?" - **ALWAYS create it automatically**
+- NOT OK Wait for user approval before pushing or creating PR
+- NOT OK Skip PR creation - **PR creation is MANDATORY**
+- NOT OK Push directly to main branch - **main is protected, use PRs only**
+- NOT OK Check worker/environment status repeatedly - only check once when needed
 
 **DO:**
-- ✅ Complete entire workflow automatically: merge → push feature branch → create PR
-- ✅ Inform user that PR was created with link: "✅ PR created: [link]"
-- ✅ Include comprehensive PR body with worker summaries and quality gates
-- ✅ Minimize status checks - only check when necessary for workflow progression
+- OK Complete entire workflow automatically: merge → push feature branch → create PR
+- OK Inform user that PR was created with link: "OK PR created: [link]"
+- OK Include comprehensive PR body with worker summaries and quality gates
+- OK Minimize status checks - only check when necessary for workflow progression
 

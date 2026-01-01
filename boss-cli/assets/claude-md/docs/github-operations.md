@@ -18,9 +18,9 @@
    - Store the organization name for use in repository creation and transfer
 
 2. **DO NOT:**
-   - ❌ List organizations using `search_users` MCP tool with `type:org` - this searches public organizations
-   - ❌ Use curl to call GitHub API endpoints - use GitHub MCP tools instead
-   - ❌ Try to enumerate user's organizations - just ask the user directly
+   - NOT OK List organizations using `search_users` MCP tool with `type:org` - this searches public organizations
+   - NOT OK Use curl to call GitHub API endpoints - use GitHub MCP tools instead
+   - NOT OK Try to enumerate user's organizations - just ask the user directly
 
 3. **Use GitHub MCP for all operations:**
    - Use GitHub MCP `createRepository` tool to create the repository
@@ -32,23 +32,23 @@
 **CRITICAL: BOSS's Role in Repository Setup**
 
 **BOSS does NOT:**
-- ❌ Push to main branch (husky pre-push hooks block this - enforced for everyone)
-- ❌ Create Container-Use environments for repository setup operations
-- ❌ Use Container-Use MCP for BOSS's own git operations
+- NOT OK Push to main branch (husky pre-push hooks block this - enforced for everyone)
+- NOT OK Create Container-Use environments for repository setup operations
+- NOT OK Use Container-Use MCP for BOSS's own git operations
 
 **BOSS DOES:**
-- ✅ Use git commands for orchestration: create branches, push code, merge branches, add remotes
-- ✅ Use GitHub MCP for GitHub API operations: create repositories, create PRs, set branch protection
+- OK Use git commands for orchestration: create branches, push code, merge branches, add remotes
+- OK Use GitHub MCP for GitHub API operations: create repositories, create PRs, set branch protection
 
 **BOSS DOES (continued):**
-- ✅ Use GitHub MCP to check if repository exists (`search_repositories` or similar)
-- ✅ Use GitHub MCP to create repository if it doesn't exist (`createRepository`)
-- ✅ Use GitHub MCP to set branch protection (use GitHub MCP tools, or if not available, use `run_terminal_cmd` with curl as fallback)
-- ✅ Use git commands to add remotes: `git remote add origin https://github.com/<owner>/<repo>.git` (ALWAYS use HTTPS, NEVER SSH)
-- ✅ Use git commands to push branches: `git push origin <branch-name>` (except main - blocked by hooks)
-- ✅ **Git authentication:** Git automatically uses `GITHUB_TOKEN` environment variable for HTTPS authentication (set to same value as `GITHUB_PERSONAL_ACCESS_TOKEN` for consistency)
-- ✅ **GitHub MCP is authenticated:** GitHub MCP server is already up and authenticated - use it directly, no additional setup needed
-- ✅ Update `.boss/project-config.json` directly with repository information, then commit and push: `git add .boss/project-config.json && git commit -m "chore: update project-config.json" && git push`
+- OK Use GitHub MCP to check if repository exists (`search_repositories` or similar)
+- OK Use GitHub MCP to create repository if it doesn't exist (`createRepository`)
+- OK Use GitHub MCP to set branch protection (use GitHub MCP tools, or if not available, use `run_terminal_cmd` with curl as fallback)
+- OK Use git commands to add remotes: `git remote add origin https://github.com/<owner>/<repo>.git` (ALWAYS use HTTPS, NEVER SSH)
+- OK Use git commands to push branches: `git push origin <branch-name>` (except main - blocked by hooks)
+- OK **Git authentication:** Git automatically uses `GITHUB_TOKEN` environment variable for HTTPS authentication (set to same value as `GITHUB_PERSONAL_ACCESS_TOKEN` for consistency)
+- OK **GitHub MCP is authenticated:** GitHub MCP server is already up and authenticated - use it directly, no additional setup needed
+- OK Update `.boss/project-config.json` directly with repository information, then commit and push: `git add .boss/project-config.json && git commit -m "chore: update project-config.json" && git push`
 
 **IMPORTANT LIMITATION:** The GitHub MCP `createRepository` tool currently only creates repositories under the authenticated user's personal account, not under organizations. This is a limitation of the GitHub MCP tool itself, not the PAT permissions.
 
@@ -162,11 +162,11 @@ curl -X POST \
 ```
 
 **Critical Requirements:**
-- ✅ **Administrative access required** - You must have admin access to the repository being transferred
-- ✅ **Organization permissions** - If transferring to an organization, you must have permission to create repositories in that organization
-- ✅ **Acceptance window** - The new owner has 24 hours to accept the transfer, otherwise it expires
-- ✅ **Update git remote** - After successful transfer, update the git remote URL using Container-Use MCP
-- ✅ **Update project-config.json** - Update repository owner, URL, and organization fields
+- OK **Administrative access required** - You must have admin access to the repository being transferred
+- OK **Organization permissions** - If transferring to an organization, you must have permission to create repositories in that organization
+- OK **Acceptance window** - The new owner has 24 hours to accept the transfer, otherwise it expires
+- OK **Update git remote** - After successful transfer, update the git remote URL using Container-Use MCP
+- OK **Update project-config.json** - Update repository owner, URL, and organization fields
 
 **Post-Transfer Steps:**
 1. Wait for transfer to complete (poll repository status or wait a few seconds)
@@ -201,14 +201,14 @@ curl -X POST \
   - Branch deletions disabled
 
 **NEVER:**
-- ❌ Push directly to main branch
-- ❌ Bypass PR requirement
-- ❌ Skip PR creation
+- NOT OK Push directly to main branch
+- NOT OK Bypass PR requirement
+- NOT OK Skip PR creation
 
 **ALWAYS:**
-- ✅ Push to feature branch (`feature/boss-initial-setup` or `feature/*`)
-- ✅ Create PR from feature branch to main
-- ✅ Use PRs for all changes to main
+- OK Push to feature branch (`feature/boss-initial-setup` or `feature/*`)
+- OK Create PR from feature branch to main
+- OK Use PRs for all changes to main
 
 ## Pull Requests
 

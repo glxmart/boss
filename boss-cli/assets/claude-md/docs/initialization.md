@@ -11,8 +11,8 @@
    - **DO NOT wait for user to ask** - check and complete setup automatically
 
 2. **Verify Bootstrap State**
-   - **CRITICAL:** Main branch should already contain ALL bootstrap files
-   - **CRITICAL:** Feature branch `feature/boss-initial-setup` should already exist (created during bootstrap)
+   - **CRITICAL:** Main branch should be EMPTY (only empty commit) - bootstrap files are NOT on main
+   - **CRITICAL:** Feature branch `feature/boss-initial-setup` should already exist with ALL bootstrap files (created during bootstrap)
    - **CRITICAL: Verify dependencies are installed** - Before creating Container-Use environments:
      - **NOTE:** `start-boss.sh` already runs `pnpm install` (or `npm install`) automatically before launching Claude
      - **DO NOT run `pnpm install` again** - dependencies should already be installed
@@ -67,24 +67,20 @@
            }
            ```
        - Verify protection was set: Check response status is 200
-     - [ ] **CRITICAL: Verify validation checks pass BEFORE pushing**
-       - **IMPORTANT:** The pre-push hook allows the first push to main (if remote main doesn't exist), BUT it still runs validation checks that can block the push
-       - **BEFORE pushing main branch, verify all checks pass:**
-         1. **Typecheck:** Run `pnpm typecheck` (or `npm run typecheck`) - must pass
-         2. **Lint:** Run `pnpm lint` (or `npm run lint`) - must pass
-         3. **Security:** Run `bash scripts/security-check.sh` - must pass
-         4. **Tests:** Run `pnpm test:unit` (or `npm run test:unit`) - must pass
-         5. **Test files:** Verify at least one test file exists (`.test.ts`, `.spec.ts`, etc.) - required for non-interactive pushes
-       - **If any check fails, fix the issues before pushing**
-       - **The bootstrap process should have created passing code, but verify before pushing**
      - [ ] **CRITICAL ORDER - Follow EXACTLY:**
        1. **Add remote using HTTPS:** `git remote add origin https://github.com/<owner>/<repo>.git` (ALWAYS use HTTPS format, NEVER SSH `git@github.com` format)
-       2. **Verify validation checks pass** (see above) - DO NOT skip this step
-       3. **FIRST push main branch:** `git push -u origin main` (contains all bootstrap files - MUST be pushed first, git will use GITHUB_TOKEN automatically, which is set to same value as GITHUB_PERSONAL_ACCESS_TOKEN)
-          - **NOTE:** The pre-push hook will allow this first push (remote main doesn't exist yet), but validation checks still run
-          - **If push fails due to validation, fix the issues and try again**
-       4. **THEN create feature branch if needed:** `git checkout -b feature/boss-initial-setup` (if it doesn't exist)
-       5. **THEN push feature branch:** `git push -u origin feature/boss-initial-setup` (git will use GITHUB_TOKEN automatically, which is set to same value as GITHUB_PERSONAL_ACCESS_TOKEN)
+       2. **FIRST push empty main branch:** `git push -u origin main` (main is EMPTY - only empty commit, no validation needed, git will use GITHUB_TOKEN automatically, which is set to same value as GITHUB_PERSONAL_ACCESS_TOKEN)
+          - **NOTE:** The pre-push hook allows empty main push without validation checks
+          - **Main branch must be pushed first (empty) before feature branch**
+       3. **THEN switch to feature branch:** `git checkout feature/boss-initial-setup` (branch should already exist from bootstrap)
+       4. **Verify validation checks pass BEFORE pushing feature branch:**
+          - **BEFORE pushing feature branch, verify all checks pass:**
+            1. **Typecheck:** Run `pnpm typecheck` (or `npm run typecheck`) - must pass
+            2. **Lint:** Run `pnpm lint` (or `npm run lint`) - must pass
+            3. **Security:** Run `bash scripts/security-check.sh` - must pass
+            4. **Tests:** Run `pnpm test:unit` (or `npm run test:unit`) - must pass
+          - **If any check fails, fix the issues before pushing**
+       5. **THEN push feature branch:** `git push -u origin feature/boss-initial-setup` (contains all bootstrap files, git will use GITHUB_TOKEN automatically, which is set to same value as GITHUB_PERSONAL_ACCESS_TOKEN)
        5. **Update `.boss/project-config.json`** with repository information:
           - Set `repository.remote = "origin"`
           - Set `repository.url = "https://github.com/{owner}/{repo}"`
@@ -108,14 +104,14 @@
 **CRITICAL UNDERSTANDING:** The pre-push hook (`.husky/pre-push`) has special behavior for the first push to main:
 
 1. **First Push Detection:** The hook checks if remote main branch exists using `git ls-remote --heads origin main`
-2. **First Push Allowed:** If remote main doesn't exist, the hook allows the push (with a warning)
-3. **BUT Validation Still Runs:** Even though the first push is allowed, the hook STILL runs all validation checks:
+2. **Empty Main Allowed:** If remote main doesn't exist AND main branch is empty (only empty commit or minimal files), the hook allows the push WITHOUT validation checks
+3. **Non-Empty Main:** If main branch contains files, validation checks will run even for first push
+4. **Feature Branch Validation:** All validation checks run normally for feature branch pushes:
    - TypeScript typecheck (`pnpm typecheck`)
    - Linting (`pnpm lint`)
    - Security checks (`bash scripts/security-check.sh`)
    - Unit tests (`pnpm test:unit`)
    - Test file presence check (blocks non-interactive pushes if no test files exist)
-4. **Validation Can Block Push:** If any validation check fails, the push will be blocked even though it's the first push
 5. **After First Push:** Once main branch exists remotely, all future pushes to main are blocked (must use feature branches and PRs)
 
 **IMPORTANT:** Before pushing main branch during initialization:

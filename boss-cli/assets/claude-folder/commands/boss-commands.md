@@ -51,8 +51,8 @@
 
 **Checklist for Initial Setup:**
 - [ ] Read `.boss/project-config.json` to check current status
-- [ ] **Verify:** Main branch contains ALL bootstrap files (committed during bootstrap)
-- [ ] **Verify:** Feature branch `feature/boss-initial-setup` exists (created as LAST step during bootstrap)
+- [ ] **Verify:** Main branch is EMPTY (only empty commit) - bootstrap files are NOT on main
+- [ ] **Verify:** Feature branch `feature/boss-initial-setup` exists with ALL bootstrap files (created during bootstrap)
 - [ ] Confirm you are on `feature/boss-initial-setup` branch (created during bootstrap)
 - [ ] Check if remote repository exists (read project-config.json, NOT git)
 - [ ] If no remote:
@@ -92,31 +92,27 @@
       ```
     - [ ] Verify protection was set: Check response status is 200
     - [ ] **DO NOT skip this step** - branch protection is mandatory
-  - [ ] **CRITICAL: Verify validation checks pass BEFORE pushing**
-    - **IMPORTANT:** The pre-push hook allows the first push to main (if remote main doesn't exist), BUT it still runs validation checks that can block the push
-    - **BEFORE pushing main branch, verify all checks pass:**
-      1. **Typecheck:** Run `pnpm typecheck` (or `npm run typecheck`) - must pass
-      2. **Lint:** Run `pnpm lint` (or `npm run lint`) - must pass
-      3. **Security:** Run `bash scripts/security-check.sh` - must pass
-      4. **Tests:** Run `pnpm test:unit` (or `npm run test:unit`) - must pass
-      5. **Test files:** Verify at least one test file exists (`.test.ts`, `.spec.ts`, etc.) - required for non-interactive pushes
-    - **If any check fails, fix the issues before pushing**
-    - **The bootstrap process should have created passing code, but verify before pushing**
   - [ ] **CRITICAL ORDER - Follow EXACTLY:**
     1. **Add remote using HTTPS:** `git remote add origin https://github.com/<owner>/<repo>.git` (ALWAYS use HTTPS, NEVER SSH `git@github.com` format)
     2. **If transferred, update remote:** `git remote set-url origin https://github.com/<new-owner>/<repo>.git` (use HTTPS format)
-    3. **Verify validation checks pass** (see above) - DO NOT skip this step
-    4. **FIRST push main branch:** `git push -u origin main` (contains all bootstrap files - MUST be pushed first, git will use GITHUB_TOKEN from environment automatically, which is set to same value as GITHUB_PERSONAL_ACCESS_TOKEN)
-       - **NOTE:** The pre-push hook will allow this first push (remote main doesn't exist yet), but validation checks still run
-       - **If push fails due to validation, fix the issues and try again**
-    5. **THEN create feature branch if needed:** `git checkout -b feature/boss-initial-setup` (if it doesn't exist)
-    6. **THEN push feature branch:** `git push -u origin feature/boss-initial-setup` (git will use GITHUB_TOKEN from environment automatically, which is set to same value as GITHUB_PERSONAL_ACCESS_TOKEN)
-    5. **Update project-config.json** with repository info (including final owner after transfer)
-    6. **Commit and push project-config.json:** `git add .boss/project-config.json && git commit -m "chore: update project-config.json" && git push`
-    7. **Mark `initialization.stage = "ready"`** in project-config.json
-    8. **Update `initialization.remoteCreated = true`** and `initialization.initialSetupComplete = true`
-    9. **Commit and push again:** `git add .boss/project-config.json && git commit -m "chore: mark initialization as ready" && git push`
-  - [ ] **NEVER push feature branch before main branch** - main must be pushed first
+    3. **FIRST push empty main branch:** `git push -u origin main` (main is EMPTY - only empty commit, no validation needed, MUST be pushed first, git will use GITHUB_TOKEN from environment automatically, which is set to same value as GITHUB_PERSONAL_ACCESS_TOKEN)
+       - **NOTE:** The pre-push hook allows empty main push without validation checks
+       - **Main branch must be pushed first (empty) before feature branch**
+    4. **THEN switch to feature branch:** `git checkout feature/boss-initial-setup` (branch should already exist from bootstrap)
+    5. **Verify validation checks pass BEFORE pushing feature branch:**
+       - **BEFORE pushing feature branch, verify all checks pass:**
+         1. **Typecheck:** Run `pnpm typecheck` (or `npm run typecheck`) - must pass
+         2. **Lint:** Run `pnpm lint` (or `npm run lint`) - must pass
+         3. **Security:** Run `bash scripts/security-check.sh` - must pass
+         4. **Tests:** Run `pnpm test:unit` (or `npm run test:unit`) - must pass
+       - **If any check fails, fix the issues before pushing**
+    6. **THEN push feature branch:** `git push -u origin feature/boss-initial-setup` (contains all bootstrap files, git will use GITHUB_TOKEN from environment automatically, which is set to same value as GITHUB_PERSONAL_ACCESS_TOKEN)
+    7. **Update project-config.json** with repository info (including final owner after transfer)
+    8. **Commit and push project-config.json:** `git add .boss/project-config.json && git commit -m "chore: update project-config.json" && git push`
+    9. **Mark `initialization.stage = "ready"`** in project-config.json
+    10. **Update `initialization.remoteCreated = true`** and `initialization.initialSetupComplete = true`
+    11. **Commit and push again:** `git add .boss/project-config.json && git commit -m "chore: mark initialization as ready" && git push`
+  - [ ] **NEVER push feature branch before main branch** - empty main must be pushed first
   - [ ] **After this, NEVER push directly to main** - main branch is protected, use PRs for future changes
   - [ ] Create PR from `feature/boss-initial-setup` to `main` automatically (for any future work)
   - [ ] Report completion to user

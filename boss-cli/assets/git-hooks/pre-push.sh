@@ -6,13 +6,26 @@
 current_branch=$(git symbolic-ref --short HEAD 2>/dev/null)
 
 # Prevent direct pushes to main (including initial push)
+FIRST_PUSH_TO_MAIN=false
 if [ "$current_branch" = "main" ]; then
   # Check if this is the very first push (no remote main exists yet)
   if ! git ls-remote --heads origin main > /dev/null 2>&1; then
     echo "⚠️  Warning: This appears to be the first push to main"
-    echo "   For initial setup, this is allowed, but main branch protection will be enforced after setup"
+    echo "   For initial setup, empty main is allowed, but main branch protection will be enforced after setup"
     echo "   Future pushes to main will be blocked - use feature branches and PRs instead"
-    # Allow first push but warn
+    FIRST_PUSH_TO_MAIN=true
+    
+    # Check if main branch is empty (only empty commit or minimal files like README/.gitignore)
+    # Count non-trivial files (exclude .gitignore, README.md, LICENSE, etc.)
+    file_count=$(git ls-tree -r HEAD --name-only 2>/dev/null | grep -v -E '^(README\.md|LICENSE|\.gitignore|\.gitattributes)$' | wc -l | tr -d ' ')
+    
+    if [ "$file_count" -eq 0 ]; then
+      echo "✅ Main branch is empty - skipping validation checks for initial empty push"
+      echo "✅ Pre-push validation passed!"
+      exit 0
+    else
+      echo "⚠️  Main branch contains files - validation checks will run"
+    fi
   else
     echo "❌ Direct push to main is not allowed!"
     echo ""
@@ -66,36 +79,38 @@ if ! pnpm check:unused > /dev/null 2>&1; then
   echo "   (This is a warning, not blocking)"
 fi
 
-# Warn if no tests in staged commits
-echo "  ✓ Checking for tests..."
-# Check if remote branch exists (for first push, it won't)
-if git ls-remote --heads origin $current_branch > /dev/null 2>&1; then
-  # Remote branch exists - check diff
-  test_files=$(git diff origin/$current_branch..HEAD --name-only 2>/dev/null | grep -E '\.(test|spec)\.(ts|tsx|js|jsx)$' || true)
-else
-  # First push - check all files in HEAD for test files
-  test_files=$(git ls-tree -r HEAD --name-only | grep -E '\.(test|spec)\.(ts|tsx|js|jsx)$' || true)
-fi
+# Warn if no tests in staged commits (skip for first empty push to main)
+if [ "$FIRST_PUSH_TO_MAIN" != "true" ]; then
+  echo "  ✓ Checking for tests..."
+  # Check if remote branch exists (for first push, it won't)
+  if git ls-remote --heads origin $current_branch > /dev/null 2>&1; then
+    # Remote branch exists - check diff
+    test_files=$(git diff origin/$current_branch..HEAD --name-only 2>/dev/null | grep -E '\.(test|spec)\.(ts|tsx|js|jsx)$' || true)
+  else
+    # First push - check all files in HEAD for test files
+    test_files=$(git ls-tree -r HEAD --name-only | grep -E '\.(test|spec)\.(ts|tsx|js|jsx)$' || true)
+  fi
 
-if [ -z "$test_files" ]; then
-  echo "⚠️  Warning: No test files in commits being pushed"
-  echo "   TDD Constitution requires tests before implementation"
-  # Allow bypass only in CI environments, but block in all other cases (including BOSS automated pushes)
-  if [ -n "${CI:-}" ]; then
-    echo "   (Allowing in CI environment, but tests should still be added)"
-  elif [ -t 0 ]; then
-    # Interactive terminal - ask user
-    echo "   Continue? (y/N)"
-    read -r response
-    if [ "$response" != "y" ]; then
-      echo "Push cancelled. Add tests first!"
+  if [ -z "$test_files" ]; then
+    echo "⚠️  Warning: No test files in commits being pushed"
+    echo "   TDD Constitution requires tests before implementation"
+    # Allow bypass only in CI environments, but block in all other cases (including BOSS automated pushes)
+    if [ -n "${CI:-}" ]; then
+      echo "   (Allowing in CI environment, but tests should still be added)"
+    elif [ -t 0 ]; then
+      # Interactive terminal - ask user
+      echo "   Continue? (y/N)"
+      read -r response
+      if [ "$response" != "y" ]; then
+        echo "Push cancelled. Add tests first!"
+        exit 1
+      fi
+    else
+      # Non-interactive but not CI (e.g., BOSS automated push) - block it
+      echo "❌ Push blocked: TDD Constitution requires tests before implementation"
+      echo "   Add test files and commit them before pushing."
       exit 1
     fi
-  else
-    # Non-interactive but not CI (e.g., BOSS automated push) - block it
-    echo "❌ Push blocked: TDD Constitution requires tests before implementation"
-    echo "   Add test files and commit them before pushing."
-    exit 1
   fi
 fi
 

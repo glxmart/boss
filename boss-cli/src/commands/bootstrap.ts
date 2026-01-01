@@ -152,23 +152,40 @@ export async function bootstrapCommand(options: BootstrapOptions): Promise<void>
     await generateTemplateDocs(projectPath, config);
     logger.stopSpinner(true, 'Template documentation generated');
 
-    // CRITICAL: Ensure test file exists (required for pre-push hook)
+    // CRITICAL: Commit empty main branch FIRST (before any files)
+    // Main branch must be pushed empty first, then all files go via feature branch/PR
+    logger.startSpinner('Creating empty initial commit on main branch...');
+    const gitEnv = {
+      ...process.env,
+      GIT_AUTHOR_NAME: 'The BOSS',
+      GIT_AUTHOR_EMAIL: 'boss@glxmart.com',
+      GIT_COMMITTER_NAME: 'The BOSS',
+      GIT_COMMITTER_EMAIL: 'boss@glxmart.com'
+    };
+    // Use --no-verify to skip hooks (dependencies aren't installed yet)
+    await execa('git', ['commit', '--allow-empty', '-m', 'chore: initial empty commit', '--no-verify'], {
+      cwd: projectPath,
+      env: gitEnv
+    });
+    logger.stopSpinner(true, 'Empty main branch committed');
+
+    // CRITICAL: Create feature/boss-initial-setup branch BEFORE committing files
+    // All bootstrap files will be committed to feature branch, not main
+    logger.startSpinner('Creating feature/boss-initial-setup branch...');
+    await createInitialSetupBranch(projectPath);
+    logger.stopSpinner(true, 'Feature branch created');
+
+    // CRITICAL: Ensure test file exists (required for pre-push hook on feature branch)
     logger.startSpinner('Ensuring test file exists...');
     await ensureTestFileExists(projectPath, config);
     logger.stopSpinner(true, 'Test file ensured');
 
-    // CRITICAL: Commit ALL bootstrap files to main branch FIRST
-    // Main branch must contain all bootstrap configuration before feature branch is created
-    logger.startSpinner('Committing all bootstrap files to main branch...');
+    // CRITICAL: Commit ALL bootstrap files to feature branch (NOT main)
+    // Main branch stays empty - all files go via feature branch/PR
+    logger.startSpinner('Committing all bootstrap files to feature branch...');
     await addFiles(projectPath, ['.']);
     await commit(projectPath, 'chore: BOSS bootstrap - initial project structure');
-    logger.stopSpinner(true, 'All bootstrap files committed to main branch');
-
-    // CRITICAL: Create feature/boss-initial-setup branch LAST
-    // This is the final step - main branch is now complete with all bootstrap files
-    logger.startSpinner('Creating feature/boss-initial-setup branch...');
-    await createInitialSetupBranch(projectPath);
-    logger.stopSpinner(true, 'Feature branch created (bootstrap complete)');
+    logger.stopSpinner(true, 'All bootstrap files committed to feature branch');
 
     // Success message
     logger.section('✅ Bootstrap Complete!');
@@ -289,7 +306,7 @@ async function createInitialSetupBranch(projectPath: string): Promise<void> {
   }
 
   // Create and switch to feature/boss-initial-setup branch
-  // This is the LAST step - all bootstrap files are already committed to main
+  // This happens BEFORE committing bootstrap files - all files will go to feature branch
   await createBranch(projectPath, 'feature/boss-initial-setup');
 
   // Early return if project-config.json doesn't exist
@@ -334,15 +351,13 @@ async function createInitialSetupBranch(projectPath: string): Promise<void> {
   // Update metadata
   if (projectConfig.metadata) {
     projectConfig.metadata.lastUpdated = now;
-    projectConfig.metadata.notes = 'Initial setup branch created. All bootstrap files committed to main. Ready for remote repository setup.';
+    projectConfig.metadata.notes = 'Initial setup branch created. All bootstrap files will be committed to feature branch. Ready for remote repository setup.';
   }
 
   await writeFile(projectConfigPath, JSON.stringify(projectConfig, null, 2));
 
-  // Commit the project-config.json update to the feature branch
-  // This is the only commit on the feature branch - all bootstrap files are on main
-  await addFiles(projectPath, ['.boss/project-config.json']);
-  await commit(projectPath, 'chore: switch to feature/boss-initial-setup branch');
+  // Note: project-config.json will be committed with all other bootstrap files
+  // No need to commit separately - it will be included in the main bootstrap commit
 }
 
 async function collectConfiguration(options: BootstrapOptions): Promise<ProjectConfig> {

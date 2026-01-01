@@ -19,6 +19,10 @@
       "Bash(git pull:*)",
       "Bash(git remote:*)",
       "Bash(git ls-tree:*)",
+      "Bash(pnpm typecheck)",
+      "Bash(pnpm lint)",
+      "Bash(bash scripts/security-check.sh)",
+      "Bash(pnpm test:unit)",
       "Bash(rm -f .boss/init-instruction.txt .claude/rules/startup-init.md CLAUDE.md.bak)"
     ]
   }

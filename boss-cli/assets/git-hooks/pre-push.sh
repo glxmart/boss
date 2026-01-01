@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/bash
 # Pre-push hook
 # Prevents direct pushes to main and validates code before push
 
@@ -88,7 +88,33 @@ if [ "$FIRST_PUSH_TO_MAIN" != "true" ]; then
     test_files=$(git diff origin/$current_branch..HEAD --name-only 2>/dev/null | grep -E '\.(test|spec)\.(ts|tsx|js|jsx)$' || true)
   else
     # First push - check all files in HEAD for test files
-    test_files=$(git ls-tree -r HEAD --name-only | grep -E '\.(test|spec)\.(ts|tsx|js|jsx)$' || true)
+    # Use git ls-tree to check committed files
+    test_files=$(git ls-tree -r HEAD --name-only 2>/dev/null | grep -E '\.(test|spec)\.(ts|tsx|js|jsx)$' || true)
+  fi
+
+  # If test_files is empty, try alternative detection methods
+  if [ -z "$test_files" ]; then
+    # Method 1: Check all files in HEAD
+    all_files=$(git ls-tree -r HEAD --name-only 2>/dev/null || true)
+    if [ -n "$all_files" ]; then
+      test_files_alt=$(echo "$all_files" | grep -E '\.(test|spec)\.(ts|tsx|js|jsx)$' || true)
+      if [ -n "$test_files_alt" ]; then
+        test_files="$test_files_alt"
+      fi
+    fi
+    
+    # Method 2: If still empty, check working directory (for uncommitted test files)
+    if [ -z "$test_files" ]; then
+      test_files_wd=$(find . -type f \( -name "*.test.ts" -o -name "*.test.tsx" -o -name "*.test.js" -o -name "*.test.jsx" -o -name "*.spec.ts" -o -name "*.spec.tsx" -o -name "*.spec.js" -o -name "*.spec.jsx" \) ! -path "*/node_modules/*" ! -path "*/.git/*" 2>/dev/null | head -5 || true)
+      if [ -n "$test_files_wd" ]; then
+        # Only use working directory files if they're tracked by git
+        for file in $test_files_wd; do
+          if git ls-files --error-unmatch "$file" >/dev/null 2>&1; then
+            test_files="${test_files:+$test_files }$file"
+          fi
+        done
+      fi
+    fi
   fi
 
   if [ -z "$test_files" ]; then
@@ -109,7 +135,16 @@ if [ "$FIRST_PUSH_TO_MAIN" != "true" ]; then
       # Non-interactive but not CI (e.g., BOSS automated push) - block it
       echo "❌ Push blocked: TDD Constitution requires tests before implementation"
       echo "   Add test files and commit them before pushing."
+      echo "   Expected pattern: *.test.ts, *.test.tsx, *.spec.ts, *.spec.tsx (or .js/.jsx variants)"
       exit 1
+    fi
+  else
+    # Show found test files (limit to first 3 to avoid clutter)
+    test_file_count=$(echo "$test_files" | wc -l | tr -d ' ')
+    if [ "$test_file_count" -le 3 ]; then
+      echo "   ✓ Found test files: $(echo "$test_files" | tr '\n' ' ')"
+    else
+      echo "   ✓ Found $test_file_count test files (showing first 3): $(echo "$test_files" | head -3 | tr '\n' ' ')"
     fi
   fi
 fi

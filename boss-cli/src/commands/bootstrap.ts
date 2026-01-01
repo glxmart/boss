@@ -184,6 +184,17 @@ export async function bootstrapCommand(options: BootstrapOptions): Promise<void>
     // Main branch stays empty - all files go via feature branch/PR
     logger.startSpinner('Committing all bootstrap files to feature branch...');
     await addFiles(projectPath, ['.']);
+    
+    // Verify test file is included before committing
+    const { stdout: testFileCheck } = await execa('git', ['ls-files'], { cwd: projectPath });
+    const hasTestFile = /\.(test|spec)\.(ts|tsx|js|jsx)$/.test(testFileCheck);
+    if (!hasTestFile) {
+      logger.warning('No test files found in staged files. Re-checking...');
+      // Re-ensure test file exists
+      await ensureTestFileExists(projectPath, config);
+      await addFiles(projectPath, ['tests/']);
+    }
+    
     await commit(projectPath, 'chore: BOSS bootstrap - initial project structure');
     logger.stopSpinner(true, 'All bootstrap files committed to feature branch');
 

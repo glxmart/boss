@@ -69,26 +69,29 @@
        - Verify protection was set: Check response status is 200
      - [ ] **CRITICAL ORDER - Follow EXACTLY:**
        1. **Add remote using HTTPS:** `git remote add origin https://github.com/<owner>/<repo>.git` (ALWAYS use HTTPS format, NEVER SSH `git@github.com` format)
-       2. **FIRST push empty main branch:** `git push -u origin main` (main is EMPTY - only empty commit, no validation needed, git will use GITHUB_TOKEN automatically, which is set to same value as GITHUB_PERSONAL_ACCESS_TOKEN)
+       2. **Check current branch:** `git branch --show-current` - verify you're on the correct branch
+       3. **Handle uncommitted changes:** If on `feature/boss-initial-setup` with uncommitted changes, commit them first: `git add . && git commit -m "chore: bootstrap files"` (these should be on feature branch)
+       4. **Switch to main branch:** `git checkout main` (if uncommitted changes prevent checkout, commit them to current branch first, then switch)
+       5. **FIRST push empty main branch:** `git push -u origin main` (main is EMPTY - only empty commit, no validation needed, git will use GITHUB_TOKEN automatically, which is set to same value as GITHUB_PERSONAL_ACCESS_TOKEN)
           - **NOTE:** The pre-push hook allows empty main push without validation checks
           - **Main branch must be pushed first (empty) before feature branch**
-       3. **THEN switch to feature branch:** `git checkout feature/boss-initial-setup` (branch should already exist from bootstrap)
-       4. **Verify validation checks pass BEFORE pushing feature branch:**
+       6. **Switch back to feature branch:** `git checkout feature/boss-initial-setup` (branch should already exist from bootstrap)
+       7. **Verify validation checks pass BEFORE pushing feature branch:**
           - **BEFORE pushing feature branch, verify all checks pass:**
             1. **Typecheck:** Run `pnpm typecheck` (or `npm run typecheck`) - must pass
             2. **Lint:** Run `pnpm lint` (or `npm run lint`) - must pass
             3. **Security:** Run `bash scripts/security-check.sh` - must pass
             4. **Tests:** Run `pnpm test:unit` (or `npm run test:unit`) - must pass
           - **If any check fails, fix the issues before pushing**
-       5. **THEN push feature branch:** `git push -u origin feature/boss-initial-setup` (contains all bootstrap files, git will use GITHUB_TOKEN automatically, which is set to same value as GITHUB_PERSONAL_ACCESS_TOKEN)
-       5. **Update `.boss/project-config.json`** with repository information:
+       8. **THEN push feature branch:** `git push -u origin feature/boss-initial-setup` (contains all bootstrap files, git will use GITHUB_TOKEN automatically, which is set to same value as GITHUB_PERSONAL_ACCESS_TOKEN)
+       9. **Update `.boss/project-config.json`** with repository information:
           - Set `repository.remote = "origin"`
           - Set `repository.url = "https://github.com/{owner}/{repo}"`
           - Set `repository.owner`, `repository.name`, `repository.private`
           - Set `initialization.remoteCreated = true`
-       6. **Commit and push project-config.json:** `git add .boss/project-config.json && git commit -m "chore: update project-config.json" && git push`
-       7. **Mark `initialization.stage = "ready"`** in `project-config.json`
-       8. **Commit and push again:** `git add .boss/project-config.json && git commit -m "chore: mark initialization as ready" && git push`
+       10. **Commit and push project-config.json:** `git add .boss/project-config.json && git commit -m "chore: update project-config.json" && git push`
+       11. **Mark `initialization.stage = "ready"`** in `project-config.json`
+       12. **Commit and push again:** `git add .boss/project-config.json && git commit -m "chore: mark initialization as ready" && git push`
      - [ ] **DO NOT create Container-Use environments for initialization** - BOSS handles this via git commands
      - [ ] **NEVER push feature branch before main branch** - main must be pushed first
      - [ ] **After initial setup, NEVER push directly to main** - always use PRs

@@ -95,23 +95,26 @@
   - [ ] **CRITICAL ORDER - Follow EXACTLY:**
     1. **Add remote using HTTPS:** `git remote add origin https://github.com/<owner>/<repo>.git` (ALWAYS use HTTPS, NEVER SSH `git@github.com` format)
     2. **If transferred, update remote:** `git remote set-url origin https://github.com/<new-owner>/<repo>.git` (use HTTPS format)
-    3. **FIRST push empty main branch:** `git push -u origin main` (main is EMPTY - only empty commit, no validation needed, MUST be pushed first, git will use GITHUB_TOKEN from environment automatically, which is set to same value as GITHUB_PERSONAL_ACCESS_TOKEN)
+    3. **Check current branch:** `git branch --show-current` - verify you're on the correct branch
+    4. **Handle uncommitted changes:** If on `feature/boss-initial-setup` with uncommitted changes, commit them first: `git add . && git commit -m "chore: bootstrap files"` (these should be on feature branch)
+    5. **Switch to main branch:** `git checkout main` (if uncommitted changes prevent checkout, commit them to current branch first, then switch)
+    6. **FIRST push empty main branch:** `git push -u origin main` (main is EMPTY - only empty commit, no validation needed, MUST be pushed first, git will use GITHUB_TOKEN from environment automatically, which is set to same value as GITHUB_PERSONAL_ACCESS_TOKEN)
        - **NOTE:** The pre-push hook allows empty main push without validation checks
        - **Main branch must be pushed first (empty) before feature branch**
-    4. **THEN switch to feature branch:** `git checkout feature/boss-initial-setup` (branch should already exist from bootstrap)
-    5. **Verify validation checks pass BEFORE pushing feature branch:**
+    7. **Switch back to feature branch:** `git checkout feature/boss-initial-setup` (branch should already exist from bootstrap)
+    8. **Verify validation checks pass BEFORE pushing feature branch:**
        - **BEFORE pushing feature branch, verify all checks pass:**
          1. **Typecheck:** Run `pnpm typecheck` (or `npm run typecheck`) - must pass
          2. **Lint:** Run `pnpm lint` (or `npm run lint`) - must pass
          3. **Security:** Run `bash scripts/security-check.sh` - must pass
          4. **Tests:** Run `pnpm test:unit` (or `npm run test:unit`) - must pass
        - **If any check fails, fix the issues before pushing**
-    6. **THEN push feature branch:** `git push -u origin feature/boss-initial-setup` (contains all bootstrap files, git will use GITHUB_TOKEN from environment automatically, which is set to same value as GITHUB_PERSONAL_ACCESS_TOKEN)
-    7. **Update project-config.json** with repository info (including final owner after transfer)
-    8. **Commit and push project-config.json:** `git add .boss/project-config.json && git commit -m "chore: update project-config.json" && git push`
-    9. **Mark `initialization.stage = "ready"`** in project-config.json
-    10. **Update `initialization.remoteCreated = true`** and `initialization.initialSetupComplete = true`
-    11. **Commit and push again:** `git add .boss/project-config.json && git commit -m "chore: mark initialization as ready" && git push`
+    9. **THEN push feature branch:** `git push -u origin feature/boss-initial-setup` (contains all bootstrap files, git will use GITHUB_TOKEN from environment automatically, which is set to same value as GITHUB_PERSONAL_ACCESS_TOKEN)
+    10. **Update project-config.json** with repository info (including final owner after transfer)
+    11. **Commit and push project-config.json:** `git add .boss/project-config.json && git commit -m "chore: update project-config.json" && git push`
+    12. **Mark `initialization.stage = "ready"`** in project-config.json
+    13. **Update `initialization.remoteCreated = true`** and `initialization.initialSetupComplete = true`
+    14. **Commit and push again:** `git add .boss/project-config.json && git commit -m "chore: mark initialization as ready" && git push`
   - [ ] **NEVER push feature branch before main branch** - empty main must be pushed first
   - [ ] **After this, NEVER push directly to main** - main branch is protected, use PRs for future changes
   - [ ] Create PR from `feature/boss-initial-setup` to `main` automatically (for any future work)

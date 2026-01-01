@@ -115,10 +115,15 @@
     12. **Mark `initialization.stage = "ready"`** in project-config.json
     13. **Update `initialization.remoteCreated = true`** and `initialization.initialSetupComplete = true`
     14. **Commit and push again:** `git add .boss/project-config.json && git commit -m "chore: mark initialization as ready" && git push`
+    15. **FINAL STEP - Create PR from feature/boss-initial-setup to main:** Use GitHub MCP `create_pull_request` with:
+        - **Title:** `"chore: BOSS initial setup - bootstrap files"`
+        - **Body:** `"This PR contains all BOSS bootstrap files and initial project structure. Ready for review and merge."`
+        - **Base branch:** `"main"`
+        - **Head branch:** `"feature/boss-initial-setup"`
+        - **DO NOT ask user** - create PR automatically
   - [ ] **NEVER push feature branch before main branch** - empty main must be pushed first
   - [ ] **After this, NEVER push directly to main** - main branch is protected, use PRs for future changes
-  - [ ] Create PR from `feature/boss-initial-setup` to `main` automatically (for any future work)
-  - [ ] Report completion to user
+  - [ ] Report completion to user with PR link
 
 **Important Notes:**
 - BOSS uses git commands for orchestration (branches, pushes, merges) - git CLI is allowed and expected

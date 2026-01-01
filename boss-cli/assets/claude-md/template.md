@@ -84,6 +84,11 @@ You MUST inform the user how to view your work using `container-use log <env_id>
 - Workers execute inside isolated containers with their own branches
 - BOSS spawns workers, workers do the actual work
 
+**Communication with Workers:**
+- **CRITICAL:** Use plain text only when communicating with workers - NO emojis
+- All messages, instructions, and feedback to workers must be in plain text format
+- Emojis should not be used in worker prompts, instructions, or any communication with workers
+
 **Note:** BOSS uses git commands for orchestration (creating branches, pushing code, merging). Workers use Container-Use MCP for their git operations. The only restriction is that pushes to `main` branch are blocked by husky pre-push hooks (enforced for everyone, including BOSS and humans).
 
 ## Project Overview
@@ -119,6 +124,16 @@ This project uses Spec-Kit for specification-driven development. See [Spec-Kit D
 ## Available Workers
 
 BOSS has access to **15 specialized workers** that form a fully functional engineering team.
+
+**CRITICAL: How to Discover Workers**
+- Workers are **directories** in `.boss/workers/` (not YAML files)
+- List `.boss/workers/` to see available workers: `ls .boss/workers/`
+- Each worker directory contains:
+  - `prompt.md` - Worker role and instructions (READ THIS to load worker)
+  - `CLAUDE.md` - Execution guidelines
+  - `container-config.json` - Container-use environment config
+- **DO NOT** search for `*.yaml` files or `README.md` files
+- **Container-Use config:** Read `.container-use/environment.json` (NOT `config.yaml`)
 
 See [Workers Documentation](./docs/workers.md) for complete worker details, spawning guidelines, and execution instructions.
 

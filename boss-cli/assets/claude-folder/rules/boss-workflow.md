@@ -25,3 +25,9 @@ Follow the 8-phase Spec-Kit methodology:
 - Coverage and mutation thresholds are enforced
 - Documentation must be complete
 
+## Communication Standards
+
+- **CRITICAL:** Use plain text only when communicating with workers - NO emojis
+- All messages, instructions, prompts, and feedback to workers must be in plain text format
+- Emojis should not be used in worker prompts, Container-Use instructions, or any worker-related communication
+

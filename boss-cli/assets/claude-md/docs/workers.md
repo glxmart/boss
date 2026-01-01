@@ -2,6 +2,47 @@
 
 BOSS has access to **15 specialized workers** that form a fully functional, high-performance engineering team. Each worker is aware of their role, uses Spec-Kit commands, and follows team collaboration patterns.
 
+## How to Discover and Load Workers
+
+**CRITICAL: Worker Discovery Instructions**
+
+When you need to find available workers or load a worker's configuration:
+
+1. **Discover Available Workers:**
+   - List directories in `.boss/workers/` to find available worker names
+   - Use: `ls -la .boss/workers/` or list the directory contents
+   - Each worker is a **directory** (not a file), named after the worker type (e.g., `architect`, `clarifier`, `spec-writer`)
+   - **DO NOT** search for `*.yaml` files - workers are directories, not YAML files
+
+2. **Load Worker Configuration:**
+   - **Worker prompt:** Read `.boss/workers/[worker-name]/prompt.md` (contains the worker's role and instructions)
+   - **Worker instructions:** Read `.boss/workers/[worker-name]/CLAUDE.md` (contains execution guidelines)
+   - **Container config:** Read `.boss/workers/[worker-name]/container-config.json` (contains container-use environment settings)
+   - **DO NOT** look for `README.md` files - use `prompt.md` and `CLAUDE.md` instead
+
+3. **Container-Use Configuration:**
+   - **Global config:** Read `.container-use/environment.json` (NOT `config.yaml`)
+   - This file contains base container settings and environment variables
+   - **DO NOT** look for `.container-use/config.yaml` - it doesn't exist
+
+**Example Worker Discovery:**
+```bash
+# List available workers
+ls .boss/workers/
+# Output: architect  clarifier  spec-writer  planner  ...
+
+# Load architect worker prompt
+cat .boss/workers/architect/prompt.md
+
+# Load architect container config
+cat .boss/workers/architect/container-config.json
+```
+
+**Common Mistakes to Avoid:**
+- ❌ **DO NOT** search for `.boss/workers/*.yaml` - workers are directories, not YAML files
+- ❌ **DO NOT** read `.boss/workers/[worker-name]/README.md` - use `prompt.md` instead
+- ❌ **DO NOT** read `.container-use/config.yaml` - read `.container-use/environment.json` instead
+
 ## Phase-Specific Workers
 
 **Phase 1: Constitution**
@@ -71,4 +112,10 @@ These workers can be spawned at any phase as needed:
 5. Review work using `container-use log <env_id>` and `container-use checkout <env_id>`
 6. Merge worker branch after approval using `mcp_container-use_merge_environment`
 7. Update `project-config.json` with worker summary
+
+**Communication Guidelines:**
+- **CRITICAL:** Use plain text only when communicating with workers - NO emojis
+- All messages, instructions, prompts, and feedback to workers must be in plain text format
+- When loading worker prompts or sending instructions via Container-Use, use text-only communication
+- Emojis should not be used in any worker-related communication, prompts, or instructions
 

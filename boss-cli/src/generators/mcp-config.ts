@@ -113,11 +113,17 @@ function getBossMCPConfig(projectPath?: string): Record<string, any> {
       args: ['stdio'],
       env: {}
     },
+    'conductor': {
+      type: 'stdio',
+      command: 'npx',
+      args: ['@boss/conductor-mcp', 'stdio'],
+      env: {}
+    },
     'github': {
       // Use op run to wrap the MCP server command and resolve op:// references from .env
       // This follows the 1Password blog post pattern: op run --env-file=.env -- <command>
       command: useOpRun ? 'op' : 'npx',
-      args: useOpRun 
+      args: useOpRun
         ? ['run', `--env-file=${envFile}`, '--', 'npx', '@modelcontextprotocol/server-github']
         : ['@modelcontextprotocol/server-github'],
       // No need for env section - op run resolves op:// references and injects them

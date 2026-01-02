@@ -146,6 +146,315 @@ enum ErrorCategory {
 }
 ```
 
+## Performance Optimizations
+
+BOSS includes comprehensive performance optimizations that reduce worker spawn times by up to **85%** and enable self-improving capabilities.
+
+### Optimization Summary
+
+| Phase | Optimization | Performance Gain | Status |
+|-------|-------------|------------------|--------|
+| 1-3 | Base optimizations (Docker images, config, git batching) | 180s → 110s (-39%) | ✅ Complete |
+| 4 | Environment resume | Resume: 10-30s (-94%) | ✅ Complete |
+| 5 | Parallel spawning | 4 workers: 720s → 110s (-85%) | ✅ Complete |
+| 6 | Config learning & metrics | Self-improving system | ✅ Complete |
+
+**Documentation**: See `docs/OPTIMIZATION_PLAN.md`, `docs/PHASE_4_COMPLETE.md`, `docs/PHASE_5_COMPLETE.md`, `docs/PHASE_6_COMPLETE.md`
+
+### Phases 1-3: Base Optimizations (Foundation)
+
+**Purpose**: Establish foundational performance improvements through Docker image optimization, configuration management, and git operation batching.
+
+#### Phase 1: Custom Docker Base Images
+
+**Before**: Each worker runs setup commands on generic Ubuntu image
+```bash
+# Runs on EVERY worker spawn (~70s)
+apt-get update                           # 20s
+apt-get install -y curl git build-essential  # 20s
+npm install -g pnpm@latest              # 15s
+npm install -g claude-code@latest       # 15s
+```
+
+**After**: Pre-built base image with tools already installed
+```dockerfile
+# conductor-mcp/docker/boss-worker-base/Dockerfile
+FROM ubuntu:24.04
+RUN apt-get update && \
+    apt-get install -y curl git build-essential && \
+    rm -rf /var/lib/apt/lists/*
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs
+RUN npm install -g pnpm@latest claude-code@latest
+```
+
+**Savings**: 50-70s per worker spawn
+
+#### Phase 2: Configuration Optimization
+
+**Strategy**: Use container-use's two-layer config system
+- **Default config** in `.container-use/environment.json` (project-wide)
+- **Worker-specific overrides** only when needed
+
+**Before**: Every worker specifies full configuration
+```json
+// Every worker's container-config.json
+{
+  "baseImage": "ubuntu:24.04",
+  "setupCommands": ["apt-get update", "apt-get install..."],
+  "installCommands": ["npm install -g pnpm", "npm install -g claude-code"],
+  "environmentVariables": {"NODE_ENV": "production", "BOSS_VERSION": "1.0.0"}
+}
+```
+
+**After**: Smart defaults with minimal overrides
+```json
+// .container-use/environment.json (shared defaults)
+{
+  "baseImage": "boss/worker-base:1.0.0",
+  "setupCommands": [],
+  "installCommands": [],
+  "environmentVariables": {
+    "NODE_ENV": "production",
+    "BOSS_VERSION": "1.0.0"
+  }
+}
+
+// Worker-specific configs only override when needed
+{
+  "installCommands": ["pnpm install --frozen-lockfile"],  // Only if needed
+  "environment": {"BOSS_WORKER_TYPE": "developer-fullstack"}
+}
+```
+
+**Savings**: 10-15s per worker spawn (reduced config processing)
+
+#### Phase 3: Git Operation Batching
+
+**Strategy**: Guide workers to batch related changes into logical commits
+
+**Before**: Workers create many small commits (~10 per task)
+```bash
+# Individual commits for related work (~20s total)
+touch src/component.tsx
+git commit -m "add component"           # 2s
+
+touch src/component.test.tsx
+git commit -m "add component tests"     # 2s
+
+touch src/component.css
+git commit -m "add component styles"    # 2s
+# ... 7 more commits
+```
+
+**After**: Batch related changes into logical commits (~3 per task)
+```bash
+# Batched commits (~6s total)
+touch src/component.tsx src/component.test.tsx src/component.css
+git add src/component.*
+git commit -m "feat: add user profile component with tests and styles"  # 2s
+# ... 2 more logical commits
+```
+
+**Implementation**: Worker CLAUDE.md templates include git batching guidance
+
+**Savings**: 10-15s per worker spawn
+
+#### Combined Base Optimization Impact
+
+**Total Savings**: 70-100s per worker spawn
+- Phase 1 (Docker images): 50-70s
+- Phase 2 (Config optimization): 10-15s
+- Phase 3 (Git batching): 10-15s
+
+**Result**: 180s → 110s per spawn (-39%)
+
+### Phase 4: Environment Resume (Iterative Work)
+
+**Purpose**: Resume work in existing worker environments instead of creating new ones, saving ~180s for iterative tasks.
+
+**Usage**:
+```typescript
+// Initial spawn
+const worker = await conductor.spawn_worker({
+  workerType: 'developer-backend',
+  taskPrompt: 'Implement user authentication'
+});
+// Time: 110s (with base optimizations)
+
+// Resume for follow-up work
+const followUp = await conductor.spawn_worker({
+  workerType: 'developer-backend',
+  taskPrompt: 'Add password reset functionality',
+  resumeEnvironmentId: worker.workerId  // ⚡ Resume optimization
+});
+// Time: 10-30s (skips container creation, setup, config)
+// Savings: ~180s per resume
+```
+
+**Benefits**:
+- Skip container creation (60-90s saved)
+- Skip configuration (10-20s saved)
+- Skip environment setup (10-20s saved)
+- Maintain full context and conversation history
+- Ideal for: bug fixes, refinements, multi-step tasks
+
+**Use Cases**:
+- Iterative development (initial 80% → resume for remaining 20%)
+- Bug fixes after code review
+- Styling adjustments and refinements
+- Multi-step feature implementation
+
+### Phase 5: Parallel Worker Spawning
+
+**Purpose**: Spawn multiple workers concurrently for massive time savings in multi-worker phases.
+
+**Usage**:
+```typescript
+// Sequential (old way) - 4 × 110s = 440s
+const architect = await spawn_worker({ type: 'architect', ... });
+const clarifier = await spawn_worker({ type: 'clarifier', ... });
+const specWriter = await spawn_worker({ type: 'spec-writer', ... });
+const planner = await spawn_worker({ type: 'planner', ... });
+
+// Parallel (new way) - max(110s) = 110s
+const results = await conductor.spawn_workers_parallel({
+  workers: [
+    { workerType: 'architect', taskPrompt: '...' },
+    { workerType: 'clarifier', taskPrompt: '...' },
+    { workerType: 'spec-writer', taskPrompt: '...' },
+    { workerType: 'planner', taskPrompt: '...' }
+  ],
+  maxConcurrency: 5  // Default: 5, max: 10
+});
+// Savings: 330s (-75%)
+```
+
+**Features**:
+- Configurable concurrency limiting (default: 5, max: 10)
+- Graceful partial failure handling
+- Automatic time savings calculation
+- Batching for large worker counts
+- Resource-aware execution
+
+**Benefits**:
+- 4-worker phase: 440s → 110s (-75%)
+- 8-worker phase: 880s → 220s (-75% with batching)
+- Comprehensive progress tracking
+- Partial success handling
+
+**Use Cases**:
+- Discovery phase (architect, clarifier, spec-writer, planner)
+- Implementation phase (frontend, backend, fullstack developers)
+- Quality assurance (code-reviewer, security, technical-writer)
+- Large-scale projects (10+ workers)
+
+### Phase 6: Configuration Learning & Performance Metrics
+
+**Purpose**: Self-improving system that learns from worker discoveries and tracks performance automatically.
+
+#### Config Inspection
+
+**Identify optimizations discovered by workers**:
+```typescript
+// Worker completes successfully
+const worker = await spawn_worker({
+  workerType: 'developer-backend',
+  taskPrompt: 'Implement database migrations'
+});
+
+// Inspect what the worker added/changed
+const config = await conductor.inspect_worker_config({
+  workerId: worker.workerId
+});
+
+// Result shows worker added postgresql-client
+// config.setupCommands: ['apt-get install -y postgresql-client']
+```
+
+#### Config Import
+
+**Adopt beneficial changes as defaults**:
+```typescript
+// Import all optimizations
+await conductor.import_worker_config({
+  workerId: worker.workerId,
+  importSetupCommands: true,
+  importInstallCommands: true,
+  importEnvironmentVariables: true
+});
+
+// Or selective import
+await conductor.import_worker_config({
+  workerId: worker.workerId,
+  selective: {
+    setupCommands: ['apt-get install -y postgresql-client'],
+    installCommands: ['pnpm install --frozen-lockfile'],
+    environmentVariables: ['NODE_OPTIONS']
+  }
+});
+
+// All future workers inherit these optimizations!
+```
+
+#### Performance Metrics
+
+**Automatic tracking of worker performance**:
+```json
+// .boss/performance-metrics.json (auto-generated)
+[
+  {
+    "workerId": "env-abc123",
+    "workerType": "developer-backend",
+    "startedAt": "2026-01-02T08:00:00Z",
+    "completedAt": "2026-01-02T08:01:52Z",
+    "totalTime": 112000,
+    "usedResumeOptimization": false,
+    "wasPartOfParallelBatch": true,
+    "batchSize": 4,
+    "success": true,
+    "artifactsCreated": 5,
+    "decisionsCount": 3,
+    "issuesCount": 0
+  }
+]
+```
+
+**Benefits**:
+- Self-learning from successful patterns
+- Data-driven optimization decisions
+- Performance visibility and trending
+- Knowledge retention across lifecycles
+- Compound gains over time
+
+**Use Cases**:
+- Learn which tools workers commonly need
+- Identify faster dependency installation methods
+- Optimize environment variables for performance
+- Track optimization effectiveness
+- Analyze trends and patterns
+
+### Optimization Tools Reference
+
+**Conductor MCP Tools**:
+- `spawn_worker` - Spawn single worker (supports `resumeEnvironmentId` for Phase 4)
+- `spawn_workers_parallel` - Spawn multiple workers concurrently (Phase 5)
+- `inspect_worker_config` - Analyze worker environment configuration (Phase 6)
+- `import_worker_config` - Import beneficial config changes (Phase 6)
+- `get_worker_status` - Check worker status and manifest
+- `execute_task` - Execute additional task in existing worker
+- `merge_worker` - Merge worker branch to target
+- `terminate_worker` - Terminate and cleanup worker
+- `list_worker_types` - List available worker types
+- `list_active_workers` - List currently active workers
+- `conductor_health` - Check Conductor MCP health
+- `ask_worker` - Ask question to completed worker
+
+**Performance Files**:
+- `.boss/performance-metrics.json` - Automatic performance tracking
+- `.boss/worker-manifest-{workerId}.json` - Per-worker manifests
+- `.container-use/environment.json` - Default configuration
+
 ## Project Structure
 
 ### boss-cli/

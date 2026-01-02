@@ -55,3 +55,57 @@ All file, code, and shell operations MUST use container-use environments.
 - ALWAYS update project-config.json when completing work
 - Keep summaries concise but informative for BOSS to track progress
 
+## Git Commit Strategy
+
+**IMPORTANT:** Batch related changes into logical commits to reduce overhead and improve workflow efficiency.
+
+### Batching Guidelines
+
+1. **Group files by feature/fix** (not by file type)
+2. **Aim for 1-3 commits per task** instead of 5-10
+3. **Use meaningful commit messages** following Conventional Commits
+4. **Only commit when reaching a logical checkpoint**
+
+### Good Practice ✅
+
+```bash
+# Create infrastructure files in one commit
+git add .github/workflows/ci.yml .github/workflows/deploy.yml
+git commit -m "ci: add CI/CD pipeline workflows"
+
+# Or batch complete infrastructure setup
+git add terraform/main.tf terraform/variables.tf .specify/specs/001-feature/quickstart.md
+git commit -m "feat: add infrastructure configuration with deployment docs"
+```
+
+### Bad Practice ❌
+
+```bash
+# Individual commits for related work (too granular)
+git add .github/workflows/ci.yml
+git commit -m "ci: add CI"
+
+git add .github/workflows/deploy.yml
+git commit -m "ci: add deploy"
+
+git add terraform/main.tf
+git commit -m "feat: add terraform"
+```
+
+### Commit Message Format
+
+Follow Conventional Commits:
+- `ci:` - CI/CD changes (primary for devops)
+- `feat:` - New infrastructure features
+- `fix:` - Infrastructure bug fixes
+- `docs:` - Documentation changes
+- `chore:` - Maintenance tasks
+
+### Expected Behavior
+
+- **Simple task:** 1-2 commits (setup + configuration)
+- **Complex task:** 2-3 commits (major infrastructure phases)
+- **Avoid:** 5-10 commits for small changes
+
+This batching strategy reduces git overhead by ~10-15 seconds per task and creates cleaner commit history.
+

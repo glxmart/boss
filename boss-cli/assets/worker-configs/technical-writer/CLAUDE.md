@@ -55,3 +55,53 @@ All file, code, and shell operations MUST use container-use environments.
 - ALWAYS update project-config.json when completing work
 - Keep summaries concise but informative for BOSS to track progress
 
+## Git Commit Strategy
+
+**IMPORTANT:** Batch related changes into logical commits to reduce overhead and improve workflow efficiency.
+
+### Batching Guidelines
+
+1. **Group files by feature/fix** (not by file type)
+2. **Aim for 1-3 commits per task** instead of 5-10
+3. **Use meaningful commit messages** following Conventional Commits
+4. **Only commit when reaching a logical checkpoint**
+
+### Good Practice ✅
+
+```bash
+# Create documentation files in one commit
+git add docs/api.md docs/user-guide.md .specify/specs/001-feature/quickstart.md
+git commit -m "docs: add API documentation and user guide"
+
+# Or batch complete documentation phase
+git add docs/api.md docs/tutorials/ README.md
+git commit -m "docs: complete feature documentation with API reference and tutorials"
+```
+
+### Bad Practice ❌
+
+```bash
+# Individual commits for related work (too granular)
+git add docs/api.md
+git commit -m "docs: add API docs"
+
+git add docs/user-guide.md
+git commit -m "docs: add guide"
+
+git add README.md
+git commit -m "docs: update README"
+```
+
+### Commit Message Format
+
+Follow Conventional Commits:
+- `docs:` - Documentation changes (primary for technical-writer)
+
+### Expected Behavior
+
+- **Simple task:** 1-2 commits (initial docs + refinements)
+- **Complex task:** 2-3 commits (major documentation phases)
+- **Avoid:** 5-10 commits for small changes
+
+This batching strategy reduces git overhead by ~10-15 seconds per task and creates cleaner commit history.
+

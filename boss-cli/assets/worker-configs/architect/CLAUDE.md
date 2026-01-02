@@ -53,3 +53,54 @@ All file, code, and shell operations MUST use container-use environments.
 - ALWAYS update project-config.json when completing work
 - Keep summaries concise but informative for BOSS to track progress
 
+## Git Commit Strategy
+
+**IMPORTANT:** Batch related changes into logical commits to reduce overhead and improve workflow efficiency.
+
+### Batching Guidelines
+
+1. **Group files by feature/fix** (not by file type)
+2. **Aim for 1-3 commits per task** instead of 5-10
+3. **Use meaningful commit messages** following Conventional Commits
+4. **Only commit when reaching a logical checkpoint**
+
+### Good Practice ✅
+
+```bash
+# Create constitution artifacts in one commit
+git add .specify/memory/constitution.md .specify/memory/principles.md
+git commit -m "docs: add project constitution with development principles"
+
+# Or batch complete architectural phase
+git add .specify/memory/constitution.md .specify/memory/architecture.md
+git commit -m "docs: establish constitution and architectural guidelines"
+```
+
+### Bad Practice ❌
+
+```bash
+# Individual commits for related work (too granular)
+git add .specify/memory/constitution.md
+git commit -m "docs: add constitution"
+
+git add .specify/memory/principles.md
+git commit -m "docs: add principles"
+
+git add .specify/memory/architecture.md
+git commit -m "docs: add architecture"
+```
+
+### Commit Message Format
+
+Follow Conventional Commits:
+- `docs:` - Documentation changes (primary for architect)
+- `feat:` - New architectural features
+
+### Expected Behavior
+
+- **Simple task:** 1-2 commits (constitution + principles)
+- **Complex task:** 2-3 commits (major architectural phases)
+- **Avoid:** 5-10 commits for small changes
+
+This batching strategy reduces git overhead by ~10-15 seconds per task and creates cleaner commit history.
+

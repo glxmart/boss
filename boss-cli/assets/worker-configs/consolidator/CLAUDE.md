@@ -60,3 +60,55 @@ All file, code, and shell operations MUST use container-use environments.
 - Keep summaries concise but informative for BOSS to track progress
 - Review all worker summaries from previous phases to understand what was completed
 
+## Git Commit Strategy
+
+**IMPORTANT:** Batch related changes into logical commits to reduce overhead and improve workflow efficiency.
+
+### Batching Guidelines
+
+1. **Group files by feature/fix** (not by file type)
+2. **Aim for 1-3 commits per task** instead of 5-10
+3. **Use meaningful commit messages** following Conventional Commits
+4. **Only commit when reaching a logical checkpoint**
+
+### Good Practice ✅
+
+```bash
+# Create consolidation artifacts in one commit
+git add .specify/specs/001-feature/quickstart.md .specify/specs/001-feature/checklist.md
+git commit -m "docs: add delivery artifacts - quickstart and checklist"
+
+# Or batch branch merges and documentation
+git add .specify/specs/001-feature/quickstart.md README.md CHANGELOG.md
+git commit -m "docs: consolidate documentation and create delivery artifacts"
+```
+
+### Bad Practice ❌
+
+```bash
+# Individual commits for related work (too granular)
+git add .specify/specs/001-feature/quickstart.md
+git commit -m "docs: add quickstart"
+
+git add .specify/specs/001-feature/checklist.md
+git commit -m "docs: add checklist"
+
+git add README.md
+git commit -m "docs: update README"
+```
+
+### Commit Message Format
+
+Follow Conventional Commits:
+- `docs:` - Documentation changes (primary for consolidator)
+- `chore:` - Maintenance tasks (branch merges, cleanup)
+- `feat:` - New feature consolidation
+
+### Expected Behavior
+
+- **Simple task:** 1-2 commits (consolidation + finalization)
+- **Complex task:** 2-3 commits (major consolidation phases)
+- **Avoid:** 5-10 commits for small changes
+
+This batching strategy reduces git overhead by ~10-15 seconds per task and creates cleaner commit history.
+

@@ -57,3 +57,54 @@ All file, code, and shell operations MUST use container-use environments.
 - ALWAYS update project-config.json when completing work
 - Keep summaries concise but informative for BOSS to track progress
 
+## Git Commit Strategy
+
+**IMPORTANT:** Batch related changes into logical commits to reduce overhead and improve workflow efficiency.
+
+### Batching Guidelines
+
+1. **Group files by feature/fix** (not by file type)
+2. **Aim for 1-3 commits per task** instead of 5-10
+3. **Use meaningful commit messages** following Conventional Commits
+4. **Only commit when reaching a logical checkpoint**
+
+### Good Practice ✅
+
+```bash
+# Create test files in one commit
+git add tests/feature.test.ts tests/integration.test.ts tests/e2e.test.ts
+git commit -m "test: add comprehensive test suite with unit, integration, and e2e tests"
+
+# Or batch test implementation with fixtures
+git add tests/api/users.test.ts tests/fixtures/users.ts tests/helpers/auth.ts
+git commit -m "test: implement user API tests with fixtures and helpers"
+```
+
+### Bad Practice ❌
+
+```bash
+# Individual commits for related work (too granular)
+git add tests/feature.test.ts
+git commit -m "test: add unit tests"
+
+git add tests/integration.test.ts
+git commit -m "test: add integration tests"
+
+git add tests/e2e.test.ts
+git commit -m "test: add e2e tests"
+```
+
+### Commit Message Format
+
+Follow Conventional Commits:
+- `test:` - Adding/updating tests (primary for tester)
+- `fix:` - Bug fixes found during testing
+
+### Expected Behavior
+
+- **Simple task:** 1-2 commits (test suite + coverage)
+- **Complex task:** 2-3 commits (major test phases)
+- **Avoid:** 5-10 commits for small changes
+
+This batching strategy reduces git overhead by ~10-15 seconds per task and creates cleaner commit history.
+

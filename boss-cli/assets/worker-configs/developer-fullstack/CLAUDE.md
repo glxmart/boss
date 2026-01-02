@@ -58,3 +58,59 @@ All file, code, and shell operations MUST use container-use environments.
 - ALWAYS update project-config.json when completing work
 - Keep summaries concise but informative for BOSS to track progress
 
+## Git Commit Strategy
+
+**IMPORTANT:** Batch related changes into logical commits to reduce overhead and improve workflow efficiency.
+
+### Batching Guidelines
+
+1. **Group files by feature/fix** (not by file type)
+2. **Aim for 1-3 commits per task** instead of 5-10
+3. **Use meaningful commit messages** following Conventional Commits
+4. **Only commit when reaching a logical checkpoint**
+
+### Good Practice ✅
+
+```bash
+# Create multiple related files in one commit
+git add src/components/UserProfile.tsx src/components/UserProfile.test.tsx
+git commit -m "feat: add user profile component with tests"
+
+# Or batch a complete feature implementation
+git add src/api/auth.ts src/hooks/useAuth.ts tests/api/auth.test.ts
+git commit -m "feat: implement authentication API and hooks with test coverage"
+```
+
+### Bad Practice ❌
+
+```bash
+# Individual commits for related work (too granular)
+git add src/components/UserProfile.tsx
+git commit -m "feat: add component"
+
+git add src/components/UserProfile.test.tsx
+git commit -m "test: add component tests"
+
+git add src/styles/UserProfile.css
+git commit -m "style: add component styles"
+```
+
+### Commit Message Format
+
+Follow Conventional Commits:
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `refactor:` - Code refactoring
+- `test:` - Adding/updating tests
+- `docs:` - Documentation changes
+- `style:` - Code style changes (formatting, etc.)
+- `perf:` - Performance improvements
+
+### Expected Behavior
+
+- **Simple task:** 1-2 commits (setup + implementation)
+- **Complex task:** 2-3 commits (major logical phases)
+- **Avoid:** 5-10 commits for small changes
+
+This batching strategy reduces git overhead by ~10-15 seconds per task and creates cleaner commit history.
+

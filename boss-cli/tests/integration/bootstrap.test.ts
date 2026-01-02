@@ -54,9 +54,10 @@ describe('Bootstrap Integration Tests', () => {
     await bootstrapCommand(options);
 
     const claudeContent = await readProjectFile(projectName, 'CLAUDE.md');
-    expect(claudeContent).toContain('ALWAYS use ONLY Environments');
-    expect(claudeContent).toContain('DO NOT install or use the git cli');
-    expect(claudeContent).toContain('container-use log <env_id>');
+    expect(claudeContent).toContain('**CRITICAL: BOSS vs Workers Distinction**');
+    expect(claudeContent).toContain('For BOSS (Orchestrator)');
+    expect(claudeContent).toContain('For Workers (Inside Containers)');
+    expect(claudeContent).toContain('Workers ALWAYS use Container-Use MCP environments');
   });
 
   it('should generate all worker configurations', async () => {
@@ -83,8 +84,10 @@ describe('Bootstrap Integration Tests', () => {
     ];
 
     for (const worker of workers) {
-      expect(await fileExists(projectName, `.boss/workers/${worker}/prompt.md`)).toBe(true);
-      expect(await fileExists(projectName, `.boss/workers/${worker}/container-config.json`)).toBe(true);
+      // Boss-cli generates CLAUDE.md and .claude/ for each worker
+      // Note: metadata.json and container-config.json are in conductor-mcp package, not in generated projects
+      expect(await fileExists(projectName, `.boss/workers/${worker}/CLAUDE.md`)).toBe(true);
+      expect(await fileExists(projectName, `.boss/workers/${worker}/.claude`)).toBe(true);
     }
   });
 

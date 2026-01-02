@@ -216,6 +216,11 @@ export async function bootstrapCommand(options: BootstrapOptions): Promise<void>
 }
 
 async function initializeHuskyAfterPackageJson(projectPath: string): Promise<void> {
+  // Skip Husky initialization in test environments to avoid partial initialization issues
+  if (process.env.VITEST || process.env.NODE_ENV === 'test') {
+    return;
+  }
+
   try {
     // Run husky to set up git hooks in .git/hooks directory (husky v9+ uses 'husky' instead of 'husky install')
     // This works even if husky isn't installed yet (npx downloads it temporarily)

@@ -196,6 +196,7 @@ claude --version  # Should work without authentication errors
 ### conductor-mcp
 - ✅ `src/config/container-mapper.ts` - Added `resolveSecrets()` function
 - ✅ `src/orchestration/task-executor.ts` - Removed `--print` flag, extract `structured_output` from result
+- ✅ `src/orchestration/container-use-client.ts` - Read command output from git notes
 - ✅ `worker-configs/*/container-config.json` (15 files) - Removed op:// references
 
 ## Future Projects

@@ -137,9 +137,41 @@ export class ContainerUseClient {
         explanation: `Executing command in environment ${params.environment_id}`
       }, { timeout: 180000 }); // 3 minutes
 
+      // container-use stores command output in git notes, not in MCP response
+      // Read the output from git notes
+      const { execFile } = await import('child_process');
+      const { promisify } = await import('util');
+      const execFileAsync = promisify(execFile);
+
+      let output = '';
+      try {
+        const gitResult = await execFileAsync('git', [
+          '-C', params.environment_source,
+          'notes', '--ref=container-use', 'show',
+          `container-use/${params.environment_id}`
+        ], { maxBuffer: 10 * 1024 * 1024 }); // 10MB buffer
+
+        if (gitResult.stdout) {
+          // Extract JSON from notes (it's after the command line)
+          const jsonMatch = gitResult.stdout.match(/\n(\{.*\})\s*$/s);
+          if (jsonMatch && jsonMatch[1]) {
+            output = jsonMatch[1];
+            logger.debug('Extracted output from git notes', {
+              environment_id: params.environment_id,
+              outputLength: output.length
+            });
+          }
+        }
+      } catch (gitError) {
+        logger.warn('Failed to read git notes for command output', {
+          environment_id: params.environment_id,
+          error: gitError instanceof Error ? gitError.message : String(gitError)
+        });
+      }
+
       return {
-        stdout: result.stdout || result.output || '',
-        output: result.output || result.stdout || ''
+        stdout: output || result.stdout || result.output || '',
+        output: output || result.output || result.stdout || ''
       };
     } catch (error) {
       throw wrapError(

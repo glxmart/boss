@@ -500,6 +500,10 @@ export const TOOL_SCHEMAS = {
         targetBranch: {
           type: 'string',
           description: 'Branch to merge worker changes into (default: feature/boss-initial-setup)'
+        },
+        resumeEnvironmentId: {
+          type: 'string',
+          description: 'Resume work in existing worker environment instead of creating new one (saves ~180s for iterative work)'
         }
       },
       required: ['workerType', 'taskPrompt']

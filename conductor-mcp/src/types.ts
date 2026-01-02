@@ -68,6 +68,7 @@ export interface SpawnWorkerInput {
   taskPrompt: string;
   projectPath?: string;
   targetBranch?: string;
+  resumeEnvironmentId?: string; // Optional: Resume work in existing environment (Phase 4 optimization)
 }
 
 export interface SpawnWorkerOutput {

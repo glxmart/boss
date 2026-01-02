@@ -181,6 +181,162 @@ This is especially important for:
 - **Solution**: Check `.mcp.json` is configured to use `op run --env-file=.env`
 - **Solution**: Restart Claude Code/Cursor with `op run --env-file=.env -- code .`
 
+## Debugging GitHub Workflows
+
+When GitHub Actions workflows fail, follow this systematic debugging approach:
+
+### 1. Quick Status Check
+
+```bash
+# View recent workflow runs
+./scripts/gh-with-1password.sh run list --limit 5
+
+# Or with 1Password inline
+op run --env-file=.env -- gh run list --limit 5
+```
+
+### 2. Get Failure Details
+
+```bash
+# View specific workflow run (get ID from list above)
+./scripts/gh-with-1password.sh run view <run-id>
+
+# View failed logs only
+./scripts/gh-with-1password.sh run view <run-id> --log-failed
+
+# Download full logs for offline analysis
+./scripts/gh-with-1password.sh run download <run-id>
+```
+
+### 3. Common Failure Patterns
+
+**Test Failures**
+
+```bash
+# Tests fail in CI but pass locally
+# Solution: Check for environment-specific issues
+# - File paths (use path.join, not hardcoded paths)
+# - Environment variables
+# - Git state (CI starts with clean slate)
+
+# Example: Integration tests failing
+./scripts/gh-with-1password.sh run view <run-id> --log-failed | grep -A 10 "FAIL"
+```
+
+**Build Failures**
+
+```bash
+# ESLint errors
+# Solution: Run linting locally before pushing
+pnpm --filter @glxmart/boss-cli lint
+pnpm --filter @glxmart/conductor-mcp lint
+
+# TypeScript errors
+# Solution: Run build locally before pushing
+pnpm build
+```
+
+**Dependency Issues**
+
+```bash
+# pnpm install fails
+# Solution: Check pnpm-lock.yaml is committed
+git status | grep pnpm-lock.yaml
+
+# Solution: Verify package.json versions are valid
+pnpm install --frozen-lockfile
+```
+
+### 4. Reproduce Locally
+
+```bash
+# Run the same commands CI runs
+cd boss-cli && pnpm install && pnpm build && pnpm test
+cd conductor-mcp && pnpm install && pnpm build && pnpm test
+
+# Run integration tests (creates real projects)
+cd boss-cli && pnpm test:integration
+```
+
+### 5. Workflow-Specific Debugging
+
+**CI Workflow** (.github/workflows/ci.yml)
+- Runs: Tests for both packages + integration tests
+- Common fix: Ensure all tests pass locally first
+
+**Release Workflow** (.github/workflows/release.yml)
+- Runs: Builds + tests before publishing via changesets
+- Common fix: Ensure `prepublishOnly` script succeeds
+- Note: Uses `NPM_TOKEN` secret for publishing
+
+**Docker Workflow** (.github/workflows/docker.yml)
+- Runs: Builds and pushes boss-worker-base image
+- Common fix: Verify Dockerfile exists and builds locally
+- Manual build: `cd conductor-mcp/docker/boss-worker-base && ./build.sh`
+
+### 6. Re-trigger Workflows
+
+```bash
+# Re-run failed workflow
+./scripts/gh-with-1password.sh run rerun <run-id>
+
+# Re-run specific job
+./scripts/gh-with-1password.sh run rerun <run-id> --job <job-id>
+```
+
+### 7. Check Workflow Status from Code
+
+If you need to programmatically check workflow status:
+
+```bash
+# Get JSON output for parsing
+./scripts/gh-with-1password.sh run list --limit 3 --json conclusion,name,status,headBranch
+
+# Check if latest run passed
+./scripts/gh-with-1password.sh run list --limit 1 --json conclusion --jq '.[0].conclusion'
+# Output: "success", "failure", "cancelled", etc.
+```
+
+### 8. Debugging Tips
+
+- **Always check the specific job that failed**: Look at ANNOTATIONS section in run view
+- **Search for the first error**: Often subsequent errors are cascading failures
+- **Compare with previous successful runs**: See what changed between success and failure
+- **Check if it's a flaky test**: Re-run to see if it passes intermittently
+- **Look for resource issues**: Timeout errors might indicate slow tests or insufficient resources
+
+### Example Debugging Session
+
+```bash
+# 1. Check what failed
+op run --env-file=.env -- gh run list --limit 3
+# Output shows CI failed
+
+# 2. Get details
+op run --env-file=.env -- gh run view 20667413783
+# Shows "Test conductor-mcp" job failed
+
+# 3. Get specific error
+op run --env-file=.env -- gh run view 20667413783 --log-failed | grep -A 20 "FAIL"
+# Shows: ERROR: The symbol "conductorWorkerConfigsPath" has already been declared
+
+# 4. Fix locally
+# Edit conductor-mcp/tests/e2e/boss-workflow.test.ts
+# Rename duplicate variable
+
+# 5. Test fix locally
+cd conductor-mcp && pnpm test
+
+# 6. Commit and push
+git add conductor-mcp/tests/e2e/boss-workflow.test.ts
+git commit -m "fix: remove duplicate variable declaration"
+git push
+
+# 7. Verify workflow passes
+sleep 30
+op run --env-file=.env -- gh run list --limit 1
+```
+
 ## Key Architectural Patterns
 
 ### Schema-Based Manifest Communication

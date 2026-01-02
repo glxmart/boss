@@ -240,9 +240,12 @@ describe('E2E: BOSS Workflow with Conductor MCP', () => {
     expect(metadata.outputs.required.length).toBeGreaterThan(0);
 
     // Verify base container-config.json exists and is valid
-    const conductorWorkerConfigsPath = path.resolve(__dirname, '../../worker-configs');
-    const baseContainerConfigPath = path.join(conductorWorkerConfigsPath, '_base', 'container-config.json');
-    const baseContainerConfigContent = await fs.readFile(baseContainerConfigPath, 'utf-8');
+    const baseContainerConfigPath2 = path.join(
+      path.resolve(__dirname, '../../worker-configs'),
+      '_base',
+      'container-config.json'
+    );
+    const baseContainerConfigContent = await fs.readFile(baseContainerConfigPath2, 'utf-8');
     const baseContainerConfig = JSON.parse(baseContainerConfigContent);
 
     expect(baseContainerConfig).toHaveProperty('base_image');

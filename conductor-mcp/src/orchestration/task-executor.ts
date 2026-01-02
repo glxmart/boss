@@ -95,9 +95,10 @@ export class TaskExecutor {
    *
    * @param environmentId - Worker environment ID
    * @param taskPrompt - Task instructions
+   * @param projectPath - Absolute path to git repository
    * @param continueSession - Whether to continue previous session
    */
-  async executeTask(environmentId: string, taskPrompt: string, continueSession: boolean = false): Promise<void> {
+  async executeTask(environmentId: string, taskPrompt: string, projectPath: string, continueSession: boolean = false): Promise<void> {
     logger.info('Executing task in environment', {
       environment_id: environmentId,
       promptLength: taskPrompt.length,
@@ -131,6 +132,7 @@ export class TaskExecutor {
 
     // Execute in the container environment
     await this.containerUseClient.executeInEnvironment({
+      environment_source: projectPath,
       environment_id: environmentId,
       command
     });
@@ -181,6 +183,7 @@ export class TaskExecutor {
   async executeTaskWithSchema(
     environmentId: string,
     taskPrompt: string,
+    projectPath: string,
     continueSession: boolean = false
   ): Promise<WorkerResult> {
     logger.info('Executing task with schema validation', {
@@ -216,6 +219,7 @@ export class TaskExecutor {
     });
 
     const result = await this.containerUseClient.executeInEnvironment({
+      environment_source: projectPath,
       environment_id: environmentId,
       command
     });
@@ -303,16 +307,19 @@ export class TaskExecutor {
    *
    * Returns null if manifest doesn't exist (new worker), throws on read/parse errors
    */
-  async getWorkerManifest(environmentId: string): Promise<WorkerManifest | null> {
+  async getWorkerManifest(environmentId: string, projectPath: string): Promise<WorkerManifest | null> {
     logger.debug('Getting worker manifest', { environment_id: environmentId });
 
     const manifestPath = `/workdir/.boss/worker-manifest-${environmentId}.json`;
 
     try {
-      const manifestContent = await this.containerUseClient.environmentFileRead({
+      const result = await this.containerUseClient.environmentFileRead({
+        environment_source: projectPath,
         environment_id: environmentId,
         target_file: manifestPath
       });
+
+      const manifestContent = result.contents;
 
       // Empty file - manifest hasn't been written yet (new worker)
       if (!manifestContent || manifestContent.trim() === '') {
@@ -388,7 +395,8 @@ export class TaskExecutor {
    */
   async updateWorkerManifest(
     environmentId: string,
-    manifest: WorkerManifest
+    manifest: WorkerManifest,
+    projectPath: string
   ): Promise<void> {
     logger.debug('Updating worker manifest', {
       environment_id: environmentId,
@@ -398,6 +406,7 @@ export class TaskExecutor {
     const manifestPath = `/workdir/.boss/worker-manifest-${environmentId}.json`;
 
     await this.containerUseClient.environmentFileWrite({
+      environment_source: projectPath,
       environment_id: environmentId,
       target_file: manifestPath,
       contents: JSON.stringify(manifest, null, 2)

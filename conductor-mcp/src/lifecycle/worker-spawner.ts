@@ -97,9 +97,13 @@ export class WorkerSpawner {
       const workerConfig = await loadWorkerConfig(input.workerType, projectPath);
 
       // 2. Create Container-Use environment
-      const containerConfig = mapToContainerUseConfig(workerConfig, {
-        workerName: input.workerType
-      });
+      const title = `${input.workerType}: ${input.taskPrompt.substring(0, 50)}...`;
+      const containerConfig = mapToContainerUseConfig(
+        workerConfig,
+        { workerName: input.workerType },
+        projectPath, // environment_source
+        title // environment title
+      );
 
       const env = await this.containerUseClient.createEnvironment(containerConfig);
       environmentId = env.environment_id;
@@ -121,14 +125,15 @@ export class WorkerSpawner {
       await this.environmentManager.configureWorkerEnvironment(
         environmentId,
         workerConfig,
-        input.workerType
+        input.workerType,
+        projectPath
       );
 
       // 4. Execute task with claude-code using JSON Schema validation
       // Worker context (role, responsibilities, methodology) is in CLAUDE.md
       // Path: /workdir/.boss/workers/${workerType}/.claude/CLAUDE.md (written by EnvironmentManager)
       // This isolated location prevents merge conflicts when parallel workers run
-      const workerResult = await this.taskExecutor.executeTaskWithSchema(environmentId, input.taskPrompt);
+      const workerResult = await this.taskExecutor.executeTaskWithSchema(environmentId, input.taskPrompt, projectPath);
 
       // 5. Create manifest from worker's structured output
       const manifest = createManifestFromResult(
@@ -139,7 +144,7 @@ export class WorkerSpawner {
       );
 
       // Write manifest to worker's environment
-      await this.taskExecutor.updateWorkerManifest(environmentId, manifest);
+      await this.taskExecutor.updateWorkerManifest(environmentId, manifest, projectPath);
 
       // 7. Update worker state in tracker
       this.stateTracker.updateWorkerStatus(environmentId, {
@@ -186,7 +191,7 @@ export class WorkerSpawner {
 
         try {
           // Delete the environment to prevent container leak
-          await this.containerUseClient.deleteEnvironment({ environment_id: environmentId });
+          await this.containerUseClient.deleteEnvironment(environmentId);
           logger.info('Orphaned container cleaned up successfully', { environmentId });
         } catch (cleanupError) {
           // Log cleanup failure but don't throw - original error is more important
@@ -231,13 +236,17 @@ export class WorkerSpawner {
       // Get worker state
       const worker = this.stateTracker.getWorkerOrThrow(input.workerId);
 
+      // Get projectPath from worker state or use current working directory
+      const projectPath = process.cwd();
+
       // Get existing manifest (if any)
-      const existingManifest = await this.taskExecutor.getWorkerManifest(input.workerId);
+      const existingManifest = await this.taskExecutor.getWorkerManifest(input.workerId, projectPath);
 
       // Execute task with schema validation (continue existing session)
       const workerResult = await this.taskExecutor.executeTaskWithSchema(
         input.workerId,
         input.taskPrompt,
+        projectPath,
         true
       );
 
@@ -251,7 +260,7 @@ export class WorkerSpawner {
       );
 
       // Write updated manifest
-      await this.taskExecutor.updateWorkerManifest(input.workerId, updatedManifest);
+      await this.taskExecutor.updateWorkerManifest(input.workerId, updatedManifest, projectPath);
 
       // Update worker state in tracker
       this.stateTracker.updateWorkerStatus(input.workerId, {

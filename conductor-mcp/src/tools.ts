@@ -154,8 +154,11 @@ export async function handleGetWorkerStatus(args: unknown) {
   try {
     const worker = stateTracker.getWorkerOrThrow(input.workerId);
 
+    // Get projectPath (default to current working directory)
+    const projectPath = process.cwd();
+
     // Attempt to read worker manifest for detailed status
-    const manifest = await taskExecutor.getWorkerManifest(input.workerId);
+    const manifest = await taskExecutor.getWorkerManifest(input.workerId, projectPath);
 
     return {
       workerId: worker.workerId,
@@ -328,6 +331,9 @@ export async function handleAskWorker(args: unknown) {
     // Verify worker exists
     stateTracker.getWorkerOrThrow(input.workerId);
 
+    // Get projectPath (default to current working directory)
+    const projectPath = process.cwd();
+
     // CRITICAL: Check that worker has completed its work
     // We can only ask questions to workers that have finished
     //
@@ -338,7 +344,7 @@ export async function handleAskWorker(args: unknown) {
     //    that might change as the worker continues execution.
     // 3. Manifest validity: Running workers are still updating their manifest, so
     //    questions based on partial data could be misleading.
-    const manifest = await taskExecutor.getWorkerManifest(input.workerId);
+    const manifest = await taskExecutor.getWorkerManifest(input.workerId, projectPath);
 
     if (!manifest) {
       throw new ConductorException(
@@ -386,6 +392,7 @@ Please answer the question based on your previous work. Your answer will be capt
     const workerResult = await taskExecutor.executeTaskWithSchema(
       input.workerId,
       questionPrompt,
+      projectPath,
       true /* continueSession */
     );
 
@@ -430,7 +437,7 @@ Please answer the question based on your previous work. Your answer will be capt
     };
 
     // Write updated manifest
-    await taskExecutor.updateWorkerManifest(input.workerId, updatedManifest);
+    await taskExecutor.updateWorkerManifest(input.workerId, updatedManifest, projectPath);
 
     return {
       success: answerProvided,

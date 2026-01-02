@@ -210,6 +210,8 @@ export interface ContainerUseEnvironment {
 }
 
 export interface CreateEnvironmentParams {
+  environment_source: string; // Absolute path to git repository
+  title: string; // Short description of work
   base_image: string;
   setup_commands: string[];
   install_commands: string[];
@@ -221,17 +223,20 @@ export interface CreateEnvironmentParams {
 }
 
 export interface ExecuteInEnvironmentParams {
+  environment_source: string; // Absolute path to git repository
   environment_id: string;
   command: string;
 }
 
 export interface EnvironmentFileWriteParams {
+  environment_source: string; // Absolute path to git repository
   environment_id: string;
   target_file: string;
   contents: string;
 }
 
 export interface EnvironmentFileReadParams {
+  environment_source: string; // Absolute path to git repository
   environment_id: string;
   target_file: string;
 }

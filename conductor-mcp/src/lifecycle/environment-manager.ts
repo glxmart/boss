@@ -17,7 +17,8 @@ export class EnvironmentManager {
   async configureWorkerEnvironment(
     environmentId: string,
     workerConfig: WorkerConfig,
-    workerType: WorkerType
+    workerType: WorkerType,
+    projectPath: string
   ): Promise<void> {
     logger.info('Configuring worker environment', {
       environment_id: environmentId,
@@ -25,15 +26,15 @@ export class EnvironmentManager {
     });
 
     // 1. Write CLAUDE.md with worker-specific context
-    await this.configureClaudeMd(environmentId, workerConfig, workerType);
+    await this.configureClaudeMd(environmentId, workerConfig, workerType, projectPath);
 
     // 2. Copy worker-specific .claude folder contents
     if (workerConfig.claudeFolder) {
-      await this.configureClaudeFolder(environmentId, workerConfig, workerType);
+      await this.configureClaudeFolder(environmentId, workerConfig, workerType, projectPath);
     }
 
     // 3. Write worker manifest template
-    await this.writeWorkerManifestTemplate(environmentId, workerType);
+    await this.writeWorkerManifestTemplate(environmentId, workerType, projectPath);
 
     logger.info('Worker environment configured successfully', {
       environment_id: environmentId,
@@ -57,7 +58,8 @@ export class EnvironmentManager {
   private async configureClaudeMd(
     environmentId: string,
     workerConfig: WorkerConfig,
-    workerType: WorkerType
+    workerType: WorkerType,
+    projectPath: string
   ): Promise<void> {
     logger.debug('Writing worker CLAUDE.md to isolated context', {
       environment_id: environmentId,
@@ -75,6 +77,7 @@ export class EnvironmentManager {
     // Write to /workdir/.boss/workers/${workerType}/.claude/CLAUDE.md
     // (CLAUDE_CONFIG_DIR will point here, won't conflict on merge)
     await this.containerUseClient.environmentFileWrite({
+      environment_source: projectPath,
       environment_id: environmentId,
       target_file: `/workdir/.boss/workers/${workerType}/.claude/CLAUDE.md`,
       contents: claudeMdContent
@@ -90,7 +93,8 @@ export class EnvironmentManager {
   private async configureClaudeFolder(
     environmentId: string,
     workerConfig: WorkerConfig,
-    workerType: WorkerType
+    workerType: WorkerType,
+    projectPath: string
   ): Promise<void> {
     if (!workerConfig.claudeFolder) {
       return;
@@ -118,6 +122,7 @@ export class EnvironmentManager {
       });
 
       await this.containerUseClient.environmentFileWrite({
+        environment_source: projectPath,
         environment_id: environmentId,
         target_file: targetPath,
         contents
@@ -138,7 +143,8 @@ export class EnvironmentManager {
    */
   private async writeWorkerManifestTemplate(
     environmentId: string,
-    workerType: WorkerType
+    workerType: WorkerType,
+    projectPath: string
   ): Promise<void> {
     logger.debug('Writing worker manifest template', {
       environment_id: environmentId,
@@ -163,6 +169,7 @@ export class EnvironmentManager {
     const manifestPath = `/workdir/.boss/worker-manifest-${environmentId}.json`;
 
     await this.containerUseClient.environmentFileWrite({
+      environment_source: projectPath,
       environment_id: environmentId,
       target_file: manifestPath,
       contents: JSON.stringify(manifest, null, 2)

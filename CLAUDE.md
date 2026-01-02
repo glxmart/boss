@@ -104,13 +104,24 @@ Each worker gets its own manifest file (`.boss/worker-manifest-{workerId}.json`)
 
 ### Configuration-Driven Workers
 
-Worker behavior is entirely defined by configuration files in `boss-cli/assets/worker-configs/{worker-type}/`:
-- `metadata.json` - Worker capabilities, inputs, outputs, constraints
-- `container-config.json` - Container environment setup
-- `.claude/` - Claude Code configuration (optional)
-- `CLAUDE.md` - Worker-specific instructions
+Worker behavior is defined by configuration files in two locations:
 
-**Clarification** boss-cli will bootstrap boss-cli/assets/worker-configs/{worker-type}/ content into .boss/workers/{worker-type}/ and inside the worker it will become workdir/.boss/workers/{worker-type}/
+**Conductor owns (package-level specs)**:
+- `conductor-mcp/worker-configs/{worker-type}/metadata.json` - Worker capabilities, inputs, outputs, constraints
+- `conductor-mcp/worker-configs/{worker-type}/container-config.json` - Container environment setup
+
+**Boss-cli generates (project-level configs)**:
+- `boss-cli/assets/worker-configs/{worker-type}/CLAUDE.md` (optional) - Worker-specific instructions
+- `boss-cli/assets/worker-configs/{worker-type}/.claude/` (optional) - Worker-specific commands/skills
+- `boss-cli/templates/spec-kit/templates/commands/` - Spec-Kit commands (copied based on worker's `primaryCommand`)
+- `boss-cli/assets/claude-folder/commands/` - BOSS-specific commands (NOT copied to workers)
+
+**During bootstrap**: boss-cli generates `.boss/workers/{worker-type}/` in the project with:
+- `CLAUDE.md` (from assets)
+- `.claude/commands/` (relevant Spec-Kit commands + worker-specific commands)
+- `.claude/skills/` (worker-specific)
+
+**Inside container**: These become available at `workdir/.boss/workers/{worker-type}/`
 
 **metadata.json** is the single source of truth for:
 - Worker description and phase
@@ -152,13 +163,18 @@ src/
 └── types/           # TypeScript type definitions
 
 assets/              # Static files copied during bootstrap
-├── claude-folder/   # .claude/ folder structure
-├── worker-configs/  # 15 worker type configurations
+├── claude-folder/   # .claude/ folder structure (project-level)
+├── worker-configs/  # Optional worker configs (CLAUDE.md, .claude/ per worker)
 ├── git-hooks/       # Pre-commit, pre-push hooks
 ├── github-workflows/ # CI/CD workflows
 └── ...
 
-templates/           # Project templates (nextjs-app-turbo, etc)
+templates/           # Project templates and shared resources
+├── nextjs-app-turbo/     # Next.js template
+├── spec-kit/
+│   └── templates/
+│       └── commands/     # Spec-Kit commands (copied to ALL workers)
+└── ...
 ```
 
 ### conductor-mcp/
@@ -180,13 +196,16 @@ src/
 ├── tools.ts         # MCP tool implementations
 └── server.ts        # MCP server setup
 
-worker-configs/      # Worker type configurations
+worker-configs/      # Worker type specifications (NO .claude folders)
 ├── {worker-type}/
 │   ├── metadata.json          # Worker spec
 │   └── container-config.json  # Container setup
 
 schemas/             # JSON schemas
 └── worker-metadata.schema.json
+
+templates/           # Shared templates used during worker spawning
+└── CLAUDE.md       # Shared worker CLAUDE.md template
 ```
 
 ## Critical Implementation Details
@@ -263,14 +282,27 @@ Applied via `applyQualityPreset()` during bootstrap.
 
 ### Adding a New Worker Type
 
-1. Create `worker-configs/{worker-type}/`
-2. Add `metadata.json` inside conductor-mcp/worker-configs/{worker-type}/ (validated against schema)
-3. Add `container-config.json` inside conductor-mcp/worker-configs/{worker-type}/
-5. Update `WorkerType` union in `conductor-mcp/src/types.ts`
-6. Add to `boss-cli/assets/worker-configs/`
-6.1. Optionally add `.claude/` folder inside boss-cli/assets/worker-configs/{worker-type}/
-6.2. Optionally add `CLAUDE.md` folder inside boss-cli/assets/worker-configs/{worker-type}/
-7. Test with `conductor-mcp` and `boss-cli`
+**In conductor-mcp (worker specifications)**:
+1. Create `conductor-mcp/worker-configs/{worker-type}/`
+2. Add `metadata.json` (validated against schema)
+   - Include `primaryCommand` field to specify which Spec-Kit commands the worker needs
+   - Example: `"primaryCommand": "/speckit.clarify"` → gets `clarify.md`
+   - Example: `"primaryCommand": ["/speckit.plan", "/speckit.tasks"]` → gets `plan.md` and `tasks.md`
+3. Add `container-config.json`
+4. Update `WorkerType` union in `conductor-mcp/src/types.ts`
+5. **DO NOT** add `.claude/` folder here - conductor only owns specs
+
+**In boss-cli (project-level config, optional)**:
+6. Optionally create `boss-cli/assets/worker-configs/{worker-type}/`
+7. Optionally add `CLAUDE.md` (worker-specific instructions)
+8. Optionally add `.claude/commands/` (worker-specific commands beyond Spec-Kit)
+9. Optionally add `.claude/skills/` (worker-specific skills)
+
+**Note**: Workers only get Spec-Kit commands if they have `primaryCommand` in metadata.json. BOSS-specific commands are NOT copied to workers.
+
+**Testing**:
+10. Test with `conductor-mcp` and `boss-cli`
+11. Verify bootstrapped project has correct .boss/workers/{worker-type}/ structure
 
 ### Modifying Bootstrap Process
 

@@ -21,10 +21,12 @@
     "test": "vitest",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
+    "test:e2e": "vitest run tests/e2e",
+    "test:local": "vitest run tests/e2e --reporter=verbose",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.4",
+    "@modelcontextprotocol/sdk": "^1.25.1",
     "ajv": "^8.12.0",
     "execa": "^9.6.1"
   },

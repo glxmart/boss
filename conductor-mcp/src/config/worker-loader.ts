@@ -80,11 +80,12 @@ export async function loadWorkerConfig(
 
   logger.info('Loading worker configuration', { workerType, source, workerDir });
 
-  // Load metadata.json
-  const metadataPath = join(workerDir, 'metadata.json');
+  // Load metadata.json (always from conductor, never from project)
+  // Projects only contain CLAUDE.md and .claude/ folder, not metadata.json
+  const conductorMetadataPath = join(CONDUCTOR_WORKER_CONFIGS, workerType, 'metadata.json');
   let metadata: any;
   try {
-    const metadataContent = await readFile(metadataPath, 'utf-8');
+    const metadataContent = await readFile(conductorMetadataPath, 'utf-8');
     metadata = JSON.parse(metadataContent);
 
     // Validate metadata against master schema
@@ -95,8 +96,8 @@ export async function loadWorkerConfig(
     if (error.code === 'ENOENT') {
       throwConductorError(
         ErrorCategory.WORKER_CONFIG_INVALID,
-        `metadata.json not found for worker "${workerType}" at ${metadataPath}. All workers must have metadata.json`,
-        { workerType, details: { path: metadataPath } }
+        `metadata.json not found for worker "${workerType}" at ${conductorMetadataPath}. All workers must have metadata.json in conductor package.`,
+        { workerType, details: { path: conductorMetadataPath } }
       );
     }
 
@@ -104,8 +105,8 @@ export async function loadWorkerConfig(
     if (error.code === 'EACCES') {
       throwConductorError(
         ErrorCategory.WORKER_CONFIG_INVALID,
-        `Permission denied reading metadata.json for worker "${workerType}" at ${metadataPath}. Check file permissions.`,
-        { workerType, details: { path: metadataPath, error: error.message } }
+        `Permission denied reading metadata.json for worker "${workerType}" at ${conductorMetadataPath}. Check file permissions.`,
+        { workerType, details: { path: conductorMetadataPath, error: error.message } }
       );
     }
 
@@ -113,8 +114,8 @@ export async function loadWorkerConfig(
     if (error instanceof SyntaxError) {
       throwConductorError(
         ErrorCategory.WORKER_CONFIG_INVALID,
-        `metadata.json for worker "${workerType}" contains invalid JSON at ${metadataPath}. Fix the JSON syntax.`,
-        { workerType, details: { path: metadataPath, parseError: error.message } }
+        `metadata.json for worker "${workerType}" contains invalid JSON at ${conductorMetadataPath}. Fix the JSON syntax.`,
+        { workerType, details: { path: conductorMetadataPath, parseError: error.message } }
       );
     }
 
@@ -122,26 +123,27 @@ export async function loadWorkerConfig(
     // or other unexpected errors - log and rethrow
     logger.debug('Rethrowing error from worker metadata loading', {
       workerType,
-      path: metadataPath,
+      path: conductorMetadataPath,
       errorType: error.constructor.name,
       message: error.message
     });
     throw error;
   }
 
-  // Load container-config.json
-  const containerConfigPath = join(workerDir, 'container-config.json');
+  // Load container-config.json (always from conductor, never from project)
+  // Projects only contain CLAUDE.md and .claude/ folder, not container-config.json
+  const conductorContainerConfigPath = join(CONDUCTOR_WORKER_CONFIGS, workerType, 'container-config.json');
   let containerConfig: any;
   try {
-    const containerConfigContent = await readFile(containerConfigPath, 'utf-8');
+    const containerConfigContent = await readFile(conductorContainerConfigPath, 'utf-8');
     containerConfig = JSON.parse(containerConfigContent);
   } catch (error: any) {
     // File not found
     if (error.code === 'ENOENT') {
       throwConductorError(
         ErrorCategory.WORKER_CONFIG_INVALID,
-        `container-config.json not found for worker "${workerType}" at ${containerConfigPath}`,
-        { workerType, details: { path: containerConfigPath } }
+        `container-config.json not found for worker "${workerType}" at ${conductorContainerConfigPath}. All workers must have container-config.json in conductor package.`,
+        { workerType, details: { path: conductorContainerConfigPath } }
       );
     }
 
@@ -149,8 +151,8 @@ export async function loadWorkerConfig(
     if (error.code === 'EACCES') {
       throwConductorError(
         ErrorCategory.WORKER_CONFIG_INVALID,
-        `Permission denied reading container-config.json for worker "${workerType}" at ${containerConfigPath}`,
-        { workerType, details: { path: containerConfigPath, error: error.message } }
+        `Permission denied reading container-config.json for worker "${workerType}" at ${conductorContainerConfigPath}`,
+        { workerType, details: { path: conductorContainerConfigPath, error: error.message } }
       );
     }
 
@@ -158,8 +160,8 @@ export async function loadWorkerConfig(
     if (error instanceof SyntaxError) {
       throwConductorError(
         ErrorCategory.WORKER_CONFIG_INVALID,
-        `container-config.json for worker "${workerType}" contains invalid JSON at ${containerConfigPath}`,
-        { workerType, details: { path: containerConfigPath, parseError: error.message } }
+        `container-config.json for worker "${workerType}" contains invalid JSON at ${conductorContainerConfigPath}`,
+        { workerType, details: { path: conductorContainerConfigPath, parseError: error.message } }
       );
     }
 
@@ -167,7 +169,7 @@ export async function loadWorkerConfig(
     throwConductorError(
       ErrorCategory.WORKER_CONFIG_INVALID,
       `Failed to load container-config.json for worker "${workerType}": ${error.message}`,
-      { workerType, details: { path: containerConfigPath, error: error.message } }
+      { workerType, details: { path: conductorContainerConfigPath, error: error.message } }
     );
   }
 
@@ -330,7 +332,9 @@ async function loadSharedCommands(): Promise<Array<{ path: string; contents: str
   return files;
 }
 
-const CLAUDE_SUBFOLDERS = ['commands', 'skills', 'agents'] as const;
+// NOTE: Workers are already isolated agents running in containers
+// No 'agents' subfolder needed - the worker itself IS the agent
+const CLAUDE_SUBFOLDERS = ['commands', 'skills'] as const;
 
 type ClaudeFile = { path: string; contents: string };
 

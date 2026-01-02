@@ -1,10 +1,8 @@
 # ${workerName} Worker Instructions
 
-This worker is responsible for ${workerRoleDescription}
-
 ## Worker-Specific Guidelines
 
-- Follow the prompt in \`prompt.md\` for detailed role instructions
+- Your role, responsibilities, and artifact requirements are defined in conductor-mcp's metadata.json
 - Use container-use environments for all operations
 - Reference \`.claude/commands/\`, \`.claude/skills/\`, and \`.claude/agents/\` for worker-specific resources
 

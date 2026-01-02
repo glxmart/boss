@@ -7,9 +7,13 @@ import { WorkerConfig, CreateEnvironmentParams, TemplateVariables } from '../typ
 
 export function mapToContainerUseConfig(
   workerConfig: WorkerConfig,
-  variables: TemplateVariables
+  variables: TemplateVariables,
+  environmentSource: string,
+  title: string
 ): CreateEnvironmentParams {
   return {
+    environment_source: environmentSource,
+    title,
     base_image: workerConfig.base_image,
     setup_commands: workerConfig.setup_commands,
     install_commands: workerConfig.install_commands,

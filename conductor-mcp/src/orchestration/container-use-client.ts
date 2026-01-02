@@ -3,7 +3,6 @@
  * Wrapper around Container-Use MCP tools
  */
 
-import { execa } from 'execa';
 import {
   ContainerUseEnvironment,
   CreateEnvironmentParams,
@@ -13,34 +12,103 @@ import {
   MergeEnvironmentParams,
   ErrorCategory
 } from '../types.js';
-import { throwConductorError, wrapError } from '../utils/error-handler.js';
+import { wrapError } from '../utils/error-handler.js';
 import { logger } from '../utils/logger.js';
+import { ContainerUseMCPClient } from './mcp-client.js';
 
 /**
- * Interface to Container-Use CLI
+ * Interface to Container-Use MCP Server
  *
- * This client communicates with container-use via CLI subprocess execution (not MCP-to-MCP).
- * Each method maps to a container-use CLI command (create, exec, write, read, merge, delete).
+ * This client communicates with container-use via MCP protocol over stdio.
+ * It starts container-use in stdio mode and uses MCP SDK to call tools.
  *
- * Future optimization: Could be replaced with direct MCP-to-MCP communication if both
- * servers are managed by the same MCP host process.
+ * Container-use workflow:
+ * 1. environment_create - Create new environment from git ref
+ * 2. environment_config - Configure base image, setup commands, env vars
+ * 3. environment_run_cmd - Execute commands in the environment
+ * 4. environment_file_* - File operations
  */
 export class ContainerUseClient {
+  private mcpClient: ContainerUseMCPClient;
+
+  constructor() {
+    this.mcpClient = new ContainerUseMCPClient();
+  }
+
   /**
    * Create a new container environment
+   * This creates the environment and then configures it with base image, setup commands, etc.
    */
   async createEnvironment(params: CreateEnvironmentParams): Promise<ContainerUseEnvironment> {
-    logger.info('Creating container environment', { base_image: params.base_image });
+    logger.info('Creating container environment', {
+      title: params.title,
+      base_image: params.base_image
+    });
 
     try {
-      const result = await this.callContainerUseTool('create_environment', {
-        config: params
+      // Step 1: Create environment
+      logger.debug('Calling environment_create', {
+        environment_source: params.environment_source,
+        title: params.title
       });
 
+      const createResult = await this.mcpClient.callTool('environment_create', {
+        environment_source: params.environment_source,
+        title: params.title,
+        explanation: `Creating environment for ${params.title}`
+      });
+
+      logger.debug('environment_create result received', {
+        resultType: typeof createResult,
+        resultKeys: createResult ? Object.keys(createResult) : [],
+        hasEnvironmentId: 'environment_id' in (createResult || {}),
+        hasId: 'id' in (createResult || {}),
+        fullResult: JSON.stringify(createResult, null, 2)
+      });
+
+      // container-use returns "id" field, not "environment_id"
+      const environmentId = createResult.environment_id || createResult.id;
+
+      if (!environmentId) {
+        logger.error('environment_create did not return environment_id', {
+          createResult,
+          resultKeys: createResult ? Object.keys(createResult) : []
+        });
+        throw new Error('Failed to create environment: no environment_id returned');
+      }
+
+      logger.info('Environment created', { environment_id: environmentId });
+
+      // Step 2: Configure environment with base image and setup
+      // Convert setup_commands and install_commands to combined setup
+      const allSetupCommands = [
+        ...params.setup_commands,
+        ...params.install_commands
+      ];
+
+      // Convert environment_variables object to env array format
+      const envs = [
+        ...Object.entries(params.environment_variables).map(([key, value]) => `${key}=${value}`),
+        ...params.secrets
+      ];
+
+      await this.mcpClient.callTool('environment_config', {
+        environment_source: params.environment_source,
+        environment_id: environmentId,
+        config: {
+          base_image: params.base_image,
+          setup_commands: allSetupCommands,
+          envs
+        },
+        explanation: `Configuring environment with ${params.base_image}`
+      });
+
+      logger.info('Environment configured', { environment_id: environmentId });
+
       return {
-        environment_id: result.environment_id,
-        title: result.title,
-        status: result.status
+        environment_id: environmentId,
+        title: params.title,
+        status: 'created'
       };
     } catch (error) {
       throw wrapError(
@@ -61,8 +129,17 @@ export class ContainerUseClient {
     });
 
     try {
-      const result = await this.callContainerUseTool('execute_in_environment', params);
-      return result || {};
+      const result = await this.mcpClient.callTool('environment_run_cmd', {
+        environment_source: params.environment_source,
+        environment_id: params.environment_id,
+        command: params.command,
+        explanation: `Executing command in environment ${params.environment_id}`
+      });
+
+      return {
+        stdout: result.stdout || result.output || '',
+        output: result.output || result.stdout || ''
+      };
     } catch (error) {
       throw wrapError(
         error,
@@ -82,11 +159,17 @@ export class ContainerUseClient {
     });
 
     try {
-      await this.callContainerUseTool('environment_file_write', params);
+      await this.mcpClient.callTool('environment_file_write', {
+        environment_source: params.environment_source,
+        environment_id: params.environment_id,
+        target_file: params.target_file,
+        contents: params.contents,
+        explanation: `Writing file ${params.target_file}`
+      });
     } catch (error) {
       throw wrapError(
         error,
-        ErrorCategory.CONTAINER_CONFIG_FAILED,
+        ErrorCategory.WORKER_EXECUTION_FAILED,
         'Failed to write file to environment'
       );
     }
@@ -95,26 +178,35 @@ export class ContainerUseClient {
   /**
    * Read file from environment
    */
-  async environmentFileRead(params: EnvironmentFileReadParams): Promise<string> {
+  async environmentFileRead(params: EnvironmentFileReadParams): Promise<{ contents: string }> {
     logger.debug('Reading file from environment', {
       environment_id: params.environment_id,
       target_file: params.target_file
     });
 
     try {
-      const result = await this.callContainerUseTool('environment_file_read', params);
-      return result.contents || '';
+      const result = await this.mcpClient.callTool('environment_file_read', {
+        environment_source: params.environment_source,
+        environment_id: params.environment_id,
+        target_file: params.target_file,
+        should_read_entire_file: true,
+        explanation: `Reading file ${params.target_file}`
+      });
+
+      return { contents: result.contents || '' };
     } catch (error) {
       throw wrapError(
         error,
-        ErrorCategory.CONTAINER_CONFIG_FAILED,
+        ErrorCategory.WORKER_EXECUTION_FAILED,
         'Failed to read file from environment'
       );
     }
   }
 
   /**
-   * Merge environment branch
+   * Merge environment changes to target branch
+   * Note: container-use doesn't have a direct merge tool via MCP
+   * This would need to use git commands or CLI merge command
    */
   async mergeEnvironment(params: MergeEnvironmentParams): Promise<void> {
     logger.info('Merging environment', {
@@ -122,51 +214,49 @@ export class ContainerUseClient {
       target_branch: params.target_branch
     });
 
-    try {
-      await this.callContainerUseTool('merge_environment', params);
-    } catch (error) {
-      throw wrapError(
-        error,
-        ErrorCategory.MERGE_FAILED,
-        'Failed to merge environment'
-      );
-    }
+    // Container-use merge is done via CLI, not MCP
+    // For now, log a warning - this needs to be handled differently
+    logger.warn('Merge via MCP not yet implemented - use container-use CLI merge command', {
+      environment_id: params.environment_id,
+      target_branch: params.target_branch
+    });
+
+    // TODO: Implement merge via CLI or find MCP equivalent
   }
 
   /**
    * Delete environment
+   * Note: container-use doesn't expose delete via MCP
+   * This would need to use the CLI delete command
    */
   async deleteEnvironment(environmentId: string): Promise<void> {
     logger.info('Deleting environment', { environment_id: environmentId });
 
-    try {
-      await this.callContainerUseTool('delete_environment', {
-        environment_id: environmentId
-      });
-    } catch (error) {
-      logger.warn('Failed to delete environment', {
-        environment_id: environmentId,
-        error: error instanceof Error ? error.message : String(error)
-      });
-      // Don't throw - environment deletion is best-effort
-    }
+    // Container-use delete is done via CLI, not MCP
+    logger.warn('Delete via MCP not implemented - environment may persist', {
+      environment_id: environmentId
+    });
+
+    // TODO: Implement delete via CLI
   }
 
   /**
    * Get environment details
    */
-  async getEnvironment(environmentId: string): Promise<ContainerUseEnvironment> {
+  async getEnvironment(environmentId: string, environmentSource: string): Promise<ContainerUseEnvironment> {
     logger.debug('Getting environment details', { environment_id: environmentId });
 
     try {
-      const result = await this.callContainerUseTool('get_environment', {
-        environment_id: environmentId
+      const result = await this.mcpClient.callTool('environment_open', {
+        environment_source: environmentSource,
+        environment_id: environmentId,
+        explanation: `Opening environment ${environmentId}`
       });
 
       return {
-        environment_id: result.environment_id,
-        title: result.title,
-        status: result.status
+        environment_id: result.environment_id || environmentId,
+        title: result.title || '',
+        status: result.status || 'unknown'
       };
     } catch (error) {
       throw wrapError(
@@ -178,193 +268,52 @@ export class ContainerUseClient {
   }
 
   /**
+   * List all environments
+   */
+  async listEnvironments(environmentSource: string): Promise<ContainerUseEnvironment[]> {
+    logger.debug('Listing environments', { environment_source: environmentSource });
+
+    try {
+      const result = await this.mcpClient.callTool('environment_list', {
+        environment_source: environmentSource,
+        explanation: 'Listing all environments'
+      });
+
+      return result.environments || [];
+    } catch (error) {
+      throw wrapError(
+        error,
+        ErrorCategory.CONTAINER_USE_UNAVAILABLE,
+        'Failed to list environments'
+      );
+    }
+  }
+
+  /**
    * Check if Container-Use is available
    */
   async checkAvailability(): Promise<boolean> {
     try {
-      // Try to call a simple Container-Use command
-      await this.callContainerUseTool('list_environments', {});
-      return true;
-    } catch {
+      // Try to connect to MCP server
+      await this.mcpClient.connect();
+
+      // List tools to verify MCP communication works
+      const tools = await this.mcpClient.listTools();
+      logger.debug('Container-use MCP tools available', { count: tools.length });
+
+      return tools.length > 0;
+    } catch (error) {
+      logger.debug('Container-use not available', {
+        error: error instanceof Error ? error.message : String(error)
+      });
       return false;
     }
   }
 
   /**
-   * Call a Container-Use CLI command
-   *
-   * This implementation uses subprocess execution to call the container-use CLI directly.
-   * The CLI provides the same functionality as the MCP server.
+   * Disconnect from MCP server
    */
-  private async callContainerUseTool(toolName: string, params: any): Promise<any> {
-    logger.debug('Calling container-use CLI', { toolName });
-
-    try {
-      // Map MCP tool names to CLI commands
-      const command = this.mapToolNameToCommand(toolName);
-      const args = this.buildCommandArgs(toolName, params);
-
-      logger.debug('Executing container-use command', {
-        command,
-        args: args.join(' ')
-      });
-
-      // Execute container-use CLI
-      const result = await execa('container-use', [command, ...args], {
-        shell: false,
-        stdio: ['pipe', 'pipe', 'pipe']
-      });
-
-      // Parse JSON output if available
-      if (result.stdout) {
-        try {
-          return JSON.parse(result.stdout);
-        } catch {
-          // Not JSON, return as string
-          return { output: result.stdout };
-        }
-      }
-
-      return {};
-    } catch (error) {
-      // Extract detailed error context from execa
-      const errorContext: Record<string, unknown> = {
-        toolName,
-        error: error instanceof Error ? error.message : String(error)
-      };
-
-      // execa errors have additional properties
-      if (error && typeof error === 'object') {
-        if ('exitCode' in error) {
-          errorContext.exitCode = error.exitCode;
-        }
-        if ('stderr' in error && error.stderr) {
-          errorContext.stderr = error.stderr;
-        }
-        if ('signal' in error && error.signal) {
-          errorContext.signal = error.signal;
-        }
-        if ('command' in error) {
-          errorContext.command = error.command;
-        }
-      }
-
-      logger.error('Container-Use CLI call failed', errorContext);
-
-      // Check if container-use is not installed
-      if (error instanceof Error && error.message.includes('ENOENT')) {
-        throwConductorError(
-          ErrorCategory.CONTAINER_USE_UNAVAILABLE,
-          'container-use CLI not found. Please install container-use: npm install -g container-use',
-          { details: error }
-        );
-      }
-
-      throw error;
-    }
-  }
-
-  /**
-   * Map MCP tool names to container-use CLI commands
-   */
-  private mapToolNameToCommand(toolName: string): string {
-    const mapping: Record<string, string> = {
-      'create_environment': 'create',
-      'execute_in_environment': 'exec',
-      'environment_file_write': 'write',
-      'environment_file_read': 'read',
-      'merge_environment': 'merge',
-      'delete_environment': 'delete',
-      'get_environment': 'get',
-      'list_environments': 'list'
-    };
-
-    return mapping[toolName] || toolName;
-  }
-
-  /**
-   * Build CLI arguments from tool parameters
-   */
-  private buildCommandArgs(toolName: string, params: any): string[] {
-    const args: string[] = [];
-
-    switch (toolName) {
-      case 'create_environment':
-        // container-use create --config <config-json>
-        if (params.config) {
-          args.push('--config', JSON.stringify(params.config));
-        }
-        if (params.title) {
-          args.push('--title', params.title);
-        }
-        break;
-
-      case 'execute_in_environment':
-        // container-use exec <env-id> <command>
-        if (params.environment_id) {
-          args.push(params.environment_id);
-        }
-        if (params.command) {
-          args.push(params.command);
-        }
-        break;
-
-      case 'environment_file_write':
-        // container-use write <env-id> <file-path> <contents>
-        if (params.environment_id) {
-          args.push(params.environment_id);
-        }
-        if (params.target_file) {
-          args.push(params.target_file);
-        }
-        if (params.contents) {
-          args.push(params.contents);
-        }
-        break;
-
-      case 'environment_file_read':
-        // container-use read <env-id> <file-path>
-        if (params.environment_id) {
-          args.push(params.environment_id);
-        }
-        if (params.target_file) {
-          args.push(params.target_file);
-        }
-        break;
-
-      case 'merge_environment':
-        // container-use merge <env-id> --target <branch>
-        if (params.environment_id) {
-          args.push(params.environment_id);
-        }
-        if (params.target_branch) {
-          args.push('--target', params.target_branch);
-        }
-        break;
-
-      case 'delete_environment':
-        // container-use delete <env-id>
-        if (params.environment_id) {
-          args.push(params.environment_id);
-        }
-        break;
-
-      case 'get_environment':
-        // container-use get <env-id>
-        if (params.environment_id) {
-          args.push(params.environment_id);
-        }
-        break;
-
-      case 'list_environments':
-        // container-use list
-        break;
-
-      default:
-        // Pass params as JSON string for unknown commands
-        args.push(JSON.stringify(params));
-    }
-
-    return args;
+  async disconnect(): Promise<void> {
+    await this.mcpClient.disconnect();
   }
 }

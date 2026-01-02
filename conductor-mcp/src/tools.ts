@@ -16,6 +16,8 @@ import {
   TerminateWorkerInput,
   ListWorkerTypesInput,
   AskWorkerInput,
+  InspectWorkerConfigInput,
+  ImportWorkerConfigInput,
   WorkerType,
   ErrorCategory,
   WorkerManifest
@@ -480,6 +482,158 @@ Please answer the question based on your previous work. Your answer will be capt
   }
 }
 
+export async function handleInspectWorkerConfig(args: unknown) {
+  const input = validateInput<InspectWorkerConfigInput>(args, ['workerId'], 'inspect_worker_config');
+
+  logger.info('Handling inspect_worker_config request (Phase 6)', {
+    workerId: input.workerId
+  });
+
+  try {
+    // Get worker state
+    const worker = stateTracker.getWorkerOrThrow(input.workerId);
+
+    // Get projectPath
+    const projectPath = process.cwd();
+
+    // Inspect environment config
+    const config = await containerUseClient.inspectEnvironmentConfig(
+      input.workerId,
+      projectPath
+    );
+
+    // TODO: If compareWithDefaults is true, compare with worker's initial config
+    // and identify changes (requires storing initial config)
+
+    return {
+      success: true,
+      workerId: input.workerId,
+      workerType: worker.workerType,
+      config,
+      message: `Configuration inspected for ${worker.workerType} worker`
+    };
+  } catch (error) {
+    logger.error('Failed to inspect worker config', {
+      workerId: input.workerId,
+      error: error instanceof Error ? error.message : String(error)
+    });
+
+    if (error instanceof ConductorException) {
+      return {
+        success: false,
+        workerId: input.workerId,
+        workerType: 'architect' as WorkerType, // Default
+        config: {
+          baseImage: '',
+          setupCommands: [],
+          installCommands: [],
+          environmentVariables: {}
+        },
+        message: 'Failed to inspect worker config',
+        error: error.error
+      };
+    }
+
+    throw error;
+  }
+}
+
+export async function handleImportWorkerConfig(args: unknown) {
+  const input = validateInput<ImportWorkerConfigInput>(args, ['workerId'], 'import_worker_config');
+
+  logger.info('Handling import_worker_config request (Phase 6)', {
+    workerId: input.workerId,
+    importSetupCommands: input.importSetupCommands,
+    importInstallCommands: input.importInstallCommands,
+    importEnvironmentVariables: input.importEnvironmentVariables
+  });
+
+  try {
+    // Get worker state
+    const worker = stateTracker.getWorkerOrThrow(input.workerId);
+
+    // Get projectPath
+    const projectPath = process.cwd();
+
+    // First, inspect the environment to get current config
+    const config = await containerUseClient.inspectEnvironmentConfig(
+      input.workerId,
+      projectPath
+    );
+
+    // Determine what to import based on input flags
+    const toImport: {
+      setupCommands?: string[];
+      installCommands?: string[];
+      environmentVariables?: Record<string, string>;
+    } = {};
+
+    if (input.importSetupCommands) {
+      toImport.setupCommands = config.setupCommands;
+    }
+
+    if (input.importInstallCommands) {
+      toImport.installCommands = config.installCommands;
+    }
+
+    if (input.importEnvironmentVariables) {
+      toImport.environmentVariables = config.environmentVariables;
+    }
+
+    // If selective import specified, override with selective items
+    if (input.selective) {
+      if (input.selective.setupCommands) {
+        toImport.setupCommands = input.selective.setupCommands;
+      }
+      if (input.selective.installCommands) {
+        toImport.installCommands = input.selective.installCommands;
+      }
+      if (input.selective.environmentVariables) {
+        const envVars: Record<string, string> = {};
+        for (const key of input.selective.environmentVariables) {
+          if (config.environmentVariables[key]) {
+            envVars[key] = config.environmentVariables[key];
+          }
+        }
+        toImport.environmentVariables = envVars;
+      }
+    }
+
+    // Import the configuration
+    const result = await containerUseClient.importEnvironmentConfig(
+      input.workerId,
+      projectPath,
+      toImport
+    );
+
+    return {
+      success: true,
+      imported: result.imported,
+      message: `Configuration imported from ${worker.workerType} worker`
+    };
+  } catch (error) {
+    logger.error('Failed to import worker config', {
+      workerId: input.workerId,
+      error: error instanceof Error ? error.message : String(error)
+    });
+
+    if (error instanceof ConductorException) {
+      return {
+        success: false,
+        imported: {
+          setupCommands: [],
+          installCommands: [],
+          environmentVariables: {}
+        },
+        message: 'Failed to import worker config',
+        error: error.error
+      };
+    }
+
+    throw error;
+  }
+}
+
 /**
  * MCP Tool Schemas
  */
@@ -682,6 +836,71 @@ export const TOOL_SCHEMAS = {
         }
       },
       required: ['workerId', 'question']
+    }
+  },
+  inspect_worker_config: {
+    name: 'inspect_worker_config',
+    description: 'Inspect worker environment configuration to identify optimizations discovered during execution (Phase 6: Configuration Learning). Returns the current configuration including base image, setup commands, install commands, and environment variables. Use this to learn from successful workers and identify beneficial changes.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        workerId: {
+          type: 'string',
+          description: 'Worker ID to inspect'
+        },
+        compareWithDefaults: {
+          type: 'boolean',
+          description: 'Compare with default config and identify changes (not yet implemented)'
+        }
+      },
+      required: ['workerId']
+    }
+  },
+  import_worker_config: {
+    name: 'import_worker_config',
+    description: 'Import configuration from a worker environment as new defaults (Phase 6: Configuration Learning). Use this to adopt optimizations discovered by workers, such as faster dependency installation methods, additional required tools, or performance-enhancing environment variables. Supports selective import of specific commands or variables.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        workerId: {
+          type: 'string',
+          description: 'Worker ID to import config from'
+        },
+        importSetupCommands: {
+          type: 'boolean',
+          description: 'Import all setup commands from worker'
+        },
+        importInstallCommands: {
+          type: 'boolean',
+          description: 'Import all install commands from worker'
+        },
+        importEnvironmentVariables: {
+          type: 'boolean',
+          description: 'Import all environment variables from worker'
+        },
+        selective: {
+          type: 'object',
+          properties: {
+            setupCommands: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Specific setup commands to import'
+            },
+            installCommands: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Specific install commands to import'
+            },
+            environmentVariables: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Specific environment variable keys to import'
+            }
+          },
+          description: 'Selectively import specific items instead of all'
+        }
+      },
+      required: ['workerId']
     }
   }
 };

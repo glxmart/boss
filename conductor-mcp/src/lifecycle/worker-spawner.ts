@@ -23,6 +23,7 @@ import {
 } from '../types.js';
 import { logger } from '../utils/logger.js';
 import { ConductorException } from '../utils/error-handler.js';
+import { logPerformanceMetrics } from '../utils/performance-metrics.js';
 
 /**
  * Create a WorkerManifest from a WorkerResult
@@ -182,7 +183,32 @@ export class WorkerSpawner {
         status: manifest.status
       });
 
-      // 8. Return worker details
+      // 8. Log performance metrics (Phase 6)
+      // TODO: Add detailed timing instrumentation for accurate metrics
+      // For now, log basic metrics with placeholder timing values
+      const endTime = new Date();
+      const totalTimeMs = endTime.getTime() - new Date(workerState.startedAt).getTime();
+
+      await logPerformanceMetrics(projectPath, {
+        workerId: environmentId,
+        workerType: input.workerType,
+        startedAt: workerState.startedAt,
+        completedAt: endTime.toISOString(),
+        containerStartTime: 0, // TODO: Instrument container creation timing
+        setupCommandsTime: 0,   // TODO: Instrument setup commands timing
+        installCommandsTime: 0, // TODO: Instrument install commands timing
+        configurationTime: 0,   // TODO: Instrument configuration timing
+        taskExecutionTime: totalTimeMs, // Approximate for now
+        totalTime: totalTimeMs,
+        usedResumeOptimization: false, // Normal spawn, not resume
+        wasPartOfParallelBatch: false, // Will be set by parallel spawner
+        success: manifest.status === 'completed',
+        artifactsCreated: workerResult.artifacts.length,
+        decisionsCount: workerResult.decisions.length,
+        issuesCount: workerResult.issues.length
+      });
+
+      // 9. Return worker details
       return {
         success: true,
         workerId: environmentId,
@@ -397,7 +423,30 @@ export class WorkerSpawner {
         newArtifacts: workerResult.artifacts.length
       });
 
-      // 8. Return worker details (same format as spawn)
+      // 8. Log performance metrics (Phase 6 - Resume optimization)
+      const endTime = new Date();
+      const totalTimeMs = endTime.getTime() - new Date(existingWorker.startedAt).getTime();
+
+      await logPerformanceMetrics(projectPath, {
+        workerId: environmentId,
+        workerType,
+        startedAt: existingWorker.startedAt,
+        completedAt: endTime.toISOString(),
+        containerStartTime: 0, // Skipped - resume doesn't create container
+        setupCommandsTime: 0,   // Skipped
+        installCommandsTime: 0, // Skipped
+        configurationTime: 0,   // Skipped
+        taskExecutionTime: totalTimeMs,
+        totalTime: totalTimeMs,
+        usedResumeOptimization: true, // Phase 4 optimization
+        wasPartOfParallelBatch: false,
+        success: updatedManifest.status === 'completed',
+        artifactsCreated: workerResult.artifacts.length,
+        decisionsCount: workerResult.decisions.length,
+        issuesCount: workerResult.issues.length
+      });
+
+      // 9. Return worker details (same format as spawn)
       return {
         success: true,
         workerId: environmentId,

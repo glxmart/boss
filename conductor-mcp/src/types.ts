@@ -203,6 +203,53 @@ export interface AskWorkerOutput {
   error?: ConductorError;
 }
 
+export interface InspectWorkerConfigInput {
+  workerId: string;
+  compareWithDefaults?: boolean; // Compare with default config
+}
+
+export interface InspectWorkerConfigOutput {
+  success: boolean;
+  workerId: string;
+  workerType: WorkerType;
+  config: {
+    baseImage: string;
+    setupCommands: string[];
+    installCommands: string[];
+    environmentVariables: Record<string, string>;
+  };
+  changes?: {
+    addedCommands: string[];
+    addedVariables: Record<string, string>;
+    modifiedVariables: Record<string, { from: string; to: string }>;
+  };
+  recommendations?: string[];
+  message: string;
+}
+
+export interface ImportWorkerConfigInput {
+  workerId: string;
+  importSetupCommands?: boolean;
+  importInstallCommands?: boolean;
+  importEnvironmentVariables?: boolean;
+  selective?: {
+    setupCommands?: string[];
+    installCommands?: string[];
+    environmentVariables?: string[];
+  };
+}
+
+export interface ImportWorkerConfigOutput {
+  success: boolean;
+  imported: {
+    setupCommands: string[];
+    installCommands: string[];
+    environmentVariables: Record<string, string>;
+  };
+  message: string;
+  error?: ConductorError;
+}
+
 // Error Types
 
 export enum ErrorCategory {
@@ -360,4 +407,31 @@ export interface WorkerResult {
   // Status indication
   workComplete: boolean;             // Is this task complete?
   nextSteps?: string[];              // What should happen next?
+}
+
+// Performance Metrics (Phase 6)
+export interface PerformanceMetrics {
+  workerId: string;
+  workerType: WorkerType;
+  startedAt: string;
+  completedAt: string;
+
+  // Timing breakdown
+  containerStartTime: number;        // ms
+  setupCommandsTime: number;         // ms
+  installCommandsTime: number;       // ms
+  configurationTime: number;         // ms
+  taskExecutionTime: number;         // ms
+  totalTime: number;                 // ms
+
+  // Optimization tracking
+  usedResumeOptimization: boolean;   // Phase 4
+  wasPartOfParallelBatch: boolean;   // Phase 5
+  batchSize?: number;                // Phase 5
+
+  // Success metrics
+  success: boolean;
+  artifactsCreated: number;
+  decisionsCount: number;
+  issuesCount: number;
 }

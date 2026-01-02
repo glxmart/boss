@@ -19,7 +19,9 @@ import {
   handleListWorkerTypes,
   handleListActiveWorkers,
   handleConductorHealth,
-  handleAskWorker
+  handleAskWorker,
+  handleInspectWorkerConfig,
+  handleImportWorkerConfig
 } from './tools.js';
 import { logger } from './utils/logger.js';
 import { ConductorException } from './utils/error-handler.js';
@@ -36,7 +38,9 @@ const TOOL_HANDLERS: Record<string, ToolHandler> = {
   list_worker_types: handleListWorkerTypes,
   list_active_workers: handleListActiveWorkers,
   conductor_health: handleConductorHealth,
-  ask_worker: handleAskWorker
+  ask_worker: handleAskWorker,
+  inspect_worker_config: handleInspectWorkerConfig,
+  import_worker_config: handleImportWorkerConfig
 };
 
 export class ConductorServer {

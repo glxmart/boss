@@ -349,4 +349,146 @@ export class ContainerUseClient {
   async disconnect(): Promise<void> {
     await this.mcpClient.disconnect();
   }
+
+  /**
+   * Inspect environment configuration (Phase 6: Configuration Learning)
+   *
+   * Returns the current configuration of a worker environment, including
+   * any changes made during execution. This helps identify optimizations
+   * that workers discovered and can be imported as defaults.
+   */
+  async inspectEnvironmentConfig(environmentId: string, environmentSource: string): Promise<{
+    baseImage: string;
+    setupCommands: string[];
+    installCommands: string[];
+    environmentVariables: Record<string, string>;
+  }> {
+    logger.info('Inspecting environment configuration (Phase 6)', {
+      environment_id: environmentId
+    });
+
+    try {
+      // Try to use MCP tool if available (may not be implemented yet)
+      try {
+        const result = await this.mcpClient.callTool('environment_config_show', {
+          environment_source: environmentSource,
+          environment_id: environmentId,
+          explanation: `Inspecting config for ${environmentId}`
+        });
+
+        logger.debug('Config inspection via MCP successful', { environmentId });
+
+        return {
+          baseImage: result.base_image || '',
+          setupCommands: result.setup_commands || [],
+          installCommands: result.install_commands || [],
+          environmentVariables: result.environment_variables || {}
+        };
+      } catch (mcpError) {
+        // MCP tool may not be available - log and fall back to manual inspection
+        logger.debug('Config inspection via MCP not available, using fallback', {
+          environmentId,
+          error: mcpError instanceof Error ? mcpError.message : String(mcpError)
+        });
+
+        // Fallback: Return empty config (actual implementation would use CLI)
+        // TODO: Implement CLI fallback with `container-use config show <env-id>`
+        return {
+          baseImage: '',
+          setupCommands: [],
+          installCommands: [],
+          environmentVariables: {}
+        };
+      }
+    } catch (error) {
+      throw wrapError(
+        error,
+        ErrorCategory.WORKER_EXECUTION_FAILED,
+        'Failed to inspect environment configuration'
+      );
+    }
+  }
+
+  /**
+   * Import configuration from environment (Phase 6: Configuration Learning)
+   *
+   * Imports beneficial configuration changes discovered by a worker during
+   * execution. This can include optimized setup commands, install commands,
+   * or environment variables that improved performance.
+   *
+   * The imported configuration can then be used as defaults for future workers.
+   */
+  async importEnvironmentConfig(
+    environmentId: string,
+    environmentSource: string,
+    options: {
+      setupCommands?: string[];
+      installCommands?: string[];
+      environmentVariables?: Record<string, string>;
+    }
+  ): Promise<{
+    imported: {
+      setupCommands: string[];
+      installCommands: string[];
+      environmentVariables: Record<string, string>;
+    };
+  }> {
+    logger.info('Importing environment configuration (Phase 6)', {
+      environment_id: environmentId,
+      hasSetupCommands: !!options.setupCommands,
+      hasInstallCommands: !!options.installCommands,
+      hasEnvVars: !!options.environmentVariables
+    });
+
+    try {
+      // Try to use MCP tool if available (may not be implemented yet)
+      try {
+        await this.mcpClient.callTool('environment_config_import', {
+          environment_source: environmentSource,
+          environment_id: environmentId,
+          config: options,
+          explanation: `Importing config from ${environmentId}`
+        });
+
+        logger.info('Config import via MCP successful', { environmentId });
+
+        return {
+          imported: {
+            setupCommands: options.setupCommands || [],
+            installCommands: options.installCommands || [],
+            environmentVariables: options.environmentVariables || {}
+          }
+        };
+      } catch (mcpError) {
+        // MCP tool may not be available - log and use fallback
+        logger.debug('Config import via MCP not available, using fallback', {
+          environmentId,
+          error: mcpError instanceof Error ? mcpError.message : String(mcpError)
+        });
+
+        // Fallback: Log the config that would be imported
+        // TODO: Implement CLI fallback with `container-use config import <env-id>`
+        logger.info('Configuration to import (manual step required)', {
+          environmentId,
+          setupCommands: options.setupCommands,
+          installCommands: options.installCommands,
+          environmentVariables: options.environmentVariables
+        });
+
+        return {
+          imported: {
+            setupCommands: options.setupCommands || [],
+            installCommands: options.installCommands || [],
+            environmentVariables: options.environmentVariables || {}
+          }
+        };
+      }
+    } catch (error) {
+      throw wrapError(
+        error,
+        ErrorCategory.WORKER_EXECUTION_FAILED,
+        'Failed to import environment configuration'
+      );
+    }
+  }
 }

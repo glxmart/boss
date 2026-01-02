@@ -1,0 +1,60 @@
+{
+  "workerType": "technical-writer",
+  "phase": "ongoing",
+  "description": "Creates comprehensive documentation for users, developers, and operators",
+  "primaryCommand": "/speckit.checklist",
+  "inputs": {
+    "required": [
+      "spec.md from Spec Writer",
+      "Implementation code from Developers"
+    ],
+    "optional": ["plan.md from Planner", "API contracts"]
+  },
+  "outputs": {
+    "required": [
+      {
+        "path": "docs/api/**/*.md",
+        "type": "markdown",
+        "description": "API documentation with examples",
+        "constraints": {
+          "examplesTested": true
+        }
+      },
+      {
+        "path": "docs/user-guide.md",
+        "type": "markdown",
+        "description": "User guide and tutorials"
+      },
+      {
+        "path": "docs/developer-guide.md",
+        "type": "markdown",
+        "description": "Developer documentation (architecture, patterns)"
+      },
+      {
+        "path": ".specify/specs/[feature]/quickstart.md",
+        "type": "markdown",
+        "description": "Setup and quickstart guide"
+      }
+    ],
+    "optional": []
+  },
+  "constraints": {
+    "documentationAsCode": "Documentation must be version-controlled",
+    "examplesTested": "All code examples must be tested and working",
+    "clarity": "Documentation must be clear, concise, and accessible",
+    "completeness": "All features, APIs, and processes must be documented"
+  },
+  "decisionTypes": [
+    "Documentation structure and organization",
+    "Which examples to include",
+    "Documentation depth and detail level",
+    "User vs. developer documentation split"
+  ],
+  "collaboratesWith": [
+    "developer-*",
+    "product-owner",
+    "devops-engineer"
+  ],
+  "workflowPosition": "ongoing",
+  "blockers": ["Incomplete implementation", "Missing API contracts"]
+}

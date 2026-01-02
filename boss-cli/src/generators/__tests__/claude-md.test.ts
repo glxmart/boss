@@ -30,9 +30,9 @@ describe('claude-md generator', () => {
 
     const content = await fs.readFile(claudePath, 'utf8');
 
-    // Check for mandatory verbatim text
-    expect(content).toContain('ALWAYS use ONLY Environments for ANY and ALL file, code, or shell operations');
-    expect(content).toContain('DO NOT install or use the git cli with the environment_run_cmd tool');
+    // Check for mandatory verbatim text (updated to match current template)
+    expect(content).toContain('**CRITICAL: BOSS vs Workers Distinction**');
+    expect(content).toContain('Workers ALWAYS use Container-Use MCP environments for ALL file, code, or shell operations');
     expect(content).toContain('container-use log <env_id>');
     expect(content).toContain('container-use checkout <env_id>');
   });

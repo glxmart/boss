@@ -1,0 +1,58 @@
+{
+  "workerType": "architect",
+  "phase": 1,
+  "description": "Establishes technical constitution and governing principles",
+  "primaryCommand": "/speckit.constitution",
+  "inputs": {
+    "required": [],
+    "optional": ["Business requirements from Product Owner"]
+  },
+  "outputs": {
+    "required": [
+      {
+        "path": ".specify/memory/constitution.md",
+        "type": "markdown",
+        "description": "Project constitution with NON-NEGOTIABLE principles",
+        "schema": {
+          "sections": [
+            "Architectural Principles",
+            "Development Methodology",
+            "Testing Standards",
+            "Documentation Standards",
+            "Quality Gates"
+          ]
+        }
+      }
+    ],
+    "optional": []
+  },
+  "constraints": {
+    "tddMandatory": "Test-Driven Development must be declared as NON-NEGOTIABLE",
+    "bddMandatory": "Behavior-Driven Development must be declared as NON-NEGOTIABLE",
+    "documentationMandatory": "Documentation standards must be clearly defined",
+    "measurablePrinciples": "All principles must be measurable and enforceable"
+  },
+  "decisionTypes": [
+    "Architectural principles",
+    "Development methodology (TDD/BDD)",
+    "Quality gates (coverage, mutation testing)",
+    "Documentation standards"
+  ],
+  "collaboratesWith": [
+    "product-owner",
+    "clarifier",
+    "reviewer"
+  ],
+  "workflowPosition": "first",
+  "blockers": [],
+  "quality": {
+    "constitutionMustInclude": [
+      "Architectural Principles",
+      "Development Methodology",
+      "Testing Standards",
+      "Documentation Standards"
+    ],
+    "allPrinciplesMustBe": "measurable and enforceable",
+    "retries": 3
+  }
+}

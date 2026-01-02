@@ -8,6 +8,13 @@
   "bin": {
     "conductor-mcp": "dist/bin.js"
   },
+  "files": [
+    "dist",
+    "worker-configs",
+    "README.md",
+    "BOSS-GUIDE.md",
+    "INSTALLATION.md"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/bin.ts stdio",
@@ -18,10 +25,12 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
+    "ajv": "^8.12.0",
     "execa": "^9.6.1"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "@vitest/coverage-v8": "^2.1.9",
     "tsx": "^4.19.0",
     "typescript": "^5.6.0",
     "vitest": "^2.1.0"

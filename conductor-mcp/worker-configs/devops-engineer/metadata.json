@@ -1,0 +1,56 @@
+{
+  "workerType": "devops-engineer",
+  "phase": "ongoing",
+  "description": "Sets up CI/CD, infrastructure, monitoring, and deployment",
+  "primaryCommand": "/speckit.analyze",
+  "inputs": {
+    "required": ["plan.md from Planner"],
+    "optional": ["Implementation code from Developers"]
+  },
+  "outputs": {
+    "required": [
+      {
+        "path": ".github/workflows/*.yml",
+        "type": "yaml",
+        "description": "CI/CD pipeline configurations"
+      },
+      {
+        "path": "terraform/",
+        "type": "directory",
+        "description": "Infrastructure as code"
+      },
+      {
+        "path": ".specify/specs/[feature]/quickstart.md",
+        "type": "markdown",
+        "description": "Deployment instructions (updated)"
+      },
+      {
+        "path": "monitoring/",
+        "type": "directory",
+        "description": "Monitoring and logging configs"
+      }
+    ],
+    "optional": []
+  },
+  "constraints": {
+    "infrastructureAsCode": "All infrastructure must be version-controlled",
+    "cicdAutomation": "All deployments must be automated",
+    "monitoring": "Comprehensive logging, metrics, alerting required",
+    "securityScanning": "Security scanning in CI/CD required"
+  },
+  "decisionTypes": [
+    "Infrastructure architecture",
+    "CI/CD pipeline structure",
+    "Deployment strategy (blue-green, canary, etc.)",
+    "Monitoring and alerting strategy"
+  ],
+  "collaboratesWith": [
+    "planner",
+    "developer-*",
+    "tester",
+    "security-engineer",
+    "consolidator"
+  ],
+  "workflowPosition": "ongoing",
+  "blockers": ["Missing infrastructure requirements in plan.md"]
+}

@@ -4,7 +4,7 @@
  */
 
 import { loadWorkerConfig } from '../config/worker-loader.js';
-import { mapToContainerUseConfig, assembleTaskPrompt } from '../config/container-mapper.js';
+import { mapToContainerUseConfig } from '../config/container-mapper.js';
 import { ContainerUseClient } from '../orchestration/container-use-client.js';
 import { TaskExecutor } from '../orchestration/task-executor.js';
 import { EnvironmentManager } from './environment-manager.js';
@@ -14,10 +14,53 @@ import {
   SpawnWorkerOutput,
   ExecuteTaskInput,
   ExecuteTaskOutput,
-  WorkerState
+  WorkerState,
+  WorkerManifest,
+  WorkerResult,
+  WorkerType
 } from '../types.js';
 import { logger } from '../utils/logger.js';
 import { ConductorException } from '../utils/error-handler.js';
+
+/**
+ * Create a WorkerManifest from a WorkerResult
+ */
+function createManifestFromResult(
+  workerId: string,
+  workerType: WorkerType,
+  result: WorkerResult,
+  startedAt: string,
+  existingManifest?: WorkerManifest | null
+): WorkerManifest {
+  const now = new Date().toISOString();
+  const isComplete = result.workComplete;
+
+  return {
+    workerId,
+    workerType,
+    status: isComplete ? 'completed' : 'running',
+    startedAt: existingManifest?.startedAt || startedAt,
+    lastUpdatedAt: now,
+    completedAt: isComplete ? now : undefined,
+    artifacts: existingManifest
+      ? [...existingManifest.artifacts, ...result.artifacts]
+      : result.artifacts,
+    decisions: existingManifest
+      ? [...existingManifest.decisions, ...result.decisions]
+      : result.decisions,
+    issues: existingManifest
+      ? [...existingManifest.issues, ...result.issues]
+      : result.issues,
+    recommendations: result.recommendations,
+    tasksCompleted: existingManifest
+      ? [...existingManifest.tasksCompleted, ...result.tasksCompleted]
+      : result.tasksCompleted,
+    principlesEstablished: result.principlesEstablished || existingManifest?.principlesEstablished,
+    requirementsGathered: result.requirementsGathered || existingManifest?.requirementsGathered,
+    testsCreated: result.testsCreated || existingManifest?.testsCreated,
+    coverageAchieved: result.coverageAchieved || existingManifest?.coverageAchieved
+  };
+}
 
 export class WorkerSpawner {
   private containerUseClient: ContainerUseClient;
@@ -47,6 +90,8 @@ export class WorkerSpawner {
       projectPath
     });
 
+    let environmentId: string | undefined;
+
     try {
       // 1. Load worker configuration
       const workerConfig = await loadWorkerConfig(input.workerType, projectPath);
@@ -57,7 +102,7 @@ export class WorkerSpawner {
       });
 
       const env = await this.containerUseClient.createEnvironment(containerConfig);
-      const environmentId = env.environment_id;
+      environmentId = env.environment_id;
       const branch = `container-use/${environmentId}`;
 
       // Register worker in state tracker (status: spawning)
@@ -79,49 +124,89 @@ export class WorkerSpawner {
         input.workerType
       );
 
-      // 4. Assemble task prompt
-      const fullPrompt = assembleTaskPrompt(workerConfig.prompt, input.taskPrompt);
+      // 4. Execute task with claude-code using JSON Schema validation
+      // Worker context (role, responsibilities, methodology) is in CLAUDE.md
+      // Path: /workdir/.boss/workers/${workerType}/.claude/CLAUDE.md (written by EnvironmentManager)
+      // This isolated location prevents merge conflicts when parallel workers run
+      const workerResult = await this.taskExecutor.executeTaskWithSchema(environmentId, input.taskPrompt);
 
-      // 5. Execute task with claude-code
-      await this.taskExecutor.executeTask(environmentId, fullPrompt);
+      // 5. Create manifest from worker's structured output
+      const manifest = createManifestFromResult(
+        environmentId,
+        input.workerType,
+        workerResult,
+        workerState.startedAt
+      );
 
-      // 6. Update worker state to running
+      // Write manifest to worker's environment
+      await this.taskExecutor.updateWorkerManifest(environmentId, manifest);
+
+      // 7. Update worker state in tracker
       this.stateTracker.updateWorkerStatus(environmentId, {
-        status: 'running',
-        lastTaskExecutedAt: new Date().toISOString()
+        status: manifest.status,
+        lastTaskExecutedAt: new Date().toISOString(),
+        artifacts: workerResult.artifacts.map(a => a.path)
       });
 
       logger.info('Worker spawned successfully', {
         workerId: environmentId,
         workerType: input.workerType,
-        branch
+        branch,
+        status: manifest.status
       });
 
-      // 7. Return worker details
+      // 8. Return worker details
       return {
         success: true,
         workerId: environmentId,
         workerType: input.workerType,
         branch,
-        status: 'running',
+        status: manifest.status,
         message: `${input.workerType} worker spawned successfully`,
         executionDetails: {
           environmentId,
           containerConfigApplied: true,
           claudeConfigured: true,
-          taskStartedAt: new Date().toISOString()
+          taskStartedAt: workerState.startedAt
         }
       };
     } catch (error) {
       logger.error('Failed to spawn worker', {
         workerType: input.workerType,
+        environmentId,
         error: error instanceof Error ? error.message : String(error)
       });
+
+      // CRITICAL: Cleanup orphaned container if it was created
+      if (environmentId) {
+        logger.warn('Cleaning up orphaned container after spawn failure', {
+          environmentId,
+          workerType: input.workerType
+        });
+
+        try {
+          // Delete the environment to prevent container leak
+          await this.containerUseClient.deleteEnvironment({ environment_id: environmentId });
+          logger.info('Orphaned container cleaned up successfully', { environmentId });
+        } catch (cleanupError) {
+          // Log cleanup failure but don't throw - original error is more important
+          logger.error('Failed to cleanup orphaned container', {
+            environmentId,
+            cleanupError: cleanupError instanceof Error ? cleanupError.message : String(cleanupError)
+          });
+        }
+
+        // Update state tracker to mark worker as failed
+        this.stateTracker.updateWorkerStatus(environmentId, {
+          status: 'failed',
+          lastTaskExecutedAt: new Date().toISOString()
+        });
+      }
 
       if (error instanceof ConductorException) {
         return {
           success: false,
-          workerId: '',
+          workerId: environmentId || '',
           workerType: input.workerType,
           branch: '',
           status: 'failed',
@@ -135,7 +220,7 @@ export class WorkerSpawner {
   }
 
   /**
-   * Execute additional task in existing worker
+   * Execute additional task in existing worker (NEW APPROACH with schema)
    */
   async executeTask(input: ExecuteTaskInput): Promise<ExecuteTaskOutput> {
     logger.info('Executing task in worker', {
@@ -146,24 +231,41 @@ export class WorkerSpawner {
       // Get worker state
       const worker = this.stateTracker.getWorkerOrThrow(input.workerId);
 
-      // Execute task
-      await this.taskExecutor.executeTask(input.workerId, input.taskPrompt);
+      // Get existing manifest (if any)
+      const existingManifest = await this.taskExecutor.getWorkerManifest(input.workerId);
 
-      // Update worker state
+      // Execute task with schema validation (continue existing session)
+      const workerResult = await this.taskExecutor.executeTaskWithSchema(
+        input.workerId,
+        input.taskPrompt,
+        true
+      );
+
+      // Create updated manifest (merges with existing)
+      const updatedManifest = createManifestFromResult(
+        input.workerId,
+        worker.workerType,
+        workerResult,
+        worker.startedAt,
+        existingManifest
+      );
+
+      // Write updated manifest
+      await this.taskExecutor.updateWorkerManifest(input.workerId, updatedManifest);
+
+      // Update worker state in tracker
       this.stateTracker.updateWorkerStatus(input.workerId, {
-        lastTaskExecutedAt: new Date().toISOString()
+        status: updatedManifest.status,
+        lastTaskExecutedAt: new Date().toISOString(),
+        artifacts: updatedManifest.artifacts.map(a => a.path)
       });
-
-      // Get execution log and artifacts (if available)
-      const executionLog = await this.taskExecutor.getExecutionLog(input.workerId);
-      const artifacts = await this.taskExecutor.getArtifacts(input.workerId);
 
       return {
         success: true,
         workerId: input.workerId,
-        status: worker.status,
-        executionLog,
-        artifacts
+        status: updatedManifest.status,
+        executionLog: `Task executed at ${new Date().toISOString()}`,
+        artifacts: updatedManifest.artifacts.map(a => a.path)
       };
     } catch (error) {
       logger.error('Failed to execute task', {

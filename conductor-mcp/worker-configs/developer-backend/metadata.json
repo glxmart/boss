@@ -1,0 +1,76 @@
+{
+  "workerType": "developer-backend",
+  "phase": 7,
+  "description": "Implements backend features with TDD+BDD, API contracts, and security",
+  "primaryCommand": "/speckit.implement",
+  "inputs": {
+    "required": [
+      "tasks.md from Planner",
+      "spec.md from Spec Writer",
+      "API contracts from Planner"
+    ],
+    "optional": ["data-model.md from Planner"]
+  },
+  "outputs": {
+    "required": [
+      {
+        "path": "src/api/**",
+        "type": "code",
+        "description": "API endpoint implementations"
+      },
+      {
+        "path": "src/services/**",
+        "type": "code",
+        "description": "Business logic services"
+      },
+      {
+        "path": "src/models/**",
+        "type": "code",
+        "description": "Data models and schemas"
+      },
+      {
+        "path": "tests/api/**",
+        "type": "test",
+        "description": "BDD + unit tests (Given/When/Then format)",
+        "constraints": {
+          "coverage": "≥80%",
+          "mutationScore": "≥80%",
+          "bddFormat": "Given/When/Then"
+        }
+      },
+      {
+        "path": "docs/api/**",
+        "type": "markdown",
+        "description": "API documentation with examples"
+      }
+    ],
+    "optional": []
+  },
+  "constraints": {
+    "tdd": "Write tests before implementation (red → green → refactor)",
+    "contracts": "Follow API contracts from Planner",
+    "performance": "Consider latency, throughput, and scalability",
+    "security": "Auth, input validation, encryption, OWASP Top 10"
+  },
+  "decisionTypes": [
+    "API design and endpoint structure",
+    "Business logic organization",
+    "Data model implementation",
+    "Error handling strategy"
+  ],
+  "collaboratesWith": [
+    "planner",
+    "developer-frontend",
+    "tester",
+    "code-reviewer",
+    "devops-engineer",
+    "security-engineer",
+    "technical-writer"
+  ],
+  "workflowPosition": "implementation",
+  "blockers": [
+    "Missing API contracts",
+    "Incomplete data model",
+    "Incomplete tasks.md"
+  ]
+}

@@ -9,6 +9,7 @@
       "Bash(curl:*)",
       "Bash(pnpm:*)",
       "Bash(npm:*)",
+      "Bash(npx vitest:*)",
       "Bash(git commit:*)",
       "Bash(git merge:*)",
       "Bash(git pull:*)",
@@ -35,7 +36,9 @@
       "Edit(.*/**)",
       "Delete(*)",
       "Delete(**)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Search(pattern:*)",
+      "Bash(wc:*)"
     ],
     "deny": [
       "Bash(rm //etc/**)",

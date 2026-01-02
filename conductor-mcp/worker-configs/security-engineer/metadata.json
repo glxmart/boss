@@ -1,0 +1,56 @@
+{
+  "workerType": "security-engineer",
+  "phase": "ongoing",
+  "description": "Performs security reviews, threat modeling, and vulnerability scanning",
+  "primaryCommand": "/speckit.checklist",
+  "inputs": {
+    "required": [
+      "plan.md from Planner",
+      "Implementation code from Developers"
+    ],
+    "optional": [".specify/memory/constitution.md"]
+  },
+  "outputs": {
+    "required": [
+      {
+        "path": ".specify/specs/[feature]/checklists/security.md",
+        "type": "markdown",
+        "description": "Security checklist and threat model",
+        "schema": {
+          "sections": [
+            "Threat Model",
+            "Security Requirements",
+            "OWASP Top 10 Compliance",
+            "Vulnerabilities"
+          ]
+        }
+      },
+      {
+        "path": "security-scan-report.html",
+        "type": "report",
+        "description": "Vulnerability scan report"
+      }
+    ],
+    "optional": []
+  },
+  "constraints": {
+    "threatModeling": "Required during planning phase",
+    "owaspCompliance": "OWASP Top 10 checks required",
+    "zeroTolerance": "Critical vulnerabilities must be fixed before approval"
+  },
+  "decisionTypes": [
+    "Security requirements and threat model",
+    "Vulnerability remediation priority",
+    "Security testing approach",
+    "Compliance requirements"
+  ],
+  "collaboratesWith": [
+    "architect",
+    "planner",
+    "developer-*",
+    "devops-engineer",
+    "code-reviewer"
+  ],
+  "workflowPosition": "ongoing",
+  "blockers": ["Missing threat model in plan.md"]
+}

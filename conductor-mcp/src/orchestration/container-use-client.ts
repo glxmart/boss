@@ -17,12 +17,13 @@ import { throwConductorError, wrapError } from '../utils/error-handler.js';
 import { logger } from '../utils/logger.js';
 
 /**
- * Interface to Container-Use MCP
+ * Interface to Container-Use CLI
  *
- * NOTE: This is a simplified interface. In a real MCP setup, calling another MCP server
- * would be done through the MCP client/host that manages both servers. For now, this
- * interface defines the contract, and the actual implementation would depend on how
- * the MCP servers are connected (e.g., through a host process or subprocess calls).
+ * This client communicates with container-use via CLI subprocess execution (not MCP-to-MCP).
+ * Each method maps to a container-use CLI command (create, exec, write, read, merge, delete).
+ *
+ * Future optimization: Could be replaced with direct MCP-to-MCP communication if both
+ * servers are managed by the same MCP host process.
  */
 export class ContainerUseClient {
   /**
@@ -32,15 +33,6 @@ export class ContainerUseClient {
     logger.info('Creating container environment', { base_image: params.base_image });
 
     try {
-      // TODO: Actual implementation would call Container-Use MCP
-      // For now, this is a placeholder that shows the interface
-
-      // In a real implementation, this would:
-      // 1. Call mcp_container-use_create_environment via the MCP host
-      // 2. Pass the configuration parameters
-      // 3. Return the environment_id
-
-      // Placeholder implementation:
       const result = await this.callContainerUseTool('create_environment', {
         config: params
       });
@@ -62,14 +54,15 @@ export class ContainerUseClient {
   /**
    * Execute command in environment
    */
-  async executeInEnvironment(params: ExecuteInEnvironmentParams): Promise<void> {
+  async executeInEnvironment(params: ExecuteInEnvironmentParams): Promise<{ stdout?: string; output?: string }> {
     logger.debug('Executing in environment', {
       environment_id: params.environment_id,
       command: params.command.substring(0, 100) + '...'
     });
 
     try {
-      await this.callContainerUseTool('execute_in_environment', params);
+      const result = await this.callContainerUseTool('execute_in_environment', params);
+      return result || {};
     } catch (error) {
       throw wrapError(
         error,
@@ -234,10 +227,29 @@ export class ContainerUseClient {
 
       return {};
     } catch (error) {
-      logger.error('Container-Use CLI call failed', {
+      // Extract detailed error context from execa
+      const errorContext: Record<string, unknown> = {
         toolName,
         error: error instanceof Error ? error.message : String(error)
-      });
+      };
+
+      // execa errors have additional properties
+      if (error && typeof error === 'object') {
+        if ('exitCode' in error) {
+          errorContext.exitCode = error.exitCode;
+        }
+        if ('stderr' in error && error.stderr) {
+          errorContext.stderr = error.stderr;
+        }
+        if ('signal' in error && error.signal) {
+          errorContext.signal = error.signal;
+        }
+        if ('command' in error) {
+          errorContext.command = error.command;
+        }
+      }
+
+      logger.error('Container-Use CLI call failed', errorContext);
 
       // Check if container-use is not installed
       if (error instanceof Error && error.message.includes('ENOENT')) {

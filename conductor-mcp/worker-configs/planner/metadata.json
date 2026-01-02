@@ -1,0 +1,71 @@
+{
+  "workerType": "planner",
+  "phase": [4, 6],
+  "description": "Creates technical plans and breaks down into actionable tasks",
+  "primaryCommand": ["/speckit.plan", "/speckit.tasks"],
+  "inputs": {
+    "required": ["spec.md from Spec Writer"],
+    "optional": ["Architect's constitution", "Clarifications"]
+  },
+  "outputs": {
+    "required": [
+      {
+        "path": ".specify/specs/[feature]/plan.md",
+        "type": "markdown",
+        "description": "Technical implementation plan"
+      },
+      {
+        "path": ".specify/specs/[feature]/data-model.md",
+        "type": "markdown",
+        "description": "Data model and schema"
+      },
+      {
+        "path": ".specify/specs/[feature]/tasks.md",
+        "type": "markdown",
+        "description": "Task breakdown with [P] parallel markers",
+        "schema": {
+          "taskFormat": "Dependency-ordered with [P] markers",
+          "includeFilePaths": true,
+          "tddStructure": "Test tasks before implementation tasks"
+        }
+      },
+      {
+        "path": ".specify/specs/[feature]/contracts/",
+        "type": "directory",
+        "description": "API contract definitions"
+      },
+      {
+        "path": ".specify/specs/[feature]/research.md",
+        "type": "markdown",
+        "description": "Research document for unknowns"
+      },
+      {
+        "path": ".specify/specs/[feature]/quickstart.md",
+        "type": "markdown",
+        "description": "Setup and quickstart guide"
+      }
+    ],
+    "optional": []
+  },
+  "constraints": {
+    "parallelization": "Mark independent tasks with [P]",
+    "dependencies": "Respect file-based dependencies (models → services → endpoints)",
+    "tddStructure": "Test tasks must precede implementation tasks"
+  },
+  "decisionTypes": [
+    "Technical approach and architecture",
+    "Task ordering and dependencies",
+    "Which tasks can run in parallel",
+    "Data model structure"
+  ],
+  "collaboratesWith": [
+    "spec-writer",
+    "architect",
+    "developer-*",
+    "reviewer",
+    "devops-engineer",
+    "security-engineer"
+  ],
+  "workflowPosition": "middle",
+  "blockers": ["Unresolved clarifications in spec.md"]
+}

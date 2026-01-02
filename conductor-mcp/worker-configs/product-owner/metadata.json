@@ -1,0 +1,47 @@
+{
+  "workerType": "product-owner",
+  "phase": "early-and-ongoing",
+  "description": "Represents business needs, prioritizes user stories, validates implementations",
+  "primaryCommand": ["/speckit.clarify", "/speckit.specify"],
+  "inputs": {
+    "required": ["Business requirements"],
+    "optional": [
+      "Clarifications from Clarifier",
+      "spec.md from Spec Writer"
+    ]
+  },
+  "outputs": {
+    "required": [
+      {
+        "path": ".specify/specs/[feature]/spec.md",
+        "type": "markdown",
+        "description": "Prioritized user stories (P1, P2, P3)",
+        "schema": {
+          "priorities": "P1|P2|P3",
+          "businessValue": "required for each user story"
+        }
+      }
+    ],
+    "optional": []
+  },
+  "constraints": {
+    "businessValueFocus": "Every feature must deliver measurable business value",
+    "userCentric": "Specifications must prioritize user needs",
+    "measurableAcceptanceCriteria": "All acceptance criteria must be objectively verifiable"
+  },
+  "decisionTypes": [
+    "User story prioritization (P1, P2, P3)",
+    "Business value assessment",
+    "Acceptance criteria validation",
+    "Trade-offs between business needs and technical constraints"
+  ],
+  "collaboratesWith": [
+    "clarifier",
+    "spec-writer",
+    "architect",
+    "developer-*",
+    "tester"
+  ],
+  "workflowPosition": "early-and-ongoing",
+  "blockers": []
+}

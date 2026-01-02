@@ -1,0 +1,41 @@
+{
+  "workerType": "clarifier",
+  "phase": 2,
+  "description": "Identifies ambiguities and asks targeted clarification questions",
+  "primaryCommand": "/speckit.clarify",
+  "inputs": {
+    "required": ["Initial requirements or user request"],
+    "optional": ["Product Owner input", "Architect's constitution"]
+  },
+  "outputs": {
+    "required": [
+      {
+        "path": ".specify/specs/000-requirements/clarification.md",
+        "type": "markdown",
+        "description": "Clarification questions and answers",
+        "schema": {
+          "maxQuestions": 5,
+          "format": "Short answer (≤5 words) or multiple choice"
+        }
+      }
+    ],
+    "optional": []
+  },
+  "constraints": {
+    "maxQuestions": 5,
+    "questionFormat": "answerable in ≤5 words or multiple choice",
+    "prioritization": "high-impact ambiguities affecting architecture, data modeling, or test design"
+  },
+  "decisionTypes": [
+    "Which ambiguities to prioritize",
+    "How to phrase questions for clarity",
+    "When sufficient clarity achieved"
+  ],
+  "collaboratesWith": [
+    "product-owner",
+    "spec-writer",
+    "architect"
+  ],
+  "workflowPosition": "early",
+  "blockers": []
+}

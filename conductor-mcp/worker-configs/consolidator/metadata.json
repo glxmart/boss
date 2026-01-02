@@ -1,0 +1,50 @@
+{
+  "workerType": "consolidator",
+  "phase": 10,
+  "description": "Merges worker branches and prepares for PR creation",
+  "primaryCommand": "/speckit.analyze",
+  "inputs": {
+    "required": [
+      "All worker branches from previous phases",
+      "Worker summaries from .boss/project-config.json"
+    ],
+    "optional": []
+  },
+  "outputs": {
+    "required": [
+      {
+        "path": ".specify/specs/[feature]/quickstart.md",
+        "type": "markdown",
+        "description": "Setup and usage instructions"
+      },
+      {
+        "path": ".specify/specs/[feature]/checklist.md",
+        "type": "markdown",
+        "description": "Quality validation checklist"
+      },
+      {
+        "path": "feature-branch",
+        "type": "git-branch",
+        "description": "Merged feature branch ready for PR"
+      }
+    ],
+    "optional": []
+  },
+  "constraints": {
+    "mustMerge": "All worker branches",
+    "mustValidate": "Integration tests, documentation completeness, artifact presence",
+    "conflictResolution": "Resolve all merge conflicts intelligently"
+  },
+  "decisionTypes": [
+    "How to resolve merge conflicts",
+    "Which integration tests to run",
+    "Whether all artifacts are complete"
+  ],
+  "collaboratesWith": [
+    "all-workers",
+    "devops-engineer",
+    "technical-writer"
+  ],
+  "workflowPosition": "final-gate",
+  "blockers": ["Incomplete worker branches", "Failed integration tests"]
+}

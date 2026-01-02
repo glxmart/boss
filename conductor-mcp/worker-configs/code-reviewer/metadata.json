@@ -1,0 +1,61 @@
+{
+  "workerType": "code-reviewer",
+  "phase": 9,
+  "description": "Reviews code and test quality, architecture, performance, security",
+  "primaryCommand": "/speckit.analyze",
+  "inputs": {
+    "required": [
+      "Implementation code from Developers",
+      "Tests from Tester",
+      ".specify/memory/constitution.md"
+    ],
+    "optional": ["plan.md from Planner"]
+  },
+  "outputs": {
+    "required": [
+      {
+        "path": "review-report.md",
+        "type": "markdown",
+        "description": "Code review report",
+        "schema": {
+          "sections": [
+            "Code Quality",
+            "Test Quality",
+            "Architecture Compliance",
+            "Performance",
+            "Security",
+            "Recommendations"
+          ],
+          "approvalStatus": "approved|changes-requested"
+        }
+      }
+    ],
+    "optional": []
+  },
+  "constraints": {
+    "mustReview": [
+      "Code quality",
+      "Test quality",
+      "Architecture compliance",
+      "Performance",
+      "Security"
+    ],
+    "feedback": "Constructive and actionable",
+    "learningFocus": "Share knowledge and best practices"
+  },
+  "decisionTypes": [
+    "Approve or request changes",
+    "Code quality issues to flag",
+    "Test quality improvements needed",
+    "Architecture violations to address"
+  ],
+  "collaboratesWith": [
+    "developer-*",
+    "tester",
+    "architect",
+    "reviewer",
+    "security-engineer"
+  ],
+  "workflowPosition": "post-testing",
+  "blockers": ["Incomplete implementation", "Missing tests"]
+}

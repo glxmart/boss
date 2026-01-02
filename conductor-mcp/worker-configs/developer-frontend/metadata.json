@@ -1,0 +1,64 @@
+{
+  "workerType": "developer-frontend",
+  "phase": 7,
+  "description": "Implements frontend features with TDD+BDD, accessibility, and performance",
+  "primaryCommand": "/speckit.implement",
+  "inputs": {
+    "required": ["tasks.md from Planner", "spec.md from Spec Writer"],
+    "optional": ["API contracts from Planner", "UX/design specifications"]
+  },
+  "outputs": {
+    "required": [
+      {
+        "path": "src/components/**",
+        "type": "code",
+        "description": "Frontend component implementations"
+      },
+      {
+        "path": "tests/components/**",
+        "type": "test",
+        "description": "BDD + unit tests (Given/When/Then format)",
+        "constraints": {
+          "coverage": "≥80%",
+          "bddFormat": "Given/When/Then"
+        }
+      },
+      {
+        "path": "docs/components/**",
+        "type": "markdown",
+        "description": "Component documentation"
+      }
+    ],
+    "optional": [
+      {
+        "path": "src/**/*.stories.tsx",
+        "type": "storybook",
+        "description": "Storybook stories for component showcase"
+      }
+    ]
+  },
+  "constraints": {
+    "tdd": "Write tests before implementation (red → green → refactor)",
+    "accessibility": "WCAG compliance, keyboard navigation, screen readers, ARIA",
+    "performance": "Optimize bundle size, lazy loading, code splitting",
+    "responsive": "Mobile-first responsive design",
+    "security": "XSS prevention, CSRF protection, input validation"
+  },
+  "decisionTypes": [
+    "Component structure and architecture",
+    "State management approach",
+    "Styling approach",
+    "Testing strategy"
+  ],
+  "collaboratesWith": [
+    "planner",
+    "developer-backend",
+    "tester",
+    "code-reviewer",
+    "devops-engineer",
+    "security-engineer",
+    "technical-writer"
+  ],
+  "workflowPosition": "implementation",
+  "blockers": ["Missing API contracts", "Incomplete tasks.md"]
+}

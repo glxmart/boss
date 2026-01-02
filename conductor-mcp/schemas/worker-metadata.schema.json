@@ -1,0 +1,239 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://boss.glx/schemas/worker-metadata.json",
+  "title": "Worker Metadata Schema",
+  "description": "Schema for BOSS worker metadata files that define worker capabilities, inputs, outputs, and orchestration requirements",
+  "type": "object",
+  "required": [
+    "workerType",
+    "phase",
+    "description",
+    "primaryCommand",
+    "inputs",
+    "outputs",
+    "collaboratesWith",
+    "workflowPosition"
+  ],
+  "properties": {
+    "workerType": {
+      "type": "string",
+      "description": "Unique identifier for the worker type",
+      "enum": [
+        "architect",
+        "clarifier",
+        "spec-writer",
+        "planner",
+        "reviewer",
+        "developer-frontend",
+        "developer-backend",
+        "developer-fullstack",
+        "tester",
+        "code-reviewer",
+        "consolidator",
+        "security-engineer",
+        "devops-engineer",
+        "technical-writer",
+        "product-owner"
+      ]
+    },
+    "phase": {
+      "description": "Development phase(s) when this worker operates",
+      "oneOf": [
+        {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 10
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 10
+          },
+          "minItems": 1
+        },
+        {
+          "type": "string",
+          "enum": ["ongoing", "early-and-ongoing"]
+        }
+      ]
+    },
+    "description": {
+      "type": "string",
+      "description": "Concise description of the worker's role and responsibilities",
+      "minLength": 10,
+      "maxLength": 200
+    },
+    "primaryCommand": {
+      "description": "Primary Spec-Kit command(s) used by this worker",
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^/speckit\\."
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^/speckit\\."
+          },
+          "minItems": 1
+        }
+      ]
+    },
+    "inputs": {
+      "type": "object",
+      "description": "Required and optional inputs for this worker",
+      "required": ["required", "optional"],
+      "properties": {
+        "required": {
+          "type": "array",
+          "description": "Inputs that must be present for worker to function",
+          "items": { "type": "string" }
+        },
+        "optional": {
+          "type": "array",
+          "description": "Inputs that enhance worker functionality but aren't mandatory",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "outputs": {
+      "type": "object",
+      "description": "Expected artifacts and deliverables from this worker",
+      "required": ["required", "optional"],
+      "properties": {
+        "required": {
+          "type": "array",
+          "description": "Outputs that must be produced by this worker",
+          "items": {
+            "type": "object",
+            "required": ["path", "type", "description"],
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "File path or pattern for this output"
+              },
+              "type": {
+                "type": "string",
+                "description": "Type of artifact being produced",
+                "enum": [
+                  "markdown",
+                  "code",
+                  "test",
+                  "yaml",
+                  "json",
+                  "directory",
+                  "report",
+                  "git-branch",
+                  "storybook"
+                ]
+              },
+              "description": {
+                "type": "string",
+                "description": "Purpose and content of this output"
+              },
+              "schema": {
+                "type": "object",
+                "description": "Expected structure or validation rules for this output"
+              },
+              "constraints": {
+                "type": "object",
+                "description": "Additional constraints or requirements for this output"
+              }
+            }
+          }
+        },
+        "optional": {
+          "type": "array",
+          "description": "Outputs that may be produced depending on context",
+          "items": {
+            "type": "object",
+            "required": ["path", "type", "description"],
+            "properties": {
+              "path": { "type": "string" },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "markdown",
+                  "code",
+                  "test",
+                  "yaml",
+                  "json",
+                  "directory",
+                  "report",
+                  "storybook"
+                ]
+              },
+              "description": { "type": "string" },
+              "schema": { "type": "object" },
+              "constraints": { "type": "object" }
+            }
+          }
+        }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "description": "Worker-specific constraints and requirements"
+    },
+    "decisionTypes": {
+      "type": "array",
+      "description": "Types of decisions this worker makes",
+      "items": { "type": "string" }
+    },
+    "collaboratesWith": {
+      "type": "array",
+      "description": "Other workers this worker interacts with",
+      "items": {
+        "type": "string",
+        "enum": [
+          "architect",
+          "clarifier",
+          "spec-writer",
+          "planner",
+          "reviewer",
+          "developer-frontend",
+          "developer-backend",
+          "developer-fullstack",
+          "developer-*",
+          "tester",
+          "code-reviewer",
+          "consolidator",
+          "security-engineer",
+          "devops-engineer",
+          "technical-writer",
+          "product-owner",
+          "all-workers"
+        ]
+      }
+    },
+    "workflowPosition": {
+      "type": "string",
+      "description": "Where this worker fits in the overall workflow",
+      "enum": [
+        "first",
+        "early",
+        "early-middle",
+        "middle",
+        "middle-gate",
+        "implementation",
+        "post-implementation",
+        "post-testing",
+        "final-gate",
+        "ongoing",
+        "early-and-ongoing"
+      ]
+    },
+    "blockers": {
+      "type": "array",
+      "description": "Conditions that prevent this worker from executing",
+      "items": { "type": "string" }
+    },
+    "quality": {
+      "type": "object",
+      "description": "Quality requirements and validation rules specific to this worker"
+    }
+  }
+}

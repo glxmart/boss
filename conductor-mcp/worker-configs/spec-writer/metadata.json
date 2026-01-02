@@ -1,0 +1,48 @@
+{
+  "workerType": "spec-writer",
+  "phase": 3,
+  "description": "Creates feature specifications with BDD user stories",
+  "primaryCommand": "/speckit.specify",
+  "inputs": {
+    "required": ["Clarification.md from Clarifier"],
+    "optional": ["Product Owner input", "Architect's constitution"]
+  },
+  "outputs": {
+    "required": [
+      {
+        "path": ".specify/specs/[feature-name]/spec.md",
+        "type": "markdown",
+        "description": "Feature specification with BDD user stories",
+        "schema": {
+          "userStoryFormat": "Given/When/Then (MANDATORY)",
+          "sections": [
+            "Overview",
+            "User Stories",
+            "Acceptance Criteria",
+            "Edge Cases",
+            "Non-Functional Requirements"
+          ]
+        }
+      }
+    ],
+    "optional": []
+  },
+  "constraints": {
+    "userStoryFormat": "Given/When/Then (BDD format is MANDATORY)",
+    "testability": "All user stories must be testable",
+    "clarity": "Avoid ambiguous terms - quantify requirements"
+  },
+  "decisionTypes": [
+    "How to structure user stories",
+    "Which edge cases to include",
+    "Non-functional requirements priority"
+  ],
+  "collaboratesWith": [
+    "clarifier",
+    "product-owner",
+    "planner",
+    "tester"
+  ],
+  "workflowPosition": "early-middle",
+  "blockers": ["Incomplete clarifications"]
+}

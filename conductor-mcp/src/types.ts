@@ -23,7 +23,7 @@ export type WorkerType =
 // Worker Status
 export type WorkerStatus = 'spawning' | 'running' | 'completed' | 'failed' | 'terminated';
 
-// Worker Configuration (from container-config.json)
+// Worker Configuration
 export interface WorkerConfig {
   workerType: string;
   base_image: string;
@@ -34,17 +34,17 @@ export interface WorkerConfig {
   network: {
     allowed_hosts: string[];
   };
-  prompt: string;              // From prompt.md
   claudeMd: string;            // From CLAUDE.md
-  roleDescription: string;     // Extracted from prompt.md
-  phase: string;               // Extracted from prompt.md
-  artifactRequirements: string; // Extracted from prompt.md
+  roleDescription: string;     // From metadata.json
+  phase: string;               // From metadata.json (formatted)
+  artifactRequirements: string; // From metadata.json (formatted)
   claudeFolder?: {             // From .claude/ folder
     files: Array<{
       path: string;            // Original path
       contents: string;
     }>;
   };
+  metadata: any;               // From metadata.json (validated against schema)
 }
 
 // Worker State (tracking active workers)
@@ -114,6 +114,12 @@ export interface GetWorkerStatusOutput {
   completedAt?: string;
   artifacts: string[];
   executionLog?: string;
+  manifest?: {
+    tasksCompleted: string[];
+    decisions: WorkerDecision[];
+    issues: WorkerIssue[];
+    recommendations: string[];
+  };
 }
 
 export interface MergeWorkerInput {
@@ -157,6 +163,19 @@ export interface ConductorHealthOutput {
   healthy: boolean;
   containerUseAvailable: boolean;
   errors?: string[];
+}
+
+export interface AskWorkerInput {
+  workerId: string;
+  question: string;
+}
+
+export interface AskWorkerOutput {
+  success: boolean;
+  workerId: string;
+  question: string;
+  answer?: string;
+  error?: ConductorError;
 }
 
 // Error Types
@@ -229,4 +248,86 @@ export interface TemplateVariables {
   workerRoleDescription?: string;
   artifactRequirements?: string;
   [key: string]: string | undefined;
+}
+
+// Worker Manifest Protocol
+//
+// Structured communication between BOSS (Claude Code) and WORKER (Claude Code in container)
+// Workers maintain .boss/worker-manifest.json to report their work without BOSS needing to ask.
+
+export interface WorkerManifest {
+  // Identity
+  workerId: string;                   // env-abc123
+  workerType: WorkerType;            // architect, clarifier, etc.
+  status: WorkerStatus;              // spawning, running, completed, failed
+
+  // Timestamps
+  startedAt: string;                 // ISO 8601
+  lastUpdatedAt: string;             // ISO 8601
+  completedAt?: string;              // ISO 8601
+
+  // Work completed
+  artifacts: WorkerArtifact[];       // Files created/modified
+  decisions: WorkerDecision[];       // Key decisions made
+  issues: WorkerIssue[];             // Problems encountered
+  recommendations: string[];         // Next steps for BOSS
+
+  // Metadata
+  tasksCompleted: string[];          // Task descriptions
+  principlesEstablished?: string[];  // For architect: principles set
+  requirementsGathered?: string[];   // For clarifier: requirements found
+  testsCreated?: number;             // For tester: test count
+  coverageAchieved?: number;         // For tester: coverage %
+
+  // BOSS Q&A (populated by ask_worker tool)
+  bossQuestions?: Array<{
+    question: string;
+    answer: string;
+    askedAt: string;
+  }>;
+}
+
+export interface WorkerArtifact {
+  path: string;                      // .specify/memory/constitution.md
+  action: 'created' | 'modified' | 'deleted';
+  purpose: string;                   // Human-readable description
+  sections?: string[];               // For documents: sections created
+  linesAdded?: number;               // For code: lines added
+  linesModified?: number;            // For code: lines modified
+}
+
+export interface WorkerDecision {
+  decision: string;                  // What was decided
+  rationale: string;                 // Why it was decided
+  impact: 'high' | 'medium' | 'low'; // Impact level
+  reversible: boolean;               // Can this be undone?
+}
+
+export interface WorkerIssue {
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  description: string;               // Problem description
+  impact: string;                    // What it affects
+  suggestedAction?: string;          // How to resolve
+  blocksProgress: boolean;           // Does this block work?
+}
+
+// Worker Result Schema
+// Structure returned by workers via --output-format json --json-schema
+// Conductor parses this and updates the manifest (workers don't write JSON manually)
+export interface WorkerResult {
+  artifacts: WorkerArtifact[];       // Files created/modified
+  decisions: WorkerDecision[];       // Key decisions made
+  issues: WorkerIssue[];             // Problems encountered
+  recommendations: string[];         // What BOSS should do next
+  tasksCompleted: string[];          // Work done descriptions
+
+  // Worker-specific metadata (optional)
+  principlesEstablished?: string[];  // For architect: principles set
+  requirementsGathered?: string[];   // For clarifier: requirements found
+  testsCreated?: number;             // For tester: test count
+  coverageAchieved?: number;         // For tester: coverage %
+
+  // Status indication
+  workComplete: boolean;             // Is this task complete?
+  nextSteps?: string[];              // What should happen next?
 }

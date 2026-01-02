@@ -1,0 +1,66 @@
+{
+  "workerType": "tester",
+  "phase": 8,
+  "description": "Creates comprehensive test suite to validate implementations",
+  "primaryCommand": "/speckit.checklist",
+  "inputs": {
+    "required": [
+      "spec.md from Spec Writer",
+      "Implementation code from Developers"
+    ],
+    "optional": ["plan.md from Planner"]
+  },
+  "outputs": {
+    "required": [
+      {
+        "path": "tests/**/*.test.ts",
+        "type": "test",
+        "description": "BDD, unit, integration, E2E tests",
+        "constraints": {
+          "coverage": "≥80%",
+          "mutationScore": "≥80%",
+          "bddFormat": "Given/When/Then matching spec.md",
+          "testPyramid": "70% unit, 20% integration, 10% E2E"
+        }
+      },
+      {
+        "path": "tests/fixtures/**",
+        "type": "code",
+        "description": "Test fixtures and test data"
+      },
+      {
+        "path": "coverage-report.html",
+        "type": "report",
+        "description": "Test coverage report"
+      }
+    ],
+    "optional": [
+      {
+        "path": "mutation-report.html",
+        "type": "report",
+        "description": "Mutation testing report"
+      }
+    ]
+  },
+  "constraints": {
+    "coverage": "≥80% (as per constitution)",
+    "mutationScore": "≥80% (as per constitution)",
+    "bddTests": "Must match Given/When/Then scenarios from spec.md",
+    "testPyramid": "Balance unit, integration, E2E tests",
+    "testIsolation": "Tests must be independent and runnable in parallel"
+  },
+  "decisionTypes": [
+    "Test strategy and coverage approach",
+    "Test data management",
+    "Performance testing scenarios",
+    "Accessibility testing approach"
+  ],
+  "collaboratesWith": [
+    "spec-writer",
+    "developer-*",
+    "code-reviewer",
+    "product-owner"
+  ],
+  "workflowPosition": "post-implementation",
+  "blockers": ["Incomplete implementation", "Missing spec.md"]
+}

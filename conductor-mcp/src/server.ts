@@ -17,10 +17,25 @@ import {
   handleTerminateWorker,
   handleListWorkerTypes,
   handleListActiveWorkers,
-  handleConductorHealth
+  handleConductorHealth,
+  handleAskWorker
 } from './tools.js';
 import { logger } from './utils/logger.js';
 import { ConductorException } from './utils/error-handler.js';
+
+type ToolHandler = (args: unknown) => Promise<unknown>;
+
+const TOOL_HANDLERS: Record<string, ToolHandler> = {
+  spawn_worker: handleSpawnWorker,
+  execute_task: handleExecuteTask,
+  get_worker_status: handleGetWorkerStatus,
+  merge_worker: handleMergeWorker,
+  terminate_worker: handleTerminateWorker,
+  list_worker_types: handleListWorkerTypes,
+  list_active_workers: handleListActiveWorkers,
+  conductor_health: handleConductorHealth,
+  ask_worker: handleAskWorker
+};
 
 export class ConductorServer {
   private server: Server;
@@ -59,44 +74,12 @@ export class ConductorServer {
       logger.info('Tool called', { toolName });
 
       try {
-        let result;
-
-        switch (toolName) {
-          case 'spawn_worker':
-            result = await handleSpawnWorker(args);
-            break;
-
-          case 'execute_task':
-            result = await handleExecuteTask(args);
-            break;
-
-          case 'get_worker_status':
-            result = await handleGetWorkerStatus(args);
-            break;
-
-          case 'merge_worker':
-            result = await handleMergeWorker(args);
-            break;
-
-          case 'terminate_worker':
-            result = await handleTerminateWorker(args);
-            break;
-
-          case 'list_worker_types':
-            result = await handleListWorkerTypes(args);
-            break;
-
-          case 'list_active_workers':
-            result = await handleListActiveWorkers();
-            break;
-
-          case 'conductor_health':
-            result = await handleConductorHealth();
-            break;
-
-          default:
-            throw new Error(`Unknown tool: ${toolName}`);
+        const handler = TOOL_HANDLERS[toolName];
+        if (!handler) {
+          throw new Error(`Unknown tool: ${toolName}`);
         }
+
+        const result = await handler(args);
 
         return {
           content: [
@@ -112,7 +95,6 @@ export class ConductorServer {
           error: error instanceof Error ? error.message : String(error)
         });
 
-        // Handle ConductorException specially
         if (error instanceof ConductorException) {
           return {
             content: [
@@ -124,11 +106,10 @@ export class ConductorServer {
                 }, null, 2)
               }
             ],
-            isError: false // Don't treat as MCP error, just return error in result
+            isError: false
           };
         }
 
-        // Re-throw other errors
         throw error;
       }
     });

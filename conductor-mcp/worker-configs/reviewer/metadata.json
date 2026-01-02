@@ -1,0 +1,50 @@
+{
+  "workerType": "reviewer",
+  "phase": 5,
+  "description": "Validates plans against constitution for compliance",
+  "primaryCommand": "/speckit.analyze",
+  "inputs": {
+    "required": [".specify/memory/constitution.md", "plan.md from Planner"],
+    "optional": ["spec.md", "tasks.md"]
+  },
+  "outputs": {
+    "required": [
+      {
+        "path": ".specify/specs/[feature]/validation-report.md",
+        "type": "markdown",
+        "description": "Constitution compliance validation report",
+        "schema": {
+          "sections": [
+            "Violations",
+            "Warnings",
+            "Recommendations",
+            "Approval Status"
+          ],
+          "approvalStatus": "approved|rejected|retry"
+        }
+      }
+    ],
+    "optional": []
+  },
+  "constraints": {
+    "maxRetries": 3,
+    "mustValidate": [
+      "TDD compliance",
+      "BDD compliance",
+      "Documentation requirements",
+      "Quality gates"
+    ]
+  },
+  "decisionTypes": [
+    "Approve or reject plan",
+    "Identify constitution violations",
+    "Determine retry vs. rejection"
+  ],
+  "collaboratesWith": [
+    "architect",
+    "planner",
+    "developer-*"
+  ],
+  "workflowPosition": "middle-gate",
+  "blockers": ["Missing constitution", "Incomplete plan"]
+}

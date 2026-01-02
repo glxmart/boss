@@ -5,6 +5,7 @@
 import { WorkerSpawner } from './lifecycle/worker-spawner.js';
 import { StateTracker } from './lifecycle/state-tracker.js';
 import { ContainerUseClient } from './orchestration/container-use-client.js';
+import { TaskExecutor } from './orchestration/task-executor.js';
 import { listAvailableWorkers } from './config/worker-loader.js';
 import {
   SpawnWorkerInput,
@@ -13,16 +14,47 @@ import {
   MergeWorkerInput,
   TerminateWorkerInput,
   ListWorkerTypesInput,
+  AskWorkerInput,
   WorkerType,
-  ErrorCategory
+  ErrorCategory,
+  WorkerManifest
 } from './types.js';
 import { logger } from './utils/logger.js';
-import { ConductorException, createError } from './utils/error-handler.js';
+import { ConductorException, createError, throwConductorError } from './utils/error-handler.js';
 
 // Initialize dependencies
 const containerUseClient = new ContainerUseClient();
 const stateTracker = new StateTracker();
 const workerSpawner = new WorkerSpawner(containerUseClient, stateTracker);
+const taskExecutor = new TaskExecutor(containerUseClient);
+
+/**
+ * Validate and cast input to expected type
+ * Throws ConductorException if validation fails
+ */
+function validateInput<T>(args: unknown, requiredFields: string[], toolName: string): T {
+  if (!args || typeof args !== 'object') {
+    throwConductorError(
+      ErrorCategory.WORKER_EXECUTION_FAILED,
+      `Invalid input for ${toolName}: expected object, got ${typeof args}`,
+      { details: { args } }
+    );
+  }
+
+  const input = args as Record<string, unknown>;
+
+  for (const field of requiredFields) {
+    if (!(field in input) || input[field] === undefined || input[field] === null) {
+      throwConductorError(
+        ErrorCategory.WORKER_EXECUTION_FAILED,
+        `Invalid input for ${toolName}: missing required field "${field}"`,
+        { details: { providedFields: Object.keys(input), requiredFields } }
+      );
+    }
+  }
+
+  return input as T;
+}
 
 // Worker type descriptions and phases
 const WORKER_METADATA: Record<WorkerType, { description: string; phase: string }> = {
@@ -93,7 +125,7 @@ const WORKER_METADATA: Record<WorkerType, { description: string; phase: string }
  */
 
 export async function handleSpawnWorker(args: unknown) {
-  const input = args as SpawnWorkerInput;
+  const input = validateInput<SpawnWorkerInput>(args, ['workerType', 'taskPrompt'], 'spawn_worker');
 
   logger.info('Handling spawn_worker request', {
     workerType: input.workerType
@@ -103,7 +135,7 @@ export async function handleSpawnWorker(args: unknown) {
 }
 
 export async function handleExecuteTask(args: unknown) {
-  const input = args as ExecuteTaskInput;
+  const input = validateInput<ExecuteTaskInput>(args, ['workerId', 'taskPrompt'], 'execute_task');
 
   logger.info('Handling execute_task request', {
     workerId: input.workerId
@@ -113,7 +145,7 @@ export async function handleExecuteTask(args: unknown) {
 }
 
 export async function handleGetWorkerStatus(args: unknown) {
-  const input = args as GetWorkerStatusInput;
+  const input = validateInput<GetWorkerStatusInput>(args, ['workerId'], 'get_worker_status');
 
   logger.info('Handling get_worker_status request', {
     workerId: input.workerId
@@ -122,16 +154,26 @@ export async function handleGetWorkerStatus(args: unknown) {
   try {
     const worker = stateTracker.getWorkerOrThrow(input.workerId);
 
+    // Attempt to read worker manifest for detailed status
+    const manifest = await taskExecutor.getWorkerManifest(input.workerId);
+
     return {
       workerId: worker.workerId,
       workerType: worker.workerType,
-      status: worker.status,
+      status: manifest?.status || worker.status,
       branch: worker.branch,
       targetBranch: worker.targetBranch,
       startedAt: worker.startedAt,
-      completedAt: worker.completedAt,
-      artifacts: worker.artifacts,
-      executionLog: worker.executionLog
+      completedAt: manifest?.completedAt || worker.completedAt,
+      artifacts: manifest?.artifacts.map(a => a.path) || worker.artifacts,
+      executionLog: worker.executionLog,
+      // Include manifest data if available
+      manifest: manifest ? {
+        tasksCompleted: manifest.tasksCompleted,
+        decisions: manifest.decisions,
+        issues: manifest.issues,
+        recommendations: manifest.recommendations
+      } : undefined
     };
   } catch (error) {
     if (error instanceof ConductorException) {
@@ -274,6 +316,151 @@ export async function handleConductorHealth() {
   };
 }
 
+export async function handleAskWorker(args: unknown) {
+  const input = validateInput<AskWorkerInput>(args, ['workerId', 'question'], 'ask_worker');
+
+  logger.info('Handling ask_worker request', {
+    workerId: input.workerId,
+    questionLength: input.question.length
+  });
+
+  try {
+    // Verify worker exists
+    stateTracker.getWorkerOrThrow(input.workerId);
+
+    // CRITICAL: Check that worker has completed its work
+    // We can only ask questions to workers that have finished
+    //
+    // Design decision: We only allow questions to completed workers because:
+    // 1. Session continuity: Workers use --session-id for state persistence. Asking
+    //    questions mid-work could interfere with the worker's current task context.
+    // 2. Consistency: Questions should be about completed work, not in-progress work
+    //    that might change as the worker continues execution.
+    // 3. Manifest validity: Running workers are still updating their manifest, so
+    //    questions based on partial data could be misleading.
+    const manifest = await taskExecutor.getWorkerManifest(input.workerId);
+
+    if (!manifest) {
+      throw new ConductorException(
+        createError(
+          ErrorCategory.WORKER_EXECUTION_FAILED,
+          `Cannot ask worker ${input.workerId}: manifest not found. Worker may not have started yet.`,
+          { workerId: input.workerId }
+        )
+      );
+    }
+
+    if (manifest.status === 'running' || manifest.status === 'spawning') {
+      throw new ConductorException(
+        createError(
+          ErrorCategory.WORKER_EXECUTION_FAILED,
+          `Cannot ask worker ${input.workerId} a question because it is still working (status: ${manifest.status}). Use get_worker_status to monitor progress, then ask questions after worker completes.`,
+          {
+            workerId: input.workerId,
+            details: {
+              currentStatus: manifest.status,
+              suggestedAction: 'Call get_worker_status periodically until status is "completed" or "failed"'
+            }
+          }
+        )
+      );
+    }
+
+    // Worker has completed (or failed) - we can ask question
+    logger.info('Worker completed, asking question with schema-based approach', {
+      workerId: input.workerId,
+      previousStatus: manifest.status
+    });
+
+    // Build follow-up question prompt (schema-based approach)
+    // Worker returns structured JSON, Conductor updates manifest
+    const questionPrompt = `
+BOSS is asking you a follow-up question about the work you completed:
+
+"${input.question}"
+
+Please answer the question based on your previous work. Your answer will be captured in structured JSON format.
+`.trim();
+
+    // Execute with schema validation to get structured answer
+    const workerResult = await taskExecutor.executeTaskWithSchema(
+      input.workerId,
+      questionPrompt,
+      true /* continueSession */
+    );
+
+    // Extract answer from recommendations (first recommendation is the answer)
+    let answer: string;
+    let answerProvided: boolean;
+
+    if (workerResult.recommendations.length > 0 && workerResult.recommendations[0]) {
+      answer = workerResult.recommendations[0];
+      answerProvided = true;
+      logger.debug('Worker provided answer to question', {
+        workerId: input.workerId,
+        answerLength: answer.length
+      });
+    } else {
+      answer = 'Worker did not provide an answer to the question.';
+      answerProvided = false;
+      logger.warn('Worker returned no answer to question', {
+        workerId: input.workerId,
+        question: input.question,
+        recommendationsCount: workerResult.recommendations.length,
+        message: 'Worker should provide answer in recommendations array'
+      });
+    }
+
+    // Update manifest with Q&A
+    const updatedManifest: WorkerManifest = {
+      ...manifest,
+      lastUpdatedAt: new Date().toISOString(),
+      bossQuestions: [
+        ...(manifest.bossQuestions || []),
+        {
+          question: input.question,
+          answer: answer || 'No answer provided',
+          askedAt: new Date().toISOString()
+        }
+      ],
+      // Also merge any new artifacts/decisions from the answer
+      artifacts: [...manifest.artifacts, ...workerResult.artifacts],
+      decisions: [...manifest.decisions, ...workerResult.decisions],
+      issues: [...manifest.issues, ...workerResult.issues]
+    };
+
+    // Write updated manifest
+    await taskExecutor.updateWorkerManifest(input.workerId, updatedManifest);
+
+    return {
+      success: answerProvided,
+      workerId: input.workerId,
+      question: input.question,
+      answer,
+      metadata: {
+        answerProvided,
+        workerIssuesReported: workerResult.issues.length
+      }
+    };
+  } catch (error) {
+    logger.error('Failed to ask worker', {
+      workerId: input.workerId,
+      error: error instanceof Error ? error.message : String(error)
+    });
+
+    if (error instanceof ConductorException) {
+      return {
+        success: false,
+        workerId: input.workerId,
+        question: input.question,
+        error: error.error
+      };
+    }
+
+    throw error;
+  }
+}
+
 /**
  * MCP Tool Schemas
  */
@@ -402,6 +589,24 @@ export const TOOL_SCHEMAS = {
     inputSchema: {
       type: 'object',
       properties: {}
+    }
+  },
+  ask_worker: {
+    name: 'ask_worker',
+    description: 'Ask a question to a COMPLETED worker. Uses schema-based JSON output for reliable answer capture. Worker must have finished (status=completed) before asking. Conductor parses the structured response and updates the manifest with the Q&A.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        workerId: {
+          type: 'string',
+          description: 'Worker ID to ask'
+        },
+        question: {
+          type: 'string',
+          description: 'Question to ask the worker'
+        }
+      },
+      required: ['workerId', 'question']
     }
   }
 };

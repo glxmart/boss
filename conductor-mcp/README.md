@@ -2,251 +2,271 @@
 
 **MCP middleware for BOSS worker orchestration**
 
+[![npm version](https://img.shields.io/npm/v/@boss/conductor-mcp)](https://www.npmjs.com/package/@boss/conductor-mcp)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 Conductor simplifies BOSS's worker orchestration by providing a clean, unified API that handles all the complexity of spawning, configuring, and managing container-use workers.
 
-## Overview
+## Quick Start
 
-### Problem
-
-BOSS previously had to manually:
-- Call Container-Use MCP to create environments
-- Load worker configurations from `.boss/workers/`
-- Configure containers by overwriting `.claude/CLAUDE.md` and `.claude/` folder
-- Execute tasks with `claude-code --dangerously-skip-permissions`
-- Monitor worker progress and handle errors
-
-This complexity led to orchestration failures and required BOSS to understand too many low-level details.
-
-### Solution
-
-Conductor MCP provides a simple middleware layer:
-
-```
-BOSS → Conductor MCP → Container-Use MCP → Docker Workers
-      (simple API)     (complex details)
-```
-
-**Before Conductor (complex):**
-```typescript
-// BOSS has to do 5+ manual steps:
-const config = loadWorkerConfig(...);
-const env = await containerUse.createEnvironment(...);
-await containerUse.fileWrite(...); // Multiple times
-await containerUse.executeInEnvironment(...);
-// Track state, handle errors, etc.
-```
-
-**With Conductor (simple):**
-```typescript
-// BOSS just does this:
-await conductor.spawnWorker({
-  workerType: 'architect',
-  taskPrompt: 'Create constitution'
-});
-// Done!
-```
-
-## Features
-
-- ✅ **Unified API**: 8 tools for all 15 worker types
-- ✅ **Configuration-driven**: Loads worker configs automatically from `.boss/workers/`
-- ✅ **Stateful**: Tracks active workers and their status
-- ✅ **Error handling**: Rich error categories with retry guidance
-- ✅ **Type-safe**: Full TypeScript with strict mode
-
-## Installation
+### Installation
 
 ```bash
 npm install @boss/conductor-mcp
 ```
 
-Or use directly with npx (recommended for MCP configuration):
+Or use with npx (recommended for MCP configuration):
 
 ```json
 {
-  "conductor": {
-    "type": "stdio",
-    "command": "npx",
-    "args": ["@boss/conductor-mcp", "stdio"]
+  "mcpServers": {
+    "conductor": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["@boss/conductor-mcp", "stdio"]
+    }
   }
 }
 ```
 
+See [Installation Guide](docs/guides/INSTALLATION.md) for complete setup instructions.
+
+### Basic Usage
+
+**Before Conductor (6+ manual steps):**
+```typescript
+// Load config, create environment, configure container,
+// write files, execute task, track state...
+```
+
+**With Conductor (1 simple call):**
+```typescript
+await conductor.spawn_worker({
+  workerType: 'architect',
+  taskPrompt: 'Create constitution with TDD, BDD, Documentation standards'
+});
+```
+
+**Complexity Reduction: 85%**
+
+## Features
+
+- **8 Unified Tools** - Simple API for all 15 worker types
+- **Configuration-Driven** - Loads worker configs automatically
+- **Stateful** - Tracks active workers and their status
+- **Schema-Based** - Type-safe manifest communication
+- **Error Handling** - Rich error categories with retry guidance
+- **Production Ready** - 19/19 tests passing
+
+## Architecture
+
+```
+BOSS (Claude Code)
+  ↓ Simple API (8 tools)
+Conductor MCP
+  ↓ Orchestrates workers
+  ↓ Manages manifests
+  ↓ Handles configuration
+Container-Use MCP
+  ↓ Creates Docker environments
+  ↓ Executes claude-code
+Worker (Claude Code in container)
+  ↓ Work adding/changing files inside /workdir
+  ↓ Returns structured JSON
+Manifest (validated, type-safe)
+```
+
 ## MCP Tools
 
-### 1. `spawn_worker`
+### Core Tools
 
-Spawn a worker with full environment setup and configuration.
+| Tool | Purpose |
+|------|---------|
+| `spawn_worker` | Spawn worker with full setup |
+| `execute_task` | Execute additional task in worker |
+| `get_worker_status` | Check worker status |
+| `merge_worker` | Merge worker branch |
+| `terminate_worker` | Terminate worker (discard) |
 
-**Input:**
-```typescript
-{
-  workerType: 'architect' | 'clarifier' | ... (15 types),
-  taskPrompt: string,
-  projectPath?: string,
-  targetBranch?: string
-}
-```
+### Management Tools
 
-**Output:**
-```typescript
-{
-  success: boolean,
-  workerId: string,
-  workerType: string,
-  branch: string,
-  status: 'running' | 'failed',
-  message: string,
-  executionDetails?: {...},
-  error?: {...}
-}
-```
+| Tool | Purpose |
+|------|---------|
+| `list_worker_types` | Get available workers |
+| `list_active_workers` | List active workers |
+| `conductor_health` | Health check |
 
-**Example:**
-```typescript
-const result = await conductor.spawnWorker({
-  workerType: 'architect',
-  taskPrompt: 'Create constitution with TDD, BDD, Documentation standards',
-  targetBranch: 'feature/boss-initial-setup'
-});
-
-console.log(result.workerId); // 'env-abc123'
-console.log(result.branch);   // 'container-use/env-abc123'
-```
-
-### 2. `execute_task`
-
-Execute additional task in existing worker.
-
-**Input:**
-```typescript
-{
-  workerId: string,
-  taskPrompt: string
-}
-```
-
-**Example:**
-```typescript
-await conductor.executeTask({
-  workerId: 'env-abc123',
-  taskPrompt: 'Add security principles to constitution'
-});
-```
-
-### 3. `get_worker_status`
-
-Get worker status and results.
-
-**Input:**
-```typescript
-{
-  workerId: string
-}
-```
-
-**Output:**
-```typescript
-{
-  workerId: string,
-  workerType: string,
-  status: 'running' | 'completed' | 'failed',
-  branch: string,
-  targetBranch: string,
-  startedAt: string,
-  completedAt?: string,
-  artifacts: string[],
-  executionLog?: string
-}
-```
-
-### 4. `merge_worker`
-
-Merge worker changes into target branch.
-
-**Input:**
-```typescript
-{
-  workerId: string,
-  targetBranch?: string
-}
-```
-
-### 5. `terminate_worker`
-
-Terminate worker without merging (for failures/retries).
-
-**Input:**
-```typescript
-{
-  workerId: string
-}
-```
-
-### 6. `list_worker_types`
-
-Get available worker types.
-
-**Output:**
-```typescript
-{
-  workers: Array<{
-    type: WorkerType,
-    description: string,
-    phase: string
-  }>
-}
-```
-
-### 7. `list_active_workers`
-
-List currently active workers.
-
-**Output:**
-```typescript
-{
-  workers: WorkerState[]
-}
-```
-
-### 8. `conductor_health`
-
-Health check.
-
-**Output:**
-```typescript
-{
-  healthy: boolean,
-  containerUseAvailable: boolean,
-  errors?: string[]
-}
-```
+See [API Reference](docs/api/TOOLS.md) for complete tool documentation.
 
 ## Worker Types
 
-Conductor supports 15 worker types:
+Conductor supports 15 specialized worker types across 10 phases:
 
-| Type | Phase | Description |
-|------|-------|-------------|
-| `architect` | Phase 1 | Create constitution with governing principles |
-| `clarifier` | Phase 2 | Gather business requirements |
-| `spec-writer` | Phase 3 | Create user stories in BDD format |
-| `planner` | Phase 4/6 | Create technical plans and task breakdowns |
-| `reviewer` | Phase 5 | Validate against constitution |
-| `developer-frontend` | Phase 7 | Implement frontend features with TDD + BDD |
-| `developer-backend` | Phase 7 | Implement backend features with TDD + BDD |
-| `developer-fullstack` | Phase 7 | Implement fullstack features with TDD + BDD |
-| `tester` | Phase 7 | Create comprehensive test suites |
-| `code-reviewer` | Phase 7 | Review code quality and standards |
-| `security-engineer` | Cross-Phase | Ensure security and compliance |
-| `devops-engineer` | Cross-Phase | Set up CI/CD and infrastructure |
-| `technical-writer` | Cross-Phase | Create comprehensive documentation |
-| `product-owner` | Cross-Phase | Represent business and user needs |
-| `consolidator` | Phase 8 | Merge all worker branches |
+| Phase | Workers | Purpose |
+|-------|---------|---------|
+| 1 | architect | Create constitution with governing principles |
+| 2 | clarifier, product-owner | Gather business requirements |
+| 3 | spec-writer | Create user stories in BDD format |
+| 4 | planner | Create technical plans |
+| 5 | reviewer | Validate against constitution |
+| 6 | planner | Break down into tasks |
+| 7 | developer-* | Implement features with TDD+BDD |
+| 8 | tester | Create comprehensive test suites |
+| 9 | code-reviewer | Review code quality |
+| 10 | consolidator | Merge all worker branches |
+| Ongoing | security-engineer, devops-engineer, technical-writer | Cross-phase support |
+
+## Documentation
+
+### Essential Reading
+
+- **[INDEX.md](INDEX.md)** - Complete documentation index
+- **[Installation Guide](docs/guides/INSTALLATION.md)** - Setup and verification
+- **[BOSS Integration Guide](docs/guides/BOSS-GUIDE.md)** - How BOSS uses Conductor
+- **[Architecture Overview](docs/architecture/OVERVIEW.md)** - System design
+
+### Reference
+
+- **[API Tools](docs/api/TOOLS.md)** - MCP tools reference
+- **[Error Handling](docs/api/ERRORS.md)** - Error categories
+- **[Worker Config](docs/architecture/WORKER-CONFIG.md)** - Configuration structure
+- **[Manifest Protocol](docs/architecture/MANIFEST-PROTOCOL.md)** - Communication protocol
+
+### Development
+
+- **[Contributing](docs/development/CONTRIBUTING.md)** - Development guidelines
+- **[Changelog](CHANGELOG.md)** - Version history
+- **[Design Documents](docs/design/)** - Future proposals
+
+## Key Concepts
+
+### Schema-Based Manifest Communication
+
+Conductor uses `claude-code --output-format json --json-schema` to get validated structured output from workers. This schema-based approach eliminates manual JSON writing by workers and ensures consistent, validated communication.
+
+#### How It Works
+
+1. **Worker executes with schema validation** - Conductor spawns workers with `--output-format json --json-schema` flags
+2. **Worker returns JSON matching schema** - Workers output structured JSON at the end of their work
+3. **Conductor validates output** - Output is validated against the worker-specific schema generated from metadata.json
+4. **Conductor updates manifest automatically** - `.boss/worker-manifest-${workerId}.json` is created/updated
+5. **No manual JSON writing by workers** - Workers focus on their work and document it in JSON output
+
+#### Worker Metadata (metadata.json)
+
+Each worker has a `metadata.json` file that defines:
+- **Inputs**: Required and optional inputs for the worker
+- **Outputs**: Expected artifacts and deliverables (with schemas)
+- **Constraints**: Worker-specific requirements and rules
+- **Collaborators**: Other workers this worker interacts with
+- **Quality Requirements**: Validation rules and quality gates
+
+**Example metadata.json for Architect:**
+```json
+{
+  "workerType": "architect",
+  "phase": 1,
+  "description": "Establishes technical constitution and governing principles",
+  "primaryCommand": "/speckit.constitution",
+  "outputs": {
+    "required": [
+      {
+        "path": ".specify/memory/constitution.md",
+        "type": "markdown",
+        "description": "Project constitution with NON-NEGOTIABLE principles"
+      }
+    ]
+  }
+}
+```
+
+#### Validation Process
+
+1. **Metadata Validation**: When a worker config is loaded, metadata.json is validated against the master schema (`schemas/worker-metadata.schema.json`)
+2. **Output Schema Generation**: Worker-specific output schema is generated from metadata.json
+3. **Output Validation**: When worker completes, output is validated against the generated schema
+4. **Manifest Creation**: Validated output is used to create the worker manifest file
+
+#### Benefits
+
+- ✅ **Guaranteed valid format** - Schema validation catches errors
+- ✅ **No JSON syntax errors** - Workers output JSON once, validated automatically
+- ✅ **Consistent data structure** - All workers follow same base schema with worker-specific extensions
+- ✅ **Type-safe throughout system** - TypeScript types generated from schemas
+- ✅ **Self-documenting** - metadata.json serves as worker specification
+- ✅ **Programmatic discovery** - BOSS can query worker capabilities via metadata.json
+
+#### Worker Output Schema (Common Fields)
+
+All workers return JSON with these base fields:
+```json
+{
+  "artifacts": [],        // Files created/updated/deleted
+  "decisions": [],        // Key decisions made
+  "issues": [],          // Problems encountered
+  "recommendations": [], // Next steps for BOSS
+  "tasksCompleted": [],  // Description of work done
+  "workComplete": true,  // Completion status
+  "nextSteps": []        // Suggested workflow steps
+}
+```
+
+Worker-specific extensions are added based on worker type (e.g., `principlesEstablished` for architect, `testsCreated` for tester).
+
+See [Conductor in Workers](docs/design/CONDUCTOR-IN-WORKERS.md) for complete design.
+
+### Per-Worker Manifests
+
+Each worker gets its own manifest file for parallel execution:
+
+```
+.boss/
+├── worker-manifest-env-abc123.json  # Backend worker
+├── worker-manifest-env-def456.json  # Frontend worker
+└── worker-manifest-env-ghi789.json  # Tester worker
+```
+
+**Result**: Clean git merges with no conflicts!
+
+## Requirements
+
+- **Node.js** >= 18.0.0
+- **container-use CLI** installed globally: `npm install -g container-use`
+- **Worker configs** in `.boss/workers/` (created by `boss bootstrap`)
+
+## Integration with BOSS
+
+Conductor is automatically configured when you run `boss bootstrap`.
+
+The MCP configuration is added to:
+- `~/.config/claude-code/mcp-servers.json` (Claude Code)
+- `~/.cursor/mcp-servers.json` (Cursor)
+- `.mcp.json` (project-specific)
+- `.claude/mcp.json` (project-specific)
+
+See [BOSS Integration Guide](docs/guides/BOSS-GUIDE.md) for detailed usage.
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Build
+npm run build
+
+# Run tests
+npm test
+
+# Run in development mode
+npm run dev
+```
+
+See [Contributing Guide](docs/development/CONTRIBUTING.md) for development guidelines.
 
 ## Error Handling
 
-Conductor provides rich error categories:
+Conductor provides rich error categories with retry guidance:
 
 ```typescript
 enum ErrorCategory {
@@ -262,132 +282,21 @@ enum ErrorCategory {
 }
 ```
 
-Errors include:
-- `category`: Error category
-- `message`: Human-readable message
-- `retryable`: Whether BOSS should retry
-- `details`: Additional error context
+See [Error Handling](docs/api/ERRORS.md) for complete documentation.
 
-## Architecture
+## Latest Updates
 
-```
-conductor-mcp/
-├── src/
-│   ├── types.ts                      # Type definitions
-│   ├── server.ts                     # MCP server setup
-│   ├── tools.ts                      # Tool definitions and handlers
-│   ├── bin.ts                        # CLI entry point
-│   ├── index.ts                      # Main exports
-│   ├── config/
-│   │   ├── worker-loader.ts          # Load worker configs
-│   │   └── container-mapper.ts       # Map to Container-Use format
-│   ├── lifecycle/
-│   │   ├── state-tracker.ts          # Track active workers
-│   │   ├── environment-manager.ts    # Configure containers
-│   │   └── worker-spawner.ts         # Orchestrate spawning
-│   ├── orchestration/
-│   │   ├── container-use-client.ts   # Container-Use interface
-│   │   └── task-executor.ts          # Execute tasks
-│   └── utils/
-│       ├── error-handler.ts          # Error handling
-│       └── logger.ts                 # Structured logging
-```
+### v0.3.0 - Schema-Based Manifest Management (2026-01-02)
 
-## Configuration
+Revolutionary change: Conductor controls manifest via JSON schema instead of manual worker updates.
 
-Conductor loads worker configurations from `.boss/workers/[workerType]/`:
+**Benefits:**
+- Guaranteed valid manifest format
+- No worker JSON errors
+- Consistent data structure
+- Single source of truth
 
-```
-.boss/workers/architect/
-├── container-config.json    # Environment setup
-├── prompt.md                # Worker role description
-├── CLAUDE.md                # Execution guidelines
-└── .claude/                 # Worker-specific context
-    ├── commands/
-    ├── skills/
-    └── agents/
-```
-
-### Template Variables
-
-Conductor expands template variables in configurations:
-
-```typescript
-// Input: "Worker role: ${workerName}"
-// Variables: { workerName: 'architect' }
-// Output: "Worker role: architect"
-```
-
-## Logging
-
-Conductor uses structured JSON logging:
-
-```json
-{
-  "timestamp": "2026-01-01T18:00:00Z",
-  "level": "info",
-  "message": "Worker spawned successfully",
-  "workerId": "env-abc123",
-  "workerType": "architect"
-}
-```
-
-Set log level with `LOG_LEVEL` environment variable:
-- `debug`: Verbose debugging
-- `info`: General information (default)
-- `warn`: Warnings
-- `error`: Errors only
-
-## Development
-
-```bash
-# Install dependencies
-npm install
-
-# Build
-npm run build
-
-# Run in development mode
-npm run dev
-
-# Run tests
-npm test
-```
-
-## Integration with BOSS
-
-Conductor is automatically configured when you run `boss bootstrap`.
-
-The MCP configuration is added to:
-- `~/.config/claude-code/mcp-servers.json` (Claude Code)
-- `~/.cursor/mcp-servers.json` (Cursor)
-- `.mcp.json` (project-specific)
-- `.claude/mcp.json` (project-specific)
-
-## Requirements
-
-- Node.js >= 18.0.0
-- **container-use CLI** installed globally: `npm install -g container-use`
-- Worker configs in `.boss/workers/` (created by `boss bootstrap`)
-
-### Container-Use Integration
-
-Conductor integrates with Container-Use via subprocess execution of the `container-use` CLI. The integration:
-
-✅ **Calls container-use CLI commands** directly (create, exec, write, read, merge, delete)
-✅ **Passes configuration** from worker configs to container-use
-✅ **Handles errors** with proper error categories and retry guidance
-✅ **Provides health checks** to verify container-use availability
-
-**Command Mapping:**
-- `create_environment` → `container-use create`
-- `execute_in_environment` → `container-use exec`
-- `environment_file_write` → `container-use write`
-- `environment_file_read` → `container-use read`
-- `merge_environment` → `container-use merge`
-- `delete_environment` → `container-use delete`
-
-The integration is fully tested with 19 unit and integration tests.
+See [CHANGELOG.md](CHANGELOG.md) for complete history.
 
 ## License
 
@@ -396,3 +305,14 @@ MIT
 ## Author
 
 BOSS CLI Team
+
+---
+
+**Quick Links:**
+- [Full Documentation Index](INDEX.md)
+- [Installation Guide](docs/guides/INSTALLATION.md)
+- [BOSS Integration Guide](docs/guides/BOSS-GUIDE.md)
+- [API Reference](docs/api/TOOLS.md)
+- [Architecture](docs/architecture/OVERVIEW.md)
+- [Contributing](docs/development/CONTRIBUTING.md)
+- [Changelog](CHANGELOG.md)

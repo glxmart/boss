@@ -1,0 +1,66 @@
+{
+  "workerType": "developer-fullstack",
+  "phase": 7,
+  "description": "Implements fullstack features with end-to-end integration",
+  "primaryCommand": "/speckit.implement",
+  "inputs": {
+    "required": [
+      "tasks.md from Planner",
+      "spec.md from Spec Writer",
+      "API contracts"
+    ],
+    "optional": ["UX/design specs", "data-model.md"]
+  },
+  "outputs": {
+    "required": [
+      {
+        "path": "src/api/**",
+        "type": "code",
+        "description": "Backend API implementations"
+      },
+      {
+        "path": "src/components/**",
+        "type": "code",
+        "description": "Frontend component implementations"
+      },
+      {
+        "path": "tests/**",
+        "type": "test",
+        "description": "BDD, unit, and integration tests",
+        "constraints": {
+          "coverage": "≥80%",
+          "integrationTests": "required",
+          "bddFormat": "Given/When/Then"
+        }
+      },
+      {
+        "path": "docs/**",
+        "type": "markdown",
+        "description": "Fullstack feature documentation"
+      }
+    ],
+    "optional": []
+  },
+  "constraints": {
+    "tdd": "Write tests before implementation (red → green → refactor)",
+    "integration": "Test frontend-backend integration thoroughly",
+    "contracts": "Ensure API contracts work end-to-end",
+    "performance": "Optimize both frontend and backend performance"
+  },
+  "decisionTypes": [
+    "Fullstack architecture decisions",
+    "Integration patterns",
+    "Error handling across stack",
+    "State management across frontend/backend"
+  ],
+  "collaboratesWith": [
+    "planner",
+    "tester",
+    "code-reviewer",
+    "devops-engineer",
+    "security-engineer",
+    "technical-writer"
+  ],
+  "workflowPosition": "implementation",
+  "blockers": ["Missing API contracts", "Incomplete tasks.md"]
+}

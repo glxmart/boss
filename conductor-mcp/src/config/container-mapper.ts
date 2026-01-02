@@ -57,7 +57,7 @@ export function escapePromptForShell(prompt: string): string {
 /**
  * Resolve secrets from conductor's environment
  *
- * When conductor is started with `op run --env-file=.env -- npx @boss/conductor-mcp stdio`,
+ * When conductor is started with `op run --env-file=.env -- npx @glxmart/conductor-mcp stdio`,
  * 1Password CLI resolves op:// references from .env and injects them as environment variables.
  *
  * This function adds CLAUDE_CODE_OAUTH_TOKEN from conductor's environment to worker secrets.

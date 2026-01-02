@@ -71,7 +71,7 @@ Update your Claude Code/Cursor MCP configuration:
   "mcpServers": {
     "boss-knowledge": {
       "command": "npx",
-      "args": ["@boss/mcp-knowledge"],
+      "args": ["@glxmart/mcp-knowledge"],
       "env": {
         "DATABASE_URL": "postgresql://boss:bosssecret@localhost:5432/boss_knowledge",
         "QDRANT_URL": "http://localhost:6333",

@@ -16,7 +16,7 @@ Conductor MCP has been successfully installed and integrated into BOSS CLI.
    - Tests: 19/19 passing (unit + integration)
 
 2. ✅ **Installed in BOSS CLI**
-   - Added to `boss-cli/package.json`: `"@boss/conductor-mcp": "file:../conductor-mcp"`
+   - Added to `boss-cli/package.json`: `"@glxmart/conductor-mcp": "file:../conductor-mcp"`
    - BOSS CLI rebuilt successfully
    - MCP config generator updated to include Conductor
 
@@ -32,13 +32,13 @@ Conductor MCP has been successfully installed and integrated into BOSS CLI.
 
 ```bash
 cd /Users/joe/code-glx/boss/boss-cli
-npm list @boss/conductor-mcp
+npm list @glxmart/conductor-mcp
 ```
 
 **Expected output:**
 ```
-@boss/cli@1.0.0
-└── @boss/conductor-mcp@0.1.0
+@glxmart/boss-cli@1.0.0
+└── @glxmart/conductor-mcp@0.1.0
 ```
 
 ### 2. MCP Configuration
@@ -57,7 +57,7 @@ When `boss bootstrap` runs, it generates MCP configurations with Conductor:
     "conductor": {
       "type": "stdio",
       "command": "npx",
-      "args": ["@boss/conductor-mcp", "stdio"]
+      "args": ["@glxmart/conductor-mcp", "stdio"]
     },
     "github": { ... },
     "boss-knowledge": { ... }
@@ -146,7 +146,7 @@ When publishing to npm:
    ```json
    {
      "dependencies": {
-       "@boss/conductor-mcp": "^0.1.0"  // Use published version
+       "@glxmart/conductor-mcp": "^0.1.0"  // Use published version
      }
    }
    ```

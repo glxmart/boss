@@ -15,8 +15,8 @@ FROM node:22-slim
 LABEL maintainer="BOSS Team"
 LABEL description="Pre-configured base image for BOSS workers"
 LABEL version="1.0.0"
-LABEL org.opencontainers.image.source="https://github.com/your-org/boss"
-LABEL org.opencontainers.image.documentation="https://github.com/your-org/boss/blob/main/conductor-mcp/docker/README.md"
+LABEL org.opencontainers.image.source="https://github.com/glxmart/boss"
+LABEL org.opencontainers.image.documentation="https://github.com/glxmart/boss/blob/main/conductor-mcp/docker/README.md"
 
 # Install system dependencies
 # Combined into single RUN to minimize layers and image size

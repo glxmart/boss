@@ -348,7 +348,7 @@ To customize a worker for your project:
 
 1. **Copy built-in config**:
    ```bash
-   cp -r node_modules/@boss/conductor-mcp/worker-configs/architect \
+   cp -r node_modules/@glxmart/conductor-mcp/worker-configs/architect \
          .boss/workers/architect
    ```
 

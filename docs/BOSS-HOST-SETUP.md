@@ -826,7 +826,7 @@ Create/edit `~/.config/claude-code/mcp-servers.json`:
   "mcpServers": {
     "aios-specs": {
       "command": "npx",
-      "args": ["@boss/mcp-specs"],
+      "args": ["@glxmart/mcp-specs"],
       "env": {
         "SPECS_PATH": "${workspaceFolder}/.specify",
         "TEMPLATES_PATH": "${workspaceFolder}/.specify/templates"
@@ -835,7 +835,7 @@ Create/edit `~/.config/claude-code/mcp-servers.json`:
 
     "aios-workflows": {
       "command": "npx",
-      "args": ["@boss/mcp-workflows"],
+      "args": ["@glxmart/mcp-workflows"],
       "env": {
         "WORKFLOWS_PATH": "${workspaceFolder}/.boss/workflows",
         "STATE_PATH": "${workspaceFolder}/.boss/state"
@@ -844,7 +844,7 @@ Create/edit `~/.config/claude-code/mcp-servers.json`:
 
     "boss-knowledge": {
       "command": "npx",
-      "args": ["@boss/mcp-knowledge"],
+      "args": ["@glxmart/mcp-knowledge"],
       "env": {
         "DATABASE_URL": "postgresql://boss:bosssecret@localhost:5432/boss_knowledge",
         "QDRANT_URL": "http://localhost:6333",

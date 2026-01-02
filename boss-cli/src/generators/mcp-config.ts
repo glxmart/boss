@@ -117,8 +117,8 @@ function getBossMCPConfig(projectPath?: string): Record<string, any> {
       // Use op run to wrap conductor and resolve CLAUDE_CODE_OAUTH_TOKEN from .env
       command: useOpRun ? 'op' : 'npx',
       args: useOpRun
-        ? ['run', `--env-file=${envFile}`, '--', 'npx', '@boss/conductor-mcp', 'stdio']
-        : ['@boss/conductor-mcp', 'stdio'],
+        ? ['run', `--env-file=${envFile}`, '--', 'npx', '@glxmart/conductor-mcp', 'stdio']
+        : ['@glxmart/conductor-mcp', 'stdio'],
     },
     'github': {
       // Use op run to wrap the MCP server command and resolve op:// references from .env
@@ -131,7 +131,7 @@ function getBossMCPConfig(projectPath?: string): Record<string, any> {
     },
     'boss-knowledge': {
       command: 'npx',
-      args: ['@boss/mcp-knowledge'],
+      args: ['@glxmart/mcp-knowledge'],
       env: {
         DATABASE_URL: 'postgresql://boss:bosssecret@localhost:5432/boss_knowledge',
         QDRANT_URL: 'http://localhost:6333',

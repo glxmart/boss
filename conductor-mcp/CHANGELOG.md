@@ -84,7 +84,7 @@ writeManifest(manifest);
 
 **Impact**:
 - Conductor is now a standalone, self-contained package
-- `npm install @boss/conductor-mcp` gets everything needed
+- `npm install @glxmart/conductor-mcp` gets everything needed
 - Projects can customize worker configs while using sensible defaults
 - Single source of truth for worker definitions
 

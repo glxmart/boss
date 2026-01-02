@@ -1,0 +1,27 @@
+# CODEOWNERS file for BOSS repository
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# Code owners are automatically requested for review when someone opens a pull request
+# that modifies code that they own.
+
+# Default owner for everything in the repo
+# This ensures all PRs require stackrider's approval
+* @stackrider
+
+# Package-specific ownership
+/boss-cli/ @stackrider
+/conductor-mcp/ @stackrider
+
+# Documentation
+/docs/ @stackrider
+/*.md @stackrider
+
+# Infrastructure and configuration
+/.github/ @stackrider
+/.changeset/ @stackrider
+/docker-compose.yml @stackrider
+
+# Security-sensitive files (extra attention required)
+/.github/workflows/ @stackrider
+/package.json @stackrider
+/pnpm-lock.yaml @stackrider

@@ -2,7 +2,7 @@
 
 **MCP middleware for BOSS worker orchestration**
 
-[![npm version](https://img.shields.io/npm/v/@boss/conductor-mcp)](https://www.npmjs.com/package/@boss/conductor-mcp)
+[![npm version](https://img.shields.io/npm/v/@glxmart/conductor-mcp)](https://www.npmjs.com/package/@glxmart/conductor-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 Conductor simplifies BOSS's worker orchestration by providing a clean, unified API that handles all the complexity of spawning, configuring, and managing container-use workers.
@@ -12,7 +12,7 @@ Conductor simplifies BOSS's worker orchestration by providing a clean, unified A
 ### Installation
 
 ```bash
-npm install @boss/conductor-mcp
+npm install @glxmart/conductor-mcp
 ```
 
 Or use with npx (recommended for MCP configuration):
@@ -23,7 +23,7 @@ Or use with npx (recommended for MCP configuration):
     "conductor": {
       "type": "stdio",
       "command": "npx",
-      "args": ["@boss/conductor-mcp", "stdio"]
+      "args": ["@glxmart/conductor-mcp", "stdio"]
     }
   }
 }

@@ -40,8 +40,8 @@ CLAUDE_CODE_OAUTH_TOKEN=op://glx/claude-code/oauth-token
   // Use op run to wrap conductor and resolve CLAUDE_CODE_OAUTH_TOKEN from .env
   command: useOpRun ? 'op' : 'npx',
   args: useOpRun
-    ? ['run', `--env-file=${envFile}`, '--', 'npx', '@boss/conductor-mcp', 'stdio']
-    : ['@boss/conductor-mcp', 'stdio'],
+    ? ['run', `--env-file=${envFile}`, '--', 'npx', '@glxmart/conductor-mcp', 'stdio']
+    : ['@glxmart/conductor-mcp', 'stdio'],
 }
 ```
 
@@ -50,7 +50,7 @@ CLAUDE_CODE_OAUTH_TOKEN=op://glx/claude-code/oauth-token
 #### c. Updated debug script (line 26-27)
 ```javascript
 // Use op run to resolve secrets from .env
-const mcp = spawn('op', ['run', '--env-file=$PROJECT_PATH/.env', '--', 'npx', '@boss/conductor-mcp', 'stdio'], {
+const mcp = spawn('op', ['run', '--env-file=$PROJECT_PATH/.env', '--', 'npx', '@glxmart/conductor-mcp', 'stdio'], {
 ```
 
 ### 2. conductor-mcp (Worker Orchestrator)
@@ -62,7 +62,7 @@ const mcp = spawn('op', ['run', '--env-file=$PROJECT_PATH/.env', '--', 'npx', '@
 /**
  * Resolve secrets from conductor's environment
  *
- * When conductor is started with `op run --env-file=.env -- npx @boss/conductor-mcp stdio`,
+ * When conductor is started with `op run --env-file=.env -- npx @glxmart/conductor-mcp stdio`,
  * 1Password CLI resolves op:// references from .env and injects them as environment variables.
  *
  * This function adds CLAUDE_CODE_OAUTH_TOKEN from conductor's environment to worker secrets.
@@ -104,7 +104,7 @@ secrets: resolveSecrets(workerConfig.secrets),
 
 ### Worker Spawn Phase (Conductor)
 
-1. IDE starts Conductor MCP: `op run --env-file=.env -- npx @boss/conductor-mcp stdio`
+1. IDE starts Conductor MCP: `op run --env-file=.env -- npx @glxmart/conductor-mcp stdio`
 2. 1Password CLI resolves `op://glx/claude-code/oauth-token` → actual token value
 3. Conductor receives `process.env.CLAUDE_CODE_OAUTH_TOKEN = "actual-token-value"`
 4. Conductor calls `mapToContainerUseConfig()` → calls `resolveSecrets()`

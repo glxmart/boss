@@ -47,13 +47,13 @@ describe('container-use-config generator', () => {
     expect(config).toHaveProperty('network');
   });
 
-  it('should use boss/worker-base:1.0.0 as base image', async () => {
+  it('should use ghcr.io/glxmart/boss-worker-base:1.0.0-beta.0 as base image', async () => {
     await generateContainerUseConfig(testDir);
 
     const configPath = path.join(testDir, '.container-use', 'environment.json');
     const config = JSON.parse(await fs.readFile(configPath, 'utf8'));
 
-    expect(config.base_image).toBe('boss/worker-base:1.0.0');
+    expect(config.base_image).toBe('ghcr.io/glxmart/boss-worker-base:1.0.0-beta.0');
   });
 
   it('should have empty setup_commands (optimization)', async () => {

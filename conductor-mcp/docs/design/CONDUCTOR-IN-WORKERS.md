@@ -64,7 +64,7 @@ Conductor MCP Instance #2 (Worker's MCP server)
   "base_image": "node:20-alpine",
   "install_commands": [
     "npm install -g @anthropic-ai/claude-code",
-    "npm install -g @boss/conductor-mcp"
+    "npm install -g @glxmart/conductor-mcp"
   ],
   "environment_variables": {
     "WORKER_ID": "${workerId}",
@@ -326,7 +326,7 @@ await conductor.notify_boss({
 {
   "install_commands": [
     "npm install -g @anthropic-ai/claude-code@latest",
-    "npm install -g @boss/conductor-mcp@0.2.0"  // Pinned version
+    "npm install -g @glxmart/conductor-mcp@0.2.0"  // Pinned version
   ]
 }
 ```
@@ -375,7 +375,7 @@ await conductor.notify_boss({
   ],
   "install_commands": [
     "npm install -g @anthropic-ai/claude-code",
-    "npm install -g @boss/conductor-mcp@0.2.0"
+    "npm install -g @glxmart/conductor-mcp@0.2.0"
   ],
   "environment_variables": {
     "WORKER_ID": "${workerId}",

@@ -635,7 +635,7 @@ Applied via `applyQualityPreset()` during bootstrap.
 
 ```
 boss-cli depends on conductor-mcp:
-  - package.json: "@boss/conductor-mcp": "file:../conductor-mcp"
+  - package.json: "@glxmart/conductor-mcp": "file:../conductor-mcp"
   - Copies conductor worker configs during bootstrap
   - Generates MCP configuration referencing conductor
 
@@ -776,7 +776,7 @@ Conductor entry:
   "conductor": {
     "type": "stdio",
     "command": "npx",
-    "args": ["@boss/conductor-mcp", "stdio"]
+    "args": ["@glxmart/conductor-mcp", "stdio"]
   }
 }
 ```

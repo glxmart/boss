@@ -1,6 +1,6 @@
 {
-  "name": "@boss/conductor-mcp",
-  "version": "0.1.0",
+  "name": "@glxmart/conductor-mcp",
+  "version": "0.1.0-beta.0",
   "description": "MCP middleware for BOSS worker orchestration",
   "type": "module",
   "main": "dist/index.js",
@@ -12,13 +12,12 @@
     "dist",
     "worker-configs",
     "schemas",
-    "templates",
     "README.md",
-    "BOSS-GUIDE.md",
-    "INSTALLATION.md"
+    "CHANGELOG.md",
+    "INDEX.md",
+    "LICENSE"
   ],
   "scripts": {
-    "preinstall": "npx only-allow pnpm",
     "build": "tsc",
     "dev": "tsx src/bin.ts stdio",
     "test": "vitest",
@@ -26,7 +25,7 @@
     "test:integration": "vitest run tests/integration",
     "test:e2e": "vitest run tests/e2e",
     "test:local": "vitest run tests/e2e --reporter=verbose",
-    "prepublishOnly": "pnpm run build",
+    "prepublishOnly": "pnpm run build && pnpm run test",
     "docker:build": "cd docker/boss-worker-base && ./build.sh",
     "docker:build:push": "cd docker/boss-worker-base && ./build.sh --push",
     "docker:test": "cd docker/boss-worker-base && ./build.sh --version test",
@@ -59,6 +58,19 @@
     "workers",
     "container-use"
   ],
-  "author": "",
-  "license": "MIT"
+  "author": "glxmart",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/glxmart/boss.git",
+    "directory": "conductor-mcp"
+  },
+  "homepage": "https://github.com/glxmart/boss/tree/main/conductor-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/glxmart/boss/issues"
+  }
 }

@@ -5,7 +5,7 @@ Command-line tool for scaffolding new BOSS projects with complete configuration.
 ## Installation
 
 ```bash
-pnpm add -g @boss/cli
+pnpm add -g @glxmart/boss-cli
 ```
 
 ## Usage

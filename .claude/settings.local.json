@@ -44,7 +44,8 @@
       "WebFetch(domain:*)",
       "Bash(git mv:*)",
       "Bash(mv:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "mcp__github__create_issue"
     ],
     "deny": [
       "Bash(rm //etc/**)",

@@ -338,7 +338,7 @@ tests/
 
 1. Build: `npm run build`
 2. Publish: `npm publish`
-3. Install: `npm install -g @boss/conductor-mcp`
+3. Install: `npm install -g @glxmart/conductor-mcp`
 4. Configure: Add to MCP servers config
 
 ### Development Deployment

@@ -1,0 +1,65 @@
+name: Manual Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Package to publish'
+        required: true
+        type: choice
+        options:
+          - boss-cli
+          - conductor-mcp
+          - all
+      version:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.26.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Publish boss-cli
+        if: inputs.package == 'boss-cli' || inputs.package == 'all'
+        run: |
+          cd boss-cli
+          pnpm version ${{ inputs.version }}
+          pnpm publish --access public --tag beta --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish conductor-mcp
+        if: inputs.package == 'conductor-mcp' || inputs.package == 'all'
+        run: |
+          cd conductor-mcp
+          pnpm version ${{ inputs.version }}
+          pnpm publish --access public --tag beta --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

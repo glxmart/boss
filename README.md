@@ -1,5 +1,11 @@
 # BOSS: Business-Orchestrated Software System
 
+[![CI](https://github.com/glxmart/boss/actions/workflows/ci.yml/badge.svg)](https://github.com/glxmart/boss/actions/workflows/ci.yml)
+[![npm version - cli](https://img.shields.io/npm/v/@glxmart/boss-cli.svg)](https://www.npmjs.com/package/@glxmart/boss-cli)
+[![npm version - conductor](https://img.shields.io/npm/v/@glxmart/conductor-mcp.svg)](https://www.npmjs.com/package/@glxmart/conductor-mcp)
+[![Docker Image](https://img.shields.io/badge/docker-ghcr.io%2Fglxmart%2Fboss--worker--base-blue)](https://ghcr.io/glxmart/boss-worker-base)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 > Transform business ideas into production-ready code through autonomous, spec-driven development with AI agents.
 
 **BOSS** is a framework and methodology that transforms Claude Code or Cursor into an autonomous development orchestrator. By configuring your AI assistant with MCP servers, BOSS skills, and worker templates, you get spec-driven development from idea to deployment - combining **GitHub's Spec-Kit**, **Container-Use isolation**, and **local-first infrastructure**.
@@ -261,12 +267,22 @@ Local infrastructure setup (PostgreSQL, Qdrant, embeddings)
 
 ## 🚀 Quick Start
 
+### Installation
+
+```bash
+# Install BOSS CLI globally (beta)
+npm install -g @glxmart/boss-cli@beta
+
+# Or with pnpm
+pnpm add -g @glxmart/boss-cli@beta
+```
+
 ### Prerequisites
 
-1. **Install Claude Code or Cursor** on your local machine
-2. **Install Docker Desktop** (for local infrastructure and workers)
-3. **Install Container-Use CLI** (`pnpm add -g container-use`)
-4. **Install 1Password CLI** (for secret management)
+1. **Claude Code or Cursor** on your local machine
+2. **Docker Desktop** (for local infrastructure and workers)
+3. **Container-Use CLI** (`npm install -g container-use`)
+4. **1Password CLI** (optional, for secret management)
 
 ### The 30-Second Overview
 

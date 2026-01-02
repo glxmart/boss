@@ -1943,7 +1943,7 @@ Add custom commands in `.boss/commands/`:
 ```typescript
 // .boss/commands/deploy-preview.ts
 
-import { Command } from '@boss/sdk';
+import { Command } from '@glxmart/boss-sdk';
 
 export default class DeployPreviewCommand extends Command {
   name = 'deploy:preview';
@@ -2127,7 +2127,7 @@ BOSS succeeds when:
 
 ```bash
 # Install BOSS CLI globally
-npm install -g @boss/cli
+npm install -g @glxmart/boss-cli
 
 # Verify installation
 boss version
@@ -2200,7 +2200,7 @@ GitHub: boss-framework/templates
 ```typescript
 // .boss/plugins/custom-reviewer.ts
 
-import { Plugin } from '@boss/sdk';
+import { Plugin } from '@glxmart/boss-sdk';
 
 export default class CustomReviewerPlugin extends Plugin {
   name = 'custom-reviewer';
@@ -2328,7 +2328,7 @@ From **"I have an idea"** to **"I have production-ready code with complete Spec-
 **Ready to build something amazing? Let's get started!**
 
 ```bash
-npm install -g @boss/cli
+npm install -g @glxmart/boss-cli
 boss bootstrap
 boss start
 ```

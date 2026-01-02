@@ -59,7 +59,7 @@ Git Merge → Success! ✅ (No conflicts)
 2. Conductor built-in: `conductor-mcp/worker-configs/[type]/` (defaults)
 
 **Impact**:
-- Conductor is self-contained: `npm install @boss/conductor-mcp` gets everything
+- Conductor is self-contained: `npm install @glxmart/conductor-mcp` gets everything
 - Projects can customize workers without forking
 - Single source of truth for worker definitions
 

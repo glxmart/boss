@@ -1,5 +1,6 @@
 import path from 'path';
 import { writeFile } from '../utils/file-system.js';
+import { DOCKER_IMAGE_FULL, BOSS_VERSION } from '../constants.js';
 
 /**
  * Generate container-use configuration for BOSS projects
@@ -16,7 +17,7 @@ export async function generateContainerUseConfig(projectPath: string): Promise<v
   const config = {
     // Use pre-built BOSS worker base image (Phase 1 optimization)
     // This includes all system dependencies and global npm packages
-    base_image: 'boss/worker-base:1.0.0',
+    base_image: DOCKER_IMAGE_FULL,
 
     // Setup commands run AFTER pulling image, BEFORE copying code
     // Empty because all system setup is in the base image
@@ -32,7 +33,7 @@ export async function generateContainerUseConfig(projectPath: string): Promise<v
     environment_variables: {
       // BOSS-specific
       IS_SANDBOX: '1',
-      BOSS_VERSION: '1.0.0',
+      BOSS_VERSION,
 
       // Spec-Kit configuration
       SPEC_KIT_MODE: 'true',

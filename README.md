@@ -212,7 +212,7 @@ Complete guide to worker isolation and security:
 
 1. **Install Claude Code or Cursor** on your local machine
 2. **Install Docker Desktop** (for local infrastructure and workers)
-3. **Install Container-Use CLI** (`npm install -g container-use`)
+3. **Install Container-Use CLI** (`pnpm add -g container-use`)
 4. **Install 1Password CLI** (for secret management)
 
 ### The 30-Second Overview

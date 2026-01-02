@@ -11,7 +11,7 @@ import { throwConductorError } from '../utils/error-handler.js';
 
 /**
  * JSON Schema for validated worker output.
- * Used with claude-code --output-format json --json-schema
+ * Used with claude --output-format json --json-schema
  */
 const WORKER_RESULT_SCHEMA = {
   type: 'object',
@@ -90,7 +90,7 @@ export class TaskExecutor {
    * Execute a task in a worker environment (LEGACY - non-schema approach)
    *
    * DEPRECATED: Use executeTaskWithSchema() instead for validated structured output.
-   * This method executes claude-code without JSON schema validation and does not
+   * This method executes claude without JSON schema validation and does not
    * return parsed results. Kept for backward compatibility.
    *
    * @param environmentId - Worker environment ID
@@ -108,23 +108,21 @@ export class TaskExecutor {
     // Escape the prompt for shell execution
     const escapedPrompt = escapePromptForShell(taskPrompt);
 
-    // Build claude-code command with proper flags
-    // --print: Exit after response (non-interactive mode)
-    // --session-id: Use worker ID as session ID for persistence
-    // --continue: Continue previous session (if continueSession=true)
+    // Build claude command with proper flags
+    // --print: Print response and exit (non-interactive mode)
+    // --dangerously-skip-permissions: Skip permission prompts (requires IS_SANDBOX=1 for root)
     const flags = [
       '--print',
-      '--dangerously-skip-permissions',
-      `--session-id ${environmentId}`
+      '--dangerously-skip-permissions'
     ];
 
     if (continueSession) {
       flags.push('--continue');
     }
 
-    const command = `echo '${escapedPrompt}' | claude-code ${flags.join(' ')}`;
+    const command = `echo '${escapedPrompt}' | claude ${flags.join(' ')}`;
 
-    logger.debug('Executing claude-code command', {
+    logger.debug('Executing claude command', {
       environment_id: environmentId,
       commandLength: command.length,
       continueSession
@@ -199,9 +197,7 @@ export class TaskExecutor {
     const schemaBase64 = Buffer.from(schemaJson).toString('base64');
 
     const flags = [
-      '--print',
       '--dangerously-skip-permissions',
-      `--session-id ${environmentId}`,
       '--output-format json'
     ];
 
@@ -209,13 +205,14 @@ export class TaskExecutor {
       flags.push('--continue');
     }
 
-    // Decode base64 schema in shell and pass to claude-code
-    const command = `echo '${escapedPrompt}' | claude-code ${flags.join(' ')} --json-schema "$(echo '${schemaBase64}' | base64 -d)"`;
+    // Decode base64 schema in shell and pass to claude
+    const command = `echo '${escapedPrompt}' | claude ${flags.join(' ')} --json-schema "$(echo '${schemaBase64}' | base64 -d)"`;
 
-    logger.debug('Executing claude-code command with schema', {
+    logger.debug('Executing claude command with schema', {
       environment_id: environmentId,
       commandLength: command.length,
-      continueSession
+      continueSession,
+      fullCommand: command.substring(0, 200) + '...'
     });
 
     const result = await this.containerUseClient.executeInEnvironment({
@@ -263,7 +260,11 @@ export class TaskExecutor {
 
     // Parse JSON
     try {
-      const workerResult: WorkerResult = JSON.parse(outputText);
+      const parsedOutput = JSON.parse(outputText);
+
+      // Claude Code with --output-format json returns a wrapper object
+      // Extract structured_output field if present, otherwise use the parsed output directly
+      const workerResult: WorkerResult = parsedOutput.structured_output || parsedOutput;
 
       logger.info('Worker result parsed successfully', {
         environment_id: environmentId,

@@ -21,7 +21,7 @@ export function mapToContainerUseConfig(
       workerConfig.environment_variables,
       variables
     ),
-    secrets: workerConfig.secrets,
+    secrets: resolveSecrets(workerConfig.secrets),
     network: workerConfig.network
   };
 }
@@ -52,4 +52,23 @@ export function assembleTaskPrompt(workerPrompt: string, taskPrompt: string): st
 export function escapePromptForShell(prompt: string): string {
   // Escape single quotes for shell
   return prompt.replace(/'/g, "'\\''");
+}
+
+/**
+ * Resolve secrets from conductor's environment
+ *
+ * When conductor is started with `op run --env-file=.env -- npx @boss/conductor-mcp stdio`,
+ * 1Password CLI resolves op:// references from .env and injects them as environment variables.
+ *
+ * This function adds CLAUDE_CODE_OAUTH_TOKEN from conductor's environment to worker secrets.
+ */
+export function resolveSecrets(secrets: string[]): string[] {
+  const resolvedSecrets = [...secrets];
+
+  // Add CLAUDE_CODE_OAUTH_TOKEN from conductor's environment if available
+  if (process.env.CLAUDE_CODE_OAUTH_TOKEN) {
+    resolvedSecrets.push(`CLAUDE_CODE_OAUTH_TOKEN=${process.env.CLAUDE_CODE_OAUTH_TOKEN}`);
+  }
+
+  return resolvedSecrets;
 }

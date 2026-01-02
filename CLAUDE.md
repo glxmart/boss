@@ -43,6 +43,8 @@ Workers are specialized Claude Code instances running in Docker containers, each
 
 ## Development Commands
 
+**IMPORTANT**: This monorepo uses **pnpm** exclusively. The `preinstall` script will prevent using npm or yarn. Install pnpm with: `npm install -g pnpm`
+
 ### boss-cli (Bootstrap CLI)
 
 ```bash
@@ -69,14 +71,14 @@ pnpm test:local           # Manual testing with verification
 
 ```bash
 # Development
-npm install          # Install dependencies
-npm run build       # Compile TypeScript
-npm run dev         # Run in stdio mode with tsx
+pnpm install          # Install dependencies
+pnpm build           # Compile TypeScript
+pnpm dev             # Run in stdio mode with tsx
 
 # Testing
-npm test                    # Run all tests
-npm run test:unit          # Unit tests only
-npm run test:integration   # Integration tests only
+pnpm test                    # Run all tests
+pnpm test:unit              # Unit tests only
+pnpm test:integration       # Integration tests only
 ```
 
 ## Key Architectural Patterns
@@ -448,11 +450,11 @@ Invalid schemas will cause worker spawn to fail with `WORKER_CONFIG_INVALID` err
 
 ### Common Issues
 
-**Build failures**: Ensure `pnpm install` or `npm install` completed successfully. Check `tsconfig.json` is valid.
+**Build failures**: Ensure `pnpm install` completed successfully. Check `tsconfig.json` is valid.
 
-**Worker spawn failures**: Check container-use CLI is installed (`npm install -g container-use`). Verify Docker is running.
+**Worker spawn failures**: Check container-use CLI is installed (`pnpm add -g container-use`). Verify Docker is running.
 
-**MCP connection issues**: Verify MCP config in `~/.config/claude-code/mcp-servers.json`. Check conductor-mcp is built (`npm run build`).
+**MCP connection issues**: Verify MCP config in `~/.config/claude-code/mcp-servers.json`. Check conductor-mcp is built (`pnpm build`).
 
 **Test failures**: Clean builds with `rm -rf dist/ && pnpm build`. Check Docker is running for integration tests.
 

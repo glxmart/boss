@@ -108,7 +108,7 @@ export class ContainerUseMCPClient {
   /**
    * Call an MCP tool
    */
-  async callTool(name: string, args: Record<string, unknown>): Promise<any> {
+  async callTool(name: string, args: Record<string, unknown>, options?: { timeout?: number }): Promise<any> {
     if (!this.isConnected || !this.client) {
       await this.connect();
     }
@@ -120,13 +120,18 @@ export class ContainerUseMCPClient {
       );
     }
 
-    logger.debug('Calling container-use MCP tool', { name, args });
+    // Default timeout is 180 seconds (3 minutes) for worker execution
+    // Can be overridden per-call
+    const timeout = options?.timeout || 180000;
+
+    logger.debug('Calling container-use MCP tool', { name, args, timeout });
 
     try {
+      // Pass timeout to MCP SDK (it has a 60s default, we need more for claude)
       const result = await this.client.callTool({
         name,
         arguments: args
-      });
+      }, undefined, { timeout });
 
       logger.debug('MCP tool call successful', { name });
       logger.debug('MCP raw response:', {

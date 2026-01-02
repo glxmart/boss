@@ -352,10 +352,11 @@ describe('E2E: BOSS Workflow with Conductor MCP', () => {
     try {
       console.log('📦 Spawning clarifier worker...');
 
-      // Spawn a clarifier worker (simpler than architect, no constitution needed)
+      // Spawn a clarifier worker with a simple, self-contained task
+      // The task should be clear and not require additional user input
       const result = await spawner.spawnWorker({
         workerType: 'clarifier',
-        taskPrompt: 'Review this initial requirement: Create a simple TODO app. What questions do you have?',
+        taskPrompt: 'Analyze this requirement: "Create a simple TODO app with add, delete, and mark complete functionality." List the key features and any assumptions you need to make. Provide your analysis in the structured JSON format.',
         projectPath,
         targetBranch: 'feature/boss-initial-setup'
       });

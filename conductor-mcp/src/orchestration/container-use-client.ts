@@ -129,12 +129,13 @@ export class ContainerUseClient {
     });
 
     try {
+      // Use 3 minute timeout for claude execution (API calls can be slow)
       const result = await this.mcpClient.callTool('environment_run_cmd', {
         environment_source: params.environment_source,
         environment_id: params.environment_id,
         command: params.command,
         explanation: `Executing command in environment ${params.environment_id}`
-      });
+      }, { timeout: 180000 }); // 3 minutes
 
       return {
         stdout: result.stdout || result.output || '',

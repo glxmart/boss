@@ -776,6 +776,81 @@ await conductor.terminate_worker({ workerId });
 
 ---
 
+### Debugging Worker Containers
+
+When conductor spawns a worker, you can directly inspect the container using `container-use` CLI commands:
+
+**List all containers:**
+```bash
+container-use list
+```
+
+**View worker execution logs:**
+```bash
+# Shows command execution, output, and any errors
+container-use log <worker-id>
+
+# Example:
+container-use log normal-owl
+```
+
+**Open interactive terminal in worker container:**
+```bash
+# Useful for inspecting environment and running commands
+container-use terminal <worker-id>
+
+# Example:
+container-use terminal model-polliwog
+```
+
+**Inside the container, you can:**
+```bash
+# Check environment variables
+echo $CLAUDE_CODE_OAUTH_TOKEN
+echo $WORKER_ROLE
+env | grep -E "CLAUDE|WORKER|SPEC_KIT"
+
+# Verify Claude Code installation
+claude --version
+
+# Check worker files
+ls -la .boss/
+cat .boss/worker-manifest-*.json
+
+# Check CLAUDE.md configuration
+cat .boss/workers/$WORKER_ROLE/CLAUDE.md
+```
+
+**Delete worker container (cleanup):**
+```bash
+container-use delete <worker-id>
+
+# Example:
+container-use delete normal-owl
+```
+
+**Common debugging workflow:**
+```bash
+# 1. Spawn a worker via conductor
+# 2. Get worker ID from spawn response
+# 3. Check execution logs
+container-use log <worker-id>
+
+# 4. If issues found, open terminal to investigate
+container-use terminal <worker-id>
+
+# 5. Inside container, verify environment and run tests
+echo $CLAUDE_CODE_OAUTH_TOKEN  # Should show actual token
+claude --version               # Should work without auth errors
+ls -la .boss/                  # Check worker files
+
+# 6. Exit and cleanup
+exit
+container-use delete <worker-id>
+```
+
+---
+
 ### Workers Merge Conflicts
 
 **Cause:** Multiple workers modified same files

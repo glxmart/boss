@@ -114,10 +114,11 @@ function getBossMCPConfig(projectPath?: string): Record<string, any> {
       env: {}
     },
     'conductor': {
-      type: 'stdio',
-      command: 'npx',
-      args: ['@boss/conductor-mcp', 'stdio'],
-      env: {}
+      // Use op run to wrap conductor and resolve CLAUDE_CODE_OAUTH_TOKEN from .env
+      command: useOpRun ? 'op' : 'npx',
+      args: useOpRun
+        ? ['run', `--env-file=${envFile}`, '--', 'npx', '@boss/conductor-mcp', 'stdio']
+        : ['@boss/conductor-mcp', 'stdio'],
     },
     'github': {
       // Use op run to wrap the MCP server command and resolve op:// references from .env
@@ -157,6 +158,9 @@ async function generateMCPEnvFile(projectPath: string): Promise<void> {
 GITHUB_PERSONAL_ACCESS_TOKEN=op://boss/github/token
 # Git also uses GITHUB_TOKEN for HTTPS authentication - set to same value
 GITHUB_TOKEN=op://boss/github/token
+
+# Claude Code OAuth Token (used by Conductor MCP for workers)
+CLAUDE_CODE_OAUTH_TOKEN=op://glx/claude-code/oauth-token
 
 # Add other secrets as needed:
 # OPENAI_API_KEY=op://boss/openai/api-key

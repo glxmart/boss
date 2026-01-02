@@ -1,0 +1,15 @@
+{
+  "name": "boss-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BOSS - Business-Orchestrated Software System",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm",
+    "test:local": "pnpm --filter @boss/cli test:local"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@10.26.0"
+}

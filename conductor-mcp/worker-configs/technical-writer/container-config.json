@@ -3,19 +3,19 @@
   "setup_commands": [
     "apt-get update",
     "apt-get install -y bash git curl build-essential"
-  ],
-  "install_commands": [
+  ],"install_commands": [
+    "npm install -g pnpm",
     "npm install -g @anthropic-ai/claude-code"
   ],
   "environment_variables": {
+    "IS_SANDBOX": "1",
     "WORKER_ROLE": "${workerName}",
     "SPEC_KIT_MODE": "true",
     "SPEC_KIT_PATH": ".specify",
-    "PATH": "$PATH:.specify/scripts",
+    "PATH": "/usr/local/bin:/usr/bin:/bin:/workdir/.specify/scripts",
     "CLAUDE_CONFIG_DIR": "/workdir/.boss/workers/${workerName}/.claude"
   },
   "secrets": [
-    "CLAUDE_CODE_OAUTH_TOKEN=op://glx/claude-code/oauth-token"
   ],
   "network": {
     "allowed_hosts": [

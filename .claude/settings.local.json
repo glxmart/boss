@@ -38,7 +38,9 @@
       "Delete(**)",
       "Bash(find:*)",
       "Search(pattern:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(chmod:*)",
+      "Bash(/Users/joe/code-glx/boss/conductor-mcp/fix-all-container-configs.sh)"
     ],
     "deny": [
       "Bash(rm //etc/**)",

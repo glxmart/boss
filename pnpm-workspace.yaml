@@ -1,0 +1,3 @@
+packages:
+  - 'boss-cli'
+  - 'conductor-mcp'

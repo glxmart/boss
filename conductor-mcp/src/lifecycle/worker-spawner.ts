@@ -129,7 +129,7 @@ export class WorkerSpawner {
         projectPath
       );
 
-      // 4. Execute task with claude-code using JSON Schema validation
+      // 4. Execute task with claude using JSON Schema validation
       // Worker context (role, responsibilities, methodology) is in CLAUDE.md
       // Path: /workdir/.boss/workers/${workerType}/.claude/CLAUDE.md (written by EnvironmentManager)
       // This isolated location prevents merge conflicts when parallel workers run

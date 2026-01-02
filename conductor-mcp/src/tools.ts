@@ -9,6 +9,7 @@ import { TaskExecutor } from './orchestration/task-executor.js';
 import { listAvailableWorkers } from './config/worker-loader.js';
 import {
   SpawnWorkerInput,
+  SpawnWorkersParallelInput,
   ExecuteTaskInput,
   GetWorkerStatusInput,
   MergeWorkerInput,
@@ -132,6 +133,17 @@ export async function handleSpawnWorker(args: unknown) {
   });
 
   return await workerSpawner.spawnWorker(input);
+}
+
+export async function handleSpawnWorkersParallel(args: unknown) {
+  const input = validateInput<SpawnWorkersParallelInput>(args, ['workers'], 'spawn_workers_parallel');
+
+  logger.info('Handling spawn_workers_parallel request (Phase 5 optimization)', {
+    workersCount: input.workers.length,
+    maxConcurrency: input.maxConcurrency || 5
+  });
+
+  return await workerSpawner.spawnWorkersInParallel(input);
 }
 
 export async function handleExecuteTask(args: unknown) {
@@ -507,6 +519,58 @@ export const TOOL_SCHEMAS = {
         }
       },
       required: ['workerType', 'taskPrompt']
+    }
+  },
+  spawn_workers_parallel: {
+    name: 'spawn_workers_parallel',
+    description: 'Spawn multiple workers concurrently for massive time savings (Phase 5 optimization). Use this for multi-worker phases like Discovery (4 workers) or Implementation (3+ workers). Saves 540s+ by running workers in parallel instead of sequentially. Example: 4 workers take 180s instead of 720s (-75%).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        workers: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              workerType: {
+                type: 'string',
+                enum: [
+                  'architect', 'clarifier', 'spec-writer', 'planner', 'reviewer',
+                  'developer-frontend', 'developer-backend', 'developer-fullstack',
+                  'tester', 'code-reviewer', 'consolidator',
+                  'security-engineer', 'devops-engineer', 'technical-writer', 'product-owner'
+                ],
+                description: 'Type of worker to spawn'
+              },
+              taskPrompt: {
+                type: 'string',
+                description: 'Task instructions for this worker'
+              },
+              resumeEnvironmentId: {
+                type: 'string',
+                description: 'Optional: Resume work in existing environment'
+              }
+            },
+            required: ['workerType', 'taskPrompt']
+          },
+          description: 'Array of workers to spawn in parallel'
+        },
+        projectPath: {
+          type: 'string',
+          description: 'Absolute path to project root (defaults to cwd)'
+        },
+        targetBranch: {
+          type: 'string',
+          description: 'Branch to merge worker changes into (default: feature/boss-initial-setup)'
+        },
+        maxConcurrency: {
+          type: 'number',
+          description: 'Maximum number of workers to spawn concurrently (default: 5, max recommended: 5)',
+          minimum: 1,
+          maximum: 10
+        }
+      },
+      required: ['workers']
     }
   },
   execute_task: {

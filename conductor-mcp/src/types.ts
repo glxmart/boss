@@ -87,6 +87,30 @@ export interface SpawnWorkerOutput {
   error?: ConductorError;
 }
 
+export interface SpawnWorkersParallelInput {
+  workers: Array<{
+    workerType: WorkerType;
+    taskPrompt: string;
+    resumeEnvironmentId?: string;
+  }>;
+  projectPath?: string;
+  targetBranch?: string;
+  maxConcurrency?: number; // Optional: Limit concurrent spawns (default: 5)
+}
+
+export interface SpawnWorkersParallelOutput {
+  success: boolean;
+  results: Array<SpawnWorkerOutput>;
+  summary: {
+    total: number;
+    succeeded: number;
+    failed: number;
+    timeSaved: string;
+    totalDuration: string;
+  };
+  message: string;
+}
+
 export interface ExecuteTaskInput {
   workerId: string;
   taskPrompt: string;

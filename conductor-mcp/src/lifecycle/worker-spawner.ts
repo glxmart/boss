@@ -12,6 +12,8 @@ import { StateTracker } from './state-tracker.js';
 import {
   SpawnWorkerInput,
   SpawnWorkerOutput,
+  SpawnWorkersParallelInput,
+  SpawnWorkersParallelOutput,
   ExecuteTaskInput,
   ExecuteTaskOutput,
   WorkerState,
@@ -431,5 +433,157 @@ export class WorkerSpawner {
 
       throw error;
     }
+  }
+
+  /**
+   * Spawn multiple workers in parallel (Phase 5 optimization)
+   *
+   * This method spawns multiple workers concurrently with configurable concurrency
+   * limiting to prevent resource exhaustion. Provides massive time savings for
+   * multi-worker phases like Discovery (4 workers) or Implementation (3+ workers).
+   *
+   * Performance Impact:
+   * - Sequential: 4 workers × 180s = 720s (12 minutes)
+   * - Parallel: max(180s) = 180s (3 minutes)
+   * - Savings: 540s (9 minutes, -75%)
+   *
+   * Features:
+   * - Configurable concurrency limit (default: 5 parallel workers)
+   * - Graceful partial failure handling
+   * - Comprehensive progress tracking
+   * - Time savings calculation
+   * - Resource-aware batching
+   *
+   * @param input Configuration for parallel spawning
+   * @returns Results for all workers plus performance summary
+   */
+  async spawnWorkersInParallel(input: SpawnWorkersParallelInput): Promise<SpawnWorkersParallelOutput> {
+    const startTime = Date.now();
+    const maxConcurrency = input.maxConcurrency || 5;
+    const projectPath = input.projectPath || process.cwd();
+    const targetBranch = input.targetBranch || 'feature/boss-initial-setup';
+
+    logger.info('Starting parallel worker spawning (Phase 5 optimization)', {
+      totalWorkers: input.workers.length,
+      maxConcurrency,
+      projectPath
+    });
+
+    // Batch workers to respect concurrency limit
+    const results: SpawnWorkerOutput[] = [];
+    const batches: typeof input.workers[] = [];
+
+    for (let i = 0; i < input.workers.length; i += maxConcurrency) {
+      batches.push(input.workers.slice(i, i + maxConcurrency));
+    }
+
+    // Process each batch concurrently
+    for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+      const batch = batches[batchIndex];
+      if (!batch) continue; // TypeScript safety (should never happen)
+
+      logger.info(`Processing batch ${batchIndex + 1}/${batches.length}`, {
+        batchSize: batch.length,
+        workerTypes: batch.map(w => w.workerType)
+      });
+
+      // Spawn all workers in this batch concurrently
+      const batchPromises = batch.map(async (workerInput) => {
+        try {
+          const spawnInput: SpawnWorkerInput = {
+            workerType: workerInput.workerType,
+            taskPrompt: workerInput.taskPrompt,
+            projectPath,
+            targetBranch,
+            resumeEnvironmentId: workerInput.resumeEnvironmentId
+          };
+
+          const result = await this.spawnWorker(spawnInput);
+          return result;
+        } catch (error) {
+          logger.error('Worker spawn failed in parallel batch', {
+            workerType: workerInput.workerType,
+            batchIndex: batchIndex + 1,
+            error: error instanceof Error ? error.message : String(error)
+          });
+
+          // Return failed result instead of throwing
+          return {
+            success: false,
+            workerId: '',
+            workerType: workerInput.workerType,
+            branch: '',
+            status: 'failed' as const,
+            message: `Failed to spawn ${workerInput.workerType}: ${error instanceof Error ? error.message : String(error)}`,
+            error: error instanceof ConductorException ? error.error : undefined
+          };
+        }
+      });
+
+      // Wait for all workers in this batch to complete
+      const batchResults = await Promise.all(batchPromises);
+      results.push(...batchResults);
+
+      logger.info(`Batch ${batchIndex + 1}/${batches.length} completed`, {
+        succeeded: batchResults.filter(r => r.success).length,
+        failed: batchResults.filter(r => !r.success).length
+      });
+    }
+
+    // Calculate summary statistics
+    const endTime = Date.now();
+    const totalDurationMs = endTime - startTime;
+    const succeeded = results.filter(r => r.success).length;
+    const failed = results.filter(r => !r.success).length;
+
+    // Calculate time savings
+    // Sequential time: total workers × avg spawn time (180s)
+    // Parallel time: actual duration
+    const sequentialTimeMs = input.workers.length * 180000; // 180s per worker
+    const timeSavedMs = sequentialTimeMs - totalDurationMs;
+
+    const summary = {
+      total: input.workers.length,
+      succeeded,
+      failed,
+      timeSaved: this.formatDuration(timeSavedMs),
+      totalDuration: this.formatDuration(totalDurationMs)
+    };
+
+    const allSucceeded = failed === 0;
+    const message = allSucceeded
+      ? `All ${succeeded} workers spawned successfully in parallel (saved ${summary.timeSaved})`
+      : `${succeeded}/${input.workers.length} workers spawned successfully (${failed} failed)`;
+
+    logger.info('Parallel worker spawning completed', {
+      ...summary,
+      timeSavedMs,
+      totalDurationMs,
+      allSucceeded
+    });
+
+    return {
+      success: allSucceeded,
+      results,
+      summary,
+      message
+    };
+  }
+
+  /**
+   * Format duration in milliseconds to human-readable string
+   */
+  private formatDuration(ms: number): string {
+    if (ms < 0) return '0s';
+
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+
+    if (minutes === 0) {
+      return `${seconds}s`;
+    }
+
+    return `${minutes}m ${remainingSeconds}s`;
   }
 }

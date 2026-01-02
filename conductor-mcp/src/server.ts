@@ -11,6 +11,7 @@ import {
 import {
   TOOL_SCHEMAS,
   handleSpawnWorker,
+  handleSpawnWorkersParallel,
   handleExecuteTask,
   handleGetWorkerStatus,
   handleMergeWorker,
@@ -27,6 +28,7 @@ type ToolHandler = (args: unknown) => Promise<unknown>;
 
 const TOOL_HANDLERS: Record<string, ToolHandler> = {
   spawn_worker: handleSpawnWorker,
+  spawn_workers_parallel: handleSpawnWorkersParallel,
   execute_task: handleExecuteTask,
   get_worker_status: handleGetWorkerStatus,
   merge_worker: handleMergeWorker,

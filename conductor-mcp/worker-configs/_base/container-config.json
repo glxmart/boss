@@ -1,28 +1,24 @@
 {
-  "base_image": "node:22-slim",
-  "setup_commands": [
-    "apt-get update",
-    "apt-get install -y bash git curl build-essential"
-  ],"install_commands": [
-    "npm install -g pnpm",
-    "npm install -g @anthropic-ai/claude-code"
-  ],
+  "$schema": "../container-config.schema.json",
+  "base_image": "boss/worker-base:1.0.0",
+  "setup_commands": [],
+  "install_commands": [],
   "environment_variables": {
     "IS_SANDBOX": "1",
     "WORKER_ROLE": "${workerName}",
+    "NODE_ENV": "production",
     "SPEC_KIT_MODE": "true",
     "SPEC_KIT_PATH": ".specify",
     "PATH": "/usr/local/bin:/usr/bin:/bin:/workdir/.specify/scripts",
     "CLAUDE_CONFIG_DIR": "/workdir/.boss/workers/${workerName}/.claude"
   },
-  "secrets": [
-  ],
+  "secrets": [],
   "network": {
     "allowed_hosts": [
-      "github.com",
-      "registry.npmjs.org",
       "api.anthropic.com",
-      "claude.ai"
+      "claude.ai",
+      "registry.npmjs.org",
+      "github.com"
     ]
   }
 }

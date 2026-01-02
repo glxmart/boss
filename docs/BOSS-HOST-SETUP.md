@@ -2,6 +2,8 @@
 
 Complete guide to setting up your local machine to run BOSS (Business-Orchestrated Software System).
 
+> **📖 Documentation:** [Index](./README.md) | [Root README](../README.md) | [BOSS Vision](./BOSS-ENHANCED-VISION.md) | [Spec-Kit Integration](./BOSS-SPEC-KIT-INTEGRATION.md) | [Container-Use Integration](./BOSS-CONTAINER-USE-INTEGRATION.md) | [GitHub Integration](./BOSS-GITHUB-INTEGRATION.md) | [Docker Setup](./DOCKER-SETUP.md)
+
 ---
 
 ## Overview

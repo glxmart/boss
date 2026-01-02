@@ -338,24 +338,100 @@ conductor-mcp is standalone:
 
 ## Documentation Structure
 
-### Root Level
-- `README.md` - High-level overview and quick start
-- `docs/` - Comprehensive design documents
+### 📖 Complete Documentation Index
 
-### boss-cli
-- `README.md` - Bootstrap CLI usage
-- `docs/common-issues.md` - Troubleshooting
+- **[docs/README.md](./docs/README.md)** - Complete documentation index with learning paths
+- **[boss-cli/docs/index.md](./boss-cli/docs/index.md)** - Bootstrap CLI documentation
+- **[conductor-mcp/INDEX.md](./conductor-mcp/INDEX.md)** - Conductor MCP documentation index
 
-### conductor-mcp
-- `README.md` - MCP server overview
-- `INDEX.md` - Documentation index
-- `INSTALLATION.md` - Setup guide
-- `CHANGELOG.md` - Version history
-- `docs/` - Detailed documentation
-  - `api/` - Tool references, error handling
-  - `architecture/` - System design
-  - `guides/` - Integration guides
-  - `development/` - Contributing guidelines
+### Core Documentation
+
+#### 1. 🎨 [BOSS-ENHANCED-VISION.md](./docs/BOSS-ENHANCED-VISION.md)
+
+**The Big Picture** - Read this first!
+
+Comprehensive overview of the BOSS system covering:
+- Two-tier architecture (Bootstrap + Orchestration)
+- Foundation technologies (Spec-Kit + Container-Use)
+- Complete workflow (8 phases)
+- Worker management & coordination
+- Knowledge engine & cross-BOSS communication
+- GitHub integration for project management
+- End-to-end examples with real scenarios
+- Advanced features (cross-BOSS coordination, dependency management)
+
+#### 2. 📋 [BOSS-SPEC-KIT-INTEGRATION.md](./docs/BOSS-SPEC-KIT-INTEGRATION.md)
+
+**Spec-Driven Development** - Implementation methodology
+
+Deep dive into how BOSS automates GitHub's Spec-Kit:
+- Seven sequential phases (Principles → Implementation)
+- Structured artifacts (constitution.md, spec.md, plan.md, tasks.md)
+- Worker prompts for each phase
+- Constitutional governance (NON-NEGOTIABLE rules)
+- Test-First methodology (TDD enforced)
+- Parallelization with [P] markers
+- Quality gate automation
+- Complete artifact specifications
+
+#### 3. 🔐 [BOSS-CONTAINER-USE-INTEGRATION.md](./docs/BOSS-CONTAINER-USE-INTEGRATION.md)
+
+**Secure Worker Execution** - Isolation & secret management
+
+Complete guide to worker isolation and security:
+- Container-use environment configurations
+- Worker-specific setups (8 worker types)
+- 1Password integration (op:// references)
+- Secret discovery by agents (automatic requirement detection)
+- Secret setup templates (Stripe, SendGrid, AWS, etc.)
+- Integration testing with real APIs
+- Worker lifecycle management
+- Security best practices & troubleshooting
+
+#### 4. 🐙 [BOSS-GITHUB-INTEGRATION.md](./docs/BOSS-GITHUB-INTEGRATION.md)
+
+**GitHub Workflows** - Repository and project management
+
+Complete guide to GitHub integration and workflows
+
+#### 5. 🖥️ [BOSS-HOST-SETUP.md](./docs/BOSS-HOST-SETUP.md)
+
+**Host Setup** - Local machine configuration
+
+Complete host machine setup guide (Docker, 1Password, Container-Use, MCP servers)
+
+#### 6. 🐳 [DOCKER-SETUP.md](./docs/DOCKER-SETUP.md)
+
+**Infrastructure Setup** - Local services and databases
+
+Local infrastructure setup (PostgreSQL, Qdrant, embeddings)
+
+### Package Documentation
+
+#### BOSS CLI (Bootstrap)
+
+- **[boss-cli/README.md](./boss-cli/README.md)** - CLI usage and commands
+- **[boss-cli/docs/index.md](./boss-cli/docs/index.md)** - Complete CLI documentation index
+- **[boss-cli/docs/common-issues.md](./boss-cli/docs/common-issues.md)** - Troubleshooting guide
+
+#### Conductor MCP (Orchestration)
+
+- **[conductor-mcp/README.md](./conductor-mcp/README.md)** - MCP server overview
+- **[conductor-mcp/INDEX.md](./conductor-mcp/INDEX.md)** - Complete documentation index
+- **[conductor-mcp/CHANGELOG.md](./conductor-mcp/CHANGELOG.md)** - Version history
+- **[conductor-mcp/docs/guides/INSTALLATION.md](./conductor-mcp/docs/guides/INSTALLATION.md)** - Installation guide
+- **[conductor-mcp/docs/guides/BOSS-GUIDE.md](./conductor-mcp/docs/guides/BOSS-GUIDE.md)** - BOSS integration
+- **[conductor-mcp/docs/architecture/OVERVIEW.md](./conductor-mcp/docs/architecture/OVERVIEW.md)** - Architecture
+- **[conductor-mcp/docs/api/TOOLS.md](./conductor-mcp/docs/api/TOOLS.md)** - API reference
+
+### Development & Planning
+
+- **[docs/CONTRIBUTING_DOCS.md](./docs/CONTRIBUTING_DOCS.md)** - **📝 Documentation guidelines (when/where to add docs)**
+- **[docs/PHASE_1_COMPLETE.md](./docs/PHASE_1_COMPLETE.md)** - Phase 1 completion summary
+- **[docs/PHASE_2_COMPLETE.md](./docs/PHASE_2_COMPLETE.md)** - Phase 2 completion summary
+- **[docs/OPTIMIZATION_PLAN.md](./docs/OPTIMIZATION_PLAN.md)** - Performance optimization strategy
+- **[docs/PERFORMANCE_ANALYSIS.md](./docs/PERFORMANCE_ANALYSIS.md)** - System performance analysis
+- **[docs/OAUTH_TOKEN_IMPLEMENTATION.md](./docs/OAUTH_TOKEN_IMPLEMENTATION.md)** - OAuth implementation details
 
 ## Local Infrastructure
 

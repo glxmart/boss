@@ -26,7 +26,13 @@
     "test:integration": "vitest run tests/integration",
     "test:e2e": "vitest run tests/e2e",
     "test:local": "vitest run tests/e2e --reporter=verbose",
-    "prepublishOnly": "pnpm run build"
+    "prepublishOnly": "pnpm run build",
+    "docker:build": "cd docker/boss-worker-base && ./build.sh",
+    "docker:build:push": "cd docker/boss-worker-base && ./build.sh --push",
+    "docker:test": "cd docker/boss-worker-base && ./build.sh --version test",
+    "worker-configs:update": "cd docker && ./update-worker-configs.sh",
+    "worker-configs:dry-run": "cd docker && ./update-worker-configs.sh --dry-run",
+    "worker-configs:rollback": "cd docker && ./update-worker-configs.sh --rollback"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.1",

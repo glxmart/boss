@@ -2,6 +2,8 @@
 
 **The Complete Vision**
 
+> **📖 Documentation:** [Index](./README.md) | [Root README](../README.md) | [Spec-Kit Integration](./BOSS-SPEC-KIT-INTEGRATION.md) | [Container-Use Integration](./BOSS-CONTAINER-USE-INTEGRATION.md) | [GitHub Integration](./BOSS-GITHUB-INTEGRATION.md) | [Host Setup](./BOSS-HOST-SETUP.md) | [Docker Setup](./DOCKER-SETUP.md)
+
 ---
 
 ## Table of Contents

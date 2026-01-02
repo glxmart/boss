@@ -1,30 +1,68 @@
 import path from 'path';
 import { writeFile } from '../utils/file-system.js';
 
+/**
+ * Generate container-use configuration for BOSS projects
+ *
+ * Uses the pre-built boss/worker-base Docker image which includes:
+ * - Node.js 22 (LTS)
+ * - System dependencies (git, curl, build-essential)
+ * - pnpm (package manager)
+ * - claude-code (Anthropic CLI)
+ *
+ * This eliminates 60-90s of setup time per worker spawn.
+ */
 export async function generateContainerUseConfig(projectPath: string): Promise<void> {
   const config = {
-    base_image: 'node:22-slim',
-    setup_commands: [
-      'apt-get update',
-      'apt-get install -y git curl build-essential bash'
-    ],
+    // Use pre-built BOSS worker base image (Phase 1 optimization)
+    // This includes all system dependencies and global npm packages
+    base_image: 'boss/worker-base:1.0.0',
+
+    // Setup commands run AFTER pulling image, BEFORE copying code
+    // Empty because all system setup is in the base image
+    setup_commands: [],
+
+    // Install commands run AFTER copying project code
+    // Only include project-specific dependencies
     install_commands: [
-      'npm install -g pnpm',
-      'pnpm install'
+      'pnpm install --frozen-lockfile'
     ],
+
+    // Environment variables for all BOSS workers
     environment_variables: {
-      NODE_ENV: 'development',
-      CI: 'true',
+      // BOSS-specific
+      IS_SANDBOX: '1',
+      BOSS_VERSION: '1.0.0',
+
+      // Spec-Kit configuration
       SPEC_KIT_MODE: 'true',
       SPEC_KIT_PATH: '.specify',
-      PATH: '$PATH:.specify/scripts'
+
+      // Node.js environment
+      NODE_ENV: 'production',
+
+      // CI flag for automation detection
+      CI: 'true',
+
+      // PATH with Spec-Kit scripts
+      PATH: '/usr/local/bin:/usr/bin:/bin:$PWD/.specify/scripts'
     },
+
+    // Secrets managed via container-use CLI or 1Password
     secrets: [],
+
+    // Network access - default hosts for BOSS workers
     network: {
       allowed_hosts: [
+        // Anthropic API
+        'api.anthropic.com',
+        'claude.ai',
+
+        // Package registries
         'registry.npmjs.org',
-        'github.com',
-        'api.anthropic.com'
+
+        // Version control
+        'github.com'
       ]
     }
   };

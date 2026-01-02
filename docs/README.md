@@ -30,6 +30,17 @@ Complete documentation for the Business-Orchestrated Software System (BOSS).
 | **[BOSS-HOST-SETUP.md](./BOSS-HOST-SETUP.md)** | Complete host machine setup (Docker, 1Password, Container-Use, MCP servers) |
 | **[DOCKER-SETUP.md](./DOCKER-SETUP.md)** | Local infrastructure setup (PostgreSQL, Qdrant, embeddings) |
 
+### Development & Planning
+
+| Document | Purpose |
+|----------|---------|
+| **[CONTRIBUTING_DOCS.md](./CONTRIBUTING_DOCS.md)** | **📝 Documentation guidelines - when and where to add docs** |
+| **[PHASE_1_COMPLETE.md](./PHASE_1_COMPLETE.md)** | Phase 1 completion summary and achievements |
+| **[PHASE_2_COMPLETE.md](./PHASE_2_COMPLETE.md)** | Phase 2 completion summary and achievements |
+| **[OPTIMIZATION_PLAN.md](./OPTIMIZATION_PLAN.md)** | Performance optimization strategy and plans |
+| **[PERFORMANCE_ANALYSIS.md](./PERFORMANCE_ANALYSIS.md)** | System performance analysis and metrics |
+| **[OAUTH_TOKEN_IMPLEMENTATION.md](./OAUTH_TOKEN_IMPLEMENTATION.md)** | OAuth token implementation details |
+
 ---
 
 ## 🎯 Learning Path

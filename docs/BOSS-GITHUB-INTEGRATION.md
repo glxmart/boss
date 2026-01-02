@@ -2,6 +2,8 @@
 
 ## How BOSS Leverages GitHub for Project Management and Human Oversight
 
+> **📖 Documentation:** [Index](./README.md) | [Root README](../README.md) | [BOSS Vision](./BOSS-ENHANCED-VISION.md) | [Spec-Kit Integration](./BOSS-SPEC-KIT-INTEGRATION.md) | [Container-Use Integration](./BOSS-CONTAINER-USE-INTEGRATION.md) | [Host Setup](./BOSS-HOST-SETUP.md) | [Docker Setup](./DOCKER-SETUP.md)
+
 This document details how BOSS (Business-Orchestrated Software System) uses **GitHub** as its project management system, enabling human oversight through pull requests, issues, and project boards - no additional infrastructure required.
 
 ---

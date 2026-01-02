@@ -1,28 +1,24 @@
 {
-  "base_image": "node:22-slim",
+  "$schema": "../container-config.schema.json",
   "setup_commands": [
     "apt-get update",
-    "apt-get install -y bash git curl build-essential"
-  ],"install_commands": [
-    "npm install -g pnpm",
-    "npm install -g @anthropic-ai/claude-code"
+    "apt-get install -y docker.io kubectl"
   ],
   "environment_variables": {
-    "IS_SANDBOX": "1",
-    "WORKER_ROLE": "${workerName}",
-    "SPEC_KIT_MODE": "true",
-    "SPEC_KIT_PATH": ".specify",
-    "PATH": "/usr/local/bin:/usr/bin:/bin:/workdir/.specify/scripts",
-    "CLAUDE_CONFIG_DIR": "/workdir/.boss/workers/${workerName}/.claude"
+    "DOCKER_BUILDKIT": "1"
   },
-  "secrets": [
-  ],
   "network": {
     "allowed_hosts": [
-      "github.com",
-      "registry.npmjs.org",
       "api.anthropic.com",
-      "claude.ai"
+      "claude.ai",
+      "registry.npmjs.org",
+      "github.com",
+      "hub.docker.com",
+      "gcr.io",
+      "quay.io",
+      "docker.io",
+      "k8s.io",
+      "registry.k8s.io"
     ]
   }
 }

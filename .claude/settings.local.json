@@ -9,6 +9,7 @@
       "Bash(curl:*)",
       "Bash(pnpm:*)",
       "Bash(npm:*)",
+      "Bash(mkdir:*)",
       "Bash(npx vitest:*)",
       "Bash(git commit:*)",
       "Bash(git merge:*)",
@@ -40,7 +41,10 @@
       "Search(pattern:*)",
       "Bash(wc:*)",
       "Bash(chmod:*)",
-      "Bash(/Users/joe/code-glx/boss/conductor-mcp/fix-all-container-configs.sh)"
+      "WebFetch(domain:*)",
+      "Bash(git mv:*)",
+      "Bash(mv:*)",
+      "Bash(rm:*)"
     ],
     "deny": [
       "Bash(rm //etc/**)",

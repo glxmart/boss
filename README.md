@@ -154,9 +154,17 @@ And CANNOT use:
 
 ## 📚 Documentation Structure
 
-This repository contains three comprehensive documents that together define the complete BOSS system:
+### 📖 Complete Documentation Index
 
-### 1. 🎨 [BOSS-ENHANCED-VISION.md](./docs/BOSS-ENHANCED-VISION.md)
+- **[docs/README.md](./docs/README.md)** - Complete documentation index with learning paths
+- **[boss-cli/docs/index.md](./boss-cli/docs/index.md)** - Bootstrap CLI documentation
+- **[conductor-mcp/INDEX.md](./conductor-mcp/INDEX.md)** - Conductor MCP documentation index
+
+### Core Documentation
+
+This repository contains comprehensive documentation that defines the complete BOSS system:
+
+#### 1. 🎨 [BOSS-ENHANCED-VISION.md](./docs/BOSS-ENHANCED-VISION.md)
 
 **The Big Picture** - Read this first!
 
@@ -172,7 +180,7 @@ Comprehensive overview of the BOSS system covering:
 
 **Start here to understand what BOSS is and what it can do.**
 
-### 2. 📋 [BOSS-SPEC-KIT-INTEGRATION.md](./docs/BOSS-SPEC-KIT-INTEGRATION.md)
+#### 2. 📋 [BOSS-SPEC-KIT-INTEGRATION.md](./docs/BOSS-SPEC-KIT-INTEGRATION.md)
 
 **Spec-Driven Development** - Implementation methodology
 
@@ -188,7 +196,7 @@ Deep dive into how BOSS automates GitHub's Spec-Kit:
 
 **Read this to understand the specification-driven workflow.**
 
-### 3. 🔐 [BOSS-CONTAINER-USE-INTEGRATION.md](./docs/BOSS-CONTAINER-USE-INTEGRATION.md)
+#### 3. 🔐 [BOSS-CONTAINER-USE-INTEGRATION.md](./docs/BOSS-CONTAINER-USE-INTEGRATION.md)
 
 **Secure Worker Execution** - Isolation & secret management
 
@@ -203,6 +211,51 @@ Complete guide to worker isolation and security:
 - ✅ Security best practices & troubleshooting
 
 **Read this to understand how workers execute securely.**
+
+#### 4. 🐙 [BOSS-GITHUB-INTEGRATION.md](./docs/BOSS-GITHUB-INTEGRATION.md)
+
+**GitHub Workflows** - Repository and project management
+
+Complete guide to GitHub integration and workflows
+
+#### 5. 🖥️ [BOSS-HOST-SETUP.md](./docs/BOSS-HOST-SETUP.md)
+
+**Host Setup** - Local machine configuration
+
+Complete host machine setup guide (Docker, 1Password, Container-Use, MCP servers)
+
+#### 6. 🐳 [DOCKER-SETUP.md](./docs/DOCKER-SETUP.md)
+
+**Infrastructure Setup** - Local services and databases
+
+Local infrastructure setup (PostgreSQL, Qdrant, embeddings)
+
+### Package Documentation
+
+#### BOSS CLI (Bootstrap)
+
+- **[boss-cli/README.md](./boss-cli/README.md)** - CLI usage and commands
+- **[boss-cli/docs/index.md](./boss-cli/docs/index.md)** - Complete CLI documentation index
+- **[boss-cli/docs/common-issues.md](./boss-cli/docs/common-issues.md)** - Troubleshooting guide
+
+#### Conductor MCP (Orchestration)
+
+- **[conductor-mcp/README.md](./conductor-mcp/README.md)** - MCP server overview
+- **[conductor-mcp/INDEX.md](./conductor-mcp/INDEX.md)** - Complete documentation index
+- **[conductor-mcp/CHANGELOG.md](./conductor-mcp/CHANGELOG.md)** - Version history
+- **[conductor-mcp/docs/guides/INSTALLATION.md](./conductor-mcp/docs/guides/INSTALLATION.md)** - Installation guide
+- **[conductor-mcp/docs/guides/BOSS-GUIDE.md](./conductor-mcp/docs/guides/BOSS-GUIDE.md)** - BOSS integration
+- **[conductor-mcp/docs/architecture/OVERVIEW.md](./conductor-mcp/docs/architecture/OVERVIEW.md)** - Architecture
+- **[conductor-mcp/docs/api/TOOLS.md](./conductor-mcp/docs/api/TOOLS.md)** - API reference
+
+### Development & Planning
+
+- **[docs/CONTRIBUTING_DOCS.md](./docs/CONTRIBUTING_DOCS.md)** - **📝 Documentation guidelines (when/where to add docs)**
+- **[docs/PHASE_1_COMPLETE.md](./docs/PHASE_1_COMPLETE.md)** - Phase 1 completion summary
+- **[docs/PHASE_2_COMPLETE.md](./docs/PHASE_2_COMPLETE.md)** - Phase 2 completion summary
+- **[docs/OPTIMIZATION_PLAN.md](./docs/OPTIMIZATION_PLAN.md)** - Performance optimization strategy
+- **[docs/PERFORMANCE_ANALYSIS.md](./docs/PERFORMANCE_ANALYSIS.md)** - System performance analysis
+- **[docs/OAUTH_TOKEN_IMPLEMENTATION.md](./docs/OAUTH_TOKEN_IMPLEMENTATION.md)** - OAuth implementation details
 
 ---
 

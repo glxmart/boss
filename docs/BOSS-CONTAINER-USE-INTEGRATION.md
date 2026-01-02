@@ -2,6 +2,8 @@
 
 **How BOSS executes AI workers in secure, isolated environments**
 
+> **📖 Documentation:** [Index](./README.md) | [Root README](../README.md) | [BOSS Vision](./BOSS-ENHANCED-VISION.md) | [Spec-Kit Integration](./BOSS-SPEC-KIT-INTEGRATION.md) | [GitHub Integration](./BOSS-GITHUB-INTEGRATION.md) | [Host Setup](./BOSS-HOST-SETUP.md) | [Docker Setup](./DOCKER-SETUP.md)
+
 This document explains how BOSS uses **container-use** to run AI workers safely with complete isolation, secure secret management, and full observability.
 
 ---

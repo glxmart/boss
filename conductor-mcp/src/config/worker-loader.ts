@@ -25,6 +25,48 @@ const __dirname = dirname(__filename);
 const CONDUCTOR_WORKER_CONFIGS = join(__dirname, '..', '..', 'worker-configs');
 const CONDUCTOR_TEMPLATES = join(__dirname, '..', '..', 'templates');
 
+/**
+ * Deep merge two objects. Worker config overrides base config.
+ * - Objects are merged recursively
+ * - Arrays are replaced (not concatenated)
+ * - Primitives are overridden
+ */
+function deepMerge<T extends Record<string, any>>(base: T, override: Partial<T>): T {
+  const result: any = { ...base };
+
+  for (const key in override) {
+    if (override.hasOwnProperty(key)) {
+      const overrideValue = override[key];
+      const baseValue = base[key];
+
+      if (overrideValue === undefined) {
+        // Skip undefined values
+        continue;
+      }
+
+      if (Array.isArray(overrideValue)) {
+        // Arrays: replace completely (don't concat)
+        result[key] = overrideValue;
+      } else if (
+        typeof overrideValue === 'object' &&
+        overrideValue !== null &&
+        !Array.isArray(overrideValue) &&
+        typeof baseValue === 'object' &&
+        baseValue !== null &&
+        !Array.isArray(baseValue)
+      ) {
+        // Objects: merge recursively
+        result[key] = deepMerge(baseValue, overrideValue);
+      } else {
+        // Primitives: override
+        result[key] = overrideValue;
+      }
+    }
+  }
+
+  return result;
+}
+
 export async function loadWorkerConfig(
   workerType: WorkerType,
   projectPath: string = process.cwd()
@@ -130,20 +172,25 @@ export async function loadWorkerConfig(
     throw error;
   }
 
-  // Load container-config.json (always from conductor, never from project)
-  // Projects only contain CLAUDE.md and .claude/ folder, not container-config.json
-  const conductorContainerConfigPath = join(CONDUCTOR_WORKER_CONFIGS, workerType, 'container-config.json');
-  let containerConfig: any;
+  // Load container configuration with inheritance:
+  // 1. Load base config from _base/container-config.json (required)
+  // 2. Load worker-specific config (optional)
+  // 3. Deep merge: worker overrides base
+
+  // Load base container config (required for all workers)
+  const baseContainerConfigPath = join(CONDUCTOR_WORKER_CONFIGS, '_base', 'container-config.json');
+  let baseContainerConfig: any;
   try {
-    const containerConfigContent = await readFile(conductorContainerConfigPath, 'utf-8');
-    containerConfig = JSON.parse(containerConfigContent);
+    const baseConfigContent = await readFile(baseContainerConfigPath, 'utf-8');
+    baseContainerConfig = JSON.parse(baseConfigContent);
+    logger.debug('Loaded base container config', { path: baseContainerConfigPath });
   } catch (error: any) {
     // File not found
     if (error.code === 'ENOENT') {
       throwConductorError(
         ErrorCategory.WORKER_CONFIG_INVALID,
-        `container-config.json not found for worker "${workerType}" at ${conductorContainerConfigPath}. All workers must have container-config.json in conductor package.`,
-        { workerType, details: { path: conductorContainerConfigPath } }
+        `Base container-config.json not found at ${baseContainerConfigPath}. This file is required for all workers.`,
+        { details: { path: baseContainerConfigPath } }
       );
     }
 
@@ -151,8 +198,8 @@ export async function loadWorkerConfig(
     if (error.code === 'EACCES') {
       throwConductorError(
         ErrorCategory.WORKER_CONFIG_INVALID,
-        `Permission denied reading container-config.json for worker "${workerType}" at ${conductorContainerConfigPath}`,
-        { workerType, details: { path: conductorContainerConfigPath, error: error.message } }
+        `Permission denied reading base container-config.json at ${baseContainerConfigPath}`,
+        { details: { path: baseContainerConfigPath, error: error.message } }
       );
     }
 
@@ -160,18 +207,74 @@ export async function loadWorkerConfig(
     if (error instanceof SyntaxError) {
       throwConductorError(
         ErrorCategory.WORKER_CONFIG_INVALID,
-        `container-config.json for worker "${workerType}" contains invalid JSON at ${conductorContainerConfigPath}`,
-        { workerType, details: { path: conductorContainerConfigPath, parseError: error.message } }
+        `Base container-config.json contains invalid JSON at ${baseContainerConfigPath}`,
+        { details: { path: baseContainerConfigPath, parseError: error.message } }
       );
     }
 
     // Other errors
     throwConductorError(
       ErrorCategory.WORKER_CONFIG_INVALID,
-      `Failed to load container-config.json for worker "${workerType}": ${error.message}`,
-      { workerType, details: { path: conductorContainerConfigPath, error: error.message } }
+      `Failed to load base container-config.json: ${error.message}`,
+      { details: { path: baseContainerConfigPath, error: error.message } }
     );
   }
+
+  // Load worker-specific container config (optional)
+  const conductorContainerConfigPath = join(CONDUCTOR_WORKER_CONFIGS, workerType, 'container-config.json');
+  let workerContainerConfig: any = {};
+  let hasWorkerOverride = false;
+
+  try {
+    const workerConfigContent = await readFile(conductorContainerConfigPath, 'utf-8');
+    workerContainerConfig = JSON.parse(workerConfigContent);
+    hasWorkerOverride = true;
+    logger.debug('Loaded worker-specific container config override', {
+      workerType,
+      path: conductorContainerConfigPath
+    });
+  } catch (error: any) {
+    // Worker-specific config is optional - ENOENT is expected for most workers
+    if (error.code === 'ENOENT') {
+      logger.debug('No worker-specific container config, using base only', {
+        workerType,
+        path: conductorContainerConfigPath
+      });
+    } else if (error.code === 'EACCES') {
+      // Permission denied is a real error
+      throwConductorError(
+        ErrorCategory.WORKER_CONFIG_INVALID,
+        `Permission denied reading worker container-config.json for "${workerType}" at ${conductorContainerConfigPath}`,
+        { workerType, details: { path: conductorContainerConfigPath, error: error.message } }
+      );
+    } else if (error instanceof SyntaxError) {
+      // JSON parse error is a real error
+      throwConductorError(
+        ErrorCategory.WORKER_CONFIG_INVALID,
+        `Worker container-config.json for "${workerType}" contains invalid JSON at ${conductorContainerConfigPath}`,
+        { workerType, details: { path: conductorContainerConfigPath, parseError: error.message } }
+      );
+    } else {
+      // Other errors are real errors
+      throwConductorError(
+        ErrorCategory.WORKER_CONFIG_INVALID,
+        `Failed to load worker container-config.json for "${workerType}": ${error.message}`,
+        { workerType, details: { path: conductorContainerConfigPath, error: error.message } }
+      );
+    }
+  }
+
+  // Deep merge: worker-specific config overrides base config
+  // Using lodash merge for deep object merging
+  const containerConfig = hasWorkerOverride
+    ? deepMerge(baseContainerConfig, workerContainerConfig)
+    : baseContainerConfig;
+
+  logger.info('Container config assembled', {
+    workerType,
+    hasWorkerOverride,
+    baseImage: containerConfig.base_image
+  });
 
   // Check for deprecated prompt.md and warn
   const promptMdPath = join(workerDir, 'prompt.md');
@@ -395,7 +498,7 @@ export async function listAvailableWorkers(projectPath: string = process.cwd()):
   try {
     const conductorEntries = await readdir(CONDUCTOR_WORKER_CONFIGS, { withFileTypes: true });
     conductorEntries
-      .filter(entry => entry.isDirectory())
+      .filter(entry => entry.isDirectory() && entry.name !== '_base') // Exclude _base directory
       .forEach(entry => workers.add(entry.name as WorkerType));
   } catch {
     logger.warn('Failed to load conductor built-in worker configs', {

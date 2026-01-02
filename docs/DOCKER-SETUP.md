@@ -1,5 +1,7 @@
 # BOSS Local Infrastructure Setup
 
+> **📖 Documentation:** [Index](./README.md) | [Root README](../README.md) | [BOSS Vision](./BOSS-ENHANCED-VISION.md) | [Spec-Kit Integration](./BOSS-SPEC-KIT-INTEGRATION.md) | [Container-Use Integration](./BOSS-CONTAINER-USE-INTEGRATION.md) | [GitHub Integration](./BOSS-GITHUB-INTEGRATION.md) | [Host Setup](./BOSS-HOST-SETUP.md)
+
 This docker-compose configuration runs the minimal BOSS infrastructure locally. **GitHub is used for project management** - no separate PM tool needed!
 
 ## Services Included

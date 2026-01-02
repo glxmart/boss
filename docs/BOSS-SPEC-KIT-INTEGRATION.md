@@ -2,6 +2,8 @@
 
 **How BOSS automates GitHub's Spec-Kit methodology**
 
+> **📖 Documentation:** [Index](./README.md) | [Root README](../README.md) | [BOSS Vision](./BOSS-ENHANCED-VISION.md) | [Container-Use Integration](./BOSS-CONTAINER-USE-INTEGRATION.md) | [GitHub Integration](./BOSS-GITHUB-INTEGRATION.md) | [Host Setup](./BOSS-HOST-SETUP.md) | [Docker Setup](./DOCKER-SETUP.md)
+
 This document explains how BOSS transforms Spec-Kit from a manual methodology into a fully automated orchestration system while preserving its core principles.
 
 ---

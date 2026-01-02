@@ -12,6 +12,8 @@
 ### Core Documentation
 - [Architecture Overview](docs/architecture/OVERVIEW.md) - System architecture and design
 - [Worker Configuration](docs/architecture/WORKER-CONFIG.md) - Worker config structure
+- [Manifest Protocol](docs/architecture/MANIFEST-PROTOCOL.md) - Manifest communication protocol
+- [Container-Use Capabilities](docs/CONTAINER_USE_CAPABILITIES.md) - Container-use MCP integration details
 - [API Reference](docs/api/TOOLS.md) - MCP tools documentation
 - [Error Handling](docs/api/ERRORS.md) - Error categories and handling
 
@@ -37,9 +39,11 @@ conductor-mcp/
 ├── src/                       # Source code
 ├── worker-configs/            # Worker configurations
 └── docs/
+    ├── CONTAINER_USE_CAPABILITIES.md # Container-use MCP integration
     ├── guides/
     │   ├── INSTALLATION.md    # Installation and verification
-    │   └── BOSS-GUIDE.md      # BOSS integration guide
+    │   ├── BOSS-GUIDE.md      # BOSS integration guide
+    │   └── AI-TOOL-COMPATIBILITY.md # AI tool compatibility
     ├── architecture/
     │   ├── OVERVIEW.md        # Architecture overview
     │   ├── WORKER-CONFIG.md   # Worker config structure
@@ -52,6 +56,7 @@ conductor-mcp/
     │   └── WORKER-CONFIG-ARCHITECTURE.md # Config improvements
     └── development/
         ├── CONTRIBUTING.md    # Development guide
+        ├── SESSION-SUMMARY.md # Development session notes
         └── WORKER-CONFIGS-REVIEW.md # Config review
 ```
 

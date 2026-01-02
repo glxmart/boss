@@ -239,13 +239,15 @@ describe('E2E: BOSS Workflow with Conductor MCP', () => {
     expect(metadata.outputs.required).toBeInstanceOf(Array);
     expect(metadata.outputs.required.length).toBeGreaterThan(0);
 
-    // Verify container-config.json exists and is valid
-    const containerConfigContent = await fs.readFile(architectContainerConfigPath, 'utf-8');
-    const containerConfig = JSON.parse(containerConfigContent);
+    // Verify base container-config.json exists and is valid
+    const conductorWorkerConfigsPath = path.resolve(__dirname, '../../worker-configs');
+    const baseContainerConfigPath = path.join(conductorWorkerConfigsPath, '_base', 'container-config.json');
+    const baseContainerConfigContent = await fs.readFile(baseContainerConfigPath, 'utf-8');
+    const baseContainerConfig = JSON.parse(baseContainerConfigContent);
 
-    expect(containerConfig).toHaveProperty('base_image');
-    expect(containerConfig.base_image).toBeTruthy();
-    expect(containerConfig).toHaveProperty('install_commands');
+    expect(baseContainerConfig).toHaveProperty('base_image');
+    expect(baseContainerConfig.base_image).toBeTruthy();
+    expect(baseContainerConfig).toHaveProperty('install_commands');
 
     // Verify the project has worker-specific CLAUDE.md (not the container config)
     const projectClaudeMdPath = path.join(projectPath, '.boss/workers/architect/CLAUDE.md');
@@ -289,17 +291,27 @@ describe('E2E: BOSS Workflow with Conductor MCP', () => {
     const conductorWorkerConfigsPath = path.resolve(__dirname, '../../worker-configs');
     const architectPath = path.join(conductorWorkerConfigsPath, 'architect');
 
-    // Check all required files exist
-    const requiredFiles = ['metadata.json', 'container-config.json'];
-    for (const file of requiredFiles) {
-      const filePath = path.join(architectPath, file);
-      const exists = await fs.access(filePath).then(() => true).catch(() => false);
-      expect(exists, `conductor worker-configs/architect/${file} should exist`).toBe(true);
-    }
+    // Check metadata.json exists (required for all workers)
+    const metadataPath = path.join(architectPath, 'metadata.json');
+    const metadataExists = await fs.access(metadataPath).then(() => true).catch(() => false);
+    expect(metadataExists, 'conductor worker-configs/architect/metadata.json should exist').toBe(true);
 
-    // Validate container-config.json structure for container spawning
-    const containerConfigPath = path.join(architectPath, 'container-config.json');
-    const containerConfig = JSON.parse(await fs.readFile(containerConfigPath, 'utf-8'));
+    // Check base container config exists (required for all workers)
+    const baseContainerConfigPath = path.join(conductorWorkerConfigsPath, '_base', 'container-config.json');
+    const baseConfigExists = await fs.access(baseContainerConfigPath).then(() => true).catch(() => false);
+    expect(baseConfigExists, 'conductor worker-configs/_base/container-config.json should exist').toBe(true);
+
+    // Load base container config
+    const baseContainerConfig = JSON.parse(await fs.readFile(baseContainerConfigPath, 'utf-8'));
+
+    // Check if worker has specific overrides (optional)
+    const workerContainerConfigPath = path.join(architectPath, 'container-config.json');
+    const workerConfigExists = await fs.access(workerContainerConfigPath).then(() => true).catch(() => false);
+
+    // Use base config (worker config is optional)
+    const containerConfig = workerConfigExists
+      ? JSON.parse(await fs.readFile(workerContainerConfigPath, 'utf-8'))
+      : baseContainerConfig;
 
     expect(containerConfig).toHaveProperty('base_image');
     expect(containerConfig.base_image).toBeTruthy();

@@ -147,7 +147,7 @@ describe('ContainerUseClient Integration - MCP Protocol', () => {
         environment_id: 'env-123',
         command: 'npm test',
         explanation: 'Executing command in environment env-123'
-      });
+      }, { timeout: 180000 });
 
       expect(result.stdout).toBe('Test output');
       expect(result.output).toBe('Test output');

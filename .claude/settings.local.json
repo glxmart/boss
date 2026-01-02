@@ -45,7 +45,12 @@
       "Bash(git mv:*)",
       "Bash(mv:*)",
       "Bash(rm:*)",
-      "mcp__github__create_issue"
+      "mcp__github__create_issue",
+      "Bash(gh run list:*)",
+      "mcp__github__get_file_contents",
+      "Bash(gh api:*)",
+      "Bash(gh auth status:*)",
+      "Bash(op run:*)"
     ],
     "deny": [
       "Bash(rm //etc/**)",

@@ -81,6 +81,106 @@ pnpm test:unit              # Unit tests only
 pnpm test:integration       # Integration tests only
 ```
 
+## 1Password Environment Setup
+
+BOSS uses 1Password CLI to manage sensitive credentials (GitHub tokens, API keys) securely. This section explains how to set up your development environment to use 1Password for authentication.
+
+### Prerequisites
+
+1. **1Password CLI installed**:
+   ```bash
+   brew install --cask 1password-cli
+   ```
+
+2. **1Password account** with vault access to:
+   - `boss/github/token` - GitHub Personal Access Token
+   - `glx/claude-code/oauth-token` - Claude Code OAuth token
+
+### Environment Configuration
+
+The `.env` file contains 1Password references using the `op://` format:
+
+```bash
+# .env (already configured)
+GITHUB_PERSONAL_ACCESS_TOKEN=op://boss/github/token
+GITHUB_TOKEN=op://boss/github/token
+CLAUDE_CODE_OAUTH_TOKEN=op://glx/claude-code/oauth-token
+```
+
+**IMPORTANT**: Never commit actual secrets to `.env`. The file uses `op://` references that are resolved at runtime by 1Password CLI.
+
+### Using GitHub CLI with 1Password
+
+When working with GitHub Actions, PRs, or workflows, use the helper script to inject 1Password credentials:
+
+```bash
+# Run any gh command with 1Password environment
+./scripts/gh-with-1password.sh <command> [args...]
+
+# Examples
+./scripts/gh-with-1password.sh run list              # List workflow runs
+./scripts/gh-with-1password.sh pr list               # List pull requests
+./scripts/gh-with-1password.sh pr create             # Create PR
+./scripts/gh-with-1password.sh api repos/glxmart/boss/actions/workflows
+```
+
+### Setting Up Shell Environment
+
+To use 1Password credentials in your current shell session:
+
+```bash
+# Load environment variables from 1Password
+eval "$(op run --env-file=.env -- bash -c 'env | grep -E "^(GITHUB_|CLAUDE_)" | sed "s/^/export /"')"
+
+# Verify GitHub authentication
+gh auth status
+
+# Now you can use gh CLI commands directly
+gh run list
+gh pr list
+```
+
+**Alternative**: Add to your `~/.zshrc` or `~/.bashrc` for automatic loading:
+
+```bash
+# Add to ~/.zshrc (update path to your BOSS repo)
+if [[ "$PWD" == "/Users/joe/code-glx/boss"* ]]; then
+  eval "$(op run --env-file=/Users/joe/code-glx/boss/.env -- bash -c 'env | grep -E "^(GITHUB_|CLAUDE_)" | sed "s/^/export /"' 2>/dev/null)"
+fi
+```
+
+### Starting Your IDE with 1Password
+
+To ensure your IDE (VS Code, Cursor) has access to 1Password credentials:
+
+```bash
+# Start VS Code
+op run --env-file=.env -- code .
+
+# Start Cursor
+op run --env-file=.env -- cursor .
+```
+
+This is especially important for:
+- GitHub MCP server (used in `.mcp.json`)
+- Conductor MCP worker spawning
+- Integration tests that require API access
+
+### Troubleshooting
+
+**Issue**: `open .env: no such file or directory`
+- **Solution**: Make sure you're running commands from the project root (`/Users/joe/code-glx/boss`)
+- **Solution**: Use absolute path: `op run --env-file=/path/to/boss/.env -- <command>`
+
+**Issue**: `gh` authentication fails
+- **Solution**: Check 1Password vault has `boss/github/token` entry
+- **Solution**: Verify token has required scopes (repo, workflow, read:org, write:packages)
+- **Solution**: Run `gh auth refresh` if token scopes changed
+
+**Issue**: MCP server can't access GitHub
+- **Solution**: Check `.mcp.json` is configured to use `op run --env-file=.env`
+- **Solution**: Restart Claude Code/Cursor with `op run --env-file=.env -- code .`
+
 ## Key Architectural Patterns
 
 ### Schema-Based Manifest Communication

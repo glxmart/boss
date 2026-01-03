@@ -5,9 +5,29 @@
 # Get the current branch name
 current_branch=$(git symbolic-ref --short HEAD 2>/dev/null)
 
+# Allow GitHub Actions to push tags (for release workflow)
+# When pushing tags, git calls the hook but we want to allow it in CI
+if [ -n "${CI:-}" ] && [ -n "${GITHUB_ACTIONS:-}" ]; then
+  # Check if we're pushing tags (not commits to branch)
+  # In GitHub Actions during release, we're pushing tags like @glxmart/package@version
+  # We can detect this by checking if the refname being pushed is a tag
+  while read local_ref local_sha remote_ref remote_sha; do
+    if [[ "$remote_ref" =~ refs/tags/ ]]; then
+      echo "✅ GitHub Actions tag push detected - allowing release tag creation"
+      exit 0
+    fi
+  done
+fi
+
 # Prevent direct pushes to main (including initial push)
 FIRST_PUSH_TO_MAIN=false
 if [ "$current_branch" = "main" ]; then
+  # Allow GitHub Actions to push to main (after PR merge, changesets may push version commits)
+  if [ -n "${CI:-}" ] && [ -n "${GITHUB_ACTIONS:-}" ]; then
+    echo "✅ GitHub Actions detected - allowing automated push to main"
+    echo "🔍 Running pre-push validation..."
+  fi
+
   # Check if this is the very first push (no remote main exists yet)
   if ! git ls-remote --heads origin main > /dev/null 2>&1; then
     echo "⚠️  Warning: This appears to be the first push to main"
@@ -27,15 +47,18 @@ if [ "$current_branch" = "main" ]; then
       echo "⚠️  Main branch contains files - validation checks will run"
     fi
   else
-    echo "❌ Direct push to main is not allowed!"
-    echo ""
-    echo "Please create a feature branch and submit a PR instead:"
-    echo "  git checkout -b feature/your-feature-name"
-    echo "  git push -u origin feature/your-feature-name"
-    echo "  gh pr create  # or use GitHub UI"
-    echo ""
-    echo "For emergency hotfixes, see: docs/emergency-bypass-procedure.md"
-    exit 1
+    # Block direct pushes to main UNLESS it's GitHub Actions
+    if [ -z "${CI:-}" ] || [ -z "${GITHUB_ACTIONS:-}" ]; then
+      echo "❌ Direct push to main is not allowed!"
+      echo ""
+      echo "Please create a feature branch and submit a PR instead:"
+      echo "  git checkout -b feature/your-feature-name"
+      echo "  git push -u origin feature/your-feature-name"
+      echo "  gh pr create  # or use GitHub UI"
+      echo ""
+      echo "For emergency hotfixes, see: docs/emergency-bypass-procedure.md"
+      exit 1
+    fi
   fi
 fi
 

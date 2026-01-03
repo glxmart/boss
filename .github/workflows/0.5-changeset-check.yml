@@ -11,6 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     # Skip if PR has 'skip-changeset' label (for docs-only PRs)
     if: "!contains(github.event.pull_request.labels.*.name, 'skip-changeset')"
+    permissions:
+      contents: read
+      pull-requests: write
 
     steps:
       - uses: actions/checkout@v4

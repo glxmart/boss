@@ -6,14 +6,28 @@ This directory contains GitHub Actions workflows with a numbered naming conventi
 
 ### Naming Convention
 
-Workflows use a numbered prefix (1.0, 1.1, 2.0, etc.) to indicate:
+Workflows use a numbered prefix (0.5, 1.0, 1.1, 2.0, etc.) to indicate:
 - **Order of execution** in the Actions tab
-- **Logical grouping** (1.x = tests, 2.x = integration, 3.x = release, 4.x = infrastructure)
+- **Logical grouping** (0.x = validation, 1.x = tests, 2.x = integration, 3.x = release, 4.x = infrastructure)
 - **Easy identification** when reviewing workflow runs
 
 ### Path-Based Triggers
 
 All workflows include `paths` filters to only run when relevant files change:
+
+#### 0.5 - Changeset Check
+**Triggers on:**
+- Pull requests to `main` branch
+- Any PR activity (opened, synchronized, reopened)
+
+**Runs:**
+- Validates changeset exists for code changes
+- Comments on PR with helpful instructions
+- Skips check if `skip-changeset` label is present
+- Auto-removes warning when changeset is added
+
+**Skip this check:**
+- Add `skip-changeset` label for docs-only, test-only, or config-only PRs
 
 #### 1.0 - Test boss-cli
 **Triggers on:**

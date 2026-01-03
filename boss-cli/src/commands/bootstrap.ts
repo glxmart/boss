@@ -99,8 +99,7 @@ export async function bootstrapCommand(options: BootstrapOptions): Promise<void>
     await generateQualityGates(projectPath, config.quality);
     logger.stopSpinner(true, 'Quality gates generated');
 
-    // Generate MCP config
-    logger.startSpinner('Generating MCP configuration...');
+    // Determine MCP scope BEFORE starting spinner (to avoid UI hang)
     let mcpScope: 'user' | 'project' | 'both' = 'both';
     if (options.mcpScope) {
       const validation = validateMCPScope(options.mcpScope);
@@ -112,6 +111,9 @@ export async function bootstrapCommand(options: BootstrapOptions): Promise<void>
     } else if (!options.nonInteractive) {
       mcpScope = await promptMCPScope();
     }
+
+    // Generate MCP config
+    logger.startSpinner('Generating MCP configuration...');
     await generateMCPConfig(projectPath, mcpScope);
     logger.stopSpinner(true, 'MCP configuration generated');
 

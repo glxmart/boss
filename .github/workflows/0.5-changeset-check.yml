@@ -1,0 +1,151 @@
+name: 0.5 - Changeset Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+    branches: [main]
+
+jobs:
+  changeset-check:
+    name: Check for Changeset
+    runs-on: ubuntu-latest
+    # Skip if PR has 'skip-changeset' label (for docs-only PRs)
+    if: "!contains(github.event.pull_request.labels.*.name, 'skip-changeset')"
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for changeset
+        id: changeset-check
+        run: |
+          # Check if any .changeset/*.md files were added (excluding README.md and config.json)
+          CHANGESET_FILES=$(git diff --name-only origin/main...HEAD | grep "^\.changeset/.*\.md$" | grep -v "README.md" || true)
+
+          # Check if code files changed (excluding docs, tests config)
+          CODE_CHANGES=$(git diff --name-only origin/main...HEAD | grep -E "^(boss-cli|conductor-mcp)/.*\.(ts|js|tsx|jsx|json)$" | grep -v -E "(test|spec|\.test\.|\.spec\.)" || true)
+
+          if [ -n "$CODE_CHANGES" ] && [ -z "$CHANGESET_FILES" ]; then
+            echo "has_code_changes=true" >> $GITHUB_OUTPUT
+            echo "has_changeset=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Code changes detected but no changeset found"
+            exit 1
+          elif [ -n "$CHANGESET_FILES" ]; then
+            echo "has_changeset=true" >> $GITHUB_OUTPUT
+            echo "✅ Changeset found: $CHANGESET_FILES"
+            exit 0
+          else
+            echo "has_code_changes=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No code changes detected (docs/config only)"
+            exit 0
+          fi
+
+      - name: Comment on PR (missing changeset)
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comment = `## ⚠️ Missing Changeset
+
+            This PR includes code changes but doesn't have a changeset.
+
+            ### To add a changeset:
+
+            \`\`\`bash
+            # Run the changeset CLI
+            pnpm changeset
+
+            # Commit the generated file
+            git add .changeset/*.md
+            git commit -m "chore: add changeset"
+            git push
+            \`\`\`
+
+            ### What is a changeset?
+
+            A changeset describes your changes and determines the version bump (patch/minor/major). This information is used to:
+            - Generate the CHANGELOG.md
+            - Determine the next version number
+            - Create the "Version Packages" PR
+
+            ### Skip this check
+
+            If this PR is docs-only, tests-only, or doesn't require a release, add the \`skip-changeset\` label.
+
+            ---
+
+            📚 [Release Documentation](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/docs/RELEASE.md)`;
+
+            // Find existing bot comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('Missing Changeset')
+            );
+
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
+
+      - name: Comment on PR (changeset found)
+        if: success() && steps.changeset-check.outputs.has_changeset == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comment = `## ✅ Changeset Detected
+
+            This PR includes a changeset. When merged, it will be included in the next release.
+
+            📚 [Release Documentation](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/docs/RELEASE.md)`;
+
+            // Find existing bot comment about missing changeset
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('Missing Changeset')
+            );
+
+            // Delete the warning if it exists
+            if (botComment) {
+              await github.rest.issues.deleteComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id
+              });
+            }
+
+            // Post success comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });

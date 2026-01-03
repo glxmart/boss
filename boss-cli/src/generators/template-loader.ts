@@ -13,12 +13,21 @@ export async function loadTemplate(
   template: Template,
   config: ProjectConfig
 ): Promise<void> {
-  const templatePath = path.join(__dirname, '../../templates', template);
+  // Map template names to actual directory names
+  const templateDirMap: Record<string, string> = {
+    'nextjs-app-turbo': 't3-app', // Next.js 15 + Turbo uses T3 template
+    't3-app': 't3-app',
+    'api-service-fastify': 'api-service-fastify',
+    'blank': 'blank'
+  };
+
+  const templateDir = templateDirMap[template] || template;
+  const templatePath = path.join(__dirname, '../../templates', templateDir);
   const fs = await import('fs-extra');
 
   if (await fs.pathExists(templatePath)) {
     // Special handling for T3 template (has base/ and extras/ structure)
-    if (template === 't3-app') {
+    if (templateDir === 't3-app') {
       await loadT3Template(projectPath, templatePath, config);
     } else {
       // Copy template files directly

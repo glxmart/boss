@@ -260,19 +260,29 @@ cd boss-cli && pnpm test:integration
 
 ### 5. Workflow-Specific Debugging
 
-**CI Workflow** (.github/workflows/ci.yml)
-- Runs: Tests for both packages + integration tests
+**Test Workflows** (1.0-test-boss-cli.yml, 1.1-test-conductor-mcp.yml)
+- Runs: Package-specific tests (only when relevant files change)
 - Common fix: Ensure all tests pass locally first
+- Path triggers: Only runs when that package changes
 
-**Release Workflow** (.github/workflows/release.yml)
-- Runs: Builds + tests before publishing via changesets
-- Common fix: Ensure `prepublishOnly` script succeeds
+**Integration Tests** (2.0-integration-tests.yml)
+- Runs: End-to-end integration tests (when either package changes)
+- Common fix: Run `pnpm test:integration` locally first
+- Path triggers: Runs when boss-cli or conductor-mcp changes
+
+**Release Workflow** (3.0-release.yml)
+- Runs: Creates version PR or publishes via changesets
+- Common fix: Ensure valid changeset exists in `.changeset/`
 - Note: Uses `NPM_TOKEN` secret for publishing
+- See: [docs/RELEASE.md](./docs/RELEASE.md) for complete release guide
 
-**Docker Workflow** (.github/workflows/docker.yml)
+**Docker Workflow** (4.0-docker.yml)
 - Runs: Builds and pushes boss-worker-base image
 - Common fix: Verify Dockerfile exists and builds locally
 - Manual build: `cd conductor-mcp/docker/boss-worker-base && ./build.sh`
+- Path triggers: Only runs when Docker files change
+
+**Complete workflow documentation:** [.github/workflows/README.md](./.github/workflows/README.md)
 
 ### 6. Re-trigger Workflows
 
@@ -845,6 +855,70 @@ Applied via `applyQualityPreset()` during bootstrap.
 - **Unit tests**: `tests/unit/*.test.ts` - Isolated component testing
 - **Integration tests**: `tests/integration/*.test.ts` - End-to-end flows
 
+## Development Workflow Commands
+
+BOSS provides numbered commands for a clear, step-by-step development workflow:
+
+### Quick Reference
+
+| Command | Purpose | Invoke With |
+|---------|---------|-------------|
+| `/1-start-feature` | Create feature branch from main | "Start a new feature" |
+| `/2-quality-check` | Run build, lint, tests, coverage | "Run quality check" |
+| `/3-create-changeset` | Create changeset for release | "Create a changeset" |
+| `/4-create-pr` | Submit pull request | "Create a pull request" |
+
+### Typical Workflow
+
+```bash
+# 1. Start feature
+"Start a new feature"
+# → Creates feature/my-feature branch
+
+# 2. Make changes
+# ... edit code ...
+git add .
+git commit -m "feat: implement feature"
+
+# 3. Validate quality
+"Run quality check"
+# → Runs build, lint, tests, coverage
+
+# 4. Create changeset
+"Create a changeset"
+# → Interactive: select packages, choose version, write summary
+
+# 5. Submit PR
+"Create a pull request"
+# → Creates PR with proper formatting
+```
+
+### When to Use Each Command
+
+**`/1-start-feature`**
+- Starting any new work
+- Ensures clean branch from latest main
+- Handles branch naming conventions
+
+**`/2-quality-check`**
+- Before creating changeset
+- Before submitting PR
+- After fixing workflow failures
+
+**`/3-create-changeset`**
+- After code is complete
+- Skip for docs/tests/config only
+- One changeset per logical change
+
+**`/4-create-pr`**
+- After changeset is created
+- When ready for review
+- Handles conventional commit format
+
+For complete documentation, see:
+- Individual command files in `.claude/commands/`
+- [docs/RELEASE.md](./docs/RELEASE.md) - Complete release guide
+
 ## Common Development Workflows
 
 ### Adding a New Worker Type
@@ -991,6 +1065,8 @@ Local infrastructure setup (PostgreSQL, Qdrant, embeddings)
 
 ### Development & Planning
 
+- **[docs/RELEASE.md](./docs/RELEASE.md)** - **📦 Release process with Changesets (automated versioning & publishing)**
+- **[.github/workflows/README.md](./.github/workflows/README.md)** - **⚙️ GitHub workflows documentation (numbered naming, path triggers)**
 - **[docs/CONTRIBUTING_DOCS.md](./docs/CONTRIBUTING_DOCS.md)** - **📝 Documentation guidelines (when/where to add docs)**
 - **[docs/PHASE_1_COMPLETE.md](./docs/PHASE_1_COMPLETE.md)** - Phase 1 completion summary
 - **[docs/PHASE_2_COMPLETE.md](./docs/PHASE_2_COMPLETE.md)** - Phase 2 completion summary
@@ -1127,8 +1203,42 @@ See `boss-cli/docs/common-issues.md` for detailed troubleshooting.
 
 ### Release Process
 
-1. Update version in package.json
-2. Update CHANGELOG.md
-3. Build and test
-4. Commit with version tag
-5. Publish (boss-cli: local, conductor-mcp: npm)
+BOSS uses **Changesets** for automated version management and publishing.
+
+**Quick start using numbered commands:**
+```bash
+# Use the numbered workflow commands for guided experience:
+/1-start-feature    # Create feature branch
+# ... make changes ...
+/2-quality-check    # Validate code quality
+/3-create-changeset # Create changeset (interactive)
+/4-create-pr        # Submit PR
+
+# After PR merge:
+# - Release workflow creates "Version Packages" PR automatically
+# - Merge Version PR → automatic npm publish
+```
+
+**Manual workflow (for reference):**
+```bash
+# 1. Create feature branch
+git checkout -b feature/my-feature
+
+# 2. Make changes and create changeset
+pnpm changeset
+
+# 3. Commit and push
+git add .changeset/*.md
+git commit -m "feat: your changes"
+git push origin feature/my-feature
+
+# 4. Create PR (changeset check validates automatically)
+# 5. Merge PR → Release workflow creates "Version Packages" PR
+# 6. Merge Version PR → automatic npm publish
+```
+
+**Skip changeset:** Add `skip-changeset` label for docs/tests/config-only PRs
+
+**Complete documentation:**
+- [docs/RELEASE.md](./docs/RELEASE.md) - Release process
+- `.claude/commands/` - Individual workflow command guides

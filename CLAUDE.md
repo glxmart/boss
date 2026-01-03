@@ -855,6 +855,76 @@ Applied via `applyQualityPreset()` during bootstrap.
 - **Unit tests**: `tests/unit/*.test.ts` - Isolated component testing
 - **Integration tests**: `tests/integration/*.test.ts` - End-to-end flows
 
+## Development Workflow Commands
+
+BOSS provides numbered commands for a clear, step-by-step development workflow:
+
+### Quick Reference
+
+| Command | Purpose | Invoke With |
+|---------|---------|-------------|
+| `/1-start-feature` | Create feature branch from main | "Start a new feature" |
+| `/2-quality-check` | Run build, lint, tests, coverage | "Run quality check" |
+| `/3-create-changeset` | Create changeset for release | "Create a changeset" |
+| `/4-create-pr` | Submit pull request | "Create a pull request" |
+| `/create-feature-pr` | Workflow overview & reference | "Show me the PR workflow" |
+
+### Typical Workflow
+
+```bash
+# 1. Start feature
+"Start a new feature"
+# → Creates feature/my-feature branch
+
+# 2. Make changes
+# ... edit code ...
+git add .
+git commit -m "feat: implement feature"
+
+# 3. Validate quality
+"Run quality check"
+# → Runs build, lint, tests, coverage
+
+# 4. Create changeset
+"Create a changeset"
+# → Interactive: select packages, choose version, write summary
+
+# 5. Submit PR
+"Create a pull request"
+# → Creates PR with proper formatting
+```
+
+### When to Use Each Command
+
+**`/1-start-feature`**
+- Starting any new work
+- Ensures clean branch from latest main
+- Handles branch naming conventions
+
+**`/2-quality-check`**
+- Before creating changeset
+- Before submitting PR
+- After fixing workflow failures
+
+**`/3-create-changeset`**
+- After code is complete
+- Skip for docs/tests/config only
+- One changeset per logical change
+
+**`/4-create-pr`**
+- After changeset is created
+- When ready for review
+- Handles conventional commit format
+
+**`/create-feature-pr`**
+- Need workflow overview
+- Want to see complete examples
+- Looking for troubleshooting guidance
+
+For complete documentation, see:
+- Individual command files in `.claude/commands/`
+- [docs/RELEASE.md](./docs/RELEASE.md) - Complete release guide
+
 ## Common Development Workflows
 
 ### Adding a New Worker Type
@@ -1141,7 +1211,21 @@ See `boss-cli/docs/common-issues.md` for detailed troubleshooting.
 
 BOSS uses **Changesets** for automated version management and publishing.
 
-**Quick start (PR workflow):**
+**Quick start using numbered commands:**
+```bash
+# Use the numbered workflow commands for guided experience:
+/1-start-feature    # Create feature branch
+# ... make changes ...
+/2-quality-check    # Validate code quality
+/3-create-changeset # Create changeset (interactive)
+/4-create-pr        # Submit PR
+
+# After PR merge:
+# - Release workflow creates "Version Packages" PR automatically
+# - Merge Version PR → automatic npm publish
+```
+
+**Manual workflow (for reference):**
 ```bash
 # 1. Create feature branch
 git checkout -b feature/my-feature
@@ -1161,4 +1245,6 @@ git push origin feature/my-feature
 
 **Skip changeset:** Add `skip-changeset` label for docs/tests/config-only PRs
 
-**Complete documentation:** [docs/RELEASE.md](./docs/RELEASE.md)
+**Complete documentation:**
+- [docs/RELEASE.md](./docs/RELEASE.md) - Release process
+- `.claude/commands/create-feature-pr.md` - Complete workflow guide

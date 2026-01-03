@@ -3,7 +3,7 @@ import { copyDirectory, writeFile, readFile } from '../utils/file-system.js';
 import { loadTemplate as loadAssetTemplate } from '../utils/template-loader.js';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import type { Template, ProjectConfig } from '../types/index.js';
+import type { Template, ProjectConfig, PackageJson } from '../types/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -105,7 +105,7 @@ async function loadT3Template(
   // Update package.json with project name and pnpm configuration
   const packageJsonPath = path.join(projectPath, 'package.json');
   if (await fs.pathExists(packageJsonPath)) {
-    const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
+    const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8')) as PackageJson;
     packageJson.name = config.name;
     // Add pnpm configuration to approve esbuild build scripts (prevents warning)
     if (!packageJson.pnpm) {
@@ -128,7 +128,9 @@ async function createMinimalTemplate(
 ): Promise<void> {
   // Create package.json
   const packageJson = getPackageJsonForTemplate(template, config);
-  await writeFile(path.join(projectPath, 'package.json'), JSON.stringify(packageJson, null, 2));
+  if (packageJson) {
+    await writeFile(path.join(projectPath, 'package.json'), JSON.stringify(packageJson, null, 2));
+  }
 
   // Create tsconfig.json
   const tsconfig = {
@@ -221,7 +223,7 @@ async function ensureEnvInGitignore(projectPath: string): Promise<void> {
   }
 
   // Read existing .gitignore
-  let content = await readFile(gitignorePath);
+  const content = await readFile(gitignorePath);
 
   // Check if .env patterns are already present (more specific check)
   // Look for .env on its own line (not as part of another word)
@@ -238,7 +240,7 @@ async function ensureEnvInGitignore(projectPath: string): Promise<void> {
   }
 }
 
-function getPackageJsonForTemplate(template: Template, config: ProjectConfig): any {
+function getPackageJsonForTemplate(template: Template, config: ProjectConfig): PackageJson | null {
   const base = {
     name: config.name,
     version: '0.1.0',

@@ -45,7 +45,7 @@ export interface WorkerConfig {
       contents: string;
     }>;
   };
-  metadata: any; // From metadata.json (validated against schema)
+  metadata: Record<string, unknown>; // From metadata.json (validated against schema)
 }
 
 // Worker State (tracking active workers)
@@ -436,3 +436,7 @@ export interface PerformanceMetrics {
   decisionsCount: number;
   issuesCount: number;
 }
+
+// Export internal types
+export * from './types/internal.js';
+export * from './utils/type-guards.js';

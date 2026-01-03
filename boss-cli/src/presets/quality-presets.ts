@@ -2,7 +2,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { readFile, writeFile } from '../utils/file-system.js';
-import type { QualityPreset } from '../types/index.js';
+import type { QualityPreset, QualityConfig } from '../types/index.js';
 import yaml from 'js-yaml';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -16,10 +16,10 @@ export async function applyQualityPreset(
   const presetPath = path.join(__dirname, `${quality}.yaml`);
   const fs = await import('fs-extra');
 
-  let preset: any = {};
+  let preset: QualityConfig = {};
   if (await fs.pathExists(presetPath)) {
     const content = await readFile(presetPath);
-    preset = yaml.load(content) as any;
+    preset = yaml.load(content) as QualityConfig;
   } else {
     // Use default preset
     preset = getDefaultPreset(quality);
@@ -28,7 +28,7 @@ export async function applyQualityPreset(
   // Update .boss/config.yaml with quality gates
   const configPath = path.join(projectPath, '.boss', 'config.yaml');
   const configContent = await readFile(configPath);
-  const config = yaml.load(configContent) as any;
+  const config = yaml.load(configContent) as QualityConfig;
 
   config.quality = {
     preset: quality,
@@ -38,8 +38,8 @@ export async function applyQualityPreset(
   await writeFile(configPath, yaml.dump(config, { indent: 2 }));
 }
 
-function getDefaultPreset(quality: QualityPreset): any {
-  const presets: Record<QualityPreset, any> = {
+function getDefaultPreset(quality: QualityPreset): QualityConfig {
+  const presets: Record<QualityPreset, QualityConfig> = {
     startup: {
       gates: {
         coverage: 60,

@@ -5,6 +5,7 @@ import { bootstrapCommand } from './commands/bootstrap.js';
 import { doctorCommand } from './commands/doctor.js';
 import { templatesCommand } from './commands/templates.js';
 import { logger } from './utils/logger.js';
+import type { BootstrapOptions } from './types/index.js';
 
 const program = new Command();
 
@@ -30,9 +31,9 @@ program
     'MCP config scope: user (global IDE), project (project directory), or both (default: both)'
   )
   .option('--non-interactive', 'Skip confirmation prompts (useful for scripts)')
-  .action(async (options) => {
+  .action(async (options: unknown) => {
     try {
-      await bootstrapCommand(options);
+      await bootstrapCommand(options as BootstrapOptions);
     } catch (error) {
       logger.error(`Bootstrap failed: ${error instanceof Error ? error.message : String(error)}`);
       process.exit(1);
@@ -56,9 +57,9 @@ program
 program
   .command('templates')
   .description('List available templates')
-  .action(async () => {
+  .action(() => {
     try {
-      await templatesCommand();
+      templatesCommand();
     } catch (error) {
       logger.error(
         `Failed to list templates: ${error instanceof Error ? error.message : String(error)}`

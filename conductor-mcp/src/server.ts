@@ -33,7 +33,7 @@ const TOOL_HANDLERS: Record<string, ToolHandler> = {
   merge_worker: handleMergeWorker,
   terminate_worker: handleTerminateWorker,
   list_worker_types: handleListWorkerTypes,
-  list_active_workers: handleListActiveWorkers,
+  list_active_workers: async () => Promise.resolve(handleListActiveWorkers()),
   conductor_health: handleConductorHealth,
   ask_worker: handleAskWorker,
   inspect_worker_config: handleInspectWorkerConfig,
@@ -61,7 +61,7 @@ export class ConductorServer {
 
   private setupHandlers(): void {
     // List tools handler
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+    this.server.setRequestHandler(ListToolsRequestSchema, () => {
       logger.debug('Listing available tools');
 
       return {
@@ -129,16 +129,20 @@ export class ConductorServer {
     logger.info('Conductor MCP server started');
 
     // Handle process signals
-    process.on('SIGINT', async () => {
-      logger.info('Received SIGINT, shutting down');
-      await this.server.close();
-      process.exit(0);
+    process.on('SIGINT', () => {
+      void (async () => {
+        logger.info('Received SIGINT, shutting down');
+        await this.server.close();
+        process.exit(0);
+      })();
     });
 
-    process.on('SIGTERM', async () => {
-      logger.info('Received SIGTERM, shutting down');
-      await this.server.close();
-      process.exit(0);
+    process.on('SIGTERM', () => {
+      void (async () => {
+        logger.info('Received SIGTERM, shutting down');
+        await this.server.close();
+        process.exit(0);
+      })();
     });
   }
 }

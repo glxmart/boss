@@ -22,11 +22,16 @@ git checkout -b feature/my-feature
 # 2. Make your changes
 # ... edit code ...
 
-# 3. Create a changeset
+# 3. Create a changeset (choose one method):
+
+# Non-interactive (works everywhere)
+pnpm changeset:add patch "boss-cli,conductor-mcp" "Your feature description"
+
+# OR interactive (local terminal only)
 pnpm changeset
 
 # 4. Commit and push
-git add .changeset/*.md
+git add .
 git commit -m "feat: your feature description"
 git push origin feature/my-feature
 
@@ -41,11 +46,12 @@ git push origin feature/my-feature
 
 ```bash
 # 1. Make your changes
+
 # 2. Create a changeset
-pnpm changeset
+pnpm changeset:add patch "boss-cli,conductor-mcp" "Your feature description"
 
 # 3. Commit and push
-git add .changeset/*.md
+git add .
 git commit -m "feat: your feature description"
 git push
 
@@ -87,7 +93,38 @@ gh pr edit <PR-number> --add-label skip-changeset
 
 ### Step 1: Create a Changeset
 
-After making changes to code, create a changeset:
+After making changes to code, create a changeset using one of two methods:
+
+#### Method 1: Non-Interactive (Recommended for Automation)
+
+Use this in CI/CD, scripts, or Claude Code environments:
+
+```bash
+pnpm changeset:add <bump-type> <packages> <message>
+```
+
+**Examples:**
+
+```bash
+# Single package
+pnpm changeset:add patch "conductor-mcp" "Fix container error handling"
+
+# Multiple packages
+pnpm changeset:add minor "boss-cli,conductor-mcp" "Add worker resume optimization"
+
+# Breaking change
+pnpm changeset:add major "boss-cli" "BREAKING: Update worker schema to v2"
+```
+
+**Parameters:**
+
+- `<bump-type>`: `patch`, `minor`, or `major`
+- `<packages>`: Comma-separated (e.g., `"boss-cli,conductor-mcp"`)
+- `<message>`: Summary (appears in CHANGELOG.md)
+
+#### Method 2: Interactive (Local Terminal Only)
+
+Use this when working in your local terminal:
 
 ```bash
 pnpm changeset
@@ -96,23 +133,17 @@ pnpm changeset
 **Interactive prompts:**
 
 1. **Select packages** that changed (Space to select, Enter to confirm)
-
-   ```
-   ◯ @glxmart/boss-cli
-   ◯ @glxmart/conductor-mcp
-   ```
-
 2. **Choose version bump type** for each package:
    - **patch** (0.0.X) - Bug fixes, documentation, minor updates
    - **minor** (0.X.0) - New features, backwards compatible
    - **major** (X.0.0) - Breaking changes
-
 3. **Write summary** - Describe the changes (appears in CHANGELOG.md)
-   ```
-   Added worker resume optimization for faster iterative development
-   ```
 
-**Generated file:** `.changeset/random-words-here.md`
+**Note:** Interactive mode requires TTY and won't work in CI/CD or Claude Code.
+
+#### Generated File
+
+Both methods create: `.changeset/random-words-here.md`
 
 ```markdown
 ---

@@ -6,6 +6,7 @@
   "scripts": {
     "test:local": "pnpm --filter @glxmart/boss-cli test:local",
     "changeset": "changeset",
+    "changeset:add": "./scripts/create-changeset.sh",
     "version-packages": "changeset version",
     "release": "pnpm build && changeset publish",
     "build": "pnpm --filter @glxmart/boss-cli build && pnpm --filter @glxmart/conductor-mcp build",

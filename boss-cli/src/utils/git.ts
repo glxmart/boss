@@ -1,5 +1,4 @@
 import { execa } from 'execa';
-import path from 'path';
 import { logger } from './logger.js';
 
 export async function initGitRepository(projectPath: string): Promise<void> {
@@ -12,12 +11,12 @@ export async function initGitRepository(projectPath: string): Promise<void> {
     try {
       await execa('git', ['config', 'user.name', 'The BOSS'], { cwd: projectPath });
       await execa('git', ['config', 'user.email', 'boss@glxmart.com'], { cwd: projectPath });
-    } catch (configError) {
+    } catch {
       // If local config fails, try to set global as fallback
       try {
         await execa('git', ['config', '--global', 'user.name', 'The BOSS']);
         await execa('git', ['config', '--global', 'user.email', 'boss@glxmart.com']);
-      } catch (globalError) {
+      } catch {
         // If both fail, log warning but continue (commit will use env vars)
         logger.warning('Could not configure git user, will use environment variables for commits');
       }
@@ -33,8 +32,9 @@ export async function initGitRepository(projectPath: string): Promise<void> {
 export async function addFiles(projectPath: string, files: string[]): Promise<void> {
   try {
     await execa('git', ['add', ...files], { cwd: projectPath });
-  } catch (error) {
-    logger.error(`Failed to add files to git: ${error}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    logger.error(`Failed to add files to git: ${message}`);
     throw error;
   }
 }
@@ -59,14 +59,15 @@ export async function commit(projectPath: string, message: string): Promise<void
     // Add a small delay to avoid race conditions with parallel tests
     await new Promise((resolve) => setTimeout(resolve, Math.random() * 50));
     await execa('git', ['commit', '-m', message, '--no-verify'], execOptions);
-  } catch (error) {
+  } catch (error: unknown) {
     // If it's a lock/index file error, retry once
     if (error instanceof Error && error.message.includes('unable to write')) {
       await new Promise((resolve) => setTimeout(resolve, 100));
       await execa('git', ['commit', '-m', message, '--no-verify'], execOptions);
       return;
     }
-    logger.error(`Failed to commit: ${error}`);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error(`Failed to commit: ${errorMessage}`);
     throw error;
   }
 }
@@ -83,8 +84,9 @@ export async function isGitRepository(dir: string): Promise<boolean> {
 export async function createBranch(projectPath: string, branchName: string): Promise<void> {
   try {
     await execa('git', ['checkout', '-b', branchName], { cwd: projectPath });
-  } catch (error) {
-    logger.error(`Failed to create branch ${branchName}: ${error}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    logger.error(`Failed to create branch ${branchName}: ${message}`);
     throw error;
   }
 }
@@ -95,8 +97,9 @@ export async function getCurrentBranch(projectPath: string): Promise<string> {
       cwd: projectPath,
     });
     return stdout.trim();
-  } catch (error) {
-    logger.error(`Failed to get current branch: ${error}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    logger.error(`Failed to get current branch: ${message}`);
     throw error;
   }
 }

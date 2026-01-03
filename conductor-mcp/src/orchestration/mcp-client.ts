@@ -9,6 +9,21 @@ import { spawn, ChildProcess } from 'child_process';
 import { logger } from '../utils/logger.js';
 import { ErrorCategory } from '../types.js';
 import { throwConductorError } from '../utils/error-handler.js';
+import type { MCPToolResult } from '../types/internal.js';
+
+interface MCPToolResponse {
+  content?: Array<{
+    type?: string;
+    text?: string;
+  }>;
+}
+
+interface MCPListToolsResponse {
+  tools: Array<{
+    name: string;
+    description?: string;
+  }>;
+}
 
 export class ContainerUseMCPClient {
   private client: Client | null = null;
@@ -45,7 +60,7 @@ export class ContainerUseMCPClient {
       });
 
       // Log stderr for debugging
-      this.process.stderr?.on('data', (data) => {
+      this.process.stderr?.on('data', (data: Buffer) => {
         logger.debug('Container-use stderr', { output: data.toString() });
       });
 
@@ -115,7 +130,7 @@ export class ContainerUseMCPClient {
     name: string,
     args: Record<string, unknown>,
     options?: { timeout?: number }
-  ): Promise<any> {
+  ): Promise<MCPToolResult> {
     if (!this.isConnected || !this.client) {
       await this.connect();
     }
@@ -132,14 +147,14 @@ export class ContainerUseMCPClient {
 
     try {
       // Pass timeout to MCP SDK (it has a 60s default, we need more for claude)
-      const result = await this.client.callTool(
+      const result = (await this.client.callTool(
         {
           name,
           arguments: args,
         },
         undefined,
         { timeout }
-      );
+      )) as MCPToolResponse;
 
       logger.debug('MCP tool call successful', { name });
       logger.debug('MCP raw response:', {
@@ -156,11 +171,8 @@ export class ContainerUseMCPClient {
         logger.debug('MCP content item:', {
           name,
           contentType: content?.type,
-          hasText: 'text' in (content || {}),
-          contentPreview:
-            typeof content === 'object' && 'text' in content
-              ? (content.text as string).substring(0, 200)
-              : 'no text field',
+          hasText: content ? 'text' in content : false,
+          contentPreview: content?.text ? content.text.substring(0, 200) : 'no text field',
         });
 
         if (
@@ -168,22 +180,23 @@ export class ContainerUseMCPClient {
           typeof content === 'object' &&
           'type' in content &&
           content.type === 'text' &&
-          'text' in content
+          'text' in content &&
+          typeof content.text === 'string'
         ) {
           try {
-            const text = content.text as string;
+            const text = content.text;
             // Try to parse as JSON first
-            const parsed = JSON.parse(text);
+            const parsed = JSON.parse(text) as MCPToolResult;
             logger.debug('MCP parsed JSON:', { name, parsed });
             return parsed;
           } catch (parseError) {
             // If JSON parsing fails, try to extract JSON from the beginning of the text
             // container-use sometimes returns JSON followed by warning text
-            const text = content.text as string;
+            const text = content.text;
             const jsonMatch = text.match(/^(\{[\s\S]*?\})\n/);
             if (jsonMatch && jsonMatch[1]) {
               try {
-                const parsed = JSON.parse(jsonMatch[1]);
+                const parsed = JSON.parse(jsonMatch[1]) as MCPToolResult;
                 logger.debug('MCP extracted and parsed JSON from mixed content:', { name, parsed });
                 return parsed;
               } catch {
@@ -202,7 +215,7 @@ export class ContainerUseMCPClient {
       }
 
       logger.debug('MCP returning raw result', { name });
-      return result;
+      return result as MCPToolResult;
     } catch (error) {
       logger.error('MCP tool call failed', {
         name,
@@ -215,7 +228,7 @@ export class ContainerUseMCPClient {
   /**
    * List available tools
    */
-  async listTools(): Promise<any[]> {
+  async listTools(): Promise<Array<{ name: string; description?: string }>> {
     if (!this.isConnected || !this.client) {
       await this.connect();
     }
@@ -225,7 +238,7 @@ export class ContainerUseMCPClient {
     }
 
     try {
-      const result = await this.client.listTools();
+      const result = (await this.client.listTools()) as MCPListToolsResponse;
       return result.tools;
     } catch (error) {
       logger.error('Failed to list tools', {

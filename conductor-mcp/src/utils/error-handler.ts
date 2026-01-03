@@ -35,11 +35,11 @@ export function wrapError(
   error: unknown,
   category: ErrorCategory,
   defaultMessage: string
-): ConductorError {
+): ConductorException {
   if (error instanceof Error) {
-    return createError(category, error.message, { details: error });
+    return new ConductorException(createError(category, error.message, { details: error }));
   }
-  return createError(category, defaultMessage, { details: error });
+  return new ConductorException(createError(category, defaultMessage, { details: error }));
 }
 
 export class ConductorException extends Error {

@@ -311,7 +311,7 @@ export async function handleListWorkerTypes(args: unknown) {
   return { workers };
 }
 
-export async function handleListActiveWorkers() {
+export function handleListActiveWorkers() {
   logger.info('Handling list_active_workers request');
 
   const workers = stateTracker.listActiveWorkers();

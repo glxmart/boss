@@ -6,7 +6,7 @@ import type { ProjectConfig } from '../types/index.js';
 
 export async function generateClaudeFolder(
   projectPath: string,
-  config: ProjectConfig
+  _config: ProjectConfig
 ): Promise<void> {
   // Detect which IDE is available and only generate that folder
   const ideFolder = await detectIDE();

@@ -40,8 +40,8 @@ export function expandEnvironmentVariables(
 }
 
 export function expandTemplate(template: string, variables: TemplateVariables): string {
-  return template.replace(/\$\{(\w+)\}/g, (match, varName) => {
-    return variables[varName] ?? match;
+  return template.replace(/\$\{(\w+)\}/g, (match, varName: string) => {
+    return variables[varName as keyof TemplateVariables] ?? match;
   });
 }
 

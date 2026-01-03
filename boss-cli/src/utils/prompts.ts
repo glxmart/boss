@@ -67,7 +67,7 @@ export const QUALITY_PRESETS: Record<QualityPreset, QualityPresetInfo> = {
 };
 
 export async function promptProjectName(): Promise<string> {
-  const { name } = await inquirer.prompt([
+  const { name } = await inquirer.prompt<{ name: string }>([
     {
       type: 'input',
       name: 'name',
@@ -92,7 +92,7 @@ export async function promptTemplate(): Promise<Template> {
     value,
   }));
 
-  const { template } = await inquirer.prompt([
+  const { template } = await inquirer.prompt<{ template: Template }>([
     {
       type: 'list',
       name: 'template',
@@ -109,7 +109,7 @@ export async function promptQualityPreset(): Promise<QualityPreset> {
     value,
   }));
 
-  const { quality } = await inquirer.prompt([
+  const { quality } = await inquirer.prompt<{ quality: QualityPreset }>([
     {
       type: 'list',
       name: 'quality',
@@ -121,7 +121,7 @@ export async function promptQualityPreset(): Promise<QualityPreset> {
 }
 
 export async function promptMCPScope(): Promise<MCPScope> {
-  const { scope } = await inquirer.prompt([
+  const { scope } = await inquirer.prompt<{ scope: MCPScope }>([
     {
       type: 'list',
       name: 'scope',
@@ -147,7 +147,7 @@ export async function promptMCPScope(): Promise<MCPScope> {
 }
 
 export async function promptGitHubConfig(): Promise<{ repo?: string; org?: string }> {
-  const { configure } = await inquirer.prompt([
+  const { configure } = await inquirer.prompt<{ configure: boolean }>([
     {
       type: 'confirm',
       name: 'configure',
@@ -160,7 +160,7 @@ export async function promptGitHubConfig(): Promise<{ repo?: string; org?: strin
     return {};
   }
 
-  const { org, repo } = await inquirer.prompt([
+  const { org, repo } = await inquirer.prompt<{ org: string; repo: string }>([
     {
       type: 'input',
       name: 'org',
@@ -215,7 +215,7 @@ export async function confirmBootstrap(
     return true;
   }
 
-  const { confirm } = await inquirer.prompt([
+  const { confirm } = await inquirer.prompt<{ confirm: boolean }>([
     {
       type: 'confirm',
       name: 'confirm',

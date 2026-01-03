@@ -306,12 +306,15 @@ describe('ContainerUseClient Integration - MCP Protocol', () => {
   describe('listEnvironments', () => {
     it('should call environment_list MCP tool', async () => {
       const mockEnvs = [
-        { environment_id: 'env-1', title: 'Worker 1' },
-        { environment_id: 'env-2', title: 'Worker 2' },
+        { environment_id: 'env-1', title: 'Worker 1', status: 'unknown' },
+        { environment_id: 'env-2', title: 'Worker 2', status: 'unknown' },
       ];
 
       mockMCPClient.callTool.mockResolvedValueOnce({
-        environments: mockEnvs,
+        environments: [
+          { environment_id: 'env-1', title: 'Worker 1' },
+          { environment_id: 'env-2', title: 'Worker 2' },
+        ],
       });
 
       const result = await client.listEnvironments('/path/to/repo');

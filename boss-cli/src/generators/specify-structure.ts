@@ -52,7 +52,6 @@ export async function copySpecKitStructure(projectPath: string): Promise<void> {
     }
   } else {
     // If Spec-Kit bundle doesn't exist, create minimal structure
-    const fs = await import('fs-extra');
     await ensureDirectory(path.join(projectPath, '.specify', 'templates'));
     await ensureDirectory(path.join(projectPath, '.specify', 'scripts'));
     await ensureDirectory(path.join(projectPath, '.specify', 'memory'));

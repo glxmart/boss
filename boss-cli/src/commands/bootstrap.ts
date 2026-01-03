@@ -7,8 +7,6 @@ import {
   promptGitHubConfig,
   promptMCPScope,
   confirmBootstrap,
-  TEMPLATES,
-  QUALITY_PRESETS,
 } from '../utils/prompts.js';
 import {
   validateProjectName,
@@ -17,7 +15,7 @@ import {
   validateMCPScope,
 } from '../utils/validators.js';
 import { validateProjectDirectory } from '../utils/validators.js';
-import type { BootstrapOptions, ProjectConfig } from '../types/index.js';
+import type { BootstrapOptions, ProjectConfig, ProjectConfigFile } from '../types/index.js';
 import { initGitRepository } from '../utils/git.js';
 import { generateProjectStructure } from '../generators/project-structure.js';
 import { generateBossConfig } from '../generators/boss-config.js';
@@ -244,7 +242,7 @@ async function initializeHuskyAfterPackageJson(projectPath: string): Promise<voi
       stdio: 'pipe',
     });
     // Husky initialized successfully (silent success)
-  } catch (error) {
+  } catch {
     // If husky is not available, log warning but continue
     // The hooks are in .husky/ directory and prepare script will install them when dependencies are installed
     logger.warning('Husky initialization skipped (husky not available via npx).');
@@ -276,7 +274,7 @@ async function ensureTestFileExists(projectPath: string, config: ProjectConfig):
   // Also check root and src directories
   if (!hasTestFile) {
     try {
-      const rootFiles = (await fs.readdir(projectPath)) as string[];
+      const rootFiles = await fs.readdir(projectPath);
       hasTestFile = rootFiles.some((f) => {
         return /\.(test|spec)\.(ts|tsx|js|jsx)$/.test(f);
       });
@@ -352,7 +350,7 @@ async function createInitialSetupBranch(projectPath: string): Promise<void> {
   }
 
   const projectConfigContent = await readFile(projectConfigPath);
-  const projectConfig = JSON.parse(projectConfigContent);
+  const projectConfig = JSON.parse(projectConfigContent) as ProjectConfigFile;
   const now = new Date().toISOString();
 
   // Update branch information
@@ -370,7 +368,7 @@ async function createInitialSetupBranch(projectPath: string): Promise<void> {
 
   // Mark branch creation operation as completed
   const branchOp = projectConfig.initialization.operationsRequired?.find(
-    (op: { operation: string }) => op.operation === 'create-initial-setup-branch'
+    (op) => op.operation === 'create-initial-setup-branch'
   );
   if (branchOp) {
     branchOp.status = 'completed';
@@ -465,9 +463,9 @@ async function collectConfiguration(options: BootstrapOptions): Promise<ProjectC
   }
 
   return {
-    name: name!,
-    template: template!,
-    quality: quality!,
+    name: name,
+    template: template,
+    quality: quality,
     githubRepo,
     githubOrg,
   };

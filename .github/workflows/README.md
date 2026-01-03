@@ -119,12 +119,29 @@ All workflows include `paths` filters to only run when relevant files change:
 
 When you make changes to boss-cli or conductor-mcp:
 
+**Method 1: Non-Interactive (Recommended for CI/CD)**
+
 ```bash
-# Run the changeset CLI
+# Create changeset directly
+pnpm changeset:add <bump-type> <packages> <message>
+
+# Examples:
+pnpm changeset:add patch "boss-cli,conductor-mcp" "Fix linting errors"
+pnpm changeset:add minor "conductor-mcp" "Add new MCP tool"
+pnpm changeset:add major "boss-cli" "BREAKING: Update worker schema"
+
+# Changes are automatically staged
+git commit -m "chore: add changeset for feature X"
+```
+
+**Method 2: Interactive (Local Terminal)**
+
+```bash
+# Run the changeset CLI (requires TTY)
 pnpm changeset
 
 # Follow the prompts:
-# 1. Select which packages changed (boss-cli, conductor-mcp, or both)
+# 1. Select which packages changed (Space to select, Enter to confirm)
 # 2. Select version bump type (patch, minor, major)
 # 3. Write a summary of changes
 

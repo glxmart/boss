@@ -92,24 +92,22 @@ Use conventional commit format:
 
 **Types:**
 
-- `feat:` - New feature (minor version)
-- `fix:` - Bug fix (patch version)
-- `docs:` - Documentation only
-- `refactor:` - Code refactoring
-- `test:` - Test additions
-- `chore:` - Tooling/config
-- `perf:` - Performance improvement
-- `feat!:` or `fix!:` - Breaking changes (add `!`)
+- **feat:** - New feature (minor version)
+- **fix:** - Bug fix (patch version)
+- **docs:** - Documentation only
+- **refactor:** - Code refactoring
+- **test:** - Test additions
+- **chore:** - Tooling/config
+- **perf:** - Performance improvement
+- **feat!** or **fix!** - Breaking changes (add exclamation mark)
 
 **Examples:**
 
-```
-✅ feat: add parallel worker spawning
-✅ fix: resolve MCP hanging during bootstrap
-✅ docs: update release workflow documentation
-✅ perf: optimize Docker image build time
-✅ feat!: update worker metadata schema to v2
-```
+- feat: add parallel worker spawning
+- fix: resolve MCP hanging during bootstrap
+- docs: update release workflow documentation
+- perf: optimize Docker image build time
+- feat!: update worker metadata schema to v2 (breaking change)
 
 ## PR Description Template
 

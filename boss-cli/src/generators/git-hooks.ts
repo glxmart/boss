@@ -1,8 +1,6 @@
 import path from 'path';
-import { execa } from 'execa';
 import { writeFile, makeExecutable, ensureDirectory } from '../utils/file-system.js';
 import { loadTemplate } from '../utils/template-loader.js';
-import { logger } from '../utils/logger.js';
 import type { QualityPreset } from '../types/index.js';
 
 export async function generateGitHooks(projectPath: string, quality: QualityPreset): Promise<void> {
@@ -45,14 +43,14 @@ async function generateTestChangedScript(projectPath: string): Promise<void> {
   await makeExecutable(scriptPath);
 }
 
-async function generatePreCommitHook(projectPath: string, quality: QualityPreset): Promise<void> {
+async function generatePreCommitHook(projectPath: string, _quality: QualityPreset): Promise<void> {
   const hook = await loadTemplate('git-hooks/pre-commit.sh');
   const hookPath = path.join(projectPath, '.husky', 'pre-commit');
   await writeFile(hookPath, hook);
   await makeExecutable(hookPath);
 }
 
-async function generateCommitMsgHook(projectPath: string, quality: QualityPreset): Promise<void> {
+async function generateCommitMsgHook(projectPath: string, _quality: QualityPreset): Promise<void> {
   const hook = await loadTemplate('git-hooks/commit-msg.sh');
   const hookPath = path.join(projectPath, '.husky', 'commit-msg');
   await writeFile(hookPath, hook);

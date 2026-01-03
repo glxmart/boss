@@ -151,27 +151,27 @@ export class TaskExecutor {
    * Get execution log from environment
    * This would query Container-Use for the command history/logs
    */
-  async getExecutionLog(environmentId: string): Promise<string> {
+  getExecutionLog(environmentId: string): Promise<string> {
     logger.debug('Getting execution log', { environment_id: environmentId });
 
     // TODO: Implement log retrieval from Container-Use
     // This would call something like container-use log <env-id>
 
-    return `Execution log for ${environmentId} (not yet implemented)`;
+    return Promise.resolve(`Execution log for ${environmentId} (not yet implemented)`);
   }
 
   /**
    * Get artifacts created by worker
    * This would query the environment for files created
    */
-  async getArtifacts(environmentId: string): Promise<string[]> {
+  getArtifacts(environmentId: string): Promise<string[]> {
     logger.debug('Getting artifacts', { environment_id: environmentId });
 
     // TODO: Implement artifact retrieval from Container-Use
     // This would call something like container-use diff <env-id>
     // and parse the output to find created/modified files
 
-    return [];
+    return Promise.resolve([]);
   }
 
   /**
@@ -266,11 +266,16 @@ export class TaskExecutor {
 
     // Parse JSON
     try {
-      const parsedOutput = JSON.parse(outputText);
+      const parsedOutput = JSON.parse(outputText) as
+        | WorkerResult
+        | { structured_output?: WorkerResult };
 
       // Claude Code with --output-format json returns a wrapper object
       // Extract structured_output field if present, otherwise use the parsed output directly
-      const workerResult: WorkerResult = parsedOutput.structured_output || parsedOutput;
+      const workerResult: WorkerResult =
+        'structured_output' in parsedOutput && parsedOutput.structured_output
+          ? parsedOutput.structured_output
+          : (parsedOutput as WorkerResult);
 
       logger.info('Worker result parsed successfully', {
         environment_id: environmentId,
@@ -342,7 +347,7 @@ export class TaskExecutor {
       // Parse JSON
       let manifest: WorkerManifest;
       try {
-        manifest = JSON.parse(manifestContent);
+        manifest = JSON.parse(manifestContent) as WorkerManifest;
       } catch (parseError) {
         // JSON corruption is a serious error - don't hide it
         logger.error('Worker manifest contains corrupted JSON', {
@@ -371,9 +376,13 @@ export class TaskExecutor {
       });
 
       return manifest;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const isNodeError = error && typeof error === 'object' && 'code' in error;
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorCode = isNodeError ? String((error as { code: unknown }).code) : undefined;
+
       // File not found - manifest doesn't exist yet (OK for new workers)
-      if (error.code === 'ENOENT' || error.message?.includes('not found')) {
+      if (errorCode === 'ENOENT' || errorMessage.includes('not found')) {
         logger.debug('Worker manifest file does not exist yet', {
           environment_id: environmentId,
         });
@@ -383,16 +392,16 @@ export class TaskExecutor {
       // Permission or other I/O error - serious problem
       logger.error('Failed to read worker manifest due to I/O error', {
         environment_id: environmentId,
-        error: error.message,
-        code: error.code,
+        error: errorMessage,
+        code: errorCode,
       });
 
       throwConductorError(
         ErrorCategory.WORKER_EXECUTION_FAILED,
-        `Failed to read worker ${environmentId} manifest at ${manifestPath}: ${error.message}. Check file permissions and container state.`,
+        `Failed to read worker ${environmentId} manifest at ${manifestPath}: ${errorMessage}. Check file permissions and container state.`,
         {
           workerId: environmentId,
-          details: { manifestPath, error: error.message, code: error.code },
+          details: { manifestPath, error: errorMessage, code: errorCode },
         }
       );
     }

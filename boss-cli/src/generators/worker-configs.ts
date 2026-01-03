@@ -1,11 +1,10 @@
 import path from 'path';
 import { promises as fsPromises } from 'fs';
-import { execa } from 'execa';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { writeFile, ensureDirectory } from '../utils/file-system.js';
 import { loadTemplate, discoverWorkers, getAssetPath } from '../utils/template-loader.js';
-import type { ProjectConfig } from '../types/index.js';
+import type { ProjectConfig, WorkerMetadata } from '../types/index.js';
 
 // NOTE: Worker phases and metadata are now defined in conductor-mcp/worker-configs/*/metadata.json
 // Boss-cli only generates worker-specific CLAUDE.md and IDE folders
@@ -71,7 +70,7 @@ async function copyRelevantSpecKitCommands(idePath: string, workerName: string):
   let primaryCommands: string[] = [];
   try {
     const metadataContent = await fsPromises.readFile(conductorMetadataPath, 'utf-8');
-    const metadata = JSON.parse(metadataContent);
+    const metadata = JSON.parse(metadataContent) as WorkerMetadata;
 
     if (metadata.primaryCommand) {
       // Handle both string and array formats
@@ -79,7 +78,7 @@ async function copyRelevantSpecKitCommands(idePath: string, workerName: string):
         ? metadata.primaryCommand
         : [metadata.primaryCommand];
     }
-  } catch (error) {
+  } catch {
     // If metadata doesn't exist or has no primaryCommand, this worker gets no spec-kit commands
     return;
   }
@@ -151,7 +150,7 @@ async function generateWorkerIDEFolder(
                   { workerName }
                 );
                 await writeFile(path.join(destSubfolder, file), content);
-              } catch (error) {
+              } catch {
                 // If template loading fails, just copy the file directly
                 await fs.copy(assetFilePath, path.join(destSubfolder, file));
               }

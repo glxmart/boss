@@ -64,9 +64,10 @@ describe('error-handler', () => {
         'Default message'
       );
 
-      expect(wrapped.category).toBe(ErrorCategory.WORKER_EXECUTION_FAILED);
+      expect(wrapped).toBeInstanceOf(ConductorException);
+      expect(wrapped.error.category).toBe(ErrorCategory.WORKER_EXECUTION_FAILED);
       expect(wrapped.message).toBe('Original error');
-      expect(wrapped.details).toBe(originalError);
+      expect(wrapped.error.details).toBe(originalError);
     });
 
     it('should wrap non-Error values with default message', () => {
@@ -76,16 +77,18 @@ describe('error-handler', () => {
         'Default message'
       );
 
-      expect(wrapped.category).toBe(ErrorCategory.WORKER_EXECUTION_FAILED);
+      expect(wrapped).toBeInstanceOf(ConductorException);
+      expect(wrapped.error.category).toBe(ErrorCategory.WORKER_EXECUTION_FAILED);
       expect(wrapped.message).toBe('Default message');
-      expect(wrapped.details).toBe('string error');
+      expect(wrapped.error.details).toBe('string error');
     });
 
     it('should wrap null/undefined with default message', () => {
       const wrapped = wrapError(null, ErrorCategory.CONTAINER_CREATION_FAILED, 'Container failed');
 
+      expect(wrapped).toBeInstanceOf(ConductorException);
       expect(wrapped.message).toBe('Container failed');
-      expect(wrapped.details).toBe(null);
+      expect(wrapped.error.details).toBe(null);
     });
   });
 

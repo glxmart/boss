@@ -20,8 +20,8 @@
 
 ## Changeset
 
-- [ ] I have added a changeset (`pnpm changeset`)
-- [ ] No changeset needed (docs, tests, or internal changes only)
+- [ ] I have added a changeset (`pnpm changeset:add` or `pnpm changeset`)
+- [ ] No changeset needed (docs, tests, or internal changes only - add `skip-changeset` label)
 
 ## Testing
 

@@ -15,6 +15,14 @@ import {
 import { wrapError } from '../utils/error-handler.js';
 import { logger } from '../utils/logger.js';
 import { ContainerUseMCPClient } from './mcp-client.js';
+import type {
+  CreateEnvironmentResult,
+  ConfigShowResult,
+  ExecuteCommandResult,
+  FileReadResult,
+  EnvironmentResult,
+  EnvironmentListResult,
+} from '../types/internal.js';
 
 /**
  * Interface to Container-Use MCP Server
@@ -52,11 +60,11 @@ export class ContainerUseClient {
         title: params.title,
       });
 
-      const createResult = await this.mcpClient.callTool('environment_create', {
+      const createResult = (await this.mcpClient.callTool('environment_create', {
         environment_source: params.environment_source,
         title: params.title,
         explanation: `Creating environment for ${params.title}`,
-      });
+      })) as CreateEnvironmentResult;
 
       logger.debug('environment_create result received', {
         resultType: typeof createResult,
@@ -67,14 +75,17 @@ export class ContainerUseClient {
       });
 
       // container-use returns "id" field, not "environment_id"
-      const environmentId = createResult.environment_id || createResult.id;
+      const environmentId = createResult.environment_id ?? createResult.id;
 
       if (!environmentId) {
         logger.error('environment_create did not return environment_id', {
           createResult,
           resultKeys: createResult ? Object.keys(createResult) : [],
         });
-        throw new Error('Failed to create environment: no environment_id returned');
+
+        // If there's an error message in the output, use it for better error reporting
+        const errorMessage = createResult.output || 'no environment_id returned';
+        throw new Error(`Failed to create environment: ${errorMessage}`);
       }
 
       logger.info('Environment created', { environment_id: environmentId });
@@ -107,7 +118,7 @@ export class ContainerUseClient {
         title: params.title,
         status: 'created',
       };
-    } catch (error) {
+    } catch (error: unknown) {
       throw wrapError(
         error,
         ErrorCategory.CONTAINER_CREATION_FAILED,
@@ -129,7 +140,7 @@ export class ContainerUseClient {
 
     try {
       // Use 3 minute timeout for claude execution (API calls can be slow)
-      const result = await this.mcpClient.callTool(
+      const result = (await this.mcpClient.callTool(
         'environment_run_cmd',
         {
           environment_source: params.environment_source,
@@ -138,7 +149,7 @@ export class ContainerUseClient {
           explanation: `Executing command in environment ${params.environment_id}`,
         },
         { timeout: 180000 }
-      ); // 3 minutes
+      )) as ExecuteCommandResult; // 3 minutes
 
       // container-use stores command output in git notes, not in MCP response
       // Read the output from git notes
@@ -179,11 +190,14 @@ export class ContainerUseClient {
         });
       }
 
+      const stdoutOutput = output || result.stdout || result.output || '';
+      const outputResult = output || result.output || result.stdout || '';
+
       return {
-        stdout: output || result.stdout || result.output || '',
-        output: output || result.output || result.stdout || '',
+        stdout: stdoutOutput,
+        output: outputResult,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       throw wrapError(
         error,
         ErrorCategory.WORKER_EXECUTION_FAILED,
@@ -209,7 +223,7 @@ export class ContainerUseClient {
         contents: params.contents,
         explanation: `Writing file ${params.target_file}`,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       throw wrapError(
         error,
         ErrorCategory.WORKER_EXECUTION_FAILED,
@@ -228,16 +242,16 @@ export class ContainerUseClient {
     });
 
     try {
-      const result = await this.mcpClient.callTool('environment_file_read', {
+      const result = (await this.mcpClient.callTool('environment_file_read', {
         environment_source: params.environment_source,
         environment_id: params.environment_id,
         target_file: params.target_file,
         should_read_entire_file: true,
         explanation: `Reading file ${params.target_file}`,
-      });
+      })) as FileReadResult;
 
-      return { contents: result.contents || '' };
-    } catch (error) {
+      return { contents: result.contents ?? '' };
+    } catch (error: unknown) {
       throw wrapError(
         error,
         ErrorCategory.WORKER_EXECUTION_FAILED,
@@ -251,7 +265,7 @@ export class ContainerUseClient {
    * Note: container-use doesn't have a direct merge tool via MCP
    * This would need to use git commands or CLI merge command
    */
-  async mergeEnvironment(params: MergeEnvironmentParams): Promise<void> {
+  mergeEnvironment(params: MergeEnvironmentParams): Promise<void> {
     logger.info('Merging environment', {
       environment_id: params.environment_id,
       target_branch: params.target_branch,
@@ -265,6 +279,7 @@ export class ContainerUseClient {
     });
 
     // TODO: Implement merge via CLI or find MCP equivalent
+    return Promise.resolve();
   }
 
   /**
@@ -272,7 +287,7 @@ export class ContainerUseClient {
    * Note: container-use doesn't expose delete via MCP
    * This would need to use the CLI delete command
    */
-  async deleteEnvironment(environmentId: string): Promise<void> {
+  deleteEnvironment(environmentId: string): Promise<void> {
     logger.info('Deleting environment', { environment_id: environmentId });
 
     // Container-use delete is done via CLI, not MCP
@@ -281,6 +296,7 @@ export class ContainerUseClient {
     });
 
     // TODO: Implement delete via CLI
+    return Promise.resolve();
   }
 
   /**
@@ -293,18 +309,18 @@ export class ContainerUseClient {
     logger.debug('Getting environment details', { environment_id: environmentId });
 
     try {
-      const result = await this.mcpClient.callTool('environment_open', {
+      const result = (await this.mcpClient.callTool('environment_open', {
         environment_source: environmentSource,
         environment_id: environmentId,
         explanation: `Opening environment ${environmentId}`,
-      });
+      })) as EnvironmentResult;
 
       return {
-        environment_id: result.environment_id || environmentId,
-        title: result.title || '',
-        status: result.status || 'unknown',
+        environment_id: result.environment_id ?? environmentId,
+        title: result.title ?? '',
+        status: result.status ?? 'unknown',
       };
-    } catch (error) {
+    } catch (error: unknown) {
       throw wrapError(
         error,
         ErrorCategory.CONTAINER_USE_UNAVAILABLE,
@@ -320,13 +336,17 @@ export class ContainerUseClient {
     logger.debug('Listing environments', { environment_source: environmentSource });
 
     try {
-      const result = await this.mcpClient.callTool('environment_list', {
+      const result = (await this.mcpClient.callTool('environment_list', {
         environment_source: environmentSource,
         explanation: 'Listing all environments',
-      });
+      })) as EnvironmentListResult;
 
-      return result.environments || [];
-    } catch (error) {
+      return (result.environments ?? []).map((env) => ({
+        environment_id: env.environment_id ?? '',
+        title: env.title ?? '',
+        status: env.status ?? 'unknown',
+      }));
+    } catch (error: unknown) {
       throw wrapError(
         error,
         ErrorCategory.CONTAINER_USE_UNAVAILABLE,
@@ -386,19 +406,19 @@ export class ContainerUseClient {
     try {
       // Try to use MCP tool if available (may not be implemented yet)
       try {
-        const result = await this.mcpClient.callTool('environment_config_show', {
+        const result = (await this.mcpClient.callTool('environment_config_show', {
           environment_source: environmentSource,
           environment_id: environmentId,
           explanation: `Inspecting config for ${environmentId}`,
-        });
+        })) as ConfigShowResult;
 
         logger.debug('Config inspection via MCP successful', { environmentId });
 
         return {
-          baseImage: result.base_image || '',
-          setupCommands: result.setup_commands || [],
-          installCommands: result.install_commands || [],
-          environmentVariables: result.environment_variables || {},
+          baseImage: result.base_image ?? '',
+          setupCommands: result.setup_commands ?? [],
+          installCommands: result.install_commands ?? [],
+          environmentVariables: result.environment_variables ?? {},
         };
       } catch (mcpError) {
         // MCP tool may not be available - log and fall back to manual inspection
@@ -416,7 +436,7 @@ export class ContainerUseClient {
           environmentVariables: {},
         };
       }
-    } catch (error) {
+    } catch (error: unknown) {
       throw wrapError(
         error,
         ErrorCategory.WORKER_EXECUTION_FAILED,
@@ -470,9 +490,9 @@ export class ContainerUseClient {
 
         return {
           imported: {
-            setupCommands: options.setupCommands || [],
-            installCommands: options.installCommands || [],
-            environmentVariables: options.environmentVariables || {},
+            setupCommands: options.setupCommands ?? [],
+            installCommands: options.installCommands ?? [],
+            environmentVariables: options.environmentVariables ?? {},
           },
         };
       } catch (mcpError) {
@@ -493,13 +513,13 @@ export class ContainerUseClient {
 
         return {
           imported: {
-            setupCommands: options.setupCommands || [],
-            installCommands: options.installCommands || [],
-            environmentVariables: options.environmentVariables || {},
+            setupCommands: options.setupCommands ?? [],
+            installCommands: options.installCommands ?? [],
+            environmentVariables: options.environmentVariables ?? {},
           },
         };
       }
-    } catch (error) {
+    } catch (error: unknown) {
       throw wrapError(
         error,
         ErrorCategory.WORKER_EXECUTION_FAILED,

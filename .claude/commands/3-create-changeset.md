@@ -40,67 +40,58 @@ This changeset is used to:
 
 ## Process
 
-When invoked, I will:
+When invoked, I will create a changeset using the non-interactive script:
 
-1. **Run changeset CLI**:
+**Command**:
 
-   ```bash
-   pnpm changeset
-   ```
+```bash
+pnpm changeset:add <bump-type> <packages> <message>
+```
 
-2. **Guide you through prompts**:
+**Parameters**:
 
-   **Step 1: Select packages**
+- `<bump-type>`: `patch`, `minor`, or `major` (see [Version Bump Guidelines](#version-bump-guidelines))
+- `<packages>`: Comma-separated package names (e.g., `"boss-cli,conductor-mcp"`)
+- `<message>`: User-facing summary of changes (use quotes for multi-line)
 
-   ```
-   Which packages would you like to include?
-   ◯ @glxmart/boss-cli
-   ◯ @glxmart/conductor-mcp
-   ```
+**Examples**:
 
-   - Press `Space` to select
-   - Press `Enter` to confirm
-   - Select all packages you modified
+```bash
+# Single package, patch bump
+pnpm changeset:add patch "conductor-mcp" "Fix container error handling"
 
-   **Step 2: Choose version bump**
+# Multiple packages, minor bump
+pnpm changeset:add minor "boss-cli,conductor-mcp" "Add worker resume optimization"
 
-   For each selected package, choose:
-   - **patch** (0.0.X) - Bug fixes, minor updates, internal changes
-     - Examples: Fix typo, Update dependency, Improve error message
+# Major breaking change
+pnpm changeset:add major "boss-cli" "BREAKING: Update worker schema to v2"
+```
 
-   - **minor** (0.X.0) - New features, backwards compatible
-     - Examples: Add new worker type, New CLI command, Performance optimization
+**What happens**:
 
-   - **major** (X.0.0) - Breaking changes, API changes
-     - Examples: Remove deprecated API, Change worker schema, Rename config fields
+1. ✅ Creates changeset file with random name (`.changeset/random-words-here.md`)
+2. ✅ Generates proper frontmatter with package versions
+3. ✅ Adds your message as the summary
+4. ✅ Shows preview of created file
+5. ✅ Automatically stages the changeset
 
-   **Step 3: Write summary**
+**Note**: The `@glxmart/` prefix is added automatically to package names.
 
-   User-facing description of changes:
+## Alternative: Interactive Mode (Local Terminal Only)
 
-   ```
-   Good examples:
-   ✅ "Add worker resume optimization for 85% faster iterations"
-   ✅ "Fix bootstrap template path resolution on Windows"
-   ✅ "BREAKING: Update worker metadata schema to v2"
+If you're working in your local terminal (not via Claude Code), you can use interactive mode:
 
-   Bad examples:
-   ❌ "Updated code"
-   ❌ "Fixed bug"
-   ❌ "Changes"
-   ```
+```bash
+pnpm changeset
+```
 
-3. **Verify changeset created**:
+This provides an interactive menu to:
 
-   ```bash
-   ls .changeset/
-   # Should show: random-words-here.md
-   ```
+1. Select packages (Space to select, Enter to confirm)
+2. Choose version bump for each package
+3. Write summary message
 
-4. **Stage changeset**:
-   ```bash
-   git add .changeset/*.md
-   ```
+**Note**: Interactive mode doesn't work in Claude Code environment (no TTY), so I always use `pnpm changeset:add` instead.
 
 ## Version Bump Guidelines
 
@@ -213,9 +204,12 @@ Fix MCP hanging bug and Docker image auto-update
 
 After changeset is created:
 
-1. Review the changeset file in `.changeset/`
-2. Commit changes: `git commit -m "chore: add changeset"`
-3. Run `/4-create-pr` to submit
+1. Review the preview shown in terminal
+2. Changeset is already staged automatically
+3. Commit all changes together with your code
+4. Run `/4-create-pr` to submit
+
+**Note**: The changeset will be committed along with your code changes, not separately.
 
 ## Related Commands
 

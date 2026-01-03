@@ -14,6 +14,10 @@ import { logger } from '../utils/logger.js';
 import { throwConductorError } from '../utils/error-handler.js';
 import { ErrorCategory } from '../types.js';
 
+interface WorkerSchemaProperties {
+  [key: string]: unknown;
+}
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -45,7 +49,7 @@ async function loadWorkerMetadataSchema(): Promise<ValidateFunction> {
 
   try {
     const schemaContent = await readFile(WORKER_METADATA_SCHEMA_PATH, 'utf-8');
-    const schema = JSON.parse(schemaContent);
+    const schema = JSON.parse(schemaContent) as Record<string, unknown>;
     workerMetadataValidator = ajv.compile(schema);
     logger.debug('Worker metadata schema loaded and compiled');
     return workerMetadataValidator;
@@ -61,10 +65,12 @@ async function loadWorkerMetadataSchema(): Promise<ValidateFunction> {
 /**
  * Validate worker metadata.json against the master schema
  */
-export async function validateWorkerMetadata(metadata: any): Promise<void> {
+export async function validateWorkerMetadata(metadata: Record<string, unknown>): Promise<void> {
   const validator = await loadWorkerMetadataSchema();
   const workerType =
-    typeof metadata === 'object' && metadata !== null ? metadata.workerType : 'unknown';
+    typeof metadata === 'object' && metadata !== null && 'workerType' in metadata
+      ? String(metadata.workerType)
+      : 'unknown';
 
   const valid = validator(metadata);
 
@@ -96,8 +102,10 @@ export async function validateWorkerMetadata(metadata: any): Promise<void> {
  * This creates a schema that validates the JSON output from a worker
  * based on the outputs defined in metadata.json
  */
-export function generateWorkerOutputSchema(metadata: any): any {
-  const baseSchema = {
+export function generateWorkerOutputSchema(
+  metadata: Record<string, unknown>
+): Record<string, unknown> {
+  const baseSchema: Record<string, unknown> = {
     $schema: 'http://json-schema.org/draft-07/schema#',
     type: 'object',
     required: [
@@ -173,8 +181,11 @@ export function generateWorkerOutputSchema(metadata: any): any {
 
   // Add worker-specific properties based on constraints or outputs
   const workerSpecificProps = getWorkerSpecificProperties(metadata);
-  if (workerSpecificProps) {
-    baseSchema.properties = { ...baseSchema.properties, ...workerSpecificProps };
+  if (workerSpecificProps && baseSchema.properties) {
+    baseSchema.properties = {
+      ...(baseSchema.properties as Record<string, unknown>),
+      ...workerSpecificProps,
+    };
   }
 
   return baseSchema;
@@ -183,10 +194,20 @@ export function generateWorkerOutputSchema(metadata: any): any {
 /**
  * Extract worker-specific properties from metadata
  */
-function getWorkerSpecificProperties(metadata: any): any {
-  const props: any = {};
+function getWorkerSpecificProperties(
+  metadata: Record<string, unknown>
+): WorkerSchemaProperties | null {
+  const props: WorkerSchemaProperties = {};
+  const workerType =
+    'workerType' in metadata && typeof metadata.workerType === 'string'
+      ? metadata.workerType
+      : null;
 
-  switch (metadata.workerType) {
+  if (!workerType) {
+    return null;
+  }
+
+  switch (workerType) {
     case 'architect':
       props.principlesEstablished = {
         type: 'array',
@@ -273,19 +294,19 @@ function getWorkerSpecificProperties(metadata: any): any {
         type: 'number',
         description: 'Test coverage percentage achieved',
       };
-      if (metadata.workerType === 'developer-backend') {
+      if (workerType === 'developer-backend') {
         props.mutationScore = {
           type: 'number',
           description: 'Mutation testing score achieved',
         };
       }
-      if (metadata.workerType === 'developer-frontend') {
+      if (workerType === 'developer-frontend') {
         props.accessibilityAuditPassed = {
           type: 'boolean',
           description: 'Whether accessibility audit passed',
         };
       }
-      if (metadata.workerType === 'developer-fullstack') {
+      if (workerType === 'developer-fullstack') {
         props.integrationTestsPassed = {
           type: 'boolean',
           description: 'Whether integration tests passed',
@@ -437,11 +458,16 @@ function getWorkerSpecificProperties(metadata: any): any {
 /**
  * Validate worker output JSON against generated schema
  */
-export function validateWorkerOutput(metadata: any, output: any): void {
+export function validateWorkerOutput(
+  metadata: Record<string, unknown>,
+  output: Record<string, unknown>
+): void {
   const schema = generateWorkerOutputSchema(metadata);
   const validator = ajv.compile(schema);
   const workerType =
-    typeof metadata === 'object' && metadata !== null ? metadata.workerType : 'unknown';
+    typeof metadata === 'object' && metadata !== null && 'workerType' in metadata
+      ? String(metadata.workerType)
+      : 'unknown';
 
   const valid = validator(output);
 

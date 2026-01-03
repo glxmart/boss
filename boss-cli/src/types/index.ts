@@ -46,3 +46,6 @@ export interface QualityGates {
   test?: boolean;
   security?: boolean;
 }
+
+// Export internal types
+export * from './internal.js';

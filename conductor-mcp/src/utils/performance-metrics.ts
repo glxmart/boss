@@ -32,7 +32,7 @@ export async function logPerformanceMetrics(
     if (existsSync(metricsFile)) {
       try {
         const content = await readFile(metricsFile, 'utf-8');
-        allMetrics = JSON.parse(content);
+        allMetrics = JSON.parse(content) as PerformanceMetrics[];
       } catch (error) {
         logger.warn('Failed to read existing performance metrics, starting fresh', {
           error: error instanceof Error ? error.message : String(error),
@@ -93,7 +93,7 @@ export async function getPerformanceMetricsSummary(projectPath: string): Promise
 
   try {
     const content = await readFile(metricsFile, 'utf-8');
-    const allMetrics: PerformanceMetrics[] = JSON.parse(content);
+    const allMetrics: PerformanceMetrics[] = JSON.parse(content) as PerformanceMetrics[];
 
     if (allMetrics.length === 0) {
       return {

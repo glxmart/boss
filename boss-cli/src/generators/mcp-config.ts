@@ -2,7 +2,7 @@ import path from 'path';
 import os from 'os';
 import fs from 'fs-extra';
 import { logger } from '../utils/logger.js';
-import type { MCPScope } from '../types/index.js';
+import type { MCPScope, MCPConfigFile } from '../types/index.js';
 
 export async function generateMCPConfig(
   projectPath?: string,
@@ -25,17 +25,18 @@ export async function generateMCPConfig(
     const claudeCodePath = path.join(homeDir, '.config', 'claude-code', 'mcp-servers.json');
     await fs.ensureDir(path.dirname(claudeCodePath));
 
-    let claudeExistingConfig: any = {};
+    let claudeExistingConfig: MCPConfigFile = { mcpServers: {} };
     if (await fs.pathExists(claudeCodePath)) {
       try {
         const content = await fs.readFile(claudeCodePath, 'utf8');
-        claudeExistingConfig = JSON.parse(content);
-      } catch (error) {
-        logger.warning(`Failed to parse existing Claude Code MCP config: ${error}`);
+        claudeExistingConfig = JSON.parse(content) as MCPConfigFile;
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        logger.warning(`Failed to parse existing Claude Code MCP config: ${message}`);
       }
     }
 
-    const claudeMergedConfig = {
+    const claudeMergedConfig: MCPConfigFile = {
       mcpServers: {
         ...(claudeExistingConfig.mcpServers || {}),
         ...bossMCPConfig,
@@ -49,17 +50,18 @@ export async function generateMCPConfig(
     const cursorPath = path.join(homeDir, '.cursor', 'mcp-servers.json');
     await fs.ensureDir(path.dirname(cursorPath));
 
-    let cursorExistingConfig: any = {};
+    let cursorExistingConfig: MCPConfigFile = { mcpServers: {} };
     if (await fs.pathExists(cursorPath)) {
       try {
         const content = await fs.readFile(cursorPath, 'utf8');
-        cursorExistingConfig = JSON.parse(content);
-      } catch (error) {
-        logger.warning(`Failed to parse existing Cursor MCP config: ${error}`);
+        cursorExistingConfig = JSON.parse(content) as MCPConfigFile;
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        logger.warning(`Failed to parse existing Cursor MCP config: ${message}`);
       }
     }
 
-    const cursorMergedConfig = {
+    const cursorMergedConfig: MCPConfigFile = {
       mcpServers: {
         ...(cursorExistingConfig.mcpServers || {}),
         ...bossMCPConfig,
@@ -75,7 +77,7 @@ export async function generateMCPConfig(
     // Generate .mcp.json (works for both Claude Code and Cursor)
     const projectMCPPath = path.join(projectPath, '.mcp.json');
     // For project scope, pass projectPath so MCP servers use op run wrapper
-    const projectConfig = {
+    const projectConfig: MCPConfigFile = {
       mcpServers: getBossMCPConfig(projectPath),
     };
 
@@ -176,7 +178,7 @@ CLAUDE_CODE_OAUTH_TOKEN=op://glx/claude-code/oauth-token
   logger.info(`MCP environment file written to: ${envPath}`);
 }
 
-async function detectIDE(): Promise<'.claude' | '.cursor'> {
+async function _detectIDE(): Promise<'.claude' | '.cursor'> {
   // Use process.env.HOME if available (for testing), otherwise fall back to os.homedir()
   const homeDir = process.env.HOME || os.homedir();
 

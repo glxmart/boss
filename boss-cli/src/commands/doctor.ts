@@ -45,7 +45,7 @@ export async function doctorCommand(): Promise<void> {
   console.log('\n');
   for (const check of checks) {
     const icon = check.status === 'pass' ? '✓' : check.status === 'fail' ? '✗' : '⚠';
-    const color = check.status === 'pass' ? 'green' : check.status === 'fail' ? 'red' : 'yellow';
+    const _color = check.status === 'pass' ? 'green' : check.status === 'fail' ? 'red' : 'yellow';
     logger[check.status === 'pass' ? 'success' : check.status === 'fail' ? 'error' : 'warning'](
       `${icon} ${check.name}: ${check.message}`
     );

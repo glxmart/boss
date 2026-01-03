@@ -16,6 +16,8 @@ import { WorkerConfig, WorkerType, ErrorCategory } from '../types.js';
 import { throwConductorError } from '../utils/error-handler.js';
 import { logger } from '../utils/logger.js';
 import { validateWorkerMetadata } from '../validation/schema-validator.js';
+import type { MetadataJson, ContainerConfigJson } from '../types/internal.js';
+import { getErrorMessage } from '../utils/type-guards.js';
 
 // Get the directory of this module
 const __filename = fileURLToPath(import.meta.url);
@@ -31,11 +33,11 @@ const CONDUCTOR_TEMPLATES = join(__dirname, '..', '..', 'templates');
  * - Arrays are replaced (not concatenated)
  * - Primitives are overridden
  */
-function deepMerge<T extends Record<string, any>>(base: T, override: Partial<T>): T {
-  const result: any = { ...base };
+function deepMerge<T extends Record<string, unknown>>(base: T, override: Partial<T>): T {
+  const result: Record<string, unknown> = { ...base };
 
   for (const key in override) {
-    if (override.hasOwnProperty(key)) {
+    if (Object.hasOwn(override, key)) {
       const overrideValue = override[key];
       const baseValue = base[key];
 
@@ -56,7 +58,10 @@ function deepMerge<T extends Record<string, any>>(base: T, override: Partial<T>)
         !Array.isArray(baseValue)
       ) {
         // Objects: merge recursively
-        result[key] = deepMerge(baseValue, overrideValue);
+        result[key] = deepMerge(
+          baseValue as Record<string, unknown>,
+          overrideValue as Record<string, unknown>
+        );
       } else {
         // Primitives: override
         result[key] = overrideValue;
@@ -64,7 +69,7 @@ function deepMerge<T extends Record<string, any>>(base: T, override: Partial<T>)
     }
   }
 
-  return result;
+  return result as T;
 }
 
 export async function loadWorkerConfig(
@@ -82,13 +87,13 @@ export async function loadWorkerConfig(
     workerDir = projectWorkerDir;
     source = 'project';
     logger.debug('Loading worker config from project override', { workerType, workerDir });
-  } catch (err) {
+  } catch (err: unknown) {
     // Log non-ENOENT errors (permission denied, corruption, I/O errors, etc.)
     if (err && typeof err === 'object' && 'code' in err && err.code !== 'ENOENT') {
       logger.warn('Error accessing project worker config, falling back to conductor package', {
         workerType,
         projectWorkerDir,
-        error: err instanceof Error ? err.message : String(err),
+        error: getErrorMessage(err),
         code: 'code' in err ? err.code : undefined,
       });
     }
@@ -101,13 +106,13 @@ export async function loadWorkerConfig(
     // Check if conductor config exists
     try {
       await stat(workerDir);
-    } catch (err) {
+    } catch (err: unknown) {
       // Log non-ENOENT errors before throwing
       if (err && typeof err === 'object' && 'code' in err && err.code !== 'ENOENT') {
         logger.error('Error accessing conductor worker config', {
           workerType,
           workerDir,
-          error: err instanceof Error ? err.message : String(err),
+          error: getErrorMessage(err),
           code: 'code' in err ? err.code : undefined,
         });
       }
@@ -125,17 +130,18 @@ export async function loadWorkerConfig(
   // Load metadata.json (always from conductor, never from project)
   // Projects only contain CLAUDE.md and .claude/ folder, not metadata.json
   const conductorMetadataPath = join(CONDUCTOR_WORKER_CONFIGS, workerType, 'metadata.json');
-  let metadata: any;
+  let metadata: MetadataJson;
   try {
     const metadataContent = await readFile(conductorMetadataPath, 'utf-8');
-    metadata = JSON.parse(metadataContent);
+    const parsedMetadata = JSON.parse(metadataContent) as MetadataJson;
 
     // Validate metadata against master schema
-    await validateWorkerMetadata(metadata);
+    await validateWorkerMetadata(parsedMetadata);
+    metadata = parsedMetadata;
     logger.debug('Worker metadata loaded and validated', { workerType });
-  } catch (error: any) {
+  } catch (error: unknown) {
     // File not found
-    if (error.code === 'ENOENT') {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
       throwConductorError(
         ErrorCategory.WORKER_CONFIG_INVALID,
         `metadata.json not found for worker "${workerType}" at ${conductorMetadataPath}. All workers must have metadata.json in conductor package.`,
@@ -144,11 +150,11 @@ export async function loadWorkerConfig(
     }
 
     // Permission denied
-    if (error.code === 'EACCES') {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'EACCES') {
       throwConductorError(
         ErrorCategory.WORKER_CONFIG_INVALID,
         `Permission denied reading metadata.json for worker "${workerType}" at ${conductorMetadataPath}. Check file permissions.`,
-        { workerType, details: { path: conductorMetadataPath, error: error.message } }
+        { workerType, details: { path: conductorMetadataPath, error: getErrorMessage(error) } }
       );
     }
 
@@ -157,7 +163,7 @@ export async function loadWorkerConfig(
       throwConductorError(
         ErrorCategory.WORKER_CONFIG_INVALID,
         `metadata.json for worker "${workerType}" contains invalid JSON at ${conductorMetadataPath}. Fix the JSON syntax.`,
-        { workerType, details: { path: conductorMetadataPath, parseError: error.message } }
+        { workerType, details: { path: conductorMetadataPath, parseError: getErrorMessage(error) } }
       );
     }
 
@@ -166,8 +172,11 @@ export async function loadWorkerConfig(
     logger.debug('Rethrowing error from worker metadata loading', {
       workerType,
       path: conductorMetadataPath,
-      errorType: error.constructor.name,
-      message: error.message,
+      errorType:
+        error && typeof error === 'object' && 'constructor' in error
+          ? (error.constructor as { name: string }).name
+          : 'unknown',
+      message: getErrorMessage(error),
     });
     throw error;
   }
@@ -179,14 +188,14 @@ export async function loadWorkerConfig(
 
   // Load base container config (required for all workers)
   const baseContainerConfigPath = join(CONDUCTOR_WORKER_CONFIGS, '_base', 'container-config.json');
-  let baseContainerConfig: any;
+  let baseContainerConfig: ContainerConfigJson;
   try {
     const baseConfigContent = await readFile(baseContainerConfigPath, 'utf-8');
-    baseContainerConfig = JSON.parse(baseConfigContent);
+    baseContainerConfig = JSON.parse(baseConfigContent) as ContainerConfigJson;
     logger.debug('Loaded base container config', { path: baseContainerConfigPath });
-  } catch (error: any) {
+  } catch (error: unknown) {
     // File not found
-    if (error.code === 'ENOENT') {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
       throwConductorError(
         ErrorCategory.WORKER_CONFIG_INVALID,
         `Base container-config.json not found at ${baseContainerConfigPath}. This file is required for all workers.`,
@@ -195,11 +204,11 @@ export async function loadWorkerConfig(
     }
 
     // Permission denied
-    if (error.code === 'EACCES') {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'EACCES') {
       throwConductorError(
         ErrorCategory.WORKER_CONFIG_INVALID,
         `Permission denied reading base container-config.json at ${baseContainerConfigPath}`,
-        { details: { path: baseContainerConfigPath, error: error.message } }
+        { details: { path: baseContainerConfigPath, error: getErrorMessage(error) } }
       );
     }
 
@@ -215,8 +224,8 @@ export async function loadWorkerConfig(
     // Other errors
     throwConductorError(
       ErrorCategory.WORKER_CONFIG_INVALID,
-      `Failed to load base container-config.json: ${error.message}`,
-      { details: { path: baseContainerConfigPath, error: error.message } }
+      `Failed to load base container-config.json: ${getErrorMessage(error)}`,
+      { details: { path: baseContainerConfigPath, error: getErrorMessage(error) } }
     );
   }
 
@@ -226,30 +235,33 @@ export async function loadWorkerConfig(
     workerType,
     'container-config.json'
   );
-  let workerContainerConfig: any = {};
+  let workerContainerConfig: Partial<ContainerConfigJson> = {};
   let hasWorkerOverride = false;
 
   try {
     const workerConfigContent = await readFile(conductorContainerConfigPath, 'utf-8');
-    workerContainerConfig = JSON.parse(workerConfigContent);
+    workerContainerConfig = JSON.parse(workerConfigContent) as Partial<ContainerConfigJson>;
     hasWorkerOverride = true;
     logger.debug('Loaded worker-specific container config override', {
       workerType,
       path: conductorContainerConfigPath,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Worker-specific config is optional - ENOENT is expected for most workers
-    if (error.code === 'ENOENT') {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
       logger.debug('No worker-specific container config, using base only', {
         workerType,
         path: conductorContainerConfigPath,
       });
-    } else if (error.code === 'EACCES') {
+    } else if (error && typeof error === 'object' && 'code' in error && error.code === 'EACCES') {
       // Permission denied is a real error
       throwConductorError(
         ErrorCategory.WORKER_CONFIG_INVALID,
         `Permission denied reading worker container-config.json for "${workerType}" at ${conductorContainerConfigPath}`,
-        { workerType, details: { path: conductorContainerConfigPath, error: error.message } }
+        {
+          workerType,
+          details: { path: conductorContainerConfigPath, error: getErrorMessage(error) },
+        }
       );
     } else if (error instanceof SyntaxError) {
       // JSON parse error is a real error
@@ -262,8 +274,11 @@ export async function loadWorkerConfig(
       // Other errors are real errors
       throwConductorError(
         ErrorCategory.WORKER_CONFIG_INVALID,
-        `Failed to load worker container-config.json for "${workerType}": ${error.message}`,
-        { workerType, details: { path: conductorContainerConfigPath, error: error.message } }
+        `Failed to load worker container-config.json for "${workerType}": ${getErrorMessage(error)}`,
+        {
+          workerType,
+          details: { path: conductorContainerConfigPath, error: getErrorMessage(error) },
+        }
       );
     }
   }
@@ -299,10 +314,10 @@ export async function loadWorkerConfig(
   try {
     claudeMd = await readFile(sharedClaudeMdPath, 'utf-8');
     logger.debug('Loaded shared CLAUDE.md template', { path: sharedClaudeMdPath });
-  } catch (sharedError: any) {
+  } catch (sharedError: unknown) {
     logger.debug('Shared CLAUDE.md not found, attempting worker-specific fallback', {
       sharedPath: sharedClaudeMdPath,
-      error: sharedError.message,
+      error: getErrorMessage(sharedError),
     });
 
     // Fallback to worker-specific CLAUDE.md if it exists (for backward compatibility)
@@ -310,13 +325,13 @@ export async function loadWorkerConfig(
     try {
       claudeMd = await readFile(workerClaudeMdPath, 'utf-8');
       logger.debug('Loaded worker-specific CLAUDE.md', { workerType, path: workerClaudeMdPath });
-    } catch (workerError: any) {
+    } catch (workerError: unknown) {
       logger.error('Failed to load both shared and worker-specific CLAUDE.md', {
         workerType,
         sharedPath: sharedClaudeMdPath,
         workerPath: workerClaudeMdPath,
-        sharedError: sharedError.message,
-        workerError: workerError.message,
+        sharedError: getErrorMessage(sharedError),
+        workerError: getErrorMessage(workerError),
       });
       throwConductorError(
         ErrorCategory.WORKER_CONFIG_INVALID,
@@ -324,8 +339,8 @@ export async function loadWorkerConfig(
         {
           workerType,
           details: {
-            sharedError: sharedError.message,
-            workerError: workerError.message,
+            sharedError: getErrorMessage(sharedError),
+            workerError: getErrorMessage(workerError),
           },
         }
       );
@@ -342,12 +357,14 @@ export async function loadWorkerConfig(
 
   const config: WorkerConfig = {
     workerType,
-    base_image: containerConfig.base_image,
-    setup_commands: containerConfig.setup_commands || [],
-    install_commands: containerConfig.install_commands || [],
-    environment_variables: containerConfig.environment_variables || {},
-    secrets: containerConfig.secrets || [],
-    network: containerConfig.network || { allowed_hosts: [] },
+    base_image: containerConfig.base_image ?? '',
+    setup_commands: containerConfig.setup_commands ?? [],
+    install_commands: containerConfig.install_commands ?? [],
+    environment_variables: containerConfig.environment_variables ?? {},
+    secrets: containerConfig.secrets ?? [],
+    network: {
+      allowed_hosts: containerConfig.network?.allowed_hosts ?? [],
+    },
     claudeMd,
     roleDescription,
     phase,

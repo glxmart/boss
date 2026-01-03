@@ -4,7 +4,7 @@ import type { ProjectConfig } from '../types/index.js';
 
 export async function generateProjectStructure(
   projectPath: string,
-  config: ProjectConfig
+  _config: ProjectConfig
 ): Promise<void> {
   const directories = [
     '.boss',

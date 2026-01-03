@@ -1,476 +1,362 @@
-# Create Feature PR with Changeset
+# Feature Development Workflow
 
-This command guides you through the complete PR workflow for BOSS, including changeset creation and automated release process.
+Complete guide to the BOSS feature development workflow using focused commands.
 
-## Context
+## Quick Start
 
-- **Main branch is protected** - Direct pushes are blocked
-- **Changesets required** - All code changes need a changeset (automated validation)
-- **Automated release** - Merging triggers version PR creation and npm publishing
+BOSS provides focused commands for each stage of development:
 
-## Prerequisites
+1. **`/1-start-feature`** - Create feature branch from main
+2. Make your code changes
+3. **`/2-quality-check`** - Run lint, tests, coverage
+4. **`/3-create-changeset`** - Create changeset (if code changes)
+5. **`/4-create-pr`** - Submit pull request
 
-- On `main` branch with latest changes
-- Know what you're going to change
-- Understand version bump type needed (patch/minor/major)
+## Development Flow
 
-## Step-by-Step Workflow
+### 1. Start Feature (`/1-start-feature`)
 
-### 1. Verify Starting Point
+Creates a new feature branch from latest main.
 
+**Usage:** "Start a new feature"
+
+**What it does:**
+- Switches to main and pulls latest
+- Creates feature branch with proper naming
+- Verifies clean starting point
+
+**Branch types:**
+- `feature/` - New features (minor version)
+- `fix/` - Bug fixes (patch version)
+- `docs/` - Documentation (skip changeset)
+- `refactor/` - Code refactoring
+- `test/` - Test additions
+- `chore/` - Tooling/config
+
+---
+
+### 2. Make Changes (Manual)
+
+**Develop your feature:**
 ```bash
-# Ensure you're on main with latest changes
-git checkout main
-git pull origin main
-
-# Verify clean working directory
-git status
-# Should show: "nothing to commit, working tree clean"
+# Edit files
+# Make commits as you work
+git add .
+git commit -m "work in progress"
 ```
 
-### 2. Create Feature Branch
-
+**Test locally:**
 ```bash
-# Create descriptive feature branch
-git checkout -b feature/your-feature-name
+# Build packages
+pnpm build
 
-# Examples:
-# git checkout -b feature/worker-resume-optimization
-# git checkout -b fix/bootstrap-template-path
-# git checkout -b docs/update-release-guide
-```
-
-**Branch naming conventions:**
-- `feature/` - New features (likely minor version)
-- `fix/` - Bug fixes (likely patch version)
-- `docs/` - Documentation (skip-changeset)
-- `refactor/` - Code refactoring (patch/skip-changeset)
-- `test/` - Test additions (skip-changeset)
-- `chore/` - Tooling/config (skip-changeset)
-
-### 3. Make Your Changes
-
-```bash
-# Make code changes in boss-cli/ or conductor-mcp/
-# Edit files as needed
-
-# Test locally
-pnpm install  # If dependencies changed
-pnpm build    # Build packages
-pnpm test     # Run tests
-
-# Package-specific testing
+# Run specific package tests
 cd boss-cli && pnpm test
 cd conductor-mcp && pnpm test
 ```
 
-### 4. Create Changeset (For Code Changes Only)
+---
 
-**Skip this step if:**
-- Documentation only (add `skip-changeset` label later)
-- Tests only
-- CI/CD config only
-- Internal tooling
+### 3. Quality Check (`/2-quality-check`)
 
-**Create changeset:**
+Validates code meets quality standards before submitting.
+
+**Usage:** "Run quality check"
+
+**What it does:**
+- Builds all packages
+- Runs linting
+- Executes test suites
+- Checks coverage thresholds
+- Reports results
+
+**Quality gates:**
+- Build must succeed
+- Lint must pass
+- All tests must pass
+- Coverage must meet thresholds (50%/80%/90% based on preset)
+
+---
+
+### 4. Create Changeset (`/3-create-changeset`)
+
+Describes changes for automated versioning.
+
+**Usage:** "Create a changeset"
+
+**What it does:**
+- Runs `pnpm changeset`
+- Guides through package selection
+- Helps choose version bump type
+- Creates changeset file
+- Stages changeset
+
+**When to create:**
+- ✅ New features
+- ✅ Bug fixes
+- ✅ Breaking changes
+
+**When to skip:**
+- ❌ Documentation only (use `skip-changeset` label)
+- ❌ Tests only
+- ❌ CI/CD config only
+
+**Version types:**
+- **patch** (0.0.X) - Bug fixes, minor updates
+- **minor** (0.X.0) - New features, backwards compatible
+- **major** (X.0.0) - Breaking changes
+
+---
+
+### 5. Create PR (`/4-create-pr`)
+
+Submits pull request with proper formatting.
+
+**Usage:** "Create a pull request"
+
+**What it does:**
+- Pushes branch to origin
+- Generates conventional commit title
+- Creates comprehensive PR description
+- Submits PR via GitHub CLI
+- Adds labels if needed
+
+**PR format:**
+- Title: Conventional commit format (`feat:`, `fix:`, etc.)
+- Description: Summary, changes, testing, changeset info
+- Labels: `skip-changeset` if docs/tests only
+
+**Automated workflows:**
+- Changeset validation
+- Package-specific tests
+- Integration tests
+- Docker builds (if applicable)
+
+---
+
+## Complete Examples
+
+### New Feature
 
 ```bash
-# Run changeset CLI
-pnpm changeset
-```
+# 1. Start
+"Start a new feature"
+# → Creates feature/my-feature branch
 
-**Interactive prompts:**
-
-1. **Select packages** (Space to select, Enter to confirm)
-   ```
-   ◯ @glxmart/boss-cli
-   ◯ @glxmart/conductor-mcp
-   ```
-   - Select packages you modified
-   - Can select multiple
-
-2. **Choose version bump type** (for each package)
-   - **patch** (0.0.X) - Bug fixes, minor updates, internal changes
-   - **minor** (0.X.0) - New features, backwards compatible
-   - **major** (X.0.0) - Breaking changes, API changes
-
-3. **Write summary** - Clear description of changes
-   ```
-   Example: "Add worker resume optimization for 85% faster iterations"
-   Example: "Fix bootstrap template path resolution on Windows"
-   Example: "BREAKING: Update worker metadata schema to v2"
-   ```
-
-**Result:** Creates `.changeset/random-words-here.md`
-
-### 5. Commit and Push
-
-```bash
-# Stage all changes including changeset
+# 2. Develop
+# ... make changes ...
 git add .
+git commit -m "feat: implement new feature"
 
-# Use conventional commit message
-git commit -m "feat: your feature description"
+# 3. Validate
+"Run quality check"
+# → ✅ All checks pass
 
-# Push to origin
-git push origin feature/your-feature-name
+# 4. Changeset
+"Create a changeset"
+# → Select packages: boss-cli
+# → Version: minor
+# → Summary: "Add new feature X"
+git commit -m "chore: add changeset"
+
+# 5. Submit
+"Create a pull request"
+# → PR created with title "feat: add new feature X"
 ```
 
-**Conventional commit types:**
-- `feat:` - New feature
-- `fix:` - Bug fix
-- `docs:` - Documentation
-- `refactor:` - Code refactoring
-- `test:` - Test additions
-- `chore:` - Tooling/config
-- `feat!:` or `fix!:` - Breaking changes (use `!`)
-
-### 6. Create Pull Request
+### Bug Fix
 
 ```bash
-# Using GitHub CLI (recommended)
-gh pr create \
-  --title "feat: your feature description" \
-  --body "## Summary
+# 1. Start
+"Start a new feature" → fix/critical-bug
 
-- Change 1
-- Change 2
-
-## Testing
-
-- [ ] Tested locally
-- [ ] All tests pass
-- [ ] Documentation updated (if needed)
-
-## Changeset
-
-- [x] Changeset created
-- Version bump: minor/patch/major
-"
-
-# Or via GitHub UI
-open "https://github.com/glxmart/boss/compare/feature/your-feature-name?expand=1"
-```
-
-**For docs/tests/config PRs (no changeset):**
-
-```bash
-# Create PR
-gh pr create --title "docs: update release guide"
-
-# Add skip-changeset label
-gh pr edit --add-label skip-changeset
-```
-
-### 7. Automated Workflow (Happens Automatically)
-
-**When PR is created/updated:**
-
-1. ✅ **0.5 - Changeset Check** runs
-   - Validates changeset exists (if code changed)
-   - Posts helpful comment if missing
-   - Passes if changeset present or `skip-changeset` label
-
-2. ✅ **1.0 - Test boss-cli** (if boss-cli files changed)
-   - Runs boss-cli tests
-
-3. ✅ **1.1 - Test conductor-mcp** (if conductor-mcp files changed)
-   - Runs conductor-mcp tests
-
-4. ✅ **2.0 - Integration Tests** (if either package changed)
-   - Runs full integration tests
-
-**All checks must pass before merge.**
-
-### 8. Review and Address Feedback
-
-```bash
-# If changes requested, make updates
-git checkout feature/your-feature-name
-
-# Make changes
-# ... edit files ...
-
-# Commit updates
-git add .
-git commit -m "fix: address review feedback"
-git push
-
-# Workflows re-run automatically
-```
-
-### 9. Merge PR
-
-**After approval and all checks pass:**
-
-```bash
-# Merge via GitHub CLI
-gh pr merge --squash --delete-branch
-
-# Or via GitHub UI
-# Click "Squash and merge"
-```
-
-### 10. Automated Release (Happens Automatically)
-
-**When PR merges to main:**
-
-1. ✅ **3.0 - Release** workflow triggers
-2. ✅ Detects changeset in main
-3. ✅ Creates/updates PR titled **"chore: version packages"**
-   - Updates `package.json` versions
-   - Generates `CHANGELOG.md` entries
-   - Removes consumed changeset files
-
-**Review Version PR:**
-
-```bash
-# List PRs
-gh pr list
-
-# View version PR
-gh pr view <PR-number>
-
-# Check what's being released
-gh pr diff <PR-number>
-```
-
-### 11. Publish Release
-
-**Merge the Version PR:**
-
-```bash
-# Merge version PR
-gh pr merge <PR-number> --squash
-
-# Or via GitHub UI
-```
-
-**Automated publishing:**
-- Builds packages
-- Publishes to npm
-- Creates git tags
-- **Done!** 🎉
-
-### 12. Verify Publication
-
-```bash
-# Check npm
-npm info @glxmart/boss-cli
-npm info @glxmart/conductor-mcp
-
-# Check versions
-npm view @glxmart/boss-cli version
-npm view @glxmart/conductor-mcp version
-
-# Visit npm
-open https://www.npmjs.com/package/@glxmart/boss-cli
-open https://www.npmjs.com/package/@glxmart/conductor-mcp
-```
-
-## Quick Reference
-
-### Full Feature Workflow
-
-```bash
-# 1. Start from main
-git checkout main && git pull
-
-# 2. Create feature branch
-git checkout -b feature/my-feature
-
-# 3. Make changes
-# ... edit code ...
-
-# 4. Test
-pnpm build && pnpm test
-
-# 5. Create changeset
-pnpm changeset
-
-# 6. Commit and push
-git add .
-git commit -m "feat: my feature"
-git push origin feature/my-feature
-
-# 7. Create PR
-gh pr create
-
-# 8. Wait for checks ✅
-# 9. Merge after approval
-# 10. Version PR auto-created
-# 11. Merge version PR
-# 12. Auto-published to npm 🎉
-```
-
-### Docs-Only Workflow
-
-```bash
-# 1-3. Same as above
-git checkout -b docs/update-readme
-
-# 4. Make changes (no changeset needed)
-# ... edit docs ...
-
-# 5. Commit and push
-git add .
-git commit -m "docs: update README"
-git push origin docs/update-readme
-
-# 6. Create PR with skip label
-gh pr create
-gh pr edit --add-label skip-changeset
-
-# 7. Merge (no release triggered)
-```
-
-### Hotfix Workflow
-
-```bash
-# 1. Create hotfix branch
-git checkout -b fix/critical-bug
-
-# 2. Fix bug
-# ... fix code ...
-
-# 3. Create patch changeset
-pnpm changeset
-# Select affected package
-# Type: patch
-# Summary: "Fix critical issue with X"
-
-# 4. Commit and push
-git add .
+# 2. Fix
+# ... fix bug ...
 git commit -m "fix: resolve critical issue"
-git push origin fix/critical-bug
 
-# 5. Create PR with priority
-gh pr create --label "priority"
+# 3. Validate
+"Run quality check"
+# → ✅ All checks pass
 
-# 6. Fast-track review and merge
-# 7. Version PR created (patch bump)
-# 8. Merge version PR → hotfix published
+# 4. Changeset
+"Create a changeset"
+# → Version: patch
+# → Summary: "Fix critical issue with X"
+git commit -m "chore: add changeset"
+
+# 5. Submit
+"Create a pull request"
+# → PR created with title "fix: resolve critical issue"
 ```
+
+### Documentation Only
+
+```bash
+# 1. Start
+"Start a new feature" → docs/update-readme
+
+# 2. Update docs
+# ... edit README.md ...
+git commit -m "docs: update README"
+
+# 3. Validate (optional)
+"Run quality check"
+
+# 4. Skip changeset (no code changes)
+
+# 5. Submit
+"Create a pull request"
+# → PR created with `skip-changeset` label
+```
+
+---
+
+## After PR is Created
+
+### Automated Workflows
+
+These run automatically when PR is created:
+
+**Always:**
+- ✅ **Changeset Check** - Validates changeset (unless `skip-changeset`)
+
+**Conditional:**
+- ✅ **Test boss-cli** - If boss-cli changed
+- ✅ **Test conductor-mcp** - If conductor-mcp changed
+- ✅ **Integration Tests** - If either package changed
+- ✅ **Docker Image** - If Docker files changed
+
+### Review Process
+
+1. Wait for automated checks to pass
+2. Request reviews from team
+3. Address feedback if needed
+4. Merge when approved
+
+### After Merge
+
+**For PRs with changeset:**
+1. Release workflow creates "Version Packages" PR
+2. Review version PR
+3. Merge version PR
+4. Auto-publishes to npm 🎉
+
+**For PRs with `skip-changeset`:**
+1. Changes merged to main
+2. No release triggered
+3. Done!
+
+---
 
 ## Troubleshooting
 
-### Changeset Check Failed
+### Quality Check Fails
+
+**Problem:** Tests or linting fail
+
+**Solution:**
+```bash
+# View specific errors
+pnpm --filter <package> test
+pnpm --filter <package> lint
+
+# Fix and retry
+"Run quality check"
+```
+
+### Missing Changeset
 
 **Problem:** PR shows "Missing Changeset" warning
 
 **Solution:**
 ```bash
 # On your feature branch
-pnpm changeset
-
-# Commit the changeset
-git add .changeset/*.md
-git commit -m "chore: add changeset"
+"Create a changeset"
 git push
-
-# Check auto-removes warning
-```
-
-### Need to Skip Changeset
-
-**Problem:** PR is docs/tests only but check fails
-
-**Solution:**
-```bash
-# Add skip-changeset label
-gh pr edit <PR-number> --add-label skip-changeset
-
-# Or via GitHub UI: Add "skip-changeset" label
-```
-
-### Multiple Commits Need Single Changeset
-
-**Problem:** Made several commits, need one changeset
-
-**Solution:**
-```bash
-# Create changeset at the end
-pnpm changeset
-# Summarize ALL changes in one changeset
-
-git add .changeset/*.md
-git commit -m "chore: add changeset for feature"
-git push
+# Warning auto-removes
 ```
 
 ### Wrong Version Type
 
-**Problem:** Created changeset with wrong version type
+**Problem:** Created changeset with wrong version
 
 **Solution:**
 ```bash
-# Edit the changeset file
+# Edit changeset file
 vim .changeset/your-changeset.md
-
-# Change the version type
-# Before: "@glxmart/boss-cli": patch
-# After:  "@glxmart/boss-cli": minor
-
+# Change: "@glxmart/boss-cli": patch → minor
 git add .changeset/
-git commit -m "chore: update changeset version type"
+git commit -m "chore: update version type"
 git push
 ```
 
-### Forgot Changeset Before Merge
+### Workflow Failures
 
-**Problem:** Merged PR without changeset
+**Problem:** GitHub Actions fail
 
 **Solution:**
 ```bash
-# On main branch (after merge)
-git checkout main
-git pull
+# Check failures
+./scripts/gh-with-1password.sh run list --limit 5
+./scripts/gh-with-1password.sh run view <run-id> --log-failed
 
-# Create changeset for the merged changes
-pnpm changeset
-# Describe what was merged
-
-git add .changeset/
-git commit -m "chore: add missing changeset"
+# Fix issues
+# ... make fixes ...
 git push
-
-# Version PR will include this change
+# Workflows re-run automatically
 ```
+
+---
+
+## Command Reference
+
+| Command | Purpose | When to Use |
+|---------|---------|-------------|
+| `/1-start-feature` | Create feature branch | Starting new work |
+| `/2-quality-check` | Validate code quality | Before changeset/PR |
+| `/3-create-changeset` | Document changes | After code is complete |
+| `/4-create-pr` | Submit for review | Ready for review |
+
+---
 
 ## Best Practices
 
 ### DO ✅
 
-- ✅ Create changeset on feature branch (not main)
+- ✅ Use focused commands for each workflow stage
+- ✅ Run quality check before creating changeset
 - ✅ Write clear, user-focused changeset summaries
+- ✅ Use conventional commit format
 - ✅ Test locally before pushing
-- ✅ Use conventional commit messages
 - ✅ Request reviews before merging
-- ✅ Squash merge PRs for clean history
-- ✅ Delete branches after merge
+- ✅ Squash merge for clean history
 
 ### DON'T ❌
 
-- ❌ Push directly to main (blocked anyway)
+- ❌ Push directly to main (protected)
+- ❌ Skip quality check
 - ❌ Skip changeset for code changes
-- ❌ Create changeset on main branch
-- ❌ Merge PRs with failing checks
+- ❌ Merge with failing checks
 - ❌ Edit CHANGELOG.md manually
 - ❌ Edit package.json versions manually
-- ❌ Create git tags manually
+
+---
 
 ## Related Documentation
 
 - [docs/RELEASE.md](../../docs/RELEASE.md) - Complete release guide
-- [.github/workflows/README.md](../../.github/workflows/README.md) - Workflow documentation
-- [CLAUDE.md](../../CLAUDE.md) - Project overview
+- [.github/workflows/README.md](../../.github/workflows/README.md) - Workflow docs
+- Individual command files for detailed usage
+
+---
 
 ## Command Usage
 
-This command provides instructions for the complete PR workflow. Use it when:
-- Starting a new feature
-- Making any code changes
-- Creating a hotfix
-- Need a workflow reminder
+This command provides workflow overview. For step-by-step execution, use the focused commands:
 
-**Invoke with:** "How do I create a feature PR?" or "Show me the PR workflow"
+- **"Start a new feature"** → `/1-start-feature`
+- **"Run quality check"** → `/2-quality-check`
+- **"Create a changeset"** → `/3-create-changeset`
+- **"Create a pull request"** → `/4-create-pr`
+
+**Invoke this overview with:** "Show me the PR workflow" or "How do I create a feature?"

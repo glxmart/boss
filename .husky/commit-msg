@@ -1,9 +1,6 @@
-#!/bin/sh
 # Commit message validation hook
 # Strictly enforces Conventional Commits v1.0.0 specification
 # See: https://www.conventionalcommits.org/en/v1.0.0/
-
-. "$(dirname "$0")/_/husky.sh"
 
 commit_msg=$(cat "$1")
 

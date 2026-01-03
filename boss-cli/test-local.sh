@@ -281,22 +281,140 @@ create_test_project() {
     log_success "Test project created at: $test_dir"
 }
 
+# Verify monorepo template-specific structure
+verify_monorepo_template() {
+    log_info "Running monorepo-specific verification..."
+
+    local checks_passed=0
+    local checks_failed=0
+
+    # Check helper function
+    check_item() {
+        local type=$1
+        local path=$2
+
+        if [ "$type" = "dir" ] && [ -d "$path" ]; then
+            log_success "  ✓ $path exists"
+            checks_passed=$((checks_passed + 1))
+        elif [ "$type" = "file" ] && [ -f "$path" ]; then
+            log_success "  ✓ $path exists"
+            checks_passed=$((checks_passed + 1))
+        else
+            log_error "  ✗ $path is missing"
+            checks_failed=$((checks_failed + 1))
+        fi
+    }
+
+    # Workspace configuration
+    log_info "Checking workspace configuration..."
+    check_item "file" "pnpm-workspace.yaml"
+    check_item "file" "turbo.json"
+    check_item "file" "package.json"
+    check_item "file" "tsconfig.json"
+
+    # Applications
+    log_info "Checking applications..."
+    check_item "dir" "apps/web"
+    check_item "file" "apps/web/package.json"
+    check_item "file" "apps/web/next.config.ts"
+    check_item "file" "apps/web/app/page.tsx"
+
+    check_item "dir" "apps/admin"
+    check_item "file" "apps/admin/package.json"
+    check_item "file" "apps/admin/next.config.ts"
+    check_item "file" "apps/admin/app/page.tsx"
+
+    # Packages
+    log_info "Checking shared packages..."
+
+    # UI package
+    check_item "dir" "packages/ui"
+    check_item "file" "packages/ui/package.json"
+    check_item "file" "packages/ui/src/components/ui/button.tsx"
+    check_item "dir" "packages/ui/.storybook"
+
+    # Database package
+    check_item "dir" "packages/database"
+    check_item "file" "packages/database/package.json"
+    check_item "file" "packages/database/prisma/schema.prisma"
+
+    # tRPC package
+    check_item "dir" "packages/trpc"
+    check_item "file" "packages/trpc/package.json"
+    check_item "file" "packages/trpc/src/routers/_app.ts"
+
+    # Auth package
+    check_item "dir" "packages/auth"
+    check_item "file" "packages/auth/package.json"
+    check_item "file" "packages/auth/src/index.ts"
+
+    # Config package
+    check_item "dir" "packages/config"
+    check_item "file" "packages/config/package.json"
+    check_item "file" "packages/config/eslint/react-library.js"
+    check_item "file" "packages/config/typescript/base.json"
+
+    # Utils package
+    check_item "dir" "packages/utils"
+    check_item "file" "packages/utils/package.json"
+    check_item "file" "packages/utils/src/string.ts"
+
+    # Docker & Deployment
+    log_info "Checking Docker and deployment files..."
+    check_item "dir" "docker"
+    check_item "file" "docker/Dockerfile.web"
+    check_item "file" "docker/Dockerfile.admin"
+    check_item "file" "docker/docker-compose.yml"
+
+    check_item "dir" "config/kamal"
+    check_item "file" "config/kamal/deploy.yml"
+    check_item "file" "scripts/deploy.sh"
+    check_item "file" "scripts/setup-db.sh"
+
+    # Verify pnpm workspace configuration
+    if [ -f "pnpm-workspace.yaml" ] && [ -f "package.json" ]; then
+        if grep -q '"private": true' package.json; then
+            log_success "  ✓ Root package.json and pnpm-workspace.yaml are properly configured"
+            checks_passed=$((checks_passed + 1))
+        else
+            log_error "  ✗ Root package.json is not marked as private"
+            checks_failed=$((checks_failed + 1))
+        fi
+    else
+        log_error "  ✗ pnpm workspace configuration is missing"
+        checks_failed=$((checks_failed + 1))
+    fi
+
+    # Verify Turborepo configuration (Turbo 2.x uses "tasks", older versions use "pipeline")
+    if [ -f "turbo.json" ]; then
+        if grep -q '"tasks"' turbo.json || grep -q '"pipeline"' turbo.json; then
+            log_success "  ✓ Turborepo tasks/pipeline is configured"
+            checks_passed=$((checks_passed + 1))
+        else
+            log_error "  ✗ Turborepo tasks/pipeline is missing"
+            checks_failed=$((checks_failed + 1))
+        fi
+    fi
+
+    return $checks_failed
+}
+
 # Verify project structure
 verify_project() {
     log_step "Verifying Project Structure"
-    
+
     local test_dir="$TEST_DIR/$TEST_PROJECT_NAME"
-    
+
     if [ ! -d "$test_dir" ]; then
         log_error "Test project directory not found: $test_dir"
         return 1
     fi
-    
+
     cd "$test_dir"
-    
+
     local checks_passed=0
     local checks_failed=0
-    
+
     # Check critical directories
     check_dir() {
         if [ -d "$1" ]; then
@@ -307,7 +425,7 @@ verify_project() {
             checks_failed=$((checks_failed + 1))
         fi
     }
-    
+
     # Check critical files
     check_file() {
         if [ -f "$1" ]; then
@@ -318,19 +436,28 @@ verify_project() {
             checks_failed=$((checks_failed + 1))
         fi
     }
-    
+
+    # Common BOSS files (all templates)
+    log_info "Checking common BOSS structure..."
     check_dir ".boss"
     check_dir ".specify"
     check_dir ".container-use"
     check_dir ".claude"
     check_dir ".github/workflows"
     check_dir ".git"
-    
+
     check_file "CLAUDE.md"
     check_file "start-boss.sh"
     check_file "docker-compose.yml"
     check_file ".boss/config.yaml"
-    
+
+    # Template-specific verification
+    if [ "$TEST_TEMPLATE" = "nextjs-app-turbo" ]; then
+        verify_monorepo_template
+        local monorepo_result=$?
+        checks_failed=$((checks_failed + monorepo_result))
+    fi
+
     # Check git repository
     if git rev-parse --git-dir > /dev/null 2>&1; then
         log_success "Git repository initialized"
@@ -341,11 +468,11 @@ verify_project() {
         log_error "Git repository not initialized"
         checks_failed=$((checks_failed + 1))
     fi
-    
+
     # Summary
     echo
     log_info "Verification Summary: $checks_passed passed, $checks_failed failed"
-    
+
     if [ $checks_failed -eq 0 ]; then
         log_success "All checks passed!"
         return 0

@@ -8,37 +8,110 @@ import type { Template, ProjectConfig, PackageJson } from '../types/index.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Template directory mapping - maps user-facing names to actual directory names
+const TEMPLATE_DIR_MAP: Record<string, string> = {
+  'nextjs-app-turbo': 'nextjs-turbo-monorepo',
+  'nextjs-turbo-monorepo': 'nextjs-turbo-monorepo',
+  't3-app': 't3-app',
+  'api-service-fastify': 'api-service-fastify',
+  blank: 'blank',
+};
+
+// Lazy-loaded fs-extra module
+type FsExtra = typeof import('fs-extra');
+let fsExtra: FsExtra | null = null;
+
+async function getFs(): Promise<FsExtra> {
+  if (!fsExtra) {
+    const fsModule = await import('fs-extra');
+    fsExtra = fsModule.default;
+  }
+  return fsExtra;
+}
+
+/**
+ * Copies files from a source directory, handling underscore-prefixed dotfiles.
+ * Files starting with '_' are copied with the underscore removed (e.g., _gitignore -> .gitignore).
+ */
+async function copyBaseFiles(srcDir: string, destDir: string): Promise<void> {
+  const fs = await getFs();
+  const files = await fs.readdir(srcDir);
+
+  for (const file of files) {
+    const srcPath = path.join(srcDir, file);
+    const destFile = file.startsWith('_') ? file.slice(1) : file;
+    const destPath = path.join(destDir, destFile);
+
+    const stat = await fs.stat(srcPath);
+    if (stat.isDirectory()) {
+      await copyDirectory(srcPath, destPath);
+    } else {
+      await fs.copy(srcPath, destPath);
+    }
+  }
+}
+
+/**
+ * Replaces template variables in a file (e.g., {{PROJECT_NAME}}).
+ * Throws an error if any unreplaced placeholders remain after processing.
+ */
+async function processTemplateVariables(
+  filePath: string,
+  replacements: Record<string, string>
+): Promise<void> {
+  const fs = await getFs();
+  if (!(await fs.pathExists(filePath))) {
+    return;
+  }
+
+  let content = await fs.readFile(filePath, 'utf8');
+  const originalContent = content;
+
+  // Replace all known variables
+  for (const [variable, value] of Object.entries(replacements)) {
+    content = content.replace(new RegExp(`\\{\\{${variable}\\}\\}`, 'g'), value);
+  }
+
+  // Check for any remaining unreplaced placeholders
+  const unreplacedPlaceholders = content.match(/\{\{[A-Z_]+\}\}/g);
+  if (unreplacedPlaceholders && unreplacedPlaceholders.length > 0) {
+    throw new Error(
+      `Failed to replace all template variables in ${filePath}. ` +
+        `Unreplaced placeholders: ${unreplacedPlaceholders.join(', ')}. ` +
+        `Available replacements: ${Object.keys(replacements).join(', ')}`
+    );
+  }
+
+  // Only write if content changed (optimization)
+  if (content !== originalContent) {
+    await fs.writeFile(filePath, content);
+  }
+}
+
 export async function loadTemplate(
   projectPath: string,
   template: Template,
   config: ProjectConfig
 ): Promise<void> {
-  // Map template names to actual directory names
-  const templateDirMap: Record<string, string> = {
-    'nextjs-app-turbo': 't3-app', // Next.js 15 + Turbo uses T3 template
-    't3-app': 't3-app',
-    'api-service-fastify': 'api-service-fastify',
-    blank: 'blank',
-  };
-
-  const templateDir = templateDirMap[template] || template;
+  const fs = await getFs();
+  const templateDir = TEMPLATE_DIR_MAP[template] || template;
   const templatePath = path.join(__dirname, '../../templates', templateDir);
-  const fs = await import('fs-extra');
 
   if (await fs.pathExists(templatePath)) {
-    // Special handling for T3 template (has base/ and extras/ structure)
-    if (templateDir === 't3-app') {
-      await loadT3Template(projectPath, templatePath, config);
-    } else {
-      // Copy template files directly
-      await copyDirectory(templatePath, projectPath);
+    switch (templateDir) {
+      case 'nextjs-turbo-monorepo':
+        await loadMonorepoTemplate(projectPath, templatePath, config);
+        break;
+      case 't3-app':
+        await loadT3Template(projectPath, templatePath, config);
+        break;
+      default:
+        await copyDirectory(templatePath, projectPath);
     }
   } else {
-    // Create minimal template structure
     await createMinimalTemplate(projectPath, template, config);
   }
 
-  // Ensure .env is always in .gitignore (for all templates)
   await ensureEnvInGitignore(projectPath);
 }
 
@@ -47,78 +120,165 @@ async function loadT3Template(
   templatePath: string,
   config: ProjectConfig
 ): Promise<void> {
-  const fs = await import('fs-extra');
-
-  // Copy base template
+  const fs = await getFs();
   const basePath = path.join(templatePath, 'base');
-  if (await fs.pathExists(basePath)) {
-    // Copy base files, handling special files
-    const baseFiles = await fs.readdir(basePath);
-    for (const file of baseFiles) {
-      const srcPath = path.join(basePath, file);
-      const destPath = path.join(projectPath, file.startsWith('_') ? file.slice(1) : file);
+  const extrasPath = path.join(templatePath, 'extras');
 
-      const stat = await fs.stat(srcPath);
-      if (stat.isDirectory()) {
-        await copyDirectory(srcPath, destPath);
-      } else {
-        await fs.copy(srcPath, destPath);
-      }
-    }
+  // Copy base template files
+  if (await fs.pathExists(basePath)) {
+    await copyBaseFiles(basePath, projectPath);
   }
 
-  // Copy extras (T3 optional features) - include all for BOSS
-  const extrasPath = path.join(templatePath, 'extras');
+  // Copy extras (T3 optional features)
   if (await fs.pathExists(extrasPath)) {
-    // Copy config files
-    const configPath = path.join(extrasPath, 'config');
-    if (await fs.pathExists(configPath)) {
-      const configFiles = await fs.readdir(configPath);
-      for (const file of configFiles) {
-        if (file.startsWith('_')) {
-          // Files starting with _ are optional, copy without underscore
-          const srcPath = path.join(configPath, file);
-          const destPath = path.join(projectPath, file.slice(1));
-          await fs.copy(srcPath, destPath);
-        } else {
-          const srcPath = path.join(configPath, file);
-          const destPath = path.join(projectPath, file);
-          await fs.copy(srcPath, destPath);
-        }
-      }
-    }
-
-    // Copy src files (merge with existing src/)
-    const extrasSrcPath = path.join(extrasPath, 'src');
-    if (await fs.pathExists(extrasSrcPath)) {
-      await copyDirectory(extrasSrcPath, path.join(projectPath, 'src'));
-    }
-
-    // Copy prisma schemas
-    const prismaPath = path.join(extrasPath, 'prisma');
-    if (await fs.pathExists(prismaPath)) {
-      await fs.ensureDir(path.join(projectPath, 'prisma'));
-      await copyDirectory(prismaPath, path.join(projectPath, 'prisma'));
-    }
+    await copyBaseFiles(path.join(extrasPath, 'config'), projectPath);
+    await copyDirectoryIfExists(path.join(extrasPath, 'src'), path.join(projectPath, 'src'));
+    await copyDirectoryIfExists(path.join(extrasPath, 'prisma'), path.join(projectPath, 'prisma'));
   }
 
   // Update package.json with project name and pnpm configuration
-  const packageJsonPath = path.join(projectPath, 'package.json');
-  if (await fs.pathExists(packageJsonPath)) {
-    const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8')) as PackageJson;
-    packageJson.name = config.name;
-    // Add pnpm configuration to approve esbuild build scripts (prevents warning)
-    if (!packageJson.pnpm) {
-      packageJson.pnpm = {};
-    }
-    if (!packageJson.pnpm.onlyBuiltDependencies) {
-      packageJson.pnpm.onlyBuiltDependencies = [];
-    }
-    if (!packageJson.pnpm.onlyBuiltDependencies.includes('esbuild')) {
-      packageJson.pnpm.onlyBuiltDependencies.push('esbuild');
-    }
-    await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));
+  await updatePackageJson(path.join(projectPath, 'package.json'), config.name);
+}
+
+/**
+ * Copies a directory if it exists, creating the destination if needed.
+ */
+async function copyDirectoryIfExists(src: string, dest: string): Promise<void> {
+  const fs = await getFs();
+  if (await fs.pathExists(src)) {
+    await fs.ensureDir(dest);
+    await copyDirectory(src, dest);
   }
+}
+
+/**
+ * Updates package.json with the project name and ensures pnpm esbuild configuration.
+ */
+async function updatePackageJson(packageJsonPath: string, projectName: string): Promise<void> {
+  const fs = await getFs();
+  if (!(await fs.pathExists(packageJsonPath))) {
+    return;
+  }
+
+  let packageJson: PackageJson;
+  try {
+    const content = await fs.readFile(packageJsonPath, 'utf8');
+    packageJson = JSON.parse(content) as PackageJson;
+  } catch (error) {
+    throw new Error(
+      `Failed to parse package.json at ${packageJsonPath}: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+
+  packageJson.name = projectName;
+
+  // Ensure pnpm configuration for esbuild
+  packageJson.pnpm = packageJson.pnpm || {};
+  packageJson.pnpm.onlyBuiltDependencies = packageJson.pnpm.onlyBuiltDependencies || [];
+  if (!packageJson.pnpm.onlyBuiltDependencies.includes('esbuild')) {
+    packageJson.pnpm.onlyBuiltDependencies.push('esbuild');
+  }
+
+  await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));
+}
+
+async function loadMonorepoTemplate(
+  projectPath: string,
+  templatePath: string,
+  config: ProjectConfig
+): Promise<void> {
+  const fs = await getFs();
+  const basePath = path.join(templatePath, 'base');
+  const extrasPath = path.join(templatePath, 'extras');
+
+  // Copy base monorepo structure
+  if (await fs.pathExists(basePath)) {
+    await copyBaseFiles(basePath, projectPath);
+  }
+
+  // Copy extras (Kamal configs, scripts, etc.)
+  if (await fs.pathExists(extrasPath)) {
+    await copyDirectoryIfExists(
+      path.join(extrasPath, 'config', 'kamal'),
+      path.join(projectPath, 'config', 'kamal')
+    );
+    await copyDockerignoreIfExists(extrasPath, projectPath);
+    await copyScriptsWithExecutablePermissions(extrasPath, projectPath);
+
+    // Copy template-specific GitHub workflows (override defaults)
+    const templateWorkflowsPath = path.join(extrasPath, 'boss-cli', 'assets', 'github-workflows');
+    if (await fs.pathExists(templateWorkflowsPath)) {
+      await copyDirectoryIfExists(
+        templateWorkflowsPath,
+        path.join(projectPath, '.github', 'workflows')
+      );
+    }
+  }
+
+  // Process all template variables
+  const templateVariables = {
+    PROJECT_NAME: config.name,
+    GITHUB_USERNAME: config.githubOrg || 'your-github-username',
+    DOMAIN: `${config.name}.com`,
+    PRODUCTION_IP: 'your-production-server-ip',
+  };
+
+  const filesToProcess = [
+    'package.json',
+    'apps/web/package.json',
+    'apps/admin/package.json',
+    'config/kamal/deploy.yml',
+    'docker/Dockerfile.web',
+  ];
+
+  for (const file of filesToProcess) {
+    try {
+      await processTemplateVariables(path.join(projectPath, file), templateVariables);
+    } catch (error) {
+      throw new Error(
+        `Failed to process template variables in ${file}: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+}
+
+async function copyDockerignoreIfExists(extrasPath: string, projectPath: string): Promise<void> {
+  const fs = await getFs();
+  const dockerignore = path.join(extrasPath, 'config', 'docker', '.dockerignore');
+  if (await fs.pathExists(dockerignore)) {
+    await fs.copy(dockerignore, path.join(projectPath, '.dockerignore'));
+  }
+}
+
+async function copyScriptsWithExecutablePermissions(
+  extrasPath: string,
+  projectPath: string
+): Promise<void> {
+  const fs = await getFs();
+  const scriptsPath = path.join(extrasPath, 'scripts');
+
+  if (!(await fs.pathExists(scriptsPath))) {
+    return;
+  }
+
+  const destScriptsPath = path.join(projectPath, 'scripts');
+  await fs.ensureDir(destScriptsPath);
+  await copyDirectory(scriptsPath, destScriptsPath);
+
+  // Make scripts executable
+  const scripts = await fs.readdir(destScriptsPath);
+  await Promise.all(
+    scripts.map(async (script: string) => {
+      const scriptPath = path.join(destScriptsPath, script);
+      try {
+        await fs.chmod(scriptPath, 0o755);
+      } catch (error) {
+        throw new Error(
+          `Failed to make script executable: ${scriptPath}: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+    })
+  );
 }
 
 async function createMinimalTemplate(
@@ -126,6 +286,8 @@ async function createMinimalTemplate(
   template: Template,
   config: ProjectConfig
 ): Promise<void> {
+  const fs = await getFs();
+
   // Create package.json
   const packageJson = getPackageJsonForTemplate(template, config);
   if (packageJson) {
@@ -153,8 +315,7 @@ async function createMinimalTemplate(
   await writeFile(path.join(projectPath, 'tsconfig.json'), JSON.stringify(tsconfig, null, 2));
 
   // Create vitest.config.ts
-  const coverageThreshold =
-    config.quality === 'startup' ? 60 : config.quality === 'production' ? 80 : 90;
+  const coverageThreshold = getCoverageThreshold(config.quality);
   const vitestConfig = await loadAssetTemplate('template-loader/vitest.config.ts', {
     coverageThreshold,
   });
@@ -183,60 +344,58 @@ async function createMinimalTemplate(
     JSON.stringify(prettierConfig, null, 2)
   );
 
-  // Create Prettier ignore file
-  const prettierIgnore = await loadAssetTemplate('template-loader/prettierignore');
-  await writeFile(path.join(projectPath, '.prettierignore'), prettierIgnore);
-
-  // Create .gitignore
-  const gitignore = await loadAssetTemplate('template-loader/gitignore');
-  await writeFile(path.join(projectPath, '.gitignore'), gitignore);
-
-  // Create src directory structure
-  const fs = await import('fs-extra');
+  // Ensure directories exist
   await fs.ensureDir(path.join(projectPath, 'src'));
   await fs.ensureDir(path.join(projectPath, 'tests'));
 
-  // Create basic index.ts file
+  // Create config files from templates
+  const prettierIgnore = await loadAssetTemplate('template-loader/prettierignore');
+  await writeFile(path.join(projectPath, '.prettierignore'), prettierIgnore);
+
+  const gitignore = await loadAssetTemplate('template-loader/gitignore');
+  await writeFile(path.join(projectPath, '.gitignore'), gitignore);
+
   const indexTs = await loadAssetTemplate('template-loader/index.ts', { config });
   await writeFile(path.join(projectPath, 'src', 'index.ts'), indexTs);
 
-  // Create basic test file
   const testFile = await loadAssetTemplate('template-loader/index.test.ts', { config });
   await writeFile(path.join(projectPath, 'tests', 'index.test.ts'), testFile);
 
-  // Create README
   const readme = await loadAssetTemplate('template-loader/README.md', { config, template });
   await writeFile(path.join(projectPath, 'README.md'), readme);
 }
 
+function getCoverageThreshold(quality: string): number {
+  switch (quality) {
+    case 'startup':
+      return 60;
+    case 'production':
+      return 80;
+    default:
+      return 90;
+  }
+}
+
+const ENV_GITIGNORE_SECTION =
+  '# Environment variables (1Password secret references)\n.env\n.env.local\n.env.*.local\n';
+
 async function ensureEnvInGitignore(projectPath: string): Promise<void> {
-  const fs = await import('fs-extra');
+  const fs = await getFs();
   const gitignorePath = path.join(projectPath, '.gitignore');
 
-  // If .gitignore doesn't exist, create it with .env
   if (!(await fs.pathExists(gitignorePath))) {
-    await writeFile(
-      gitignorePath,
-      '# Environment variables (1Password secret references)\n.env\n.env.local\n.env.*.local\n'
-    );
+    await writeFile(gitignorePath, ENV_GITIGNORE_SECTION);
     return;
   }
 
-  // Read existing .gitignore
   const content = await readFile(gitignorePath);
 
-  // Check if .env patterns are already present (more specific check)
-  // Look for .env on its own line (not as part of another word)
+  // Check if .env patterns are already present (on their own line)
   const hasEnvPattern =
     /^\.env$/m.test(content) || /^\.env\*$/m.test(content) || /^\.env\./m.test(content);
 
-  // If .env is not in gitignore, add it
   if (!hasEnvPattern) {
-    // Add .env patterns if they don't exist
-    const envSection =
-      '\n# Environment variables (1Password secret references)\n.env\n.env.local\n.env.*.local\n';
-    const updatedContent = content.trimEnd() + envSection;
-    await writeFile(gitignorePath, updatedContent);
+    await writeFile(gitignorePath, content.trimEnd() + '\n' + ENV_GITIGNORE_SECTION);
   }
 }
 

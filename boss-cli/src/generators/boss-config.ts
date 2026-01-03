@@ -243,19 +243,18 @@ async function generateProjectConfig(projectPath: string, config: ProjectConfig)
   );
 }
 
+// Project type mapping based on template characteristics
+const PROJECT_TYPE_MAP: Record<string, string> = {
+  'nextjs-app-turbo': 'monorepo',
+  't3-app': 'web-app',
+  'api-service-fastify': 'api-service',
+};
+
 function getProjectType(template: string): string {
-  if (template === 'nextjs-app-turbo') return 'web-app';
-  if (template === 't3-app') return 'web-app';
-  if (template === 'api-service-fastify') return 'api-service';
-  return 'library';
+  return PROJECT_TYPE_MAP[template] || 'library';
 }
 
 function getStackForTemplate(template: string): string[] {
-  const stacks: Record<string, string[]> = {
-    'nextjs-app-turbo': ['nextjs', 'typescript', 'tailwind', 'prisma', 'vitest', 'shadcn-ui'],
-    'api-service-fastify': ['fastify', 'typescript', 'prisma', 'vitest'],
-    't3-app': ['nextjs', 'typescript', 'tailwind', 'prisma', 'trpc', 'nextauth'],
-    blank: ['typescript', 'vitest'],
-  };
-  return stacks[template] || [];
+  const templateInfo = TEMPLATES[template as keyof typeof TEMPLATES];
+  return templateInfo?.stack || [];
 }

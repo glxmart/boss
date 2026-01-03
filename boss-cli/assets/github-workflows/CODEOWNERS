@@ -1,3 +1,22 @@
-# BOSS Project Code Owners
-* @${githubUser}
+# CODEOWNERS file for {{githubUser}}
 
+# Default owners for everything in the repo
+* @{{githubUser}}
+
+# Apps
+/apps/web/ @{{githubUser}}
+/apps/admin/ @{{githubUser}}
+
+# Packages
+/packages/ui/ @{{githubUser}}
+/packages/database/ @{{githubUser}}
+/packages/trpc/ @{{githubUser}}
+/packages/auth/ @{{githubUser}}
+/packages/config/ @{{githubUser}}
+/packages/utils/ @{{githubUser}}
+
+# Configuration
+/docker/ @{{githubUser}}
+/.github/ @{{githubUser}}
+/turbo.json @{{githubUser}}
+/pnpm-workspace.yaml @{{githubUser}}

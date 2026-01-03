@@ -49,7 +49,7 @@ describe('template-docs generator', () => {
     expect(await fs.pathExists(docPath)).toBe(true);
 
     const content = await fs.readFile(docPath, 'utf8');
-    expect(content).toContain('Template Documentation: Next.js App (Turbo)');
+    expect(content).toContain('Template Documentation: Next.js Turbo Monorepo');
     expect(content).toContain('test-nextjs');
     expect(content).toContain('production');
     expect(content).toContain('Next.js');

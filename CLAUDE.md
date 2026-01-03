@@ -77,11 +77,14 @@ pnpm run gh pr view 5            # View PR details
 All workflow scripts use 1Password to manage GitHub credentials. If you encounter "Missing required token scopes" errors:
 
 ```bash
-# Quick fix
-./scripts/fix-github-token-scopes.sh
+# 1. Generate new token
+open https://github.com/settings/tokens/new
 
-# Or manually add scopes
-op run --env-file=.env -- gh auth refresh -h github.com -s read:org,read:discussion
+# 2. Update 1Password
+op item edit boss/github --field token="ghp_YOUR_NEW_TOKEN_HERE"
+
+# 3. Verify
+op run --env-file=.env -- gh auth status
 ```
 
 **Required token scopes**:
@@ -89,6 +92,7 @@ op run --env-file=.env -- gh auth refresh -h github.com -s read:org,read:discuss
 - ✅ `repo` - Repository access
 - ✅ `workflow` - Workflow management
 - ✅ `write:packages` - Package publishing
+- ✅ `read:packages` - Package reading
 - ⚠️ `read:org` - Organization read (needed for PR details)
 - ⚠️ `read:discussion` - Discussions read (optional)
 

@@ -17,7 +17,12 @@
     "typecheck": "pnpm --filter @glxmart/boss-cli build && pnpm --filter @glxmart/conductor-mcp build",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
-    "prepare": "husky"
+    "prepare": "husky",
+    "workflow:1-start": "./scripts/1-start-feature.sh",
+    "workflow:2-check": "./scripts/2-quality-check.sh",
+    "workflow:3-changeset": "./scripts/3-create-changeset.sh",
+    "workflow:4-pr": "./scripts/4-create-pr.sh",
+    "gh": "op run --env-file=.env -- gh"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,md,yml,yaml}": [

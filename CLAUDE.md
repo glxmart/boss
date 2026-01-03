@@ -43,9 +43,58 @@ Workers are specialized Claude Code instances running in Docker containers, each
 
 **15 Worker Types**: architect, clarifier, spec-writer, planner, reviewer, developer-{frontend,backend,fullstack}, tester, code-reviewer, security-engineer, devops-engineer, technical-writer, product-owner, consolidator
 
-## Development Commands
+## Development Workflow
 
 **IMPORTANT**: This monorepo uses **pnpm** exclusively. The `preinstall` script will prevent using npm or yarn. Install pnpm with: `npm install -g pnpm`
+
+### Numbered Workflow Scripts
+
+BOSS provides numbered workflow scripts for a streamlined development process:
+
+```bash
+# Complete workflow
+pnpm run workflow:1-start        # Start feature branch
+pnpm run workflow:2-check        # Quality validation
+pnpm run workflow:3-changeset    # Create changeset
+pnpm run workflow:4-pr           # Create pull request
+
+# Or use scripts directly
+./scripts/1-start-feature.sh
+./scripts/2-quality-check.sh
+./scripts/3-create-changeset.sh
+./scripts/4-create-pr.sh
+
+# GitHub CLI with 1Password
+pnpm run gh pr list              # List PRs
+pnpm run gh run list             # List workflow runs
+pnpm run gh pr view 5            # View PR details
+```
+
+**Complete documentation**: [docs/WORKFLOW_SCRIPTS.md](./docs/WORKFLOW_SCRIPTS.md)
+
+### GitHub Token Setup
+
+All workflow scripts use 1Password to manage GitHub credentials. If you encounter "Missing required token scopes" errors:
+
+```bash
+# Quick fix
+./scripts/fix-github-token-scopes.sh
+
+# Or manually add scopes
+op run --env-file=.env -- gh auth refresh -h github.com -s read:org,read:discussion
+```
+
+**Required token scopes**:
+
+- ✅ `repo` - Repository access
+- ✅ `workflow` - Workflow management
+- ✅ `write:packages` - Package publishing
+- ⚠️ `read:org` - Organization read (needed for PR details)
+- ⚠️ `read:discussion` - Discussions read (optional)
+
+**Complete guide**: [docs/GITHUB_TOKEN_SETUP.md](./docs/GITHUB_TOKEN_SETUP.md)
+
+## Development Commands
 
 ### boss-cli (Bootstrap CLI)
 

@@ -10,6 +10,7 @@ import { execa } from 'execa';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+import { ErrorCategory } from '../../src/types.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -458,7 +459,7 @@ describe('E2E: BOSS Workflow with Conductor MCP', () => {
         const errorDetails = result.error?.details;
 
         if (
-          errorCategory === 'CONTAINER_CREATION_FAILED' &&
+          errorCategory === ErrorCategory.CONTAINER_CREATION_FAILED &&
           errorDetails instanceof Error &&
           (errorDetails.message.includes('failed to resolve image') ||
             errorDetails.message.includes('401 Unauthorized'))

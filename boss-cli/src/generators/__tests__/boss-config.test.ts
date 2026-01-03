@@ -36,7 +36,7 @@ describe('boss-config generator', () => {
     expect(parsed.boss.template).toBe('nextjs-app-turbo');
     expect(parsed.boss.quality).toBe('production');
     expect(parsed.project.name).toBe('test-project');
-    expect(parsed.project.type).toBe('web-app');
+    expect(parsed.project.type).toBe('monorepo');
     expect(parsed.project.stack).toContain('nextjs');
     expect(parsed.project.stack).toContain('shadcn-ui');
   });

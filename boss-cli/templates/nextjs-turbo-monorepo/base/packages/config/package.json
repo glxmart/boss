@@ -1,0 +1,19 @@
+{
+  "name": "@repo/config",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    "./eslint/nextjs": "./eslint/nextjs.js",
+    "./eslint/react-library": "./eslint/react-library.js",
+    "./eslint/library": "./eslint/library.js",
+    "./typescript/base": "./typescript/base.json",
+    "./typescript/nextjs": "./typescript/nextjs.json",
+    "./typescript/react-library": "./typescript/react-library.json",
+    "./tailwind": "./tailwind/base.ts"
+  },
+  "files": [
+    "eslint",
+    "typescript",
+    "tailwind"
+  ]
+}

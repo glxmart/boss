@@ -9,9 +9,21 @@ import type {
 
 export const TEMPLATES: Record<Template, TemplateInfo> = {
   'nextjs-app-turbo': {
-    name: 'Next.js App (Turbo)',
-    description: 'Next.js 15 + Turbo + Tailwind + Prisma + Vitest + shadcn/ui',
-    stack: ['nextjs', 'typescript', 'tailwind', 'prisma', 'vitest', 'shadcn-ui'],
+    name: 'Next.js Turbo Monorepo',
+    description: 'Next.js 15 + Turborepo + shadcn/ui + Prisma + tRPC + NextAuth + Vitest + Storybook + Kamal',
+    stack: [
+      'nextjs',
+      'turborepo',
+      'typescript',
+      'tailwind',
+      'shadcn-ui',
+      'prisma',
+      'trpc',
+      'nextauth',
+      'vitest',
+      'storybook',
+      'kamal',
+    ],
   },
   'api-service-fastify': {
     name: 'API Service (Fastify)',

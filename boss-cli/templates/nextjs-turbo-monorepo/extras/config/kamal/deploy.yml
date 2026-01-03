@@ -1,0 +1,92 @@
+# Kamal deployment configuration for {{PROJECT_NAME}}
+# Documentation: https://kamal-deploy.org/
+
+service: {{PROJECT_NAME}}
+
+image: {{GITHUB_USERNAME}}/{{PROJECT_NAME}}
+
+servers:
+  web:
+    hosts:
+      - {{PRODUCTION_IP}}
+    labels:
+      traefik.http.routers.{{PROJECT_NAME}}-web.rule: Host(`{{DOMAIN}}`)
+      traefik.http.routers.{{PROJECT_NAME}}-web.entrypoints: websecure
+      traefik.http.routers.{{PROJECT_NAME}}-web.tls.certresolver: letsencrypt
+    port: 3000
+
+  admin:
+    hosts:
+      - {{PRODUCTION_IP}}
+    labels:
+      traefik.http.routers.{{PROJECT_NAME}}-admin.rule: Host(`admin.{{DOMAIN}}`)
+      traefik.http.routers.{{PROJECT_NAME}}-admin.entrypoints: websecure
+      traefik.http.routers.{{PROJECT_NAME}}-admin.tls.certresolver: letsencrypt
+    port: 3001
+
+registry:
+  server: ghcr.io
+  username: {{GITHUB_USERNAME}}
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+env:
+  clear:
+    NODE_ENV: production
+  secret:
+    - DATABASE_URL
+    - NEXTAUTH_SECRET
+    - NEXTAUTH_URL
+
+accessories:
+  db:
+    image: postgres:16-alpine
+    host: {{PRODUCTION_IP}}
+    port: 5432
+    env:
+      clear:
+        POSTGRES_DB: {{PROJECT_NAME}}
+      secret:
+        - POSTGRES_USER
+        - POSTGRES_PASSWORD
+    directories:
+      - data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    host: {{PRODUCTION_IP}}
+    port: 6379
+    directories:
+      - data:/data
+
+traefik:
+  options:
+    publish:
+      - "443:443"
+    volume:
+      - "/letsencrypt/acme.json:/letsencrypt/acme.json"
+  args:
+    entrypoints.web.address: ":80"
+    entrypoints.websecure.address: ":443"
+    certificatesresolvers.letsencrypt.acme.email: "admin@{{DOMAIN}}"
+    certificatesresolvers.letsencrypt.acme.storage: "/letsencrypt/acme.json"
+    certificatesresolvers.letsencrypt.acme.httpchallenge: "true"
+    certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint: "web"
+
+ssh:
+  user: deploy
+
+builder:
+  multiarch: false
+  args:
+    BUILDKIT_INLINE_CACHE: "1"
+
+healthcheck:
+  path: /api/health
+  port: 3000
+  max_attempts: 7
+  interval: 20s
+
+# Build configuration for each app
+# Run: kamal build --builder web -f docker/Dockerfile.web
+# Run: kamal build --builder admin -f docker/Dockerfile.admin

@@ -9,6 +9,7 @@ Complete reference for all 8 Conductor MCP tools.
 Spawn a worker with full environment setup and configuration.
 
 **Input:**
+
 ```typescript
 {
   workerType: 'architect' | 'clarifier' | 'spec-writer' | 'planner' |
@@ -23,6 +24,7 @@ Spawn a worker with full environment setup and configuration.
 ```
 
 **Output:**
+
 ```typescript
 {
   success: boolean,
@@ -42,18 +44,20 @@ Spawn a worker with full environment setup and configuration.
 ```
 
 **Example:**
+
 ```typescript
 const result = await conductor.spawn_worker({
   workerType: 'architect',
   taskPrompt: 'Create constitution with TDD, BDD, Documentation standards',
-  targetBranch: 'feature/boss-initial-setup'
+  targetBranch: 'feature/boss-initial-setup',
 });
 
-console.log(result.workerId);  // 'env-abc123'
-console.log(result.branch);    // 'container-use/env-abc123'
+console.log(result.workerId); // 'env-abc123'
+console.log(result.branch); // 'container-use/env-abc123'
 ```
 
 **When to use:**
+
 - At the start of each phase
 - When spawning parallel workers
 - When retrying a failed worker
@@ -65,6 +69,7 @@ console.log(result.branch);    // 'container-use/env-abc123'
 Execute an additional task in an existing worker.
 
 **Input:**
+
 ```typescript
 {
   workerId: string,        // From spawn_worker response
@@ -73,6 +78,7 @@ Execute an additional task in an existing worker.
 ```
 
 **Output:**
+
 ```typescript
 {
   success: boolean,
@@ -85,14 +91,16 @@ Execute an additional task in an existing worker.
 ```
 
 **Example:**
+
 ```typescript
 await conductor.execute_task({
   workerId: 'env-abc123',
-  taskPrompt: 'Add Security Principles section to constitution.md'
+  taskPrompt: 'Add Security Principles section to constitution.md',
 });
 ```
 
 **When to use:**
+
 - When a worker needs to perform a follow-up task
 - When adding to a worker's scope
 - When refining worker output
@@ -104,13 +112,15 @@ await conductor.execute_task({
 Check worker status and get results.
 
 **Input:**
+
 ```typescript
 {
-  workerId: string
+  workerId: string;
 }
 ```
 
 **Output:**
+
 ```typescript
 {
   workerId: string,
@@ -128,9 +138,10 @@ Check worker status and get results.
 ```
 
 **Example:**
+
 ```typescript
 const status = await conductor.get_worker_status({
-  workerId: 'env-abc123'
+  workerId: 'env-abc123',
 });
 
 if (status.status === 'completed') {
@@ -141,6 +152,7 @@ if (status.status === 'completed') {
 ```
 
 **When to use:**
+
 - To monitor worker progress
 - To check if worker completed
 - To retrieve artifacts and decisions
@@ -153,6 +165,7 @@ if (status.status === 'completed') {
 Merge worker's branch into target branch.
 
 **Input:**
+
 ```typescript
 {
   workerId: string,
@@ -161,6 +174,7 @@ Merge worker's branch into target branch.
 ```
 
 **Output:**
+
 ```typescript
 {
   success: boolean,
@@ -170,17 +184,19 @@ Merge worker's branch into target branch.
 ```
 
 **Example:**
+
 ```typescript
 // After quality gates pass
 await conductor.merge_worker({
   workerId: 'env-abc123',
-  targetBranch: 'feature/boss-initial-setup'
+  targetBranch: 'feature/boss-initial-setup',
 });
 
 console.log('Worker work merged!');
 ```
 
 **When to use:**
+
 - After quality gates pass
 - When worker work is approved
 - At end of phase
@@ -192,13 +208,15 @@ console.log('Worker work merged!');
 Terminate worker without merging (discard changes).
 
 **Input:**
+
 ```typescript
 {
-  workerId: string
+  workerId: string;
 }
 ```
 
 **Output:**
+
 ```typescript
 {
   success: boolean,
@@ -208,20 +226,22 @@ Terminate worker without merging (discard changes).
 ```
 
 **Example:**
+
 ```typescript
 // Worker failed validation, terminate and retry
 await conductor.terminate_worker({
-  workerId: 'env-abc123'
+  workerId: 'env-abc123',
 });
 
 // Spawn new worker with improved prompt
 const newWorker = await conductor.spawn_worker({
   workerType: 'architect',
-  taskPrompt: 'Previous attempt failed validation.\n\nCRITICAL: Include ALL required sections...'
+  taskPrompt: 'Previous attempt failed validation.\n\nCRITICAL: Include ALL required sections...',
 });
 ```
 
 **When to use:**
+
 - When quality gates fail
 - When worker needs to be retried
 - On unrecoverable errors
@@ -235,6 +255,7 @@ const newWorker = await conductor.spawn_worker({
 Get available worker types and their descriptions.
 
 **Input:**
+
 ```typescript
 {
   projectPath?: string    // Optional project path
@@ -242,26 +263,29 @@ Get available worker types and their descriptions.
 ```
 
 **Output:**
+
 ```typescript
 {
   workers: Array<{
-    type: WorkerType,
-    description: string,
-    phase: string
-  }>
+    type: WorkerType;
+    description: string;
+    phase: string;
+  }>;
 }
 ```
 
 **Example:**
+
 ```typescript
 const { workers } = await conductor.list_worker_types();
 
-workers.forEach(w => {
+workers.forEach((w) => {
   console.log(`${w.type} (${w.phase}): ${w.description}`);
 });
 ```
 
 **When to use:**
+
 - During initialization
 - When deciding which workers to spawn
 - For help/documentation
@@ -273,35 +297,40 @@ workers.forEach(w => {
 List currently active workers.
 
 **Input:**
+
 ```typescript
-{}  // No parameters
+{
+} // No parameters
 ```
 
 **Output:**
+
 ```typescript
 {
   workers: Array<{
-    workerId: string,
-    workerType: string,
-    status: 'running' | 'completed' | 'failed',
-    branch: string,
-    startedAt: string,
-    artifacts: string[]
-  }>
+    workerId: string;
+    workerType: string;
+    status: 'running' | 'completed' | 'failed';
+    branch: string;
+    startedAt: string;
+    artifacts: string[];
+  }>;
 }
 ```
 
 **Example:**
+
 ```typescript
 const { workers } = await conductor.list_active_workers();
 
 console.log(`Active workers: ${workers.length}`);
-workers.forEach(w => {
+workers.forEach((w) => {
   console.log(`${w.workerType} (${w.workerId}): ${w.status}`);
 });
 ```
 
 **When to use:**
+
 - To monitor parallel workers
 - To check overall progress
 - Before spawning new workers
@@ -313,11 +342,14 @@ workers.forEach(w => {
 Health check for Conductor and container-use availability.
 
 **Input:**
+
 ```typescript
-{}  // No parameters
+{
+} // No parameters
 ```
 
 **Output:**
+
 ```typescript
 {
   healthy: boolean,
@@ -327,6 +359,7 @@ Health check for Conductor and container-use availability.
 ```
 
 **Example:**
+
 ```typescript
 const health = await conductor.conductor_health();
 
@@ -340,6 +373,7 @@ if (!health.healthy) {
 ```
 
 **When to use:**
+
 - At startup
 - Before spawning workers
 - When diagnosing issues
@@ -358,7 +392,7 @@ if (!health.healthy) throw new Error('Conductor not ready');
 // 2. Spawn worker
 const worker = await conductor.spawn_worker({
   workerType: 'architect',
-  taskPrompt: 'Create constitution'
+  taskPrompt: 'Create constitution',
 });
 
 // 3. Wait for completion
@@ -383,26 +417,28 @@ if (qualityGatesPass(status)) {
 const tasks = [
   { type: 'developer-backend', prompt: 'Implement API' },
   { type: 'developer-frontend', prompt: 'Implement UI' },
-  { type: 'tester', prompt: 'Create tests' }
+  { type: 'tester', prompt: 'Create tests' },
 ];
 
 const workers = await Promise.all(
-  tasks.map(t => conductor.spawn_worker({
-    workerType: t.type,
-    taskPrompt: t.prompt
-  }))
+  tasks.map((t) =>
+    conductor.spawn_worker({
+      workerType: t.type,
+      taskPrompt: t.prompt,
+    })
+  )
 );
 
 // Monitor all workers
-const workerIds = workers.map(w => w.workerId);
+const workerIds = workers.map((w) => w.workerId);
 let allCompleted = false;
 
 while (!allCompleted) {
   await sleep(10000);
   const statuses = await Promise.all(
-    workerIds.map(id => conductor.get_worker_status({ workerId: id }))
+    workerIds.map((id) => conductor.get_worker_status({ workerId: id }))
   );
-  allCompleted = statuses.every(s => s.status !== 'running');
+  allCompleted = statuses.every((s) => s.status !== 'running');
 }
 
 // Merge successful workers
@@ -431,7 +467,7 @@ while (attempts < maxAttempts) {
 
   worker = await conductor.spawn_worker({
     workerType: 'spec-writer',
-    taskPrompt: prompt
+    taskPrompt: prompt,
   });
 
   const status = await waitForCompletion(worker.workerId);
@@ -500,6 +536,7 @@ See [Manifest Protocol](../architecture/MANIFEST-PROTOCOL.md) for complete defin
 ---
 
 **Related Documentation:**
+
 - [Architecture Overview](../architecture/OVERVIEW.md)
 - [Error Handling](ERRORS.md)
 - [BOSS Integration Guide](../guides/BOSS-GUIDE.md)

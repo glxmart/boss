@@ -26,7 +26,10 @@ export async function makeExecutable(filePath: string): Promise<void> {
   await fs.chmod(filePath, 0o755);
 }
 
-export async function makeExecutableRecursive(dir: string, pattern: string = '*.sh'): Promise<void> {
+export async function makeExecutableRecursive(
+  dir: string,
+  pattern: string = '*.sh'
+): Promise<void> {
   const files = await fs.readdir(dir);
   for (const file of files) {
     const filePath = path.join(dir, file);
@@ -42,18 +45,14 @@ export async function makeExecutableRecursive(dir: string, pattern: string = '*.
         shouldMakeExecutable = true;
       } else if (pattern !== '*.sh') {
         // Convert glob pattern to regex (e.g., "*.sh" -> /^.*\.sh$/)
-        const regexPattern = pattern
-          .replace(/\./g, '\\.')
-          .replace(/\*/g, '.*')
-          .replace(/\?/g, '.');
+        const regexPattern = pattern.replace(/\./g, '\\.').replace(/\*/g, '.*').replace(/\?/g, '.');
         const regex = new RegExp(`^${regexPattern}$`);
         shouldMakeExecutable = regex.test(file);
       }
-      
+
       if (shouldMakeExecutable) {
         await makeExecutable(filePath);
       }
     }
   }
 }
-

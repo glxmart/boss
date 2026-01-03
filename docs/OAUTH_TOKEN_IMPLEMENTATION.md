@@ -29,12 +29,14 @@ Workers running in isolated Docker containers need `CLAUDE_CODE_OAUTH_TOKEN` to 
 **File: `boss-cli/src/generators/mcp-config.ts`**
 
 #### a. Updated `.env` file generation (line 162-163)
+
 ```typescript
 # Claude Code OAuth Token (used by Conductor MCP for workers)
 CLAUDE_CODE_OAUTH_TOKEN=op://glx/claude-code/oauth-token
 ```
 
 #### b. Updated Conductor MCP config (line 116-122)
+
 ```typescript
 'conductor': {
   // Use op run to wrap conductor and resolve CLAUDE_CODE_OAUTH_TOKEN from .env
@@ -48,6 +50,7 @@ CLAUDE_CODE_OAUTH_TOKEN=op://glx/claude-code/oauth-token
 **File: `boss-cli/scripts/debug-worker-spawn.sh`**
 
 #### c. Updated debug script (line 26-27)
+
 ```javascript
 // Use op run to resolve secrets from .env
 const mcp = spawn('op', ['run', '--env-file=$PROJECT_PATH/.env', '--', 'npx', '@glxmart/conductor-mcp', 'stdio'], {
@@ -58,6 +61,7 @@ const mcp = spawn('op', ['run', '--env-file=$PROJECT_PATH/.env', '--', 'npx', '@
 **File: `conductor-mcp/src/config/container-mapper.ts`**
 
 #### a. Added `resolveSecrets()` function (line 57-74)
+
 ```typescript
 /**
  * Resolve secrets from conductor's environment
@@ -80,6 +84,7 @@ export function resolveSecrets(secrets: string[]): string[] {
 ```
 
 #### b. Updated `mapToContainerUseConfig()` to use `resolveSecrets()` (line 24)
+
 ```typescript
 secrets: resolveSecrets(workerConfig.secrets),
 ```
@@ -87,9 +92,10 @@ secrets: resolveSecrets(workerConfig.secrets),
 **File: `conductor-mcp/worker-configs/*/container-config.json`** (15 files)
 
 #### c. Removed `op://` references from all worker configs
+
 ```json
 {
-  "secrets": []  // Empty - Conductor injects CLAUDE_CODE_OAUTH_TOKEN automatically
+  "secrets": [] // Empty - Conductor injects CLAUDE_CODE_OAUTH_TOKEN automatically
 }
 ```
 
@@ -153,6 +159,7 @@ container-use delete <worker-id>
 ```
 
 **Common debugging workflow**:
+
 ```bash
 # 1. Spawn a worker via conductor
 # 2. Get worker ID from spawn response or conductor logs
@@ -175,6 +182,7 @@ container-use delete <worker-id>
 ### Verify Worker Container Receives Token
 
 Inside a worker container, the environment should have:
+
 ```bash
 echo $CLAUDE_CODE_OAUTH_TOKEN  # Should output actual token (not op:// reference)
 claude --version  # Should work without authentication errors
@@ -190,10 +198,12 @@ claude --version  # Should work without authentication errors
 ## Files Modified
 
 ### boss-cli
+
 - ✅ `src/generators/mcp-config.ts` - Added CLAUDE_CODE_OAUTH_TOKEN to .env, wrapped Conductor with op run
 - ✅ `scripts/debug-worker-spawn.sh` - Use op run to start Conductor
 
 ### conductor-mcp
+
 - ✅ `src/config/container-mapper.ts` - Added `resolveSecrets()` function
 - ✅ `src/orchestration/task-executor.ts` - Removed `--print` flag, extract `structured_output` from result
 - ✅ `src/orchestration/container-use-client.ts` - Read command output from git notes
@@ -202,6 +212,7 @@ claude --version  # Should work without authentication errors
 ## Future Projects
 
 All future projects bootstrapped with `boss bootstrap` will automatically:
+
 1. ✅ Have `.env` file with `CLAUDE_CODE_OAUTH_TOKEN=op://glx/claude-code/oauth-token`
 2. ✅ Have `.mcp.json` with Conductor wrapped in `op run`
 3. ✅ Worker containers will receive actual OAuth token
@@ -210,18 +221,22 @@ All future projects bootstrapped with `boss bootstrap` will automatically:
 ## Troubleshooting
 
 ### Worker fails with "Maximum call stack size exceeded"
+
 - **Cause**: OAuth token is `op://` reference instead of actual token
 - **Fix**: Ensure Conductor is started with `op run --env-file=.env`
 
 ### Worker fails with authentication error
+
 - **Cause**: `CLAUDE_CODE_OAUTH_TOKEN` not set in Conductor environment
 - **Fix**: Verify `.env` file exists and has correct `op://` reference
 
 ### Debug script doesn't work
+
 - **Cause**: Script not using `op run`
 - **Fix**: Use updated `scripts/debug-worker-spawn.sh` that includes `op run`
 
 ### Worker spawn returns "success: false" with JSON parsing error
+
 - **Cause**: Claude Code `--output-format json` wraps output in `{type: "result", structured_output: {...}}` format
 - **Fix**: Updated `task-executor.ts` to extract `structured_output` field from result (fixed in v0.1.0+)
 

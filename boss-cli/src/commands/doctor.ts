@@ -51,8 +51,8 @@ export async function doctorCommand(): Promise<void> {
     );
   }
 
-  const failed = checks.filter(c => c.status === 'fail').length;
-  const warnings = checks.filter(c => c.status === 'warning').length;
+  const failed = checks.filter((c) => c.status === 'fail').length;
+  const warnings = checks.filter((c) => c.status === 'warning').length;
 
   console.log('\n');
   if (failed === 0 && warnings === 0) {
@@ -110,7 +110,11 @@ async function check1Password(): Promise<CheckResult> {
       await execa('op', ['account', 'list']);
       return { name: '1Password CLI', status: 'pass', message: 'Installed and authenticated' };
     } catch {
-      return { name: '1Password CLI', status: 'warning', message: 'Installed but not authenticated (run: op signin)' };
+      return {
+        name: '1Password CLI',
+        status: 'warning',
+        message: 'Installed but not authenticated (run: op signin)',
+      };
     }
   } catch {
     return { name: '1Password CLI', status: 'fail', message: 'Not installed or not in PATH' };
@@ -122,7 +126,11 @@ async function checkContainerUse(): Promise<CheckResult> {
     const { stdout } = await execa('container-use', ['--version']);
     return { name: 'Container-Use CLI', status: 'pass', message: `v${stdout.trim()}` };
   } catch {
-    return { name: 'Container-Use CLI', status: 'fail', message: 'Not installed (run: npm install -g container-use)' };
+    return {
+      name: 'Container-Use CLI',
+      status: 'fail',
+      message: 'Not installed (run: npm install -g container-use)',
+    };
   }
 }
 
@@ -135,7 +143,11 @@ async function checkClaudeCode(): Promise<CheckResult> {
       await execa('cursor', ['--version']);
       return { name: 'Cursor', status: 'pass', message: 'Installed' };
     } catch {
-      return { name: 'Claude Code/Cursor', status: 'warning', message: 'Not found in PATH (may be installed but not in PATH)' };
+      return {
+        name: 'Claude Code/Cursor',
+        status: 'warning',
+        message: 'Not found in PATH (may be installed but not in PATH)',
+      };
     }
   }
 }
@@ -161,10 +173,18 @@ async function checkPort(port: number, service: string): Promise<CheckResult> {
         return { name: `Port ${port} (${service})`, status: 'pass', message: 'Available' };
       }
     } else {
-      return { name: `Port ${port} (${service})`, status: 'warning', message: 'Port check not available on this platform' };
+      return {
+        name: `Port ${port} (${service})`,
+        status: 'warning',
+        message: 'Port check not available on this platform',
+      };
     }
   } catch {
-    return { name: `Port ${port} (${service})`, status: 'warning', message: 'Unable to check port' };
+    return {
+      name: `Port ${port} (${service})`,
+      status: 'warning',
+      message: 'Unable to check port',
+    };
   }
 }
 
@@ -172,19 +192,22 @@ async function checkMCPConfig(): Promise<CheckResult> {
   const os = await import('os');
   const path = await import('path');
   const fs = await import('fs-extra');
-  
+
   // Check Claude Code first (default/preferred)
   const claudeCodePath = path.join(os.homedir(), '.config', 'claude-code', 'mcp-servers.json');
   if (await fs.pathExists(claudeCodePath)) {
     return { name: 'MCP Config', status: 'pass', message: `Found: ${claudeCodePath}` };
   }
-  
+
   // Fall back to Cursor
   const cursorPath = path.join(os.homedir(), '.cursor', 'mcp-servers.json');
   if (await fs.pathExists(cursorPath)) {
     return { name: 'MCP Config', status: 'pass', message: `Found: ${cursorPath}` };
   }
 
-  return { name: 'MCP Config', status: 'warning', message: 'Not found (will be created during bootstrap - defaults to Claude Code)' };
+  return {
+    name: 'MCP Config',
+    status: 'warning',
+    message: 'Not found (will be created during bootstrap - defaults to Claude Code)',
+  };
 }
-

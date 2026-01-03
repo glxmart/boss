@@ -5,11 +5,13 @@ Create a changeset describing your changes for automated versioning and release.
 ## What This Does
 
 Generates a changeset file that describes:
+
 - Which packages changed
 - Version bump type (patch/minor/major)
 - User-facing summary of changes
 
 This changeset is used to:
+
 - Generate CHANGELOG.md
 - Determine next version number
 - Create automated "Version Packages" PR
@@ -21,6 +23,7 @@ This changeset is used to:
 ## When to Create Changeset
 
 **CREATE changeset for:**
+
 - ✅ New features
 - ✅ Bug fixes
 - ✅ Performance improvements
@@ -28,6 +31,7 @@ This changeset is used to:
 - ✅ Breaking changes
 
 **SKIP changeset for:**
+
 - ❌ Documentation only (use `skip-changeset` label on PR)
 - ❌ Tests only
 - ❌ CI/CD config only
@@ -39,6 +43,7 @@ This changeset is used to:
 When invoked, I will:
 
 1. **Run changeset CLI**:
+
    ```bash
    pnpm changeset
    ```
@@ -46,11 +51,13 @@ When invoked, I will:
 2. **Guide you through prompts**:
 
    **Step 1: Select packages**
+
    ```
    Which packages would you like to include?
    ◯ @glxmart/boss-cli
    ◯ @glxmart/conductor-mcp
    ```
+
    - Press `Space` to select
    - Press `Enter` to confirm
    - Select all packages you modified
@@ -58,7 +65,6 @@ When invoked, I will:
    **Step 2: Choose version bump**
 
    For each selected package, choose:
-
    - **patch** (0.0.X) - Bug fixes, minor updates, internal changes
      - Examples: Fix typo, Update dependency, Improve error message
 
@@ -71,6 +77,7 @@ When invoked, I will:
    **Step 3: Write summary**
 
    User-facing description of changes:
+
    ```
    Good examples:
    ✅ "Add worker resume optimization for 85% faster iterations"
@@ -84,6 +91,7 @@ When invoked, I will:
    ```
 
 3. **Verify changeset created**:
+
    ```bash
    ls .changeset/
    # Should show: random-words-here.md
@@ -99,6 +107,7 @@ When invoked, I will:
 ### Patch (0.0.X)
 
 When to use:
+
 - Bug fixes
 - Documentation updates in code
 - Internal refactoring
@@ -106,6 +115,7 @@ When to use:
 - Performance improvements (non-breaking)
 
 Examples:
+
 - Fix validation error message
 - Update JSDoc comments
 - Refactor internal function
@@ -114,12 +124,14 @@ Examples:
 ### Minor (0.X.0)
 
 When to use:
+
 - New features
 - New functionality
 - Backwards-compatible additions
 - New options/parameters (with defaults)
 
 Examples:
+
 - Add new worker type
 - New CLI command
 - Add optional parameter to function
@@ -128,6 +140,7 @@ Examples:
 ### Major (X.0.0)
 
 When to use:
+
 - Breaking changes
 - Removed functionality
 - Changed behavior
@@ -135,6 +148,7 @@ When to use:
 - Schema changes
 
 Examples:
+
 - Remove deprecated worker type
 - Change metadata schema structure
 - Rename required config fields
@@ -143,9 +157,10 @@ Examples:
 ## Example Changesets
 
 **New Feature (minor):**
+
 ```markdown
 ---
-"@glxmart/conductor-mcp": minor
+'@glxmart/conductor-mcp': minor
 ---
 
 Add parallel worker spawning with configurable concurrency
@@ -154,9 +169,10 @@ New `spawn_workers_parallel` tool enables spawning multiple workers concurrently
 ```
 
 **Bug Fix (patch):**
+
 ```markdown
 ---
-"@glxmart/boss-cli": patch
+'@glxmart/boss-cli': patch
 ---
 
 Fix bootstrap CLI hanging during MCP configuration prompt
@@ -165,9 +181,10 @@ Resolved issue where user prompt was called while spinner was active, causing 20
 ```
 
 **Breaking Change (major):**
+
 ```markdown
 ---
-"@glxmart/conductor-mcp": major
+'@glxmart/conductor-mcp': major
 ---
 
 BREAKING: Update worker metadata schema to v2
@@ -181,8 +198,8 @@ If you made several related changes, create ONE changeset that describes all of 
 
 ```markdown
 ---
-"@glxmart/boss-cli": patch
-"@glxmart/conductor-mcp": patch
+'@glxmart/boss-cli': patch
+'@glxmart/conductor-mcp': patch
 ---
 
 Fix MCP hanging bug and Docker image auto-update
@@ -195,6 +212,7 @@ Fix MCP hanging bug and Docker image auto-update
 ## Next Steps
 
 After changeset is created:
+
 1. Review the changeset file in `.changeset/`
 2. Commit changes: `git commit -m "chore: add changeset"`
 3. Run `/4-create-pr` to submit

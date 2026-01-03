@@ -4,32 +4,32 @@
 
 - name: skip-changeset
   description: Skip changeset validation for docs/tests/config-only changes
-  color: "d4c5f9"
+  color: 'd4c5f9'
 
 - name: bug
   description: Something isn't working
-  color: "d73a4a"
+  color: 'd73a4a'
 
 - name: enhancement
   description: New feature or request
-  color: "a2eeef"
+  color: 'a2eeef'
 
 - name: documentation
   description: Improvements or additions to documentation
-  color: "0075ca"
+  color: '0075ca'
 
 - name: dependencies
   description: Dependency updates
-  color: "0366d6"
+  color: '0366d6'
 
 - name: breaking-change
   description: Introduces breaking changes (major version bump)
-  color: "b60205"
+  color: 'b60205'
 
 - name: good-first-issue
   description: Good for newcomers
-  color: "7057ff"
+  color: '7057ff'
 
 - name: help-wanted
   description: Extra attention is needed
-  color: "008672"
+  color: '008672'

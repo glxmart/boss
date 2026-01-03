@@ -18,7 +18,7 @@ export function createError(
     ErrorCategory.CONTAINER_CONFIG_FAILED,
     ErrorCategory.WORKER_EXECUTION_FAILED,
     ErrorCategory.MERGE_FAILED,
-    ErrorCategory.CONTAINER_USE_UNAVAILABLE
+    ErrorCategory.CONTAINER_USE_UNAVAILABLE,
   ];
 
   return {
@@ -27,11 +27,15 @@ export function createError(
     workerId: options?.workerId,
     workerType: options?.workerType,
     details: options?.details,
-    retryable: retryableCategories.includes(category)
+    retryable: retryableCategories.includes(category),
   };
 }
 
-export function wrapError(error: unknown, category: ErrorCategory, defaultMessage: string): ConductorError {
+export function wrapError(
+  error: unknown,
+  category: ErrorCategory,
+  defaultMessage: string
+): ConductorError {
   if (error instanceof Error) {
     return createError(category, error.message, { details: error });
   }

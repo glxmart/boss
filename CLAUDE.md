@@ -10,6 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 2. **conductor-mcp** - MCP middleware for orchestrating container-based workers
 
 BOSS transforms Claude Code/Cursor into an autonomous development orchestrator using:
+
 - **Spec-Kit** (GitHub) - Executable specifications
 - **Container-Use MCP** - Isolated worker execution
 - **Conductor MCP** - Worker orchestration middleware
@@ -34,6 +35,7 @@ conductor-mcp (Orchestration)
 ### Worker Architecture
 
 Workers are specialized Claude Code instances running in Docker containers, each with:
+
 - Dedicated Git branch (`container-use/env-{id}`)
 - Worker-specific configuration (metadata.json, container-config.json)
 - Structured JSON output via `--output-format json --json-schema`
@@ -88,6 +90,7 @@ BOSS uses 1Password CLI to manage sensitive credentials (GitHub tokens, API keys
 ### Prerequisites
 
 1. **1Password CLI installed**:
+
    ```bash
    brew install --cask 1password-cli
    ```
@@ -162,6 +165,7 @@ op run --env-file=.env -- cursor .
 ```
 
 This is especially important for:
+
 - GitHub MCP server (used in `.mcp.json`)
 - Conductor MCP worker spawning
 - Integration tests that require API access
@@ -169,15 +173,18 @@ This is especially important for:
 ### Troubleshooting
 
 **Issue**: `open .env: no such file or directory`
+
 - **Solution**: Make sure you're running commands from the project root (`/Users/joe/code-glx/boss`)
 - **Solution**: Use absolute path: `op run --env-file=/path/to/boss/.env -- <command>`
 
 **Issue**: `gh` authentication fails
+
 - **Solution**: Check 1Password vault has `boss/github/token` entry
 - **Solution**: Verify token has required scopes (repo, workflow, read:org, write:packages)
 - **Solution**: Run `gh auth refresh` if token scopes changed
 
 **Issue**: MCP server can't access GitHub
+
 - **Solution**: Check `.mcp.json` is configured to use `op run --env-file=.env`
 - **Solution**: Restart Claude Code/Cursor with `op run --env-file=.env -- code .`
 
@@ -261,22 +268,26 @@ cd boss-cli && pnpm test:integration
 ### 5. Workflow-Specific Debugging
 
 **Test Workflows** (1.0-test-boss-cli.yml, 1.1-test-conductor-mcp.yml)
+
 - Runs: Package-specific tests (only when relevant files change)
 - Common fix: Ensure all tests pass locally first
 - Path triggers: Only runs when that package changes
 
 **Integration Tests** (2.0-integration-tests.yml)
+
 - Runs: End-to-end integration tests (when either package changes)
 - Common fix: Run `pnpm test:integration` locally first
 - Path triggers: Runs when boss-cli or conductor-mcp changes
 
 **Release Workflow** (3.0-release.yml)
+
 - Runs: Creates version PR or publishes via changesets
 - Common fix: Ensure valid changeset exists in `.changeset/`
 - Note: Uses `NPM_TOKEN` secret for publishing
 - See: [docs/RELEASE.md](./docs/RELEASE.md) for complete release guide
 
 **Docker Workflow** (4.0-docker.yml)
+
 - Runs: Builds and pushes boss-worker-base image
 - Common fix: Verify Dockerfile exists and builds locally
 - Manual build: `cd conductor-mcp/docker/boss-worker-base && ./build.sh`
@@ -354,6 +365,7 @@ op run --env-file=.env -- gh run list --limit 1
 Conductor uses `claude-code --output-format json --json-schema` for validated structured output from workers. This eliminates manual JSON writing and ensures type-safe communication.
 
 **Flow**:
+
 1. Conductor generates JSON schema from worker metadata.json
 2. Worker executes with `--json-schema` flag
 3. Worker returns validated JSON matching schema
@@ -365,6 +377,7 @@ Conductor uses `claude-code --output-format json --json-schema` for validated st
 ### Per-Worker Manifests
 
 Each worker gets its own manifest file (`.boss/worker-manifest-{workerId}.json`) instead of a shared manifest. This enables:
+
 - Parallel worker execution without conflicts
 - Clean git merges
 - Worker-specific metadata tracking
@@ -375,16 +388,19 @@ Each worker gets its own manifest file (`.boss/worker-manifest-{workerId}.json`)
 Worker behavior is defined by configuration files in two locations:
 
 **Conductor owns (package-level specs)**:
+
 - `conductor-mcp/worker-configs/{worker-type}/metadata.json` - Worker capabilities, inputs, outputs, constraints
 - `conductor-mcp/worker-configs/{worker-type}/container-config.json` - Container environment setup
 
 **Boss-cli generates (project-level configs)**:
+
 - `boss-cli/assets/worker-configs/{worker-type}/CLAUDE.md` (optional) - Worker-specific instructions
 - `boss-cli/assets/worker-configs/{worker-type}/.claude/` (optional) - Worker-specific commands/skills
 - `boss-cli/templates/spec-kit/templates/commands/` - Spec-Kit commands (copied based on worker's `primaryCommand`)
 - `boss-cli/assets/claude-folder/commands/` - BOSS-specific commands (NOT copied to workers)
 
 **During bootstrap**: boss-cli generates `.boss/workers/{worker-type}/` in the project with:
+
 - `CLAUDE.md` (from assets)
 - `.claude/commands/` (relevant Spec-Kit commands + worker-specific commands)
 - `.claude/skills/` (worker-specific)
@@ -392,6 +408,7 @@ Worker behavior is defined by configuration files in two locations:
 **Inside container**: These become available at `workdir/.boss/workers/{worker-type}/`
 
 **metadata.json** is the single source of truth for:
+
 - Worker description and phase
 - Required/optional inputs
 - Expected outputs (with validation schemas)
@@ -404,10 +421,10 @@ All errors are categorized with explicit retry guidance:
 
 ```typescript
 enum ErrorCategory {
-  WORKER_CONFIG_NOT_FOUND,      // retryable: false
-  CONTAINER_CREATION_FAILED,    // retryable: true
-  WORKER_EXECUTION_FAILED,      // retryable: true
-  MERGE_FAILED,                 // retryable: true
+  WORKER_CONFIG_NOT_FOUND, // retryable: false
+  CONTAINER_CREATION_FAILED, // retryable: true
+  WORKER_EXECUTION_FAILED, // retryable: true
+  MERGE_FAILED, // retryable: true
   // ... etc
 }
 ```
@@ -418,12 +435,12 @@ BOSS includes comprehensive performance optimizations that reduce worker spawn t
 
 ### Optimization Summary
 
-| Phase | Optimization | Performance Gain | Status |
-|-------|-------------|------------------|--------|
-| 1-3 | Base optimizations (Docker images, config, git batching) | 180s → 110s (-39%) | ✅ Complete |
-| 4 | Environment resume | Resume: 10-30s (-94%) | ✅ Complete |
-| 5 | Parallel spawning | 4 workers: 720s → 110s (-85%) | ✅ Complete |
-| 6 | Config learning & metrics | Self-improving system | ✅ Complete |
+| Phase | Optimization                                             | Performance Gain              | Status      |
+| ----- | -------------------------------------------------------- | ----------------------------- | ----------- |
+| 1-3   | Base optimizations (Docker images, config, git batching) | 180s → 110s (-39%)            | ✅ Complete |
+| 4     | Environment resume                                       | Resume: 10-30s (-94%)         | ✅ Complete |
+| 5     | Parallel spawning                                        | 4 workers: 720s → 110s (-85%) | ✅ Complete |
+| 6     | Config learning & metrics                                | Self-improving system         | ✅ Complete |
 
 **Documentation**: See `docs/OPTIMIZATION_PLAN.md`, `docs/PHASE_4_COMPLETE.md`, `docs/PHASE_5_COMPLETE.md`, `docs/PHASE_6_COMPLETE.md`
 
@@ -434,6 +451,7 @@ BOSS includes comprehensive performance optimizations that reduce worker spawn t
 #### Phase 1: Custom Docker Base Images
 
 **Before**: Each worker runs setup commands on generic Ubuntu image
+
 ```bash
 # Runs on EVERY worker spawn (~70s)
 apt-get update                           # 20s
@@ -443,6 +461,7 @@ npm install -g claude-code@latest       # 15s
 ```
 
 **After**: Pre-built base image with tools already installed
+
 ```dockerfile
 # conductor-mcp/docker/boss-worker-base/Dockerfile
 FROM ubuntu:24.04
@@ -459,21 +478,24 @@ RUN npm install -g pnpm@latest claude-code@latest
 #### Phase 2: Configuration Optimization
 
 **Strategy**: Use container-use's two-layer config system
+
 - **Default config** in `.container-use/environment.json` (project-wide)
 - **Worker-specific overrides** only when needed
 
 **Before**: Every worker specifies full configuration
+
 ```json
 // Every worker's container-config.json
 {
   "baseImage": "ubuntu:24.04",
   "setupCommands": ["apt-get update", "apt-get install..."],
   "installCommands": ["npm install -g pnpm", "npm install -g claude-code"],
-  "environmentVariables": {"NODE_ENV": "production", "BOSS_VERSION": "1.0.0"}
+  "environmentVariables": { "NODE_ENV": "production", "BOSS_VERSION": "1.0.0" }
 }
 ```
 
 **After**: Smart defaults with minimal overrides
+
 ```json
 // .container-use/environment.json (shared defaults)
 {
@@ -500,6 +522,7 @@ RUN npm install -g pnpm@latest claude-code@latest
 **Strategy**: Guide workers to batch related changes into logical commits
 
 **Before**: Workers create many small commits (~10 per task)
+
 ```bash
 # Individual commits for related work (~20s total)
 touch src/component.tsx
@@ -514,6 +537,7 @@ git commit -m "add component styles"    # 2s
 ```
 
 **After**: Batch related changes into logical commits (~3 per task)
+
 ```bash
 # Batched commits (~6s total)
 touch src/component.tsx src/component.test.tsx src/component.css
@@ -529,6 +553,7 @@ git commit -m "feat: add user profile component with tests and styles"  # 2s
 #### Combined Base Optimization Impact
 
 **Total Savings**: 70-100s per worker spawn
+
 - Phase 1 (Docker images): 50-70s
 - Phase 2 (Config optimization): 10-15s
 - Phase 3 (Git batching): 10-15s
@@ -540,11 +565,12 @@ git commit -m "feat: add user profile component with tests and styles"  # 2s
 **Purpose**: Resume work in existing worker environments instead of creating new ones, saving ~180s for iterative tasks.
 
 **Usage**:
+
 ```typescript
 // Initial spawn
 const worker = await conductor.spawn_worker({
   workerType: 'developer-backend',
-  taskPrompt: 'Implement user authentication'
+  taskPrompt: 'Implement user authentication',
 });
 // Time: 110s (with base optimizations)
 
@@ -552,13 +578,14 @@ const worker = await conductor.spawn_worker({
 const followUp = await conductor.spawn_worker({
   workerType: 'developer-backend',
   taskPrompt: 'Add password reset functionality',
-  resumeEnvironmentId: worker.workerId  // ⚡ Resume optimization
+  resumeEnvironmentId: worker.workerId, // ⚡ Resume optimization
 });
 // Time: 10-30s (skips container creation, setup, config)
 // Savings: ~180s per resume
 ```
 
 **Benefits**:
+
 - Skip container creation (60-90s saved)
 - Skip configuration (10-20s saved)
 - Skip environment setup (10-20s saved)
@@ -566,6 +593,7 @@ const followUp = await conductor.spawn_worker({
 - Ideal for: bug fixes, refinements, multi-step tasks
 
 **Use Cases**:
+
 - Iterative development (initial 80% → resume for remaining 20%)
 - Bug fixes after code review
 - Styling adjustments and refinements
@@ -576,6 +604,7 @@ const followUp = await conductor.spawn_worker({
 **Purpose**: Spawn multiple workers concurrently for massive time savings in multi-worker phases.
 
 **Usage**:
+
 ```typescript
 // Sequential (old way) - 4 × 110s = 440s
 const architect = await spawn_worker({ type: 'architect', ... });
@@ -597,6 +626,7 @@ const results = await conductor.spawn_workers_parallel({
 ```
 
 **Features**:
+
 - Configurable concurrency limiting (default: 5, max: 10)
 - Graceful partial failure handling
 - Automatic time savings calculation
@@ -604,12 +634,14 @@ const results = await conductor.spawn_workers_parallel({
 - Resource-aware execution
 
 **Benefits**:
+
 - 4-worker phase: 440s → 110s (-75%)
 - 8-worker phase: 880s → 220s (-75% with batching)
 - Comprehensive progress tracking
 - Partial success handling
 
 **Use Cases**:
+
 - Discovery phase (architect, clarifier, spec-writer, planner)
 - Implementation phase (frontend, backend, fullstack developers)
 - Quality assurance (code-reviewer, security, technical-writer)
@@ -622,16 +654,17 @@ const results = await conductor.spawn_workers_parallel({
 #### Config Inspection
 
 **Identify optimizations discovered by workers**:
+
 ```typescript
 // Worker completes successfully
 const worker = await spawn_worker({
   workerType: 'developer-backend',
-  taskPrompt: 'Implement database migrations'
+  taskPrompt: 'Implement database migrations',
 });
 
 // Inspect what the worker added/changed
 const config = await conductor.inspect_worker_config({
-  workerId: worker.workerId
+  workerId: worker.workerId,
 });
 
 // Result shows worker added postgresql-client
@@ -641,13 +674,14 @@ const config = await conductor.inspect_worker_config({
 #### Config Import
 
 **Adopt beneficial changes as defaults**:
+
 ```typescript
 // Import all optimizations
 await conductor.import_worker_config({
   workerId: worker.workerId,
   importSetupCommands: true,
   importInstallCommands: true,
-  importEnvironmentVariables: true
+  importEnvironmentVariables: true,
 });
 
 // Or selective import
@@ -656,8 +690,8 @@ await conductor.import_worker_config({
   selective: {
     setupCommands: ['apt-get install -y postgresql-client'],
     installCommands: ['pnpm install --frozen-lockfile'],
-    environmentVariables: ['NODE_OPTIONS']
-  }
+    environmentVariables: ['NODE_OPTIONS'],
+  },
 });
 
 // All future workers inherit these optimizations!
@@ -666,6 +700,7 @@ await conductor.import_worker_config({
 #### Performance Metrics
 
 **Automatic tracking of worker performance**:
+
 ```json
 // .boss/performance-metrics.json (auto-generated)
 [
@@ -687,6 +722,7 @@ await conductor.import_worker_config({
 ```
 
 **Benefits**:
+
 - Self-learning from successful patterns
 - Data-driven optimization decisions
 - Performance visibility and trending
@@ -694,6 +730,7 @@ await conductor.import_worker_config({
 - Compound gains over time
 
 **Use Cases**:
+
 - Learn which tools workers commonly need
 - Identify faster dependency installation methods
 - Optimize environment variables for performance
@@ -703,6 +740,7 @@ await conductor.import_worker_config({
 ### Optimization Tools Reference
 
 **Conductor MCP Tools**:
+
 - `spawn_worker` - Spawn single worker (supports `resumeEnvironmentId` for Phase 4)
 - `spawn_workers_parallel` - Spawn multiple workers concurrently (Phase 5)
 - `inspect_worker_config` - Analyze worker environment configuration (Phase 6)
@@ -717,6 +755,7 @@ await conductor.import_worker_config({
 - `ask_worker` - Ask question to completed worker
 
 **Performance Files**:
+
 - `.boss/performance-metrics.json` - Automatic performance tracking
 - `.boss/worker-manifest-{workerId}.json` - Per-worker manifests
 - `.container-use/environment.json` - Default configuration
@@ -818,17 +857,17 @@ Workers communicate via structured JSON output:
 
 ```typescript
 interface WorkerResult {
-  artifacts: WorkerArtifact[];      // Files created/modified
-  decisions: WorkerDecision[];      // Key decisions made
-  issues: WorkerIssue[];           // Problems encountered
-  recommendations: string[];        // Next steps for BOSS
-  tasksCompleted: string[];        // Work descriptions
-  workComplete: boolean;           // Completion status
+  artifacts: WorkerArtifact[]; // Files created/modified
+  decisions: WorkerDecision[]; // Key decisions made
+  issues: WorkerIssue[]; // Problems encountered
+  recommendations: string[]; // Next steps for BOSS
+  tasksCompleted: string[]; // Work descriptions
+  workComplete: boolean; // Completion status
 
   // Worker-specific (from metadata.json)
-  principlesEstablished?: string[];  // architect
-  requirementsGathered?: string[];   // clarifier
-  testsCreated?: number;            // tester
+  principlesEstablished?: string[]; // architect
+  requirementsGathered?: string[]; // clarifier
+  testsCreated?: number; // tester
 }
 ```
 
@@ -861,12 +900,12 @@ BOSS provides numbered commands for a clear, step-by-step development workflow:
 
 ### Quick Reference
 
-| Command | Purpose | Invoke With |
-|---------|---------|-------------|
-| `/1-start-feature` | Create feature branch from main | "Start a new feature" |
-| `/2-quality-check` | Run build, lint, tests, coverage | "Run quality check" |
-| `/3-create-changeset` | Create changeset for release | "Create a changeset" |
-| `/4-create-pr` | Submit pull request | "Create a pull request" |
+| Command               | Purpose                          | Invoke With             |
+| --------------------- | -------------------------------- | ----------------------- |
+| `/1-start-feature`    | Create feature branch from main  | "Start a new feature"   |
+| `/2-quality-check`    | Run build, lint, tests, coverage | "Run quality check"     |
+| `/3-create-changeset` | Create changeset for release     | "Create a changeset"    |
+| `/4-create-pr`        | Submit pull request              | "Create a pull request" |
 
 ### Typical Workflow
 
@@ -896,26 +935,31 @@ git commit -m "feat: implement feature"
 ### When to Use Each Command
 
 **`/1-start-feature`**
+
 - Starting any new work
 - Ensures clean branch from latest main
 - Handles branch naming conventions
 
 **`/2-quality-check`**
+
 - Before creating changeset
 - Before submitting PR
 - After fixing workflow failures
 
 **`/3-create-changeset`**
+
 - After code is complete
 - Skip for docs/tests/config only
 - One changeset per logical change
 
 **`/4-create-pr`**
+
 - After changeset is created
 - When ready for review
 - Handles conventional commit format
 
 For complete documentation, see:
+
 - Individual command files in `.claude/commands/`
 - [docs/RELEASE.md](./docs/RELEASE.md) - Complete release guide
 
@@ -924,6 +968,7 @@ For complete documentation, see:
 ### Adding a New Worker Type
 
 **In conductor-mcp (worker specifications)**:
+
 1. Create `conductor-mcp/worker-configs/{worker-type}/`
 2. Add `metadata.json` (validated against schema)
    - Include `primaryCommand` field to specify which Spec-Kit commands the worker needs
@@ -933,17 +978,11 @@ For complete documentation, see:
 4. Update `WorkerType` union in `conductor-mcp/src/types.ts`
 5. **DO NOT** add `.claude/` folder here - conductor only owns specs
 
-**In boss-cli (project-level config, optional)**:
-6. Optionally create `boss-cli/assets/worker-configs/{worker-type}/`
-7. Optionally add `CLAUDE.md` (worker-specific instructions)
-8. Optionally add `.claude/commands/` (worker-specific commands beyond Spec-Kit)
-9. Optionally add `.claude/skills/` (worker-specific skills)
+**In boss-cli (project-level config, optional)**: 6. Optionally create `boss-cli/assets/worker-configs/{worker-type}/` 7. Optionally add `CLAUDE.md` (worker-specific instructions) 8. Optionally add `.claude/commands/` (worker-specific commands beyond Spec-Kit) 9. Optionally add `.claude/skills/` (worker-specific skills)
 
 **Note**: Workers only get Spec-Kit commands if they have `primaryCommand` in metadata.json. BOSS-specific commands are NOT copied to workers.
 
-**Testing**:
-10. Test with `conductor-mcp` and `boss-cli`
-11. Verify bootstrapped project has correct .boss/workers/{worker-type}/ structure
+**Testing**: 10. Test with `conductor-mcp` and `boss-cli` 11. Verify bootstrapped project has correct .boss/workers/{worker-type}/ structure
 
 ### Modifying Bootstrap Process
 
@@ -990,6 +1029,7 @@ conductor-mcp is standalone:
 **The Big Picture** - Read this first!
 
 Comprehensive overview of the BOSS system covering:
+
 - Two-tier architecture (Bootstrap + Orchestration)
 - Foundation technologies (Spec-Kit + Container-Use)
 - Complete workflow (8 phases)
@@ -1004,6 +1044,7 @@ Comprehensive overview of the BOSS system covering:
 **Spec-Driven Development** - Implementation methodology
 
 Deep dive into how BOSS automates GitHub's Spec-Kit:
+
 - Seven sequential phases (Principles → Implementation)
 - Structured artifacts (constitution.md, spec.md, plan.md, tasks.md)
 - Worker prompts for each phase
@@ -1018,6 +1059,7 @@ Deep dive into how BOSS automates GitHub's Spec-Kit:
 **Secure Worker Execution** - Isolation & secret management
 
 Complete guide to worker isolation and security:
+
 - Container-use environment configurations
 - Worker-specific setups (8 worker types)
 - 1Password integration (op:// references)
@@ -1103,6 +1145,7 @@ Bootstrap generates MCP configs for both packages:
 **Project-specific**: `.mcp.json`, `.claude/mcp.json`
 
 Conductor entry:
+
 ```json
 {
   "conductor": {
@@ -1116,11 +1159,13 @@ Conductor entry:
 ## Build Artifacts
 
 ### boss-cli
+
 - `dist/` - Compiled TypeScript + copied assets
 - `dist/assets/` - Static files for bootstrap
 - Binary: `dist/index.js` (via `boss` command)
 
 ### conductor-mcp
+
 - `dist/` - Compiled TypeScript
 - Binary: `dist/bin.js` (via `conductor-mcp` command)
 - Published files: `dist/`, `worker-configs/`, docs
@@ -1132,6 +1177,7 @@ Conductor entry:
 When BOSS (Claude Code configured as orchestrator) operates:
 
 **BOSS CAN**:
+
 - Use Conductor MCP (spawn/manage workers)
 - Use GitHub MCP (ALL GitHub operations)
 - Use Knowledge Base MCP (query patterns)
@@ -1141,13 +1187,13 @@ When BOSS (Claude Code configured as orchestrator) operates:
 - Manage Full Project Lifecycle - Create Github project, issues, tasks etc via GitHub MCP
 - Comunicate with humans via Github.
 
-
 **BOSS CANNOT**:
+
 - Do the work himself (Needs to spin-up conductor workers)
 - Work or push to the main branch
 
-
 **Workers CAN** (inside containers):
+
 - ALL file operations
 - ALL code execution
 - Full development capabilities
@@ -1157,6 +1203,7 @@ This separation ensures security, observability, and control.
 ### Schema Validation
 
 All worker metadata.json files MUST validate against `conductor-mcp/schemas/worker-metadata.schema.json`. Validation happens at:
+
 1. Worker config load time
 2. Pre-publish checks
 3. Runtime when spawning workers
@@ -1206,6 +1253,7 @@ See `boss-cli/docs/common-issues.md` for detailed troubleshooting.
 BOSS uses **Changesets** for automated version management and publishing.
 
 **Quick start using numbered commands:**
+
 ```bash
 # Use the numbered workflow commands for guided experience:
 /1-start-feature    # Create feature branch
@@ -1220,6 +1268,7 @@ BOSS uses **Changesets** for automated version management and publishing.
 ```
 
 **Manual workflow (for reference):**
+
 ```bash
 # 1. Create feature branch
 git checkout -b feature/my-feature
@@ -1240,5 +1289,6 @@ git push origin feature/my-feature
 **Skip changeset:** Add `skip-changeset` label for docs/tests/config-only PRs
 
 **Complete documentation:**
+
 - [docs/RELEASE.md](./docs/RELEASE.md) - Release process
 - `.claude/commands/` - Individual workflow command guides

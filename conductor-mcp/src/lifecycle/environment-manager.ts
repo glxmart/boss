@@ -22,7 +22,7 @@ export class EnvironmentManager {
   ): Promise<void> {
     logger.info('Configuring worker environment', {
       environment_id: environmentId,
-      workerType
+      workerType,
     });
 
     // 1. Write CLAUDE.md with worker-specific context
@@ -38,7 +38,7 @@ export class EnvironmentManager {
 
     logger.info('Worker environment configured successfully', {
       environment_id: environmentId,
-      workerType
+      workerType,
     });
   }
 
@@ -63,7 +63,7 @@ export class EnvironmentManager {
   ): Promise<void> {
     logger.debug('Writing worker CLAUDE.md to isolated context', {
       environment_id: environmentId,
-      workerType
+      workerType,
     });
 
     // Expand template variables in CLAUDE.md
@@ -71,7 +71,7 @@ export class EnvironmentManager {
       workerName: workerType,
       workerRoleDescription: workerConfig.roleDescription,
       phase: workerConfig.phase,
-      artifactRequirements: workerConfig.artifactRequirements
+      artifactRequirements: workerConfig.artifactRequirements,
     });
 
     // Write to /workdir/.boss/workers/${workerType}/.claude/CLAUDE.md
@@ -80,7 +80,7 @@ export class EnvironmentManager {
       environment_source: projectPath,
       environment_id: environmentId,
       target_file: `/workdir/.boss/workers/${workerType}/.claude/CLAUDE.md`,
-      contents: claudeMdContent
+      contents: claudeMdContent,
     });
   }
 
@@ -103,7 +103,7 @@ export class EnvironmentManager {
     logger.debug('Copying worker .claude folder contents to isolated context', {
       environment_id: environmentId,
       workerType,
-      fileCount: workerConfig.claudeFolder.files.length
+      fileCount: workerConfig.claudeFolder.files.length,
     });
 
     for (const file of workerConfig.claudeFolder.files) {
@@ -113,19 +113,19 @@ export class EnvironmentManager {
 
       // Expand template variables in file contents
       const contents = expandTemplate(file.contents, {
-        workerName: workerType
+        workerName: workerType,
       });
 
       logger.debug('Writing file to worker context', {
         environment_id: environmentId,
-        target_file: targetPath
+        target_file: targetPath,
       });
 
       await this.containerUseClient.environmentFileWrite({
         environment_source: projectPath,
         environment_id: environmentId,
         target_file: targetPath,
-        contents
+        contents,
       });
     }
   }
@@ -148,7 +148,7 @@ export class EnvironmentManager {
   ): Promise<void> {
     logger.debug('Writing worker manifest template', {
       environment_id: environmentId,
-      workerType
+      workerType,
     });
 
     const now = new Date().toISOString();
@@ -162,7 +162,7 @@ export class EnvironmentManager {
       decisions: [],
       issues: [],
       recommendations: [],
-      tasksCompleted: []
+      tasksCompleted: [],
     };
 
     // Per-worker manifest file to prevent conflicts in parallel execution
@@ -172,12 +172,12 @@ export class EnvironmentManager {
       environment_source: projectPath,
       environment_id: environmentId,
       target_file: manifestPath,
-      contents: JSON.stringify(manifest, null, 2)
+      contents: JSON.stringify(manifest, null, 2),
     });
 
     logger.debug('Worker manifest template written', {
       environment_id: environmentId,
-      manifestPath
+      manifestPath,
     });
   }
 }

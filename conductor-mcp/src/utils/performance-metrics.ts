@@ -35,7 +35,7 @@ export async function logPerformanceMetrics(
         allMetrics = JSON.parse(content);
       } catch (error) {
         logger.warn('Failed to read existing performance metrics, starting fresh', {
-          error: error instanceof Error ? error.message : String(error)
+          error: error instanceof Error ? error.message : String(error),
         });
       }
     }
@@ -50,12 +50,12 @@ export async function logPerformanceMetrics(
       workerId: metrics.workerId,
       workerType: metrics.workerType,
       totalTime: metrics.totalTime,
-      success: metrics.success
+      success: metrics.success,
     });
   } catch (error) {
     logger.error('Failed to log performance metrics', {
       workerId: metrics.workerId,
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
     // Don't throw - metrics logging should not break worker spawning
   }
@@ -64,9 +64,7 @@ export async function logPerformanceMetrics(
 /**
  * Get performance metrics summary for analysis
  */
-export async function getPerformanceMetricsSummary(
-  projectPath: string
-): Promise<{
+export async function getPerformanceMetricsSummary(projectPath: string): Promise<{
   totalWorkers: number;
   avgTotalTime: number;
   avgContainerStartTime: number;
@@ -88,8 +86,8 @@ export async function getPerformanceMetricsSummary(
       successRate: 0,
       optimizationsUsed: {
         resume: 0,
-        parallel: 0
-      }
+        parallel: 0,
+      },
     };
   }
 
@@ -106,19 +104,21 @@ export async function getPerformanceMetricsSummary(
         successRate: 0,
         optimizationsUsed: {
           resume: 0,
-          parallel: 0
-        }
+          parallel: 0,
+        },
       };
     }
 
     const totalWorkers = allMetrics.length;
-    const successfulWorkers = allMetrics.filter(m => m.success).length;
-    const resumeCount = allMetrics.filter(m => m.usedResumeOptimization).length;
-    const parallelCount = allMetrics.filter(m => m.wasPartOfParallelBatch).length;
+    const successfulWorkers = allMetrics.filter((m) => m.success).length;
+    const resumeCount = allMetrics.filter((m) => m.usedResumeOptimization).length;
+    const parallelCount = allMetrics.filter((m) => m.wasPartOfParallelBatch).length;
 
     const avgTotalTime = allMetrics.reduce((sum, m) => sum + m.totalTime, 0) / totalWorkers;
-    const avgContainerStartTime = allMetrics.reduce((sum, m) => sum + m.containerStartTime, 0) / totalWorkers;
-    const avgTaskExecutionTime = allMetrics.reduce((sum, m) => sum + m.taskExecutionTime, 0) / totalWorkers;
+    const avgContainerStartTime =
+      allMetrics.reduce((sum, m) => sum + m.containerStartTime, 0) / totalWorkers;
+    const avgTaskExecutionTime =
+      allMetrics.reduce((sum, m) => sum + m.taskExecutionTime, 0) / totalWorkers;
 
     return {
       totalWorkers,
@@ -128,12 +128,12 @@ export async function getPerformanceMetricsSummary(
       successRate: (successfulWorkers / totalWorkers) * 100,
       optimizationsUsed: {
         resume: resumeCount,
-        parallel: parallelCount
-      }
+        parallel: parallelCount,
+      },
     };
   } catch (error) {
     logger.error('Failed to get performance metrics summary', {
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
     throw error;
   }

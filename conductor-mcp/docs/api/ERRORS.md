@@ -13,11 +13,13 @@ Conductor provides structured errors with retry guidance:
 **Retryable**: ❌ No
 
 **Common Causes**:
+
 - Worker type doesn't exist
 - Project not bootstrapped
 - Missing `.boss/workers/` directory
 
 **Resolution**:
+
 ```bash
 # Run bootstrap to create worker configs
 boss bootstrap
@@ -35,11 +37,13 @@ conductor list_worker_types
 **Retryable**: ❌ No
 
 **Common Causes**:
+
 - Invalid JSON in `container-config.json`
 - Missing required fields in metadata.json
 - Invalid template variables
 
 **Resolution**:
+
 ```bash
 # Validate worker config
 cd .boss/workers/[worker-type]
@@ -56,12 +60,14 @@ cat metadata.json | jq .          # Validate metadata
 **Retryable**: ✅ Yes
 
 **Common Causes**:
+
 - Docker not running
 - container-use CLI not installed
 - Insufficient disk space
 - Network issues (pulling base image)
 
 **Resolution**:
+
 ```bash
 # Check Docker status
 docker ps
@@ -85,11 +91,13 @@ container-use create --base-image node:20-alpine
 **Retryable**: ✅ Yes
 
 **Common Causes**:
+
 - Container filesystem full
 - Permission issues
 - Invalid file paths in config
 
 **Resolution**:
+
 ```bash
 # Check container logs
 container-use log [env-id]
@@ -107,12 +115,14 @@ cat .boss/workers/[type]/container-config.json
 **Retryable**: ✅ Yes (with improved prompt)
 
 **Common Causes**:
+
 - Worker encountered errors
 - Invalid task prompt
 - Missing required inputs
 - Task too complex
 
 **Resolution**:
+
 ```typescript
 // Get execution log to understand failure
 const status = await conductor.get_worker_status({ workerId });
@@ -133,7 +143,7 @@ const newWorker = await conductor.spawn_worker({
     - Use Spec-Kit commands
 
     ERRORS FROM PREVIOUS ATTEMPT:
-    ${status.manifest?.issues.map(i => i.description).join('\n')}`
+    ${status.manifest?.issues.map((i) => i.description).join('\n')}`,
 });
 ```
 
@@ -146,15 +156,20 @@ const newWorker = await conductor.spawn_worker({
 **Retryable**: ❌ No
 
 **Common Causes**:
+
 - Invalid worker ID
 - Worker already terminated
 - Worker already merged
 
 **Resolution**:
+
 ```typescript
 // List active workers
 const { workers } = await conductor.list_active_workers();
-console.log('Active workers:', workers.map(w => w.workerId));
+console.log(
+  'Active workers:',
+  workers.map((w) => w.workerId)
+);
 
 // Check if worker was merged
 const { workers: allWorkers } = await conductor.list_worker_types();
@@ -170,6 +185,7 @@ const { workers: allWorkers } = await conductor.list_worker_types();
 **Retryable**: ❌ No
 
 **Common Causes**:
+
 - Double merge attempt
 - Worker already integrated
 
@@ -184,11 +200,13 @@ const { workers: allWorkers } = await conductor.list_worker_types();
 **Retryable**: ✅ Yes (after resolving conflicts)
 
 **Common Causes**:
+
 - Merge conflicts
 - Target branch doesn't exist
 - Git errors
 
 **Resolution**:
+
 ```bash
 # Check for conflicts
 git status
@@ -213,10 +231,12 @@ conductor merge_worker --worker-id [env-id]
 **Retryable**: ✅ Yes (after installation)
 
 **Common Causes**:
+
 - container-use not installed
 - container-use not in PATH
 
 **Resolution**:
+
 ```bash
 # Install container-use
 npm install -g container-use
@@ -257,7 +277,7 @@ interface ConductorError {
 try {
   const worker = await conductor.spawn_worker({
     workerType: 'architect',
-    taskPrompt: 'Create constitution'
+    taskPrompt: 'Create constitution',
   });
 } catch (error) {
   if (isConductorError(error)) {
@@ -278,11 +298,7 @@ try {
 ### Retry with Exponential Backoff
 
 ```typescript
-async function spawnWorkerWithRetry(
-  workerType: WorkerType,
-  taskPrompt: string,
-  maxAttempts = 3
-) {
+async function spawnWorkerWithRetry(workerType: WorkerType, taskPrompt: string, maxAttempts = 3) {
   let attempt = 0;
   let delay = 1000; // Start with 1 second
 
@@ -290,7 +306,7 @@ async function spawnWorkerWithRetry(
     try {
       return await conductor.spawn_worker({
         workerType,
-        taskPrompt
+        taskPrompt,
       });
     } catch (error) {
       if (!isConductorError(error) || !error.retryable) {
@@ -333,7 +349,7 @@ async function handleWorkerError(
       const details = error.details as { workerId?: string };
       if (details?.workerId) {
         const status = await conductor.get_worker_status({
-          workerId: details.workerId
+          workerId: details.workerId,
         });
         console.log('Issues:', status.manifest?.issues);
         // Terminate and retry with improved prompt
@@ -387,12 +403,14 @@ const worker = await conductor.spawn_worker({...});
 ### Issue: "Worker stuck at 'running'"
 
 **Diagnosis:**
+
 ```typescript
 const status = await conductor.get_worker_status({ workerId });
 console.log('Execution log:', status.executionLog);
 ```
 
 **Solutions:**
+
 1. Check execution log for errors
 2. Verify worker has required inputs
 3. Check container logs: `container-use log [env-id]`
@@ -403,12 +421,14 @@ console.log('Execution log:', status.executionLog);
 ### Issue: "Merge conflicts"
 
 **Diagnosis:**
+
 ```bash
 git checkout container-use/[env-id]
 git diff [target-branch]
 ```
 
 **Solutions:**
+
 1. Review parallel tasks for file conflicts
 2. Use `[P]` markers only for truly independent tasks
 3. Resolve conflicts manually
@@ -419,12 +439,14 @@ git diff [target-branch]
 ### Issue: "Worker returns invalid JSON"
 
 **Diagnosis:**
+
 ```typescript
 const status = await conductor.get_worker_status({ workerId });
 // Check manifest validation errors
 ```
 
 **Solutions:**
+
 1. This shouldn't happen with schema-based approach
 2. Check worker CLAUDE.md has correct schema instructions
 3. Verify metadata.json output schema is correct
@@ -435,12 +457,14 @@ const status = await conductor.get_worker_status({ workerId });
 ### Issue: "High memory usage"
 
 **Diagnosis:**
+
 ```typescript
 const { workers } = await conductor.list_active_workers();
 console.log(`Active workers: ${workers.length}`);
 ```
 
 **Solutions:**
+
 1. Limit concurrent workers (max 3-5)
 2. Terminate completed workers promptly
 3. Monitor container resource usage
@@ -464,6 +488,7 @@ export LOG_LEVEL=error
 ```
 
 Log output:
+
 ```json
 {
   "timestamp": "2026-01-02T10:00:00Z",
@@ -481,6 +506,7 @@ Log output:
 ---
 
 **Related Documentation:**
+
 - [API Tools](TOOLS.md)
 - [Architecture Overview](../architecture/OVERVIEW.md)
 - [BOSS Integration Guide](../guides/BOSS-GUIDE.md)

@@ -46,4 +46,3 @@ export interface QualityGates {
   test?: boolean;
   security?: boolean;
 }
-

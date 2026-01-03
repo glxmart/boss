@@ -52,7 +52,11 @@ describe('template-loader', () => {
 
     it('should interpolate nested object properties', async () => {
       const templatePath = path.join(testDir, 'assets', 'test-templates', 'nested.txt');
-      await fs.writeFile(templatePath, 'Project: ${config.name}, Quality: ${config.quality}', 'utf8');
+      await fs.writeFile(
+        templatePath,
+        'Project: ${config.name}, Quality: ${config.quality}',
+        'utf8'
+      );
 
       const content = await loadTemplate(
         'test-templates/nested.txt',
@@ -84,9 +88,7 @@ describe('template-loader', () => {
     });
 
     it('should throw error for missing template file', async () => {
-      await expect(
-        loadTemplate('test-templates/nonexistent.txt', {}, testDir)
-      ).rejects.toThrow();
+      await expect(loadTemplate('test-templates/nonexistent.txt', {}, testDir)).rejects.toThrow();
     });
   });
 
@@ -145,4 +147,3 @@ describe('template-loader', () => {
     });
   });
 });
-

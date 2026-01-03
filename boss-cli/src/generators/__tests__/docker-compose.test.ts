@@ -46,4 +46,3 @@ describe('docker-compose generator', () => {
     expect(content).toContain('8080:80'); // Embeddings
   });
 });
-

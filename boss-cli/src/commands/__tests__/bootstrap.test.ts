@@ -11,8 +11,8 @@ vi.mock('../../utils/logger.js', () => ({
     error: vi.fn(),
     warning: vi.fn(),
     startSpinner: vi.fn(),
-    stopSpinner: vi.fn()
-  }
+    stopSpinner: vi.fn(),
+  },
 }));
 
 vi.mock('../../utils/validators.js', () => ({
@@ -20,7 +20,7 @@ vi.mock('../../utils/validators.js', () => ({
   validateTemplate: vi.fn((template: string) => ({ valid: true })),
   validateQualityPreset: vi.fn((quality: string) => ({ valid: true })),
   validateMCPScope: vi.fn((scope: string) => ({ valid: true })),
-  validateProjectDirectory: vi.fn(async () => ({ valid: true }))
+  validateProjectDirectory: vi.fn(async () => ({ valid: true })),
 }));
 
 vi.mock('../../utils/prompts.js', () => ({
@@ -31,90 +31,90 @@ vi.mock('../../utils/prompts.js', () => ({
   promptMCPScope: vi.fn(async () => 'both'),
   confirmBootstrap: vi.fn(async () => true),
   TEMPLATES: {
-    'nextjs-app-turbo': { name: 'Next.js App', description: 'Test', stack: [] }
+    'nextjs-app-turbo': { name: 'Next.js App', description: 'Test', stack: [] },
   },
   QUALITY_PRESETS: {
-    'production': { name: 'Production', description: 'Test', gates: {} }
-  }
+    production: { name: 'Production', description: 'Test', gates: {} },
+  },
 }));
 
 vi.mock('../../utils/git.js', () => ({
   initGitRepository: vi.fn(async () => {}),
   addFiles: vi.fn(async () => {}),
   commit: vi.fn(async () => {}),
-  createBranch: vi.fn(async () => {})
+  createBranch: vi.fn(async () => {}),
 }));
 
 vi.mock('../../utils/file-system.js', () => ({
   ensureDirectory: vi.fn(async () => {}),
   writeFile: vi.fn(async () => {}),
   readFile: vi.fn(async () => '{}'),
-  pathExists: vi.fn(async () => false)
+  pathExists: vi.fn(async () => false),
 }));
 
 vi.mock('../../generators/project-structure.js', () => ({
-  generateProjectStructure: vi.fn(async () => {})
+  generateProjectStructure: vi.fn(async () => {}),
 }));
 
 vi.mock('../../generators/boss-config.js', () => ({
-  generateBossConfig: vi.fn(async () => {})
+  generateBossConfig: vi.fn(async () => {}),
 }));
 
 vi.mock('../../generators/specify-structure.js', () => ({
-  copySpecKitStructure: vi.fn(async () => {})
+  copySpecKitStructure: vi.fn(async () => {}),
 }));
 
 vi.mock('../../generators/container-use-config.js', () => ({
-  generateContainerUseConfig: vi.fn(async () => {})
+  generateContainerUseConfig: vi.fn(async () => {}),
 }));
 
 vi.mock('../../generators/worker-configs.js', () => ({
-  generateWorkerConfigs: vi.fn(async () => {})
+  generateWorkerConfigs: vi.fn(async () => {}),
 }));
 
 vi.mock('../../generators/quality-gates.js', () => ({
-  generateQualityGates: vi.fn(async () => {})
+  generateQualityGates: vi.fn(async () => {}),
 }));
 
 vi.mock('../../generators/mcp-config.js', () => ({
-  generateMCPConfig: vi.fn(async () => {})
+  generateMCPConfig: vi.fn(async () => {}),
 }));
 
 vi.mock('../../generators/github-workflows.js', () => ({
-  generateGitHubWorkflows: vi.fn(async () => {})
+  generateGitHubWorkflows: vi.fn(async () => {}),
 }));
 
 vi.mock('../../generators/git-hooks.js', () => ({
-  generateGitHooks: vi.fn(async () => {})
+  generateGitHooks: vi.fn(async () => {}),
 }));
 
 vi.mock('../../generators/docker-compose.js', () => ({
-  generateDockerCompose: vi.fn(async () => {})
+  generateDockerCompose: vi.fn(async () => {}),
 }));
 
 vi.mock('../../generators/claude-md.js', () => ({
-  generateClaudeMD: vi.fn(async () => {})
+  generateClaudeMD: vi.fn(async () => {}),
 }));
 
 vi.mock('../../generators/claude-folder.js', () => ({
-  generateClaudeFolder: vi.fn(async () => {})
+  generateClaudeFolder: vi.fn(async () => {}),
 }));
 
 vi.mock('../../generators/start-boss-sh.js', () => ({
-  generateStartBossScript: vi.fn(async () => {})
+  generateStartBossScript: vi.fn(async () => {}),
 }));
 
 vi.mock('../../generators/template-loader.js', () => ({
   loadTemplate: vi.fn(async () => {}),
-  loadAssetTemplate: vi.fn(async () => 'test content')
+  loadAssetTemplate: vi.fn(async () => 'test content'),
 }));
 
 vi.mock('../../generators/template-docs.js', () => ({
-  generateTemplateDocs: vi.fn(async () => {})
+  generateTemplateDocs: vi.fn(async () => {}),
 }));
 
 vi.mock('../../presets/quality-presets.js', () => ({
-  applyQualityPreset: vi.fn(async () => {})
+  applyQualityPreset: vi.fn(async () => {}),
 }));
 
 vi.mock('execa', () => ({
@@ -134,7 +134,7 @@ vi.mock('execa', () => ({
       return { stdout: '', stderr: '' };
     }
     return { stdout: '', stderr: '' };
-  })
+  }),
 }));
 
 // Mock fs-extra
@@ -143,8 +143,8 @@ vi.mock('fs-extra', () => ({
     pathExists: vi.fn(async () => false),
     ensureDir: vi.fn(async () => {}),
     readdir: vi.fn(async () => []),
-    writeFile: vi.fn(async () => {})
-  }
+    writeFile: vi.fn(async () => {}),
+  },
 }));
 
 describe('bootstrap command', () => {
@@ -168,7 +168,7 @@ describe('bootstrap command', () => {
         githubRepo: 'test-repo',
         githubOrg: 'test-org',
         mcpScope: 'both',
-        nonInteractive: true
+        nonInteractive: true,
       };
 
       await bootstrapCommand(options);
@@ -191,7 +191,7 @@ describe('bootstrap command', () => {
         name: 'test-project',
         template: 'nextjs-app-turbo',
         quality: 'production',
-        nonInteractive: false
+        nonInteractive: false,
       };
 
       await bootstrapCommand(options);
@@ -204,14 +204,14 @@ describe('bootstrap command', () => {
       const { validateProjectDirectory } = await import('../../utils/validators.js');
       vi.mocked(validateProjectDirectory).mockResolvedValueOnce({
         valid: false,
-        error: 'Directory is not empty'
+        error: 'Directory is not empty',
       });
 
       const options: BootstrapOptions = {
         name: 'test-project',
         template: 'nextjs-app-turbo',
         quality: 'production',
-        nonInteractive: true
+        nonInteractive: true,
       };
 
       await bootstrapCommand(options);
@@ -223,14 +223,14 @@ describe('bootstrap command', () => {
       const { validateProjectName } = await import('../../utils/validators.js');
       vi.mocked(validateProjectName).mockReturnValueOnce({
         valid: false,
-        error: 'Invalid project name'
+        error: 'Invalid project name',
       });
 
       const options: BootstrapOptions = {
         name: 'Invalid Name',
         template: 'nextjs-app-turbo',
         quality: 'production',
-        nonInteractive: true
+        nonInteractive: true,
       };
 
       await bootstrapCommand(options);
@@ -242,14 +242,14 @@ describe('bootstrap command', () => {
       const { validateTemplate } = await import('../../utils/validators.js');
       vi.mocked(validateTemplate).mockReturnValueOnce({
         valid: false,
-        error: 'Invalid template'
+        error: 'Invalid template',
       });
 
       const options: BootstrapOptions = {
         name: 'test-project',
         template: 'invalid-template' as any,
         quality: 'production',
-        nonInteractive: true
+        nonInteractive: true,
       };
 
       await bootstrapCommand(options);
@@ -261,14 +261,14 @@ describe('bootstrap command', () => {
       const { validateQualityPreset } = await import('../../utils/validators.js');
       vi.mocked(validateQualityPreset).mockReturnValueOnce({
         valid: false,
-        error: 'Invalid quality preset'
+        error: 'Invalid quality preset',
       });
 
       const options: BootstrapOptions = {
         name: 'test-project',
         template: 'nextjs-app-turbo',
         quality: 'invalid-quality' as any,
-        nonInteractive: true
+        nonInteractive: true,
       };
 
       await bootstrapCommand(options);
@@ -280,7 +280,7 @@ describe('bootstrap command', () => {
       const { validateMCPScope } = await import('../../utils/validators.js');
       vi.mocked(validateMCPScope).mockReturnValueOnce({
         valid: false,
-        error: 'Invalid MCP scope'
+        error: 'Invalid MCP scope',
       });
 
       const options: BootstrapOptions = {
@@ -288,7 +288,7 @@ describe('bootstrap command', () => {
         template: 'nextjs-app-turbo',
         quality: 'production',
         mcpScope: 'invalid-scope' as any,
-        nonInteractive: true
+        nonInteractive: true,
       };
 
       await bootstrapCommand(options);
@@ -301,7 +301,7 @@ describe('bootstrap command', () => {
         await import('../../utils/prompts.js');
 
       const options: BootstrapOptions = {
-        nonInteractive: false
+        nonInteractive: false,
       };
 
       await bootstrapCommand(options);
@@ -319,7 +319,7 @@ describe('bootstrap command', () => {
         name: 'test-project',
         template: 'nextjs-app-turbo',
         quality: 'production',
-        nonInteractive: true
+        nonInteractive: true,
       };
 
       await bootstrapCommand(options);
@@ -337,7 +337,7 @@ describe('bootstrap command', () => {
         name: 'test-project',
         template: 'nextjs-app-turbo',
         quality: 'production',
-        nonInteractive: true
+        nonInteractive: true,
       };
 
       await bootstrapCommand(options);
@@ -355,15 +355,12 @@ describe('bootstrap command', () => {
         name: 'test-project',
         template: 'nextjs-app-turbo',
         quality: 'production',
-        nonInteractive: true
+        nonInteractive: true,
       };
 
       await bootstrapCommand(options);
 
-      expect(createBranch).toHaveBeenCalledWith(
-        expect.any(String),
-        'feature/boss-initial-setup'
-      );
+      expect(createBranch).toHaveBeenCalledWith(expect.any(String), 'feature/boss-initial-setup');
     });
 
     it('should commit bootstrap files', async () => {
@@ -373,7 +370,7 @@ describe('bootstrap command', () => {
         name: 'test-project',
         template: 'nextjs-app-turbo',
         quality: 'production',
-        nonInteractive: true
+        nonInteractive: true,
       };
 
       await bootstrapCommand(options);
@@ -387,15 +384,13 @@ describe('bootstrap command', () => {
 
     it('should handle bootstrap errors', async () => {
       const { generateProjectStructure } = await import('../../generators/project-structure.js');
-      vi.mocked(generateProjectStructure).mockRejectedValueOnce(
-        new Error('Generation failed')
-      );
+      vi.mocked(generateProjectStructure).mockRejectedValueOnce(new Error('Generation failed'));
 
       const options: BootstrapOptions = {
         name: 'test-project',
         template: 'nextjs-app-turbo',
         quality: 'production',
-        nonInteractive: true
+        nonInteractive: true,
       };
 
       await expect(bootstrapCommand(options)).rejects.toThrow('Generation failed');
@@ -408,15 +403,12 @@ describe('bootstrap command', () => {
         name: 'test-project',
         template: 'nextjs-app-turbo',
         quality: 'production',
-        nonInteractive: true
+        nonInteractive: true,
       };
 
       await bootstrapCommand(options);
 
-      expect(applyQualityPreset).toHaveBeenCalledWith(
-        expect.any(String),
-        'production'
-      );
+      expect(applyQualityPreset).toHaveBeenCalledWith(expect.any(String), 'production');
     });
 
     it('should load template', async () => {
@@ -426,7 +418,7 @@ describe('bootstrap command', () => {
         name: 'test-project',
         template: 'nextjs-app-turbo',
         quality: 'production',
-        nonInteractive: true
+        nonInteractive: true,
       };
 
       await bootstrapCommand(options);
@@ -437,7 +429,7 @@ describe('bootstrap command', () => {
         expect.objectContaining({
           name: 'test-project',
           template: 'nextjs-app-turbo',
-          quality: 'production'
+          quality: 'production',
         })
       );
     });
@@ -450,15 +442,12 @@ describe('bootstrap command', () => {
         template: 'nextjs-app-turbo',
         quality: 'production',
         mcpScope: 'project',
-        nonInteractive: true
+        nonInteractive: true,
       };
 
       await bootstrapCommand(options);
 
-      expect(generateMCPConfig).toHaveBeenCalledWith(
-        expect.any(String),
-        'project'
-      );
+      expect(generateMCPConfig).toHaveBeenCalledWith(expect.any(String), 'project');
     });
 
     it('should use user scope for MCP when specified', async () => {
@@ -469,15 +458,12 @@ describe('bootstrap command', () => {
         template: 'nextjs-app-turbo',
         quality: 'production',
         mcpScope: 'user',
-        nonInteractive: true
+        nonInteractive: true,
       };
 
       await bootstrapCommand(options);
 
-      expect(generateMCPConfig).toHaveBeenCalledWith(
-        expect.any(String),
-        'user'
-      );
+      expect(generateMCPConfig).toHaveBeenCalledWith(expect.any(String), 'user');
     });
 
     it('should prompt for MCP scope in interactive mode when not provided', async () => {
@@ -487,7 +473,7 @@ describe('bootstrap command', () => {
         name: 'test-project',
         template: 'nextjs-app-turbo',
         quality: 'production',
-        nonInteractive: false
+        nonInteractive: false,
       };
 
       await bootstrapCommand(options);

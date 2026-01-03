@@ -14,4 +14,3 @@ describe('doctor command', () => {
   // Note: Full integration tests would require actual system tools
   // These are tested in manual testing scenarios
 });
-

@@ -2,12 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'fs-extra';
 import path from 'path';
 import os from 'os';
-import {
-  initGitRepository,
-  addFiles,
-  commit,
-  isGitRepository
-} from '../git.js';
+import { initGitRepository, addFiles, commit, isGitRepository } from '../git.js';
 
 describe('git utilities', () => {
   const testDir = path.join(os.tmpdir(), 'boss-cli-test-git');
@@ -96,11 +91,10 @@ describe('git utilities', () => {
 
       // Should not throw even if hooks would fail
       await commit(testDir, 'Test commit');
-      
+
       const { execa } = await import('execa');
       const { stdout } = await execa('git', ['log', '--oneline', '-1'], { cwd: testDir });
       expect(stdout).toBeTruthy();
     });
   });
 });
-

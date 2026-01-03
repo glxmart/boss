@@ -10,7 +10,7 @@ import {
   EnvironmentFileWriteParams,
   EnvironmentFileReadParams,
   MergeEnvironmentParams,
-  ErrorCategory
+  ErrorCategory,
 } from '../types.js';
 import { wrapError } from '../utils/error-handler.js';
 import { logger } from '../utils/logger.js';
@@ -42,20 +42,20 @@ export class ContainerUseClient {
   async createEnvironment(params: CreateEnvironmentParams): Promise<ContainerUseEnvironment> {
     logger.info('Creating container environment', {
       title: params.title,
-      base_image: params.base_image
+      base_image: params.base_image,
     });
 
     try {
       // Step 1: Create environment
       logger.debug('Calling environment_create', {
         environment_source: params.environment_source,
-        title: params.title
+        title: params.title,
       });
 
       const createResult = await this.mcpClient.callTool('environment_create', {
         environment_source: params.environment_source,
         title: params.title,
-        explanation: `Creating environment for ${params.title}`
+        explanation: `Creating environment for ${params.title}`,
       });
 
       logger.debug('environment_create result received', {
@@ -63,7 +63,7 @@ export class ContainerUseClient {
         resultKeys: createResult ? Object.keys(createResult) : [],
         hasEnvironmentId: 'environment_id' in (createResult || {}),
         hasId: 'id' in (createResult || {}),
-        fullResult: JSON.stringify(createResult, null, 2)
+        fullResult: JSON.stringify(createResult, null, 2),
       });
 
       // container-use returns "id" field, not "environment_id"
@@ -72,7 +72,7 @@ export class ContainerUseClient {
       if (!environmentId) {
         logger.error('environment_create did not return environment_id', {
           createResult,
-          resultKeys: createResult ? Object.keys(createResult) : []
+          resultKeys: createResult ? Object.keys(createResult) : [],
         });
         throw new Error('Failed to create environment: no environment_id returned');
       }
@@ -81,15 +81,12 @@ export class ContainerUseClient {
 
       // Step 2: Configure environment with base image and setup
       // Convert setup_commands and install_commands to combined setup
-      const allSetupCommands = [
-        ...params.setup_commands,
-        ...params.install_commands
-      ];
+      const allSetupCommands = [...params.setup_commands, ...params.install_commands];
 
       // Convert environment_variables object to env array format
       const envs = [
         ...Object.entries(params.environment_variables).map(([key, value]) => `${key}=${value}`),
-        ...params.secrets
+        ...params.secrets,
       ];
 
       await this.mcpClient.callTool('environment_config', {
@@ -98,9 +95,9 @@ export class ContainerUseClient {
         config: {
           base_image: params.base_image,
           setup_commands: allSetupCommands,
-          envs
+          envs,
         },
-        explanation: `Configuring environment with ${params.base_image}`
+        explanation: `Configuring environment with ${params.base_image}`,
       });
 
       logger.info('Environment configured', { environment_id: environmentId });
@@ -108,7 +105,7 @@ export class ContainerUseClient {
       return {
         environment_id: environmentId,
         title: params.title,
-        status: 'created'
+        status: 'created',
       };
     } catch (error) {
       throw wrapError(
@@ -122,20 +119,26 @@ export class ContainerUseClient {
   /**
    * Execute command in environment
    */
-  async executeInEnvironment(params: ExecuteInEnvironmentParams): Promise<{ stdout?: string; output?: string }> {
+  async executeInEnvironment(
+    params: ExecuteInEnvironmentParams
+  ): Promise<{ stdout?: string; output?: string }> {
     logger.debug('Executing in environment', {
       environment_id: params.environment_id,
-      command: params.command.substring(0, 100) + '...'
+      command: params.command.substring(0, 100) + '...',
     });
 
     try {
       // Use 3 minute timeout for claude execution (API calls can be slow)
-      const result = await this.mcpClient.callTool('environment_run_cmd', {
-        environment_source: params.environment_source,
-        environment_id: params.environment_id,
-        command: params.command,
-        explanation: `Executing command in environment ${params.environment_id}`
-      }, { timeout: 180000 }); // 3 minutes
+      const result = await this.mcpClient.callTool(
+        'environment_run_cmd',
+        {
+          environment_source: params.environment_source,
+          environment_id: params.environment_id,
+          command: params.command,
+          explanation: `Executing command in environment ${params.environment_id}`,
+        },
+        { timeout: 180000 }
+      ); // 3 minutes
 
       // container-use stores command output in git notes, not in MCP response
       // Read the output from git notes
@@ -145,11 +148,18 @@ export class ContainerUseClient {
 
       let output = '';
       try {
-        const gitResult = await execFileAsync('git', [
-          '-C', params.environment_source,
-          'notes', '--ref=container-use', 'show',
-          `container-use/${params.environment_id}`
-        ], { maxBuffer: 10 * 1024 * 1024 }); // 10MB buffer
+        const gitResult = await execFileAsync(
+          'git',
+          [
+            '-C',
+            params.environment_source,
+            'notes',
+            '--ref=container-use',
+            'show',
+            `container-use/${params.environment_id}`,
+          ],
+          { maxBuffer: 10 * 1024 * 1024 }
+        ); // 10MB buffer
 
         if (gitResult.stdout) {
           // Extract JSON from notes (it's after the command line)
@@ -158,20 +168,20 @@ export class ContainerUseClient {
             output = jsonMatch[1];
             logger.debug('Extracted output from git notes', {
               environment_id: params.environment_id,
-              outputLength: output.length
+              outputLength: output.length,
             });
           }
         }
       } catch (gitError) {
         logger.warn('Failed to read git notes for command output', {
           environment_id: params.environment_id,
-          error: gitError instanceof Error ? gitError.message : String(gitError)
+          error: gitError instanceof Error ? gitError.message : String(gitError),
         });
       }
 
       return {
         stdout: output || result.stdout || result.output || '',
-        output: output || result.output || result.stdout || ''
+        output: output || result.output || result.stdout || '',
       };
     } catch (error) {
       throw wrapError(
@@ -188,7 +198,7 @@ export class ContainerUseClient {
   async environmentFileWrite(params: EnvironmentFileWriteParams): Promise<void> {
     logger.debug('Writing file to environment', {
       environment_id: params.environment_id,
-      target_file: params.target_file
+      target_file: params.target_file,
     });
 
     try {
@@ -197,7 +207,7 @@ export class ContainerUseClient {
         environment_id: params.environment_id,
         target_file: params.target_file,
         contents: params.contents,
-        explanation: `Writing file ${params.target_file}`
+        explanation: `Writing file ${params.target_file}`,
       });
     } catch (error) {
       throw wrapError(
@@ -214,7 +224,7 @@ export class ContainerUseClient {
   async environmentFileRead(params: EnvironmentFileReadParams): Promise<{ contents: string }> {
     logger.debug('Reading file from environment', {
       environment_id: params.environment_id,
-      target_file: params.target_file
+      target_file: params.target_file,
     });
 
     try {
@@ -223,7 +233,7 @@ export class ContainerUseClient {
         environment_id: params.environment_id,
         target_file: params.target_file,
         should_read_entire_file: true,
-        explanation: `Reading file ${params.target_file}`
+        explanation: `Reading file ${params.target_file}`,
       });
 
       return { contents: result.contents || '' };
@@ -244,14 +254,14 @@ export class ContainerUseClient {
   async mergeEnvironment(params: MergeEnvironmentParams): Promise<void> {
     logger.info('Merging environment', {
       environment_id: params.environment_id,
-      target_branch: params.target_branch
+      target_branch: params.target_branch,
     });
 
     // Container-use merge is done via CLI, not MCP
     // For now, log a warning - this needs to be handled differently
     logger.warn('Merge via MCP not yet implemented - use container-use CLI merge command', {
       environment_id: params.environment_id,
-      target_branch: params.target_branch
+      target_branch: params.target_branch,
     });
 
     // TODO: Implement merge via CLI or find MCP equivalent
@@ -267,7 +277,7 @@ export class ContainerUseClient {
 
     // Container-use delete is done via CLI, not MCP
     logger.warn('Delete via MCP not implemented - environment may persist', {
-      environment_id: environmentId
+      environment_id: environmentId,
     });
 
     // TODO: Implement delete via CLI
@@ -276,20 +286,23 @@ export class ContainerUseClient {
   /**
    * Get environment details
    */
-  async getEnvironment(environmentId: string, environmentSource: string): Promise<ContainerUseEnvironment> {
+  async getEnvironment(
+    environmentId: string,
+    environmentSource: string
+  ): Promise<ContainerUseEnvironment> {
     logger.debug('Getting environment details', { environment_id: environmentId });
 
     try {
       const result = await this.mcpClient.callTool('environment_open', {
         environment_source: environmentSource,
         environment_id: environmentId,
-        explanation: `Opening environment ${environmentId}`
+        explanation: `Opening environment ${environmentId}`,
       });
 
       return {
         environment_id: result.environment_id || environmentId,
         title: result.title || '',
-        status: result.status || 'unknown'
+        status: result.status || 'unknown',
       };
     } catch (error) {
       throw wrapError(
@@ -309,7 +322,7 @@ export class ContainerUseClient {
     try {
       const result = await this.mcpClient.callTool('environment_list', {
         environment_source: environmentSource,
-        explanation: 'Listing all environments'
+        explanation: 'Listing all environments',
       });
 
       return result.environments || [];
@@ -337,7 +350,7 @@ export class ContainerUseClient {
       return tools.length > 0;
     } catch (error) {
       logger.debug('Container-use not available', {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
       return false;
     }
@@ -357,14 +370,17 @@ export class ContainerUseClient {
    * any changes made during execution. This helps identify optimizations
    * that workers discovered and can be imported as defaults.
    */
-  async inspectEnvironmentConfig(environmentId: string, environmentSource: string): Promise<{
+  async inspectEnvironmentConfig(
+    environmentId: string,
+    environmentSource: string
+  ): Promise<{
     baseImage: string;
     setupCommands: string[];
     installCommands: string[];
     environmentVariables: Record<string, string>;
   }> {
     logger.info('Inspecting environment configuration (Phase 6)', {
-      environment_id: environmentId
+      environment_id: environmentId,
     });
 
     try {
@@ -373,7 +389,7 @@ export class ContainerUseClient {
         const result = await this.mcpClient.callTool('environment_config_show', {
           environment_source: environmentSource,
           environment_id: environmentId,
-          explanation: `Inspecting config for ${environmentId}`
+          explanation: `Inspecting config for ${environmentId}`,
         });
 
         logger.debug('Config inspection via MCP successful', { environmentId });
@@ -382,13 +398,13 @@ export class ContainerUseClient {
           baseImage: result.base_image || '',
           setupCommands: result.setup_commands || [],
           installCommands: result.install_commands || [],
-          environmentVariables: result.environment_variables || {}
+          environmentVariables: result.environment_variables || {},
         };
       } catch (mcpError) {
         // MCP tool may not be available - log and fall back to manual inspection
         logger.debug('Config inspection via MCP not available, using fallback', {
           environmentId,
-          error: mcpError instanceof Error ? mcpError.message : String(mcpError)
+          error: mcpError instanceof Error ? mcpError.message : String(mcpError),
         });
 
         // Fallback: Return empty config (actual implementation would use CLI)
@@ -397,7 +413,7 @@ export class ContainerUseClient {
           baseImage: '',
           setupCommands: [],
           installCommands: [],
-          environmentVariables: {}
+          environmentVariables: {},
         };
       }
     } catch (error) {
@@ -437,7 +453,7 @@ export class ContainerUseClient {
       environment_id: environmentId,
       hasSetupCommands: !!options.setupCommands,
       hasInstallCommands: !!options.installCommands,
-      hasEnvVars: !!options.environmentVariables
+      hasEnvVars: !!options.environmentVariables,
     });
 
     try {
@@ -447,7 +463,7 @@ export class ContainerUseClient {
           environment_source: environmentSource,
           environment_id: environmentId,
           config: options,
-          explanation: `Importing config from ${environmentId}`
+          explanation: `Importing config from ${environmentId}`,
         });
 
         logger.info('Config import via MCP successful', { environmentId });
@@ -456,14 +472,14 @@ export class ContainerUseClient {
           imported: {
             setupCommands: options.setupCommands || [],
             installCommands: options.installCommands || [],
-            environmentVariables: options.environmentVariables || {}
-          }
+            environmentVariables: options.environmentVariables || {},
+          },
         };
       } catch (mcpError) {
         // MCP tool may not be available - log and use fallback
         logger.debug('Config import via MCP not available, using fallback', {
           environmentId,
-          error: mcpError instanceof Error ? mcpError.message : String(mcpError)
+          error: mcpError instanceof Error ? mcpError.message : String(mcpError),
         });
 
         // Fallback: Log the config that would be imported
@@ -472,15 +488,15 @@ export class ContainerUseClient {
           environmentId,
           setupCommands: options.setupCommands,
           installCommands: options.installCommands,
-          environmentVariables: options.environmentVariables
+          environmentVariables: options.environmentVariables,
         });
 
         return {
           imported: {
             setupCommands: options.setupCommands || [],
             installCommands: options.installCommands || [],
-            environmentVariables: options.environmentVariables || {}
-          }
+            environmentVariables: options.environmentVariables || {},
+          },
         };
       }
     } catch (error) {

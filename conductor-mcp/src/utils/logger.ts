@@ -6,7 +6,7 @@ export enum LogLevel {
   DEBUG = 'debug',
   INFO = 'info',
   WARN = 'warn',
-  ERROR = 'error'
+  ERROR = 'error',
 }
 
 interface LogContext {
@@ -47,13 +47,12 @@ class Logger {
       timestamp: new Date().toISOString(),
       level,
       message,
-      ...context
+      ...context,
     };
 
     // Output to stderr for structured logging
-    const output = level === LogLevel.ERROR || level === LogLevel.WARN
-      ? console.error
-      : console.log;
+    const output =
+      level === LogLevel.ERROR || level === LogLevel.WARN ? console.error : console.log;
 
     output(JSON.stringify(logEntry));
   }

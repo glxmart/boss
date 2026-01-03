@@ -15,6 +15,7 @@ This document captures findings from reviewing the official container-use docume
 ### ✅ Fully Supported Features
 
 #### 1. Custom Base Images
+
 **Documentation:** https://container-use.com/environment-configuration
 
 ```bash
@@ -31,6 +32,7 @@ container-use config base-image reset
 **Configuration Storage:** `.container-use/environment.json`
 
 **Best Practice:**
+
 > "If you use custom base images with `latest` tags and update them frequently, consider using versioned tags (e.g., `myimage:v1.2.3`) for more predictable cache behavior."
 
 **BOSS Application:** Pre-built `boss/worker-base:1.0.0` image with Node.js, pnpm, claude-code pre-installed.
@@ -38,6 +40,7 @@ container-use config base-image reset
 ---
 
 #### 2. Setup Commands
+
 **When:** Executes AFTER pulling base image, BEFORE copying project code
 
 ```bash
@@ -54,6 +57,7 @@ container-use config setup-command clear
 ---
 
 #### 3. Install Commands
+
 **When:** Executes AFTER copying project code
 
 ```bash
@@ -85,11 +89,13 @@ container-use config env clear
 ---
 
 #### 5. Environment Persistence & Resume
+
 **Documentation:** https://container-use.com/environment-workflow
 
 > "The agent will resume in the existing environment with all previous work intact when referencing an environment ID in new prompts."
 
 **Commands:**
+
 ```bash
 # List all environments
 container-use list
@@ -102,6 +108,7 @@ container-use log <env-id>
 ```
 
 **Use Cases:**
+
 - Iterative development (add missing features)
 - Bug fixes (resume where bug was introduced)
 - Refinements (adjust styling/behavior)
@@ -115,10 +122,12 @@ container-use log <env-id>
 #### 6. Configuration Layers & Import
 
 **Two-Layer System:**
+
 1. **Default Config:** `.container-use/environment.json` (project-wide baseline)
 2. **Agent Adaptations:** Temporary modifications agents make during work
 
 **Import Capability:**
+
 ```bash
 # View agent's environment modifications
 container-use config show <env-id>
@@ -128,6 +137,7 @@ container-use config import <env-id>
 ```
 
 **Important Note:**
+
 > "Configuration changes only apply to **new environments**. Agent modifications remain in their environment until you import them."
 
 **Use Case:** Self-improving system that learns from worker discoveries (e.g., better build caching, additional tools).
@@ -139,6 +149,7 @@ container-use config import <env-id>
 #### 7. Environment Observation & Control
 
 **Real-time Monitoring:**
+
 ```bash
 # Watch agent activity
 container-use watch <env-id>
@@ -155,6 +166,7 @@ container-use terminal <env-id>
 ```
 
 **Recommendation:**
+
 > "Most of the time, `diff` and `log` give you enough information to decide next steps without the overhead of checking out or entering containers."
 
 **BOSS Application:** Use for debugging worker failures, observing progress.
@@ -164,6 +176,7 @@ container-use terminal <env-id>
 #### 8. Work Integration
 
 **Methods:**
+
 ```bash
 # Merge with full commit history
 container-use merge <env-id>
@@ -192,6 +205,7 @@ container-use delete --all
 ```
 
 **Philosophy:**
+
 > "Environments are **disposable by design**—if an agent encounters issues, deletion and restart often proves faster than attempting recovery."
 
 **BOSS Application:** Clean up completed/failed workers to conserve resources.
@@ -199,6 +213,7 @@ container-use delete --all
 ---
 
 #### 10. Secrets Management
+
 **Documentation:** https://container-use.com/secrets-management
 
 ```bash
@@ -217,6 +232,7 @@ container-use config secret clear
 ### ❌ NOT Supported
 
 #### 1. Container Pooling
+
 **Finding:** No built-in warm pool or container reuse mechanism.
 
 **Implication:** Cannot pre-warm containers for instant availability.
@@ -226,11 +242,13 @@ container-use config secret clear
 ---
 
 #### 2. Cross-Task Container Reuse
+
 **Finding:** Environments are task-specific. While you can `resume` in an environment for iterative work on the same task, you cannot reuse a completed environment for a different task.
 
 **Implication:** Each new worker spawn requires new environment creation.
 
 **Workaround:**
+
 - Use pre-built Docker images
 - Leverage Docker layer caching
 - Resume for iterative/related tasks only
@@ -238,6 +256,7 @@ container-use config secret clear
 ---
 
 #### 3. Image Pre-warming
+
 **Finding:** No keep-alive mechanism to maintain running containers.
 
 **Implication:** Cannot maintain ready-to-use containers waiting for tasks.
@@ -247,6 +266,7 @@ container-use config secret clear
 ---
 
 #### 4. Streaming During Setup
+
 **Finding:** No documented streaming output during `setup_commands` or `install_commands`.
 
 **Implication:** No real-time feedback during container initialization.
@@ -263,29 +283,31 @@ Based on container-use capabilities:
 
 ### ✅ Feasible Optimizations
 
-| Optimization | Method | Expected Savings |
-|-------------|--------|------------------|
-| **Pre-built Images** | Custom `base_image` with all dependencies | 50-70s per spawn |
-| **Setup Command Optimization** | Move to Docker build-time | 40s (apt-get) |
-| **Install Command Optimization** | Move globals to Docker build-time | 30s (npm install -g) |
-| **Environment Resume** | Use for iterative tasks | 180-360s for follow-ups |
-| **Configuration Learning** | Import successful worker configs | Continuous improvement |
-| **Parallel Spawning** | Orchestration-level (Promise.all) | 240-360s for phases |
+| Optimization                     | Method                                    | Expected Savings        |
+| -------------------------------- | ----------------------------------------- | ----------------------- |
+| **Pre-built Images**             | Custom `base_image` with all dependencies | 50-70s per spawn        |
+| **Setup Command Optimization**   | Move to Docker build-time                 | 40s (apt-get)           |
+| **Install Command Optimization** | Move globals to Docker build-time         | 30s (npm install -g)    |
+| **Environment Resume**           | Use for iterative tasks                   | 180-360s for follow-ups |
+| **Configuration Learning**       | Import successful worker configs          | Continuous improvement  |
+| **Parallel Spawning**            | Orchestration-level (Promise.all)         | 240-360s for phases     |
 
 ### ❌ Infeasible Optimizations
 
-| Optimization | Why Not Possible | Alternative |
-|-------------|------------------|-------------|
-| Container Pooling | Not a container-use feature | Pre-built images + layer caching |
-| Persistent Workers | Environments are ephemeral | Resume for iterative work |
-| Pre-warmed Containers | No keep-alive mechanism | Optimize Docker image |
+| Optimization          | Why Not Possible            | Alternative                      |
+| --------------------- | --------------------------- | -------------------------------- |
+| Container Pooling     | Not a container-use feature | Pre-built images + layer caching |
+| Persistent Workers    | Environments are ephemeral  | Resume for iterative work        |
+| Pre-warmed Containers | No keep-alive mechanism     | Optimize Docker image            |
 
 ---
 
 ## Configuration Best Practices
 
 ### 1. Use Versioned Image Tags
+
 ❌ Bad:
+
 ```json
 {
   "base_image": "boss/worker-base:latest"
@@ -293,6 +315,7 @@ Based on container-use capabilities:
 ```
 
 ✅ Good:
+
 ```json
 {
   "base_image": "boss/worker-base:1.0.0"
@@ -306,12 +329,14 @@ Based on container-use capabilities:
 ### 2. Layer Configuration Properly
 
 **Project Defaults** (`.container-use/environment.json`):
+
 ```bash
 container-use config base-image set boss/worker-base:1.0.0
 container-use config env set NODE_ENV production
 ```
 
 **Worker-Specific** (`container-config.json`):
+
 ```json
 {
   "base_image": "boss/worker-base:1.0.0",
@@ -326,6 +351,7 @@ container-use config env set NODE_ENV production
 ### 3. Minimize Setup Commands
 
 ❌ Bad (runtime):
+
 ```json
 {
   "setup_commands": [
@@ -337,6 +363,7 @@ container-use config env set NODE_ENV production
 ```
 
 ✅ Good (build-time):
+
 ```dockerfile
 FROM node:22-slim
 RUN apt-get update && apt-get install -y git curl build-essential
@@ -348,11 +375,13 @@ RUN npm install -g pnpm claude-code
 ### 4. Use Environment Resume Strategically
 
 **Good Use Cases:**
+
 - Fixing bugs introduced by same worker
 - Adding missing features to partial implementation
 - Iterating on styling/behavior
 
 **Bad Use Cases:**
+
 - Completely different tasks
 - Different worker types
 - Tasks requiring clean state
@@ -370,10 +399,12 @@ When implementing optimizations, measure these metrics:
 5. **Resume Time** - Time to resume existing environment
 
 **Baseline (Current):**
+
 - Container Startup: 60-90s
 - Total Spawn: 180-360s
 
 **Target (With Optimizations):**
+
 - Container Startup: 5-10s
 - Total Spawn: 60-90s
 - Resume: <10s
@@ -394,6 +425,6 @@ When implementing optimizations, measure these metrics:
 
 ## Revision History
 
-| Date | Version | Changes |
-|------|---------|---------|
-| 2026-01-02 | 1.0.0 | Initial documentation from official container-use.com review |
+| Date       | Version | Changes                                                      |
+| ---------- | ------- | ------------------------------------------------------------ |
+| 2026-01-02 | 1.0.0   | Initial documentation from official container-use.com review |

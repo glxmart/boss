@@ -5,6 +5,7 @@ Create a pull request for your feature branch with proper formatting and checks.
 ## What This Does
 
 Creates a well-formatted PR that:
+
 - Uses conventional commit format in title
 - Includes comprehensive description
 - Triggers automated workflows
@@ -17,6 +18,7 @@ Creates a well-formatted PR that:
 ## Prerequisites
 
 Before creating PR:
+
 - ✅ On feature branch (not main)
 - ✅ Changes committed
 - ✅ Quality checks pass (run `/2-quality-check`)
@@ -27,12 +29,14 @@ Before creating PR:
 When invoked, I will:
 
 1. **Verify current state**:
+
    ```bash
    git status
    git log -1
    ```
 
 2. **Push branch** (if not already pushed):
+
    ```bash
    git push origin <branch-name>
    ```
@@ -43,6 +47,7 @@ When invoked, I will:
    - `docs/update-readme` → `docs: update README with new features`
 
 4. **Generate PR description**:
+
    ```markdown
    ## Summary
 
@@ -66,6 +71,7 @@ When invoked, I will:
    ```
 
 5. **Create PR using GitHub CLI**:
+
    ```bash
    ./scripts/gh-with-1password.sh pr create \
      --title "feat: your feature" \
@@ -85,6 +91,7 @@ Use conventional commit format:
 **Format:** `<type>: <description>`
 
 **Types:**
+
 - `feat:` - New feature (minor version)
 - `fix:` - Bug fix (patch version)
 - `docs:` - Documentation only
@@ -95,6 +102,7 @@ Use conventional commit format:
 - `feat!:` or `fix!:` - Breaking changes (add `!`)
 
 **Examples:**
+
 ```
 ✅ feat: add parallel worker spawning
 ✅ fix: resolve MCP hanging during bootstrap
@@ -106,6 +114,7 @@ Use conventional commit format:
 ## PR Description Template
 
 **For feature PRs:**
+
 ```markdown
 ## Summary
 
@@ -136,6 +145,7 @@ Brief description of what this PR does.
 ```
 
 **For docs/config PRs:**
+
 ```markdown
 ## Summary
 
@@ -154,6 +164,7 @@ Updated documentation for X.
 ```
 
 **For bug fix PRs:**
+
 ```markdown
 ## Summary
 
@@ -183,9 +194,11 @@ Description of how this fixes it.
 After PR is created, these workflows run automatically:
 
 ### Always Run:
+
 - **0.5 - Changeset Check** - Validates changeset exists (unless `skip-changeset` label)
 
 ### Conditional (based on file changes):
+
 - **1.0 - Test boss-cli** - If boss-cli files changed
 - **1.1 - Test conductor-mcp** - If conductor-mcp files changed
 - **2.0 - Integration Tests** - If either package changed
@@ -196,6 +209,7 @@ After PR is created, these workflows run automatically:
 Add label for PRs that don't need a release:
 
 **Use `skip-changeset` for:**
+
 - Documentation only
 - Tests only
 - CI/CD config only
@@ -204,6 +218,7 @@ Add label for PRs that don't need a release:
 - Comment updates
 
 **How to add:**
+
 ```bash
 ./scripts/gh-with-1password.sh pr edit <PR-number> --add-label skip-changeset
 ```
@@ -211,11 +226,13 @@ Add label for PRs that don't need a release:
 ## After PR Creation
 
 The PR will:
+
 1. Run automated checks
 2. Wait for review
 3. Show status of all workflows
 
 **Monitor status:**
+
 ```bash
 # View PR
 ./scripts/gh-with-1password.sh pr view <PR-number>
@@ -227,11 +244,13 @@ The PR will:
 ## If Workflows Fail
 
 1. Check which workflow failed:
+
    ```bash
    ./scripts/gh-with-1password.sh run list --limit 5
    ```
 
 2. View failure details:
+
    ```bash
    ./scripts/gh-with-1password.sh run view <run-id> --log-failed
    ```
@@ -260,12 +279,14 @@ Once approved and all checks pass:
 ## Next Steps After Merge
 
 For PRs with changesets:
+
 1. **Release workflow** runs automatically
 2. Creates/updates **"Version Packages"** PR
 3. Review version PR
 4. Merge version PR → publishes to npm
 
 For PRs with `skip-changeset`:
+
 1. Changes merged to main
 2. No release triggered
 3. Done!

@@ -108,6 +108,7 @@ git commit -m "feat: your feature description"
 ```
 
 Follow [Conventional Commits](https://www.conventionalcommits.org/):
+
 - `feat:` - New feature
 - `fix:` - Bug fix
 - `docs:` - Documentation only
@@ -135,6 +136,7 @@ Then create a pull request on GitHub.
 - Use meaningful variable names
 
 **Example**:
+
 ```typescript
 /**
  * Spawns a worker with full environment setup
@@ -142,9 +144,7 @@ Then create a pull request on GitHub.
  * @param input - Spawn worker input parameters
  * @returns Promise resolving to spawn result
  */
-export async function spawnWorker(
-  input: SpawnWorkerInput
-): Promise<SpawnWorkerOutput> {
+export async function spawnWorker(input: SpawnWorkerInput): Promise<SpawnWorkerOutput> {
   // Implementation
 }
 ```
@@ -164,7 +164,7 @@ throw new ConductorError({
   category: 'WORKER_CONFIG_NOT_FOUND',
   message: `Worker config not found: ${workerType}`,
   retryable: false,
-  details: { workerType }
+  details: { workerType },
 });
 ```
 
@@ -175,7 +175,7 @@ throw new ConductorError({
 logger.info('Worker spawned successfully', {
   workerId,
   workerType,
-  branch
+  branch,
 });
 ```
 
@@ -220,9 +220,7 @@ describe('loadWorkerConfig', () => {
   });
 
   it('should throw error for non-existent worker type', async () => {
-    await expect(
-      loadWorkerConfig('non-existent')
-    ).rejects.toThrow('Worker config not found');
+    await expect(loadWorkerConfig('non-existent')).rejects.toThrow('Worker config not found');
   });
 });
 ```
@@ -251,11 +249,13 @@ npm test -- --watch
 ### Adding a New Worker Type
 
 1. **Create worker config directory**:
+
    ```bash
    mkdir -p worker-configs/new-worker/.claude/{agents,commands,skills}
    ```
 
 2. **Create configuration files**:
+
    ```bash
    touch worker-configs/new-worker/metadata.json
    touch worker-configs/new-worker/prompt.md
@@ -264,6 +264,7 @@ npm test -- --watch
    ```
 
 3. **Update types**:
+
    ```typescript
    // src/types.ts
    export type WorkerType =
@@ -273,6 +274,7 @@ npm test -- --watch
    ```
 
 4. **Write tests**:
+
    ```typescript
    // tests/unit/new-worker.test.ts
    describe('new-worker', () => {
@@ -290,6 +292,7 @@ npm test -- --watch
 ### Adding a New Tool
 
 1. **Define tool schema**:
+
    ```typescript
    // src/tools.ts
    const newToolSchema = {
@@ -298,30 +301,30 @@ npm test -- --watch
      inputSchema: {
        type: 'object',
        properties: {
-         param1: { type: 'string', description: '...' }
+         param1: { type: 'string', description: '...' },
        },
-       required: ['param1']
-     }
+       required: ['param1'],
+     },
    };
    ```
 
 2. **Implement handler**:
+
    ```typescript
-   async function handleNewTool(
-     input: NewToolInput
-   ): Promise<NewToolOutput> {
+   async function handleNewTool(input: NewToolInput): Promise<NewToolOutput> {
      // Implementation
    }
    ```
 
 3. **Register tool**:
+
    ```typescript
    // src/server.ts
    server.setRequestHandler(ListToolsRequestSchema, async () => ({
      tools: [
        // ... existing tools
-       newToolSchema
-     ]
+       newToolSchema,
+     ],
    }));
 
    server.setRequestHandler(CallToolRequestSchema, async (request) => {
@@ -333,11 +336,12 @@ npm test -- --watch
    ```
 
 4. **Write tests**:
+
    ```typescript
    describe('new_tool', () => {
      it('should execute successfully', async () => {
        const result = await handleNewTool({
-         param1: 'value'
+         param1: 'value',
        });
        expect(result.success).toBe(true);
      });
@@ -393,24 +397,30 @@ Include:
 5. **Breaking Changes**: Any breaking changes?
 
 **Example**:
+
 ```markdown
 ## What
+
 Adds support for custom worker metadata schemas
 
 ## Why
+
 Projects need to extend worker metadata with custom fields
 
 ## How
+
 - Added schema validation framework
 - Updated worker-loader to validate metadata.json
 - Added tests for custom schemas
 
 ## Testing
+
 - Unit tests for schema validation
 - Integration tests with custom worker configs
 - Manual testing with test project
 
 ## Breaking Changes
+
 None
 ```
 

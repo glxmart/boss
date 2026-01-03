@@ -3,6 +3,7 @@
 Get up and running with BOSS in 5 minutes.
 
 ## Prerequisites
+
 - Node.js >= 18.0.0
 - Docker Desktop running
 - 1Password CLI (optional, for secret management)
@@ -14,6 +15,7 @@ npm install -g @glxmart/boss-cli
 ```
 
 Or with pnpm:
+
 ```bash
 pnpm add -g @glxmart/boss-cli
 ```
@@ -77,6 +79,7 @@ If you encounter issues:
 3. **MCP not found**: Ensure `@glxmart/conductor-mcp` is installed
 
 For more help, see:
+
 - [Common Issues](boss-cli/docs/common-issues.md)
 - [GitHub Issues](https://github.com/glxmart/boss/issues)
 - [Discussions](https://github.com/glxmart/boss/discussions)

@@ -85,8 +85,6 @@
       "Delete(//var/**)",
       "Delete(//root/**)"
     ],
-    "ask": [
-      "Bash(rm -rf ./*)"
-    ]
+    "ask": ["Bash(rm -rf ./*)"]
   }
 }

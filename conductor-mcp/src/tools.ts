@@ -20,7 +20,7 @@ import {
   ImportWorkerConfigInput,
   WorkerType,
   ErrorCategory,
-  WorkerManifest
+  WorkerManifest,
 } from './types.js';
 import { logger } from './utils/logger.js';
 import { ConductorException, createError, throwConductorError } from './utils/error-handler.js';
@@ -61,66 +61,66 @@ function validateInput<T>(args: unknown, requiredFields: string[], toolName: str
 
 // Worker type descriptions and phases
 const WORKER_METADATA: Record<WorkerType, { description: string; phase: string }> = {
-  'architect': {
+  architect: {
     description: 'Create constitution with governing principles and standards',
-    phase: 'Phase 1: Constitution'
+    phase: 'Phase 1: Constitution',
   },
-  'clarifier': {
+  clarifier: {
     description: 'Gather business requirements through conversation',
-    phase: 'Phase 2: Clarification'
+    phase: 'Phase 2: Clarification',
   },
   'spec-writer': {
     description: 'Create user stories in BDD format',
-    phase: 'Phase 3: Specification'
+    phase: 'Phase 3: Specification',
   },
-  'planner': {
+  planner: {
     description: 'Create technical plans and task breakdowns',
-    phase: 'Phase 4/6: Planning & Task Breakdown'
+    phase: 'Phase 4/6: Planning & Task Breakdown',
   },
-  'reviewer': {
+  reviewer: {
     description: 'Validate against constitution compliance',
-    phase: 'Phase 5: Validation'
+    phase: 'Phase 5: Validation',
   },
   'developer-frontend': {
     description: 'Implement frontend features with TDD + BDD',
-    phase: 'Phase 7: Implementation'
+    phase: 'Phase 7: Implementation',
   },
   'developer-backend': {
     description: 'Implement backend features with TDD + BDD',
-    phase: 'Phase 7: Implementation'
+    phase: 'Phase 7: Implementation',
   },
   'developer-fullstack': {
     description: 'Implement fullstack features with TDD + BDD',
-    phase: 'Phase 7: Implementation'
+    phase: 'Phase 7: Implementation',
   },
-  'tester': {
+  tester: {
     description: 'Create comprehensive test suites',
-    phase: 'Phase 7: Implementation (Testing)'
+    phase: 'Phase 7: Implementation (Testing)',
   },
   'code-reviewer': {
     description: 'Review code quality and standards',
-    phase: 'Phase 7: Implementation (Code Review)'
+    phase: 'Phase 7: Implementation (Code Review)',
   },
   'security-engineer': {
     description: 'Ensure security and compliance',
-    phase: 'Phase 0-8: Security (Cross-Phase)'
+    phase: 'Phase 0-8: Security (Cross-Phase)',
   },
   'devops-engineer': {
     description: 'Set up CI/CD and infrastructure',
-    phase: 'Phase 0-8: Infrastructure (Cross-Phase)'
+    phase: 'Phase 0-8: Infrastructure (Cross-Phase)',
   },
   'technical-writer': {
     description: 'Create comprehensive documentation',
-    phase: 'Phase 0-8: Documentation (Cross-Phase)'
+    phase: 'Phase 0-8: Documentation (Cross-Phase)',
   },
   'product-owner': {
     description: 'Represent business and user needs',
-    phase: 'Phase 0-8: Business (Cross-Phase)'
+    phase: 'Phase 0-8: Business (Cross-Phase)',
   },
-  'consolidator': {
+  consolidator: {
     description: 'Merge all worker branches and create final artifacts',
-    phase: 'Phase 8: Consolidation'
-  }
+    phase: 'Phase 8: Consolidation',
+  },
 };
 
 /**
@@ -131,18 +131,22 @@ export async function handleSpawnWorker(args: unknown) {
   const input = validateInput<SpawnWorkerInput>(args, ['workerType', 'taskPrompt'], 'spawn_worker');
 
   logger.info('Handling spawn_worker request', {
-    workerType: input.workerType
+    workerType: input.workerType,
   });
 
   return await workerSpawner.spawnWorker(input);
 }
 
 export async function handleSpawnWorkersParallel(args: unknown) {
-  const input = validateInput<SpawnWorkersParallelInput>(args, ['workers'], 'spawn_workers_parallel');
+  const input = validateInput<SpawnWorkersParallelInput>(
+    args,
+    ['workers'],
+    'spawn_workers_parallel'
+  );
 
   logger.info('Handling spawn_workers_parallel request (Phase 5 optimization)', {
     workersCount: input.workers.length,
-    maxConcurrency: input.maxConcurrency || 5
+    maxConcurrency: input.maxConcurrency || 5,
   });
 
   return await workerSpawner.spawnWorkersInParallel(input);
@@ -152,7 +156,7 @@ export async function handleExecuteTask(args: unknown) {
   const input = validateInput<ExecuteTaskInput>(args, ['workerId', 'taskPrompt'], 'execute_task');
 
   logger.info('Handling execute_task request', {
-    workerId: input.workerId
+    workerId: input.workerId,
   });
 
   return await workerSpawner.executeTask(input);
@@ -162,7 +166,7 @@ export async function handleGetWorkerStatus(args: unknown) {
   const input = validateInput<GetWorkerStatusInput>(args, ['workerId'], 'get_worker_status');
 
   logger.info('Handling get_worker_status request', {
-    workerId: input.workerId
+    workerId: input.workerId,
   });
 
   try {
@@ -182,25 +186,24 @@ export async function handleGetWorkerStatus(args: unknown) {
       targetBranch: worker.targetBranch,
       startedAt: worker.startedAt,
       completedAt: manifest?.completedAt || worker.completedAt,
-      artifacts: manifest?.artifacts.map(a => a.path) || worker.artifacts,
+      artifacts: manifest?.artifacts.map((a) => a.path) || worker.artifacts,
       executionLog: worker.executionLog,
       // Include manifest data if available
-      manifest: manifest ? {
-        tasksCompleted: manifest.tasksCompleted,
-        decisions: manifest.decisions,
-        issues: manifest.issues,
-        recommendations: manifest.recommendations
-      } : undefined
+      manifest: manifest
+        ? {
+            tasksCompleted: manifest.tasksCompleted,
+            decisions: manifest.decisions,
+            issues: manifest.issues,
+            recommendations: manifest.recommendations,
+          }
+        : undefined,
     };
   } catch (error) {
     if (error instanceof ConductorException) {
       throw error;
     }
     throw new ConductorException(
-      createError(
-        ErrorCategory.WORKER_NOT_FOUND,
-        `Worker ${input.workerId} not found`
-      )
+      createError(ErrorCategory.WORKER_NOT_FOUND, `Worker ${input.workerId} not found`)
     );
   }
 }
@@ -209,7 +212,7 @@ export async function handleMergeWorker(args: unknown) {
   const input = args as MergeWorkerInput;
 
   logger.info('Handling merge_worker request', {
-    workerId: input.workerId
+    workerId: input.workerId,
   });
 
   try {
@@ -230,25 +233,25 @@ export async function handleMergeWorker(args: unknown) {
     const targetBranch = input.targetBranch || worker.targetBranch;
     await containerUseClient.mergeEnvironment({
       environment_id: input.workerId,
-      target_branch: targetBranch
+      target_branch: targetBranch,
     });
 
     // Update worker state
     stateTracker.updateWorkerStatus(input.workerId, {
       status: 'completed',
-      completedAt: new Date().toISOString()
+      completedAt: new Date().toISOString(),
     });
 
     return {
       success: true,
-      message: `Worker ${input.workerId} merged successfully into ${targetBranch}`
+      message: `Worker ${input.workerId} merged successfully into ${targetBranch}`,
     };
   } catch (error) {
     if (error instanceof ConductorException) {
       return {
         success: false,
         message: 'Failed to merge worker',
-        error: error.error
+        error: error.error,
       };
     }
     throw error;
@@ -259,7 +262,7 @@ export async function handleTerminateWorker(args: unknown) {
   const input = args as TerminateWorkerInput;
 
   logger.info('Handling terminate_worker request', {
-    workerId: input.workerId
+    workerId: input.workerId,
   });
 
   try {
@@ -272,19 +275,19 @@ export async function handleTerminateWorker(args: unknown) {
     // Update worker state
     stateTracker.updateWorkerStatus(input.workerId, {
       status: 'terminated',
-      completedAt: new Date().toISOString()
+      completedAt: new Date().toISOString(),
     });
 
     return {
       success: true,
-      message: `Worker ${input.workerId} terminated successfully`
+      message: `Worker ${input.workerId} terminated successfully`,
     };
   } catch (error) {
     if (error instanceof ConductorException) {
       return {
         success: false,
         message: 'Failed to terminate worker',
-        error: error.error
+        error: error.error,
       };
     }
     throw error;
@@ -299,10 +302,10 @@ export async function handleListWorkerTypes(args: unknown) {
   const projectPath = input.projectPath || process.cwd();
   const availableWorkers = await listAvailableWorkers(projectPath);
 
-  const workers = availableWorkers.map(type => ({
+  const workers = availableWorkers.map((type) => ({
     type,
     description: WORKER_METADATA[type]?.description || 'Unknown worker type',
-    phase: WORKER_METADATA[type]?.phase || 'Unknown phase'
+    phase: WORKER_METADATA[type]?.phase || 'Unknown phase',
   }));
 
   return { workers };
@@ -329,7 +332,7 @@ export async function handleConductorHealth() {
   return {
     healthy: containerUseAvailable,
     containerUseAvailable,
-    errors: errors.length > 0 ? errors : undefined
+    errors: errors.length > 0 ? errors : undefined,
   };
 }
 
@@ -338,7 +341,7 @@ export async function handleAskWorker(args: unknown) {
 
   logger.info('Handling ask_worker request', {
     workerId: input.workerId,
-    questionLength: input.question.length
+    questionLength: input.question.length,
   });
 
   try {
@@ -379,8 +382,9 @@ export async function handleAskWorker(args: unknown) {
             workerId: input.workerId,
             details: {
               currentStatus: manifest.status,
-              suggestedAction: 'Call get_worker_status periodically until status is "completed" or "failed"'
-            }
+              suggestedAction:
+                'Call get_worker_status periodically until status is "completed" or "failed"',
+            },
           }
         )
       );
@@ -389,7 +393,7 @@ export async function handleAskWorker(args: unknown) {
     // Worker has completed (or failed) - we can ask question
     logger.info('Worker completed, asking question with schema-based approach', {
       workerId: input.workerId,
-      previousStatus: manifest.status
+      previousStatus: manifest.status,
     });
 
     // Build follow-up question prompt (schema-based approach)
@@ -419,7 +423,7 @@ Please answer the question based on your previous work. Your answer will be capt
       answerProvided = true;
       logger.debug('Worker provided answer to question', {
         workerId: input.workerId,
-        answerLength: answer.length
+        answerLength: answer.length,
       });
     } else {
       answer = 'Worker did not provide an answer to the question.';
@@ -428,7 +432,7 @@ Please answer the question based on your previous work. Your answer will be capt
         workerId: input.workerId,
         question: input.question,
         recommendationsCount: workerResult.recommendations.length,
-        message: 'Worker should provide answer in recommendations array'
+        message: 'Worker should provide answer in recommendations array',
       });
     }
 
@@ -441,13 +445,13 @@ Please answer the question based on your previous work. Your answer will be capt
         {
           question: input.question,
           answer: answer || 'No answer provided',
-          askedAt: new Date().toISOString()
-        }
+          askedAt: new Date().toISOString(),
+        },
       ],
       // Also merge any new artifacts/decisions from the answer
       artifacts: [...manifest.artifacts, ...workerResult.artifacts],
       decisions: [...manifest.decisions, ...workerResult.decisions],
-      issues: [...manifest.issues, ...workerResult.issues]
+      issues: [...manifest.issues, ...workerResult.issues],
     };
 
     // Write updated manifest
@@ -460,13 +464,13 @@ Please answer the question based on your previous work. Your answer will be capt
       answer,
       metadata: {
         answerProvided,
-        workerIssuesReported: workerResult.issues.length
-      }
+        workerIssuesReported: workerResult.issues.length,
+      },
     };
   } catch (error) {
     logger.error('Failed to ask worker', {
       workerId: input.workerId,
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
 
     if (error instanceof ConductorException) {
@@ -474,7 +478,7 @@ Please answer the question based on your previous work. Your answer will be capt
         success: false,
         workerId: input.workerId,
         question: input.question,
-        error: error.error
+        error: error.error,
       };
     }
 
@@ -483,10 +487,14 @@ Please answer the question based on your previous work. Your answer will be capt
 }
 
 export async function handleInspectWorkerConfig(args: unknown) {
-  const input = validateInput<InspectWorkerConfigInput>(args, ['workerId'], 'inspect_worker_config');
+  const input = validateInput<InspectWorkerConfigInput>(
+    args,
+    ['workerId'],
+    'inspect_worker_config'
+  );
 
   logger.info('Handling inspect_worker_config request (Phase 6)', {
-    workerId: input.workerId
+    workerId: input.workerId,
   });
 
   try {
@@ -497,10 +505,7 @@ export async function handleInspectWorkerConfig(args: unknown) {
     const projectPath = process.cwd();
 
     // Inspect environment config
-    const config = await containerUseClient.inspectEnvironmentConfig(
-      input.workerId,
-      projectPath
-    );
+    const config = await containerUseClient.inspectEnvironmentConfig(input.workerId, projectPath);
 
     // TODO: If compareWithDefaults is true, compare with worker's initial config
     // and identify changes (requires storing initial config)
@@ -510,12 +515,12 @@ export async function handleInspectWorkerConfig(args: unknown) {
       workerId: input.workerId,
       workerType: worker.workerType,
       config,
-      message: `Configuration inspected for ${worker.workerType} worker`
+      message: `Configuration inspected for ${worker.workerType} worker`,
     };
   } catch (error) {
     logger.error('Failed to inspect worker config', {
       workerId: input.workerId,
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
 
     if (error instanceof ConductorException) {
@@ -527,10 +532,10 @@ export async function handleInspectWorkerConfig(args: unknown) {
           baseImage: '',
           setupCommands: [],
           installCommands: [],
-          environmentVariables: {}
+          environmentVariables: {},
         },
         message: 'Failed to inspect worker config',
-        error: error.error
+        error: error.error,
       };
     }
 
@@ -545,7 +550,7 @@ export async function handleImportWorkerConfig(args: unknown) {
     workerId: input.workerId,
     importSetupCommands: input.importSetupCommands,
     importInstallCommands: input.importInstallCommands,
-    importEnvironmentVariables: input.importEnvironmentVariables
+    importEnvironmentVariables: input.importEnvironmentVariables,
   });
 
   try {
@@ -556,10 +561,7 @@ export async function handleImportWorkerConfig(args: unknown) {
     const projectPath = process.cwd();
 
     // First, inspect the environment to get current config
-    const config = await containerUseClient.inspectEnvironmentConfig(
-      input.workerId,
-      projectPath
-    );
+    const config = await containerUseClient.inspectEnvironmentConfig(input.workerId, projectPath);
 
     // Determine what to import based on input flags
     const toImport: {
@@ -609,12 +611,12 @@ export async function handleImportWorkerConfig(args: unknown) {
     return {
       success: true,
       imported: result.imported,
-      message: `Configuration imported from ${worker.workerType} worker`
+      message: `Configuration imported from ${worker.workerType} worker`,
     };
   } catch (error) {
     logger.error('Failed to import worker config', {
       workerId: input.workerId,
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
 
     if (error instanceof ConductorException) {
@@ -623,10 +625,10 @@ export async function handleImportWorkerConfig(args: unknown) {
         imported: {
           setupCommands: [],
           installCommands: [],
-          environmentVariables: {}
+          environmentVariables: {},
         },
         message: 'Failed to import worker config',
-        error: error.error
+        error: error.error,
       };
     }
 
@@ -648,36 +650,49 @@ export const TOOL_SCHEMAS = {
         workerType: {
           type: 'string',
           enum: [
-            'architect', 'clarifier', 'spec-writer', 'planner', 'reviewer',
-            'developer-frontend', 'developer-backend', 'developer-fullstack',
-            'tester', 'code-reviewer', 'consolidator',
-            'security-engineer', 'devops-engineer', 'technical-writer', 'product-owner'
+            'architect',
+            'clarifier',
+            'spec-writer',
+            'planner',
+            'reviewer',
+            'developer-frontend',
+            'developer-backend',
+            'developer-fullstack',
+            'tester',
+            'code-reviewer',
+            'consolidator',
+            'security-engineer',
+            'devops-engineer',
+            'technical-writer',
+            'product-owner',
           ],
-          description: 'Type of worker to spawn'
+          description: 'Type of worker to spawn',
         },
         taskPrompt: {
           type: 'string',
-          description: 'Task instructions for the worker'
+          description: 'Task instructions for the worker',
         },
         projectPath: {
           type: 'string',
-          description: 'Absolute path to project root (defaults to cwd)'
+          description: 'Absolute path to project root (defaults to cwd)',
         },
         targetBranch: {
           type: 'string',
-          description: 'Branch to merge worker changes into (default: feature/boss-initial-setup)'
+          description: 'Branch to merge worker changes into (default: feature/boss-initial-setup)',
         },
         resumeEnvironmentId: {
           type: 'string',
-          description: 'Resume work in existing worker environment instead of creating new one (saves ~180s for iterative work)'
-        }
+          description:
+            'Resume work in existing worker environment instead of creating new one (saves ~180s for iterative work)',
+        },
       },
-      required: ['workerType', 'taskPrompt']
-    }
+      required: ['workerType', 'taskPrompt'],
+    },
   },
   spawn_workers_parallel: {
     name: 'spawn_workers_parallel',
-    description: 'Spawn multiple workers concurrently for massive time savings (Phase 5 optimization). Use this for multi-worker phases like Discovery (4 workers) or Implementation (3+ workers). Saves 540s+ by running workers in parallel instead of sequentially. Example: 4 workers take 180s instead of 720s (-75%).',
+    description:
+      'Spawn multiple workers concurrently for massive time savings (Phase 5 optimization). Use this for multi-worker phases like Discovery (4 workers) or Implementation (3+ workers). Saves 540s+ by running workers in parallel instead of sequentially. Example: 4 workers take 180s instead of 720s (-75%).',
     inputSchema: {
       type: 'object',
       properties: {
@@ -689,43 +704,55 @@ export const TOOL_SCHEMAS = {
               workerType: {
                 type: 'string',
                 enum: [
-                  'architect', 'clarifier', 'spec-writer', 'planner', 'reviewer',
-                  'developer-frontend', 'developer-backend', 'developer-fullstack',
-                  'tester', 'code-reviewer', 'consolidator',
-                  'security-engineer', 'devops-engineer', 'technical-writer', 'product-owner'
+                  'architect',
+                  'clarifier',
+                  'spec-writer',
+                  'planner',
+                  'reviewer',
+                  'developer-frontend',
+                  'developer-backend',
+                  'developer-fullstack',
+                  'tester',
+                  'code-reviewer',
+                  'consolidator',
+                  'security-engineer',
+                  'devops-engineer',
+                  'technical-writer',
+                  'product-owner',
                 ],
-                description: 'Type of worker to spawn'
+                description: 'Type of worker to spawn',
               },
               taskPrompt: {
                 type: 'string',
-                description: 'Task instructions for this worker'
+                description: 'Task instructions for this worker',
               },
               resumeEnvironmentId: {
                 type: 'string',
-                description: 'Optional: Resume work in existing environment'
-              }
+                description: 'Optional: Resume work in existing environment',
+              },
             },
-            required: ['workerType', 'taskPrompt']
+            required: ['workerType', 'taskPrompt'],
           },
-          description: 'Array of workers to spawn in parallel'
+          description: 'Array of workers to spawn in parallel',
         },
         projectPath: {
           type: 'string',
-          description: 'Absolute path to project root (defaults to cwd)'
+          description: 'Absolute path to project root (defaults to cwd)',
         },
         targetBranch: {
           type: 'string',
-          description: 'Branch to merge worker changes into (default: feature/boss-initial-setup)'
+          description: 'Branch to merge worker changes into (default: feature/boss-initial-setup)',
         },
         maxConcurrency: {
           type: 'number',
-          description: 'Maximum number of workers to spawn concurrently (default: 5, max recommended: 5)',
+          description:
+            'Maximum number of workers to spawn concurrently (default: 5, max recommended: 5)',
           minimum: 1,
-          maximum: 10
-        }
+          maximum: 10,
+        },
       },
-      required: ['workers']
-    }
+      required: ['workers'],
+    },
   },
   execute_task: {
     name: 'execute_task',
@@ -735,15 +762,15 @@ export const TOOL_SCHEMAS = {
       properties: {
         workerId: {
           type: 'string',
-          description: 'Worker ID (env_id) returned from spawn_worker'
+          description: 'Worker ID (env_id) returned from spawn_worker',
         },
         taskPrompt: {
           type: 'string',
-          description: 'Additional task instructions'
-        }
+          description: 'Additional task instructions',
+        },
       },
-      required: ['workerId', 'taskPrompt']
-    }
+      required: ['workerId', 'taskPrompt'],
+    },
   },
   get_worker_status: {
     name: 'get_worker_status',
@@ -753,11 +780,11 @@ export const TOOL_SCHEMAS = {
       properties: {
         workerId: {
           type: 'string',
-          description: 'Worker ID to check'
-        }
+          description: 'Worker ID to check',
+        },
       },
-      required: ['workerId']
-    }
+      required: ['workerId'],
+    },
   },
   merge_worker: {
     name: 'merge_worker',
@@ -767,15 +794,15 @@ export const TOOL_SCHEMAS = {
       properties: {
         workerId: {
           type: 'string',
-          description: 'Worker ID to merge'
+          description: 'Worker ID to merge',
         },
         targetBranch: {
           type: 'string',
-          description: 'Branch to merge into (optional, uses stored value)'
-        }
+          description: 'Branch to merge into (optional, uses stored value)',
+        },
       },
-      required: ['workerId']
-    }
+      required: ['workerId'],
+    },
   },
   terminate_worker: {
     name: 'terminate_worker',
@@ -785,11 +812,11 @@ export const TOOL_SCHEMAS = {
       properties: {
         workerId: {
           type: 'string',
-          description: 'Worker ID to terminate'
-        }
+          description: 'Worker ID to terminate',
+        },
       },
-      required: ['workerId']
-    }
+      required: ['workerId'],
+    },
   },
   list_worker_types: {
     name: 'list_worker_types',
@@ -799,84 +826,87 @@ export const TOOL_SCHEMAS = {
       properties: {
         projectPath: {
           type: 'string',
-          description: 'Project path to load workers from'
-        }
-      }
-    }
+          description: 'Project path to load workers from',
+        },
+      },
+    },
   },
   list_active_workers: {
     name: 'list_active_workers',
     description: 'Get list of currently active workers',
     inputSchema: {
       type: 'object',
-      properties: {}
-    }
+      properties: {},
+    },
   },
   conductor_health: {
     name: 'conductor_health',
     description: 'Check Conductor MCP health and dependencies',
     inputSchema: {
       type: 'object',
-      properties: {}
-    }
+      properties: {},
+    },
   },
   ask_worker: {
     name: 'ask_worker',
-    description: 'Ask a question to a COMPLETED worker. Uses schema-based JSON output for reliable answer capture. Worker must have finished (status=completed) before asking. Conductor parses the structured response and updates the manifest with the Q&A.',
+    description:
+      'Ask a question to a COMPLETED worker. Uses schema-based JSON output for reliable answer capture. Worker must have finished (status=completed) before asking. Conductor parses the structured response and updates the manifest with the Q&A.',
     inputSchema: {
       type: 'object',
       properties: {
         workerId: {
           type: 'string',
-          description: 'Worker ID to ask'
+          description: 'Worker ID to ask',
         },
         question: {
           type: 'string',
-          description: 'Question to ask the worker'
-        }
+          description: 'Question to ask the worker',
+        },
       },
-      required: ['workerId', 'question']
-    }
+      required: ['workerId', 'question'],
+    },
   },
   inspect_worker_config: {
     name: 'inspect_worker_config',
-    description: 'Inspect worker environment configuration to identify optimizations discovered during execution (Phase 6: Configuration Learning). Returns the current configuration including base image, setup commands, install commands, and environment variables. Use this to learn from successful workers and identify beneficial changes.',
+    description:
+      'Inspect worker environment configuration to identify optimizations discovered during execution (Phase 6: Configuration Learning). Returns the current configuration including base image, setup commands, install commands, and environment variables. Use this to learn from successful workers and identify beneficial changes.',
     inputSchema: {
       type: 'object',
       properties: {
         workerId: {
           type: 'string',
-          description: 'Worker ID to inspect'
+          description: 'Worker ID to inspect',
         },
         compareWithDefaults: {
           type: 'boolean',
-          description: 'Compare with default config and identify changes (not yet implemented)'
-        }
+          description: 'Compare with default config and identify changes (not yet implemented)',
+        },
       },
-      required: ['workerId']
-    }
+      required: ['workerId'],
+    },
   },
   import_worker_config: {
     name: 'import_worker_config',
-    description: 'Import configuration from a worker environment as new defaults (Phase 6: Configuration Learning). Use this to adopt optimizations discovered by workers, such as faster dependency installation methods, additional required tools, or performance-enhancing environment variables. Supports selective import of specific commands or variables.',
+    description:
+      'Import configuration from a worker environment as new defaults (Phase 6: Configuration Learning). Use this to adopt optimizations discovered by workers, such as faster dependency installation methods, additional required tools, or performance-enhancing environment variables. Supports selective import of specific commands or variables.',
     inputSchema: {
       type: 'object',
       properties: {
         workerId: {
           type: 'string',
-          description: 'Worker ID to import config from'
+          description: 'Worker ID to import config from',
         },
         importSetupCommands: {
           type: 'boolean',
-          description: 'Import all setup commands from worker'
+          description: 'Import all setup commands from worker',
         },
         importInstallCommands: {
           type: 'boolean',
-          description: 'Import all install commands from worker'
+          description: 'Import all install commands from worker',
         },
         importEnvironmentVariables: {
           type: 'boolean',
-          description: 'Import all environment variables from worker'
+          description: 'Import all environment variables from worker',
         },
         selective: {
           type: 'object',
@@ -884,23 +914,23 @@ export const TOOL_SCHEMAS = {
             setupCommands: {
               type: 'array',
               items: { type: 'string' },
-              description: 'Specific setup commands to import'
+              description: 'Specific setup commands to import',
             },
             installCommands: {
               type: 'array',
               items: { type: 'string' },
-              description: 'Specific install commands to import'
+              description: 'Specific install commands to import',
             },
             environmentVariables: {
               type: 'array',
               items: { type: 'string' },
-              description: 'Specific environment variable keys to import'
-            }
+              description: 'Specific environment variable keys to import',
+            },
           },
-          description: 'Selectively import specific items instead of all'
-        }
+          description: 'Selectively import specific items instead of all',
+        },
       },
-      required: ['workerId']
-    }
-  }
+      required: ['workerId'],
+    },
+  },
 };

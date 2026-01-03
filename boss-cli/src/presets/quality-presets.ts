@@ -15,7 +15,7 @@ export async function applyQualityPreset(
   // Load preset YAML
   const presetPath = path.join(__dirname, `${quality}.yaml`);
   const fs = await import('fs-extra');
-  
+
   let preset: any = {};
   if (await fs.pathExists(presetPath)) {
     const content = await readFile(presetPath);
@@ -32,7 +32,7 @@ export async function applyQualityPreset(
 
   config.quality = {
     preset: quality,
-    gates: preset.gates || {}
+    gates: preset.gates || {},
   };
 
   await writeFile(configPath, yaml.dump(config, { indent: 2 }));
@@ -40,25 +40,25 @@ export async function applyQualityPreset(
 
 function getDefaultPreset(quality: QualityPreset): any {
   const presets: Record<QualityPreset, any> = {
-    'startup': {
+    startup: {
       gates: {
         coverage: 60,
         lint: true,
         typecheck: true,
-        test: true
-      }
+        test: true,
+      },
     },
-    'production': {
+    production: {
       gates: {
         coverage: 80,
         mutation: 80,
         lint: true,
         typecheck: true,
         test: true,
-        security: true
-      }
+        security: true,
+      },
     },
-    'enterprise': {
+    enterprise: {
       gates: {
         coverage: 90,
         mutation: 80,
@@ -66,10 +66,9 @@ function getDefaultPreset(quality: QualityPreset): any {
         typecheck: true,
         test: true,
         security: true,
-        dependency_check: true
-      }
-    }
+        dependency_check: true,
+      },
+    },
   };
   return presets[quality];
 }
-

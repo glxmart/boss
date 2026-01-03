@@ -4,10 +4,7 @@
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from '@modelcontextprotocol/sdk/types.js';
+import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import {
   TOOL_SCHEMAS,
   handleSpawnWorker,
@@ -21,7 +18,7 @@ import {
   handleConductorHealth,
   handleAskWorker,
   handleInspectWorkerConfig,
-  handleImportWorkerConfig
+  handleImportWorkerConfig,
 } from './tools.js';
 import { logger } from './utils/logger.js';
 import { ConductorException } from './utils/error-handler.js';
@@ -40,7 +37,7 @@ const TOOL_HANDLERS: Record<string, ToolHandler> = {
   conductor_health: handleConductorHealth,
   ask_worker: handleAskWorker,
   inspect_worker_config: handleInspectWorkerConfig,
-  import_worker_config: handleImportWorkerConfig
+  import_worker_config: handleImportWorkerConfig,
 };
 
 export class ConductorServer {
@@ -68,7 +65,7 @@ export class ConductorServer {
       logger.debug('Listing available tools');
 
       return {
-        tools: Object.values(TOOL_SCHEMAS)
+        tools: Object.values(TOOL_SCHEMAS),
       };
     });
 
@@ -91,14 +88,14 @@ export class ConductorServer {
           content: [
             {
               type: 'text',
-              text: JSON.stringify(result, null, 2)
-            }
-          ]
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
         };
       } catch (error) {
         logger.error('Tool execution failed', {
           toolName,
-          error: error instanceof Error ? error.message : String(error)
+          error: error instanceof Error ? error.message : String(error),
         });
 
         if (error instanceof ConductorException) {
@@ -106,13 +103,17 @@ export class ConductorServer {
             content: [
               {
                 type: 'text',
-                text: JSON.stringify({
-                  success: false,
-                  error: error.error
-                }, null, 2)
-              }
+                text: JSON.stringify(
+                  {
+                    success: false,
+                    error: error.error,
+                  },
+                  null,
+                  2
+                ),
+              },
             ],
-            isError: false
+            isError: false,
           };
         }
 

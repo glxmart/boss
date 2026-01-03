@@ -1,11 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { bootstrapCommand } from '../../src/commands/bootstrap.js';
 import yaml from 'js-yaml';
-import {
-  cleanupTestProject,
-  fileExists,
-  readProjectFile
-} from '../helpers/test-utils.js';
+import { cleanupTestProject, fileExists, readProjectFile } from '../helpers/test-utils.js';
 import { getTestProjectPath } from '../setup.js';
 
 describe('Quality Presets Integration Tests', () => {
@@ -22,14 +18,12 @@ describe('Quality Presets Integration Tests', () => {
         quality: 'startup' as const,
         name: projectName,
         nonInteractive: true,
-        projectPath: getTestProjectPath(projectName)
+        projectPath: getTestProjectPath(projectName),
       };
 
       await bootstrapCommand(options);
 
-      const config = yaml.load(
-        await readProjectFile(projectName, '.boss/config.yaml')
-      ) as any;
+      const config = yaml.load(await readProjectFile(projectName, '.boss/config.yaml')) as any;
 
       expect(config.quality.preset).toBe('startup');
       expect(config.quality.gates.coverage).toBe(60);
@@ -49,14 +43,12 @@ describe('Quality Presets Integration Tests', () => {
         quality: 'production' as const,
         name: projectName,
         nonInteractive: true,
-        projectPath: getTestProjectPath(projectName)
+        projectPath: getTestProjectPath(projectName),
       };
 
       await bootstrapCommand(options);
 
-      const config = yaml.load(
-        await readProjectFile(projectName, '.boss/config.yaml')
-      ) as any;
+      const config = yaml.load(await readProjectFile(projectName, '.boss/config.yaml')) as any;
 
       expect(config.quality.preset).toBe('production');
       expect(config.quality.gates.coverage).toBe(80);
@@ -77,14 +69,12 @@ describe('Quality Presets Integration Tests', () => {
         quality: 'enterprise' as const,
         name: projectName,
         nonInteractive: true,
-        projectPath: getTestProjectPath(projectName)
+        projectPath: getTestProjectPath(projectName),
       };
 
       await bootstrapCommand(options);
 
-      const config = yaml.load(
-        await readProjectFile(projectName, '.boss/config.yaml')
-      ) as any;
+      const config = yaml.load(await readProjectFile(projectName, '.boss/config.yaml')) as any;
 
       expect(config.quality.preset).toBe('enterprise');
       expect(config.quality.gates.coverage).toBe(90);
@@ -93,4 +83,3 @@ describe('Quality Presets Integration Tests', () => {
     });
   });
 });
-

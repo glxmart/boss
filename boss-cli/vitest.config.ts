@@ -8,10 +8,9 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       include: ['src/**/*.ts'],
-      exclude: ['src/**/*.test.ts', 'src/**/*.spec.ts', 'node_modules', 'dist']
+      exclude: ['src/**/*.test.ts', 'src/**/*.spec.ts', 'node_modules', 'dist'],
     },
     include: ['src/**/*.{test,spec}.ts'],
-    testTimeout: 30000
-  }
+    testTimeout: 30000,
+  },
 });
-

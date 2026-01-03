@@ -20,7 +20,7 @@ describe('project-structure generator', () => {
     const config: ProjectConfig = {
       name: 'test-project',
       template: 'blank',
-      quality: 'startup'
+      quality: 'startup',
     };
 
     await generateProjectStructure(testDir, config);
@@ -34,7 +34,7 @@ describe('project-structure generator', () => {
     const configs: ProjectConfig[] = [
       { name: 'test', template: 'blank', quality: 'startup' },
       { name: 'test', template: 'nextjs-app-turbo', quality: 'startup' },
-      { name: 'test', template: 'api-service-fastify', quality: 'startup' }
+      { name: 'test', template: 'api-service-fastify', quality: 'startup' },
     ];
 
     for (const config of configs) {
@@ -46,4 +46,3 @@ describe('project-structure generator', () => {
     }
   });
 });
-

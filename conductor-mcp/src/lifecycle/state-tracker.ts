@@ -16,7 +16,7 @@ export class StateTracker {
   registerWorker(state: WorkerState): void {
     logger.info('Registering worker', {
       workerId: state.workerId,
-      workerType: state.workerType
+      workerType: state.workerType,
     });
 
     this.workers.set(state.workerId, state);
@@ -29,11 +29,9 @@ export class StateTracker {
     const current = this.workers.get(workerId);
 
     if (!current) {
-      throwConductorError(
-        ErrorCategory.WORKER_NOT_FOUND,
-        `Worker ${workerId} not found`,
-        { workerId }
-      );
+      throwConductorError(ErrorCategory.WORKER_NOT_FOUND, `Worker ${workerId} not found`, {
+        workerId,
+      });
     }
 
     const updated = { ...current, ...updates };
@@ -41,7 +39,7 @@ export class StateTracker {
 
     logger.debug('Worker status updated', {
       workerId,
-      status: updated.status
+      status: updated.status,
     });
   }
 
@@ -59,11 +57,9 @@ export class StateTracker {
     const worker = this.workers.get(workerId);
 
     if (!worker) {
-      throwConductorError(
-        ErrorCategory.WORKER_NOT_FOUND,
-        `Worker ${workerId} not found`,
-        { workerId }
-      );
+      throwConductorError(ErrorCategory.WORKER_NOT_FOUND, `Worker ${workerId} not found`, {
+        workerId,
+      });
     }
 
     return worker;
@@ -73,8 +69,9 @@ export class StateTracker {
    * List all active workers
    */
   listActiveWorkers(): WorkerState[] {
-    return Array.from(this.workers.values())
-      .filter(w => w.status === 'running' || w.status === 'spawning');
+    return Array.from(this.workers.values()).filter(
+      (w) => w.status === 'running' || w.status === 'spawning'
+    );
   }
 
   /**
@@ -93,7 +90,7 @@ export class StateTracker {
     if (worker) {
       logger.info('Removing worker from tracking', {
         workerId,
-        workerType: worker.workerType
+        workerType: worker.workerType,
       });
       this.workers.delete(workerId);
     }
@@ -110,16 +107,14 @@ export class StateTracker {
    * Get workers by type
    */
   getWorkersByType(workerType: WorkerType): WorkerState[] {
-    return Array.from(this.workers.values())
-      .filter(w => w.workerType === workerType);
+    return Array.from(this.workers.values()).filter((w) => w.workerType === workerType);
   }
 
   /**
    * Get workers by status
    */
   getWorkersByStatus(status: WorkerStatus): WorkerState[] {
-    return Array.from(this.workers.values())
-      .filter(w => w.status === status);
+    return Array.from(this.workers.values()).filter((w) => w.status === status);
   }
 
   /**

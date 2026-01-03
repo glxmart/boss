@@ -30,7 +30,7 @@ export class ContainerUseMCPClient {
     try {
       // Spawn container-use stdio process
       this.process = spawn('container-use', ['stdio'], {
-        stdio: ['pipe', 'pipe', 'pipe']
+        stdio: ['pipe', 'pipe', 'pipe'],
       });
 
       // Handle process errors
@@ -52,16 +52,19 @@ export class ContainerUseMCPClient {
       // Create transport using process stdin/stdout
       this.transport = new StdioClientTransport({
         command: 'container-use',
-        args: ['stdio']
+        args: ['stdio'],
       });
 
       // Create MCP client
-      this.client = new Client({
-        name: 'conductor-mcp',
-        version: '0.1.0'
-      }, {
-        capabilities: {}
-      });
+      this.client = new Client(
+        {
+          name: 'conductor-mcp',
+          version: '0.1.0',
+        },
+        {
+          capabilities: {},
+        }
+      );
 
       // Connect client to transport
       await this.client.connect(this.transport);
@@ -70,7 +73,7 @@ export class ContainerUseMCPClient {
       logger.info('Connected to container-use MCP server');
     } catch (error) {
       logger.error('Failed to connect to container-use MCP server', {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
       await this.disconnect();
       throw error;
@@ -100,7 +103,7 @@ export class ContainerUseMCPClient {
       logger.info('Disconnected from container-use MCP server');
     } catch (error) {
       logger.warn('Error during disconnect', {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -108,16 +111,17 @@ export class ContainerUseMCPClient {
   /**
    * Call an MCP tool
    */
-  async callTool(name: string, args: Record<string, unknown>, options?: { timeout?: number }): Promise<any> {
+  async callTool(
+    name: string,
+    args: Record<string, unknown>,
+    options?: { timeout?: number }
+  ): Promise<any> {
     if (!this.isConnected || !this.client) {
       await this.connect();
     }
 
     if (!this.client) {
-      throwConductorError(
-        ErrorCategory.CONTAINER_USE_UNAVAILABLE,
-        'MCP client not initialized'
-      );
+      throwConductorError(ErrorCategory.CONTAINER_USE_UNAVAILABLE, 'MCP client not initialized');
     }
 
     // Default timeout is 180 seconds (3 minutes) for worker execution
@@ -128,10 +132,14 @@ export class ContainerUseMCPClient {
 
     try {
       // Pass timeout to MCP SDK (it has a 60s default, we need more for claude)
-      const result = await this.client.callTool({
-        name,
-        arguments: args
-      }, undefined, { timeout });
+      const result = await this.client.callTool(
+        {
+          name,
+          arguments: args,
+        },
+        undefined,
+        { timeout }
+      );
 
       logger.debug('MCP tool call successful', { name });
       logger.debug('MCP raw response:', {
@@ -139,7 +147,7 @@ export class ContainerUseMCPClient {
         resultKeys: Object.keys(result),
         hasContent: !!result.content,
         contentLength: Array.isArray(result.content) ? result.content.length : 0,
-        fullResult: JSON.stringify(result, null, 2)
+        fullResult: JSON.stringify(result, null, 2),
       });
 
       // Parse result content
@@ -149,12 +157,19 @@ export class ContainerUseMCPClient {
           name,
           contentType: content?.type,
           hasText: 'text' in (content || {}),
-          contentPreview: typeof content === 'object' && 'text' in content
-            ? (content.text as string).substring(0, 200)
-            : 'no text field'
+          contentPreview:
+            typeof content === 'object' && 'text' in content
+              ? (content.text as string).substring(0, 200)
+              : 'no text field',
         });
 
-        if (content && typeof content === 'object' && 'type' in content && content.type === 'text' && 'text' in content) {
+        if (
+          content &&
+          typeof content === 'object' &&
+          'type' in content &&
+          content.type === 'text' &&
+          'text' in content
+        ) {
           try {
             const text = content.text as string;
             // Try to parse as JSON first
@@ -179,7 +194,7 @@ export class ContainerUseMCPClient {
             logger.warn('MCP response not JSON, returning as text', {
               name,
               textPreview: text.substring(0, 200),
-              parseError: parseError instanceof Error ? parseError.message : String(parseError)
+              parseError: parseError instanceof Error ? parseError.message : String(parseError),
             });
             return { output: text };
           }
@@ -191,7 +206,7 @@ export class ContainerUseMCPClient {
     } catch (error) {
       logger.error('MCP tool call failed', {
         name,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
       throw error;
     }
@@ -206,10 +221,7 @@ export class ContainerUseMCPClient {
     }
 
     if (!this.client) {
-      throwConductorError(
-        ErrorCategory.CONTAINER_USE_UNAVAILABLE,
-        'MCP client not initialized'
-      );
+      throwConductorError(ErrorCategory.CONTAINER_USE_UNAVAILABLE, 'MCP client not initialized');
     }
 
     try {
@@ -217,7 +229,7 @@ export class ContainerUseMCPClient {
       return result.tools;
     } catch (error) {
       logger.error('Failed to list tools', {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
       throw error;
     }

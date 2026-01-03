@@ -22,7 +22,7 @@ export function mapToContainerUseConfig(
       variables
     ),
     secrets: resolveSecrets(workerConfig.secrets),
-    network: workerConfig.network
+    network: workerConfig.network,
   };
 }
 

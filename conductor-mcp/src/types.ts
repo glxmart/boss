@@ -34,30 +34,31 @@ export interface WorkerConfig {
   network: {
     allowed_hosts: string[];
   };
-  claudeMd: string;            // From CLAUDE.md
-  roleDescription: string;     // From metadata.json
-  phase: string;               // From metadata.json (formatted)
+  claudeMd: string; // From CLAUDE.md
+  roleDescription: string; // From metadata.json
+  phase: string; // From metadata.json (formatted)
   artifactRequirements: string; // From metadata.json (formatted)
-  claudeFolder?: {             // From .claude/ folder
+  claudeFolder?: {
+    // From .claude/ folder
     files: Array<{
-      path: string;            // Original path
+      path: string; // Original path
       contents: string;
     }>;
   };
-  metadata: any;               // From metadata.json (validated against schema)
+  metadata: any; // From metadata.json (validated against schema)
 }
 
 // Worker State (tracking active workers)
 export interface WorkerState {
-  workerId: string;           // env-abc123
+  workerId: string; // env-abc123
   workerType: WorkerType;
-  branch: string;             // container-use/env-abc123
-  targetBranch: string;       // feature/boss-initial-setup
+  branch: string; // container-use/env-abc123
+  targetBranch: string; // feature/boss-initial-setup
   status: WorkerStatus;
   startedAt: string;
   completedAt?: string;
   lastTaskExecutedAt?: string;
-  artifacts: string[];        // Files created by worker
+  artifacts: string[]; // Files created by worker
   executionLog?: string;
 }
 
@@ -261,7 +262,7 @@ export enum ErrorCategory {
   WORKER_NOT_FOUND = 'WORKER_NOT_FOUND',
   WORKER_ALREADY_MERGED = 'WORKER_ALREADY_MERGED',
   MERGE_FAILED = 'MERGE_FAILED',
-  CONTAINER_USE_UNAVAILABLE = 'CONTAINER_USE_UNAVAILABLE'
+  CONTAINER_USE_UNAVAILABLE = 'CONTAINER_USE_UNAVAILABLE',
 }
 
 export interface ConductorError {
@@ -334,27 +335,27 @@ export interface TemplateVariables {
 
 export interface WorkerManifest {
   // Identity
-  workerId: string;                   // env-abc123
-  workerType: WorkerType;            // architect, clarifier, etc.
-  status: WorkerStatus;              // spawning, running, completed, failed
+  workerId: string; // env-abc123
+  workerType: WorkerType; // architect, clarifier, etc.
+  status: WorkerStatus; // spawning, running, completed, failed
 
   // Timestamps
-  startedAt: string;                 // ISO 8601
-  lastUpdatedAt: string;             // ISO 8601
-  completedAt?: string;              // ISO 8601
+  startedAt: string; // ISO 8601
+  lastUpdatedAt: string; // ISO 8601
+  completedAt?: string; // ISO 8601
 
   // Work completed
-  artifacts: WorkerArtifact[];       // Files created/modified
-  decisions: WorkerDecision[];       // Key decisions made
-  issues: WorkerIssue[];             // Problems encountered
-  recommendations: string[];         // Next steps for BOSS
+  artifacts: WorkerArtifact[]; // Files created/modified
+  decisions: WorkerDecision[]; // Key decisions made
+  issues: WorkerIssue[]; // Problems encountered
+  recommendations: string[]; // Next steps for BOSS
 
   // Metadata
-  tasksCompleted: string[];          // Task descriptions
-  principlesEstablished?: string[];  // For architect: principles set
-  requirementsGathered?: string[];   // For clarifier: requirements found
-  testsCreated?: number;             // For tester: test count
-  coverageAchieved?: number;         // For tester: coverage %
+  tasksCompleted: string[]; // Task descriptions
+  principlesEstablished?: string[]; // For architect: principles set
+  requirementsGathered?: string[]; // For clarifier: requirements found
+  testsCreated?: number; // For tester: test count
+  coverageAchieved?: number; // For tester: coverage %
 
   // BOSS Q&A (populated by ask_worker tool)
   bossQuestions?: Array<{
@@ -365,48 +366,48 @@ export interface WorkerManifest {
 }
 
 export interface WorkerArtifact {
-  path: string;                      // .specify/memory/constitution.md
+  path: string; // .specify/memory/constitution.md
   action: 'created' | 'modified' | 'deleted';
-  purpose: string;                   // Human-readable description
-  sections?: string[];               // For documents: sections created
-  linesAdded?: number;               // For code: lines added
-  linesModified?: number;            // For code: lines modified
+  purpose: string; // Human-readable description
+  sections?: string[]; // For documents: sections created
+  linesAdded?: number; // For code: lines added
+  linesModified?: number; // For code: lines modified
 }
 
 export interface WorkerDecision {
-  decision: string;                  // What was decided
-  rationale: string;                 // Why it was decided
+  decision: string; // What was decided
+  rationale: string; // Why it was decided
   impact: 'high' | 'medium' | 'low'; // Impact level
-  reversible: boolean;               // Can this be undone?
+  reversible: boolean; // Can this be undone?
 }
 
 export interface WorkerIssue {
   severity: 'critical' | 'high' | 'medium' | 'low';
-  description: string;               // Problem description
-  impact: string;                    // What it affects
-  suggestedAction?: string;          // How to resolve
-  blocksProgress: boolean;           // Does this block work?
+  description: string; // Problem description
+  impact: string; // What it affects
+  suggestedAction?: string; // How to resolve
+  blocksProgress: boolean; // Does this block work?
 }
 
 // Worker Result Schema
 // Structure returned by workers via --output-format json --json-schema
 // Conductor parses this and updates the manifest (workers don't write JSON manually)
 export interface WorkerResult {
-  artifacts: WorkerArtifact[];       // Files created/modified
-  decisions: WorkerDecision[];       // Key decisions made
-  issues: WorkerIssue[];             // Problems encountered
-  recommendations: string[];         // What BOSS should do next
-  tasksCompleted: string[];          // Work done descriptions
+  artifacts: WorkerArtifact[]; // Files created/modified
+  decisions: WorkerDecision[]; // Key decisions made
+  issues: WorkerIssue[]; // Problems encountered
+  recommendations: string[]; // What BOSS should do next
+  tasksCompleted: string[]; // Work done descriptions
 
   // Worker-specific metadata (optional)
-  principlesEstablished?: string[];  // For architect: principles set
-  requirementsGathered?: string[];   // For clarifier: requirements found
-  testsCreated?: number;             // For tester: test count
-  coverageAchieved?: number;         // For tester: coverage %
+  principlesEstablished?: string[]; // For architect: principles set
+  requirementsGathered?: string[]; // For clarifier: requirements found
+  testsCreated?: number; // For tester: test count
+  coverageAchieved?: number; // For tester: coverage %
 
   // Status indication
-  workComplete: boolean;             // Is this task complete?
-  nextSteps?: string[];              // What should happen next?
+  workComplete: boolean; // Is this task complete?
+  nextSteps?: string[]; // What should happen next?
 }
 
 // Performance Metrics (Phase 6)
@@ -417,17 +418,17 @@ export interface PerformanceMetrics {
   completedAt: string;
 
   // Timing breakdown
-  containerStartTime: number;        // ms
-  setupCommandsTime: number;         // ms
-  installCommandsTime: number;       // ms
-  configurationTime: number;         // ms
-  taskExecutionTime: number;         // ms
-  totalTime: number;                 // ms
+  containerStartTime: number; // ms
+  setupCommandsTime: number; // ms
+  installCommandsTime: number; // ms
+  configurationTime: number; // ms
+  taskExecutionTime: number; // ms
+  totalTime: number; // ms
 
   // Optimization tracking
-  usedResumeOptimization: boolean;   // Phase 4
-  wasPartOfParallelBatch: boolean;   // Phase 5
-  batchSize?: number;                // Phase 5
+  usedResumeOptimization: boolean; // Phase 4
+  wasPartOfParallelBatch: boolean; // Phase 5
+  batchSize?: number; // Phase 5
 
   // Success metrics
   success: boolean;

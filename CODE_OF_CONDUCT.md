@@ -12,6 +12,7 @@ and orientation.
 ## Our Standards
 
 Examples of behavior that contributes to a positive environment:
+
 - Using welcoming and inclusive language
 - Being respectful of differing viewpoints and experiences
 - Gracefully accepting constructive criticism
@@ -19,6 +20,7 @@ Examples of behavior that contributes to a positive environment:
 - Showing empathy towards other community members
 
 Examples of unacceptable behavior:
+
 - The use of sexualized language or imagery, and sexual attention or advances of any kind
 - Trolling, insulting or derogatory comments, and personal or political attacks
 - Public or private harassment

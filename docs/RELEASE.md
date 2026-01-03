@@ -5,6 +5,7 @@ This document describes the automated release process for BOSS packages using Ch
 ## Overview
 
 BOSS uses [Changesets](https://github.com/changesets/changesets) for:
+
 - **Automated version management** - No manual version bumping
 - **Changelog generation** - Auto-generated from changeset descriptions
 - **Coordinated releases** - Handle monorepo dependencies automatically
@@ -75,6 +76,7 @@ gh pr edit <PR-number> --add-label skip-changeset
 ```
 
 **When to skip:**
+
 - Documentation-only changes (`docs/`, `README.md`, etc.)
 - Test-only changes
 - CI/CD configuration changes
@@ -94,6 +96,7 @@ pnpm changeset
 **Interactive prompts:**
 
 1. **Select packages** that changed (Space to select, Enter to confirm)
+
    ```
    ◯ @glxmart/boss-cli
    ◯ @glxmart/conductor-mcp
@@ -113,8 +116,8 @@ pnpm changeset
 
 ```markdown
 ---
-"@glxmart/boss-cli": minor
-"@glxmart/conductor-mcp": patch
+'@glxmart/boss-cli': minor
+'@glxmart/conductor-mcp': patch
 ---
 
 Added worker resume optimization for faster iterative development
@@ -148,6 +151,7 @@ When code with changesets reaches `main`:
    - All pending changes grouped together
 
 **Example PR:**
+
 ```
 Title: chore: version packages
 
@@ -164,11 +168,13 @@ CHANGELOG updates:
 ### Step 4: Review and Merge
 
 **Review the Version PR:**
+
 - ✅ Check version bumps are correct
 - ✅ Review changelog entries
 - ✅ Verify no unintended changes
 
 **Merge the PR:**
+
 ```bash
 # Via GitHub UI or CLI
 ./scripts/gh-with-1password.sh pr merge <PR-number>
@@ -191,6 +197,7 @@ CHANGELOG updates:
 ### Patch (0.0.X)
 
 **When to use:**
+
 - Bug fixes
 - Documentation updates
 - Internal refactoring (no API changes)
@@ -198,6 +205,7 @@ CHANGELOG updates:
 - Performance improvements (no breaking changes)
 
 **Examples:**
+
 ```bash
 # Fix bug in bootstrap command
 pnpm changeset
@@ -209,6 +217,7 @@ pnpm changeset
 ### Minor (0.X.0)
 
 **When to use:**
+
 - New features
 - New worker types
 - New MCP tools
@@ -216,6 +225,7 @@ pnpm changeset
 - Deprecated (but not removed) APIs
 
 **Examples:**
+
 ```bash
 # Add parallel worker spawning
 pnpm changeset
@@ -227,6 +237,7 @@ pnpm changeset
 ### Major (X.0.0)
 
 **When to use:**
+
 - Breaking API changes
 - Removed features
 - Changed worker config schemas
@@ -234,6 +245,7 @@ pnpm changeset
 - Major architectural changes
 
 **Examples:**
+
 ```bash
 # Change worker metadata schema
 pnpm changeset
@@ -390,6 +402,7 @@ git tag -l
 **Problem:** Pushed changesets but no PR appeared
 
 **Solutions:**
+
 1. Check workflow ran: `./scripts/gh-with-1password.sh run list`
 2. View workflow logs: `./scripts/gh-with-1password.sh run view <run-id> --log`
 3. Verify changeset format:
@@ -404,6 +417,7 @@ git tag -l
 **Problem:** Version PR merged but packages didn't publish
 
 **Solutions:**
+
 1. Check workflow logs for `pnpm release` step
 2. Verify `NPM_TOKEN` secret is valid:
    ```bash
@@ -425,7 +439,9 @@ git tag -l
 **Problem:** Used wrong version type (patch instead of minor)
 
 **Solutions:**
+
 1. **Before merging version PR:**
+
    ```bash
    # Edit the changeset file
    vim .changeset/your-changeset.md
@@ -448,6 +464,7 @@ git tag -l
 **Problem:** Merged code without changeset
 
 **Solutions:**
+
 ```bash
 # Create changeset on main after merge
 git checkout main
@@ -528,6 +545,7 @@ Location: `.changeset/config.json`
 ```
 
 **Key settings:**
+
 - `commit: false` - Don't auto-commit (we commit manually)
 - `access: "public"` - Publish as public packages
 - `baseBranch: "main"` - Release from main branch
@@ -538,11 +556,13 @@ Location: `.changeset/config.json`
 Location: `.github/workflows/3.0-release.yml`
 
 **Triggers:**
+
 - Push to `main` branch
 - Changes to package code or changesets
 - Path filters prevent unnecessary runs
 
 **Required secrets:**
+
 - `GITHUB_TOKEN` - Auto-provided by GitHub
 - `NPM_TOKEN` - Must be configured in repository settings
 

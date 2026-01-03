@@ -3,7 +3,7 @@ import {
   expandTemplate,
   expandEnvironmentVariables,
   assembleTaskPrompt,
-  escapePromptForShell
+  escapePromptForShell,
 } from '../../src/config/container-mapper.js';
 
 describe('container-mapper', () => {
@@ -31,7 +31,7 @@ describe('container-mapper', () => {
     it('should expand all environment variables', () => {
       const envVars = {
         WORKER_ROLE: '${workerName}',
-        NODE_ENV: 'test'
+        NODE_ENV: 'test',
       };
       const variables = { workerName: 'architect' };
 
@@ -39,7 +39,7 @@ describe('container-mapper', () => {
 
       expect(result).toEqual({
         WORKER_ROLE: 'architect',
-        NODE_ENV: 'test'
+        NODE_ENV: 'test',
       });
     });
   });

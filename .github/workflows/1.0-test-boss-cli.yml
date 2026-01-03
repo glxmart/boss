@@ -42,4 +42,7 @@ jobs:
         run: cd boss-cli && pnpm test
 
       - name: Lint
-        run: cd boss-cli && pnpm lint || echo "No lint script"
+        run: cd boss-cli && pnpm lint
+
+      - name: Format check
+        run: pnpm format:check

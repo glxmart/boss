@@ -4,12 +4,12 @@
 
 ### Worker Execution Times (from logs)
 
-| Worker | Task | Duration (total) | API Time | Turns | Cost |
-|--------|------|-----------------|----------|-------|------|
-| model-polliwog | Create README | 84s | 62s | 11 | $0.30 |
-| pleasant-wildcat | Create constitution | 103s | 118s | 17 | $0.37 |
-| superb-spider | Create test doc | 46s | 62s | 13 | $0.30 |
-| regular-goat | Date formatter + tests | ~180s | N/A | N/A | N/A |
+| Worker           | Task                   | Duration (total) | API Time | Turns | Cost  |
+| ---------------- | ---------------------- | ---------------- | -------- | ----- | ----- |
+| model-polliwog   | Create README          | 84s              | 62s      | 11    | $0.30 |
+| pleasant-wildcat | Create constitution    | 103s             | 118s     | 17    | $0.37 |
+| superb-spider    | Create test doc        | 46s              | 62s      | 13    | $0.30 |
+| regular-goat     | Date formatter + tests | ~180s            | N/A      | N/A   | N/A   |
 
 ### Timing Breakdown (regular-goat example)
 
@@ -28,15 +28,16 @@
 ### 1. Container Setup (⏱️ 60-90s per worker)
 
 **Current Process:**
+
 ```json
 {
   "setup_commands": [
-    "apt-get update",              // ~20-30s
-    "apt-get install -y bash git curl build-essential"  // ~15-20s
+    "apt-get update", // ~20-30s
+    "apt-get install -y bash git curl build-essential" // ~15-20s
   ],
   "install_commands": [
-    "npm install -g pnpm",         // ~10-15s
-    "npm install -g @anthropic-ai/claude-code"  // ~15-20s
+    "npm install -g pnpm", // ~10-15s
+    "npm install -g @anthropic-ai/claude-code" // ~15-20s
   ]
 }
 ```
@@ -48,6 +49,7 @@
 ### 2. Multiple Git Commits (⏱️ 10-20s overhead)
 
 **Current Behavior:**
+
 - Commit 1: Create environment
 - Commit 2: Write CLAUDE.md
 - Commit 3: Write initial manifest
@@ -62,6 +64,7 @@
 ### 3. Claude API Round Trips (⏱️ Variable, 40-120s)
 
 **Current Behavior:**
+
 - 11-17 turns per simple task
 - Each turn: Request → API → Response
 - Cache hits help but still significant time
@@ -73,12 +76,16 @@
 ### 4. Git Notes Parsing (⏱️ Minor, <1s)
 
 **Current Implementation:**
+
 ```typescript
 // Read git notes after execution
 const gitResult = await execFileAsync('git', [
-  '-C', params.environment_source,
-  'notes', '--ref=container-use', 'show',
-  `container-use/${params.environment_id}`
+  '-C',
+  params.environment_source,
+  'notes',
+  '--ref=container-use',
+  'show',
+  `container-use/${params.environment_id}`,
 ]);
 ```
 
@@ -119,10 +126,11 @@ RUN mkdir -p .boss .specify
 ```
 
 **Update container configs:**
+
 ```json
 {
   "base_image": "ghcr.io/boss/worker-developer-backend:latest",
-  "setup_commands": [],  // Empty - already done
+  "setup_commands": [], // Empty - already done
   "install_commands": [] // Empty - already done
 }
 ```
@@ -130,6 +138,7 @@ RUN mkdir -p .boss .specify
 **Estimated Savings:** 50-70 seconds per worker spawn
 
 **Implementation Effort:** Medium
+
 - Create Dockerfiles for 15 worker types
 - Set up CI/CD to build and publish images
 - Update container-config.json files
@@ -141,6 +150,7 @@ RUN mkdir -p .boss .specify
 **Combine multiple file operations into single commits**
 
 **Current:**
+
 ```
 Commit: Write CLAUDE.md
 Commit: Write manifest
@@ -149,12 +159,14 @@ Commit: Write file 2
 ```
 
 **Improved:**
+
 ```
 Commit: Setup worker (CLAUDE.md + initial manifest)
 Commit: Worker output (all files + final manifest)
 ```
 
 **Implementation:**
+
 - Buffer file writes in worker-spawner.ts
 - Flush at setup completion and execution completion
 - Reduce total commits from 5-10 to 2-3
@@ -172,6 +184,7 @@ Commit: Worker output (all files + final manifest)
 **Current:** BOSS waits for full completion before seeing results
 
 **Improved:**
+
 ```typescript
 // Stream updates as they happen
 conductor.on('worker_progress', (event) => {
@@ -181,40 +194,43 @@ conductor.on('worker_progress', (event) => {
 ```
 
 **Benefits:**
+
 - Better UX - see progress in real-time
 - Early error detection
 - No time savings but feels faster
 
 **Implementation Effort:** Medium
+
 - Add event emitter to worker-spawner
 - Stream git commits or container-use events
 - Update MCP tools to support progress callbacks
 
 ---
 
-### Priority 4: Parallel Worker Setup (🚀 Save N*setup_time for parallel spawns)
+### Priority 4: Parallel Worker Setup (🚀 Save N\*setup_time for parallel spawns)
 
 **Run worker initialization in parallel when spawning multiple workers**
 
 **Current:**
+
 ```typescript
 for (const task of tasks) {
-  await conductor.spawn_worker(task);  // Sequential
+  await conductor.spawn_worker(task); // Sequential
 }
 ```
 
 **Improved:**
+
 ```typescript
-await Promise.all(
-  tasks.map(task => conductor.spawn_worker(task))
-);  // Parallel
+await Promise.all(tasks.map((task) => conductor.spawn_worker(task))); // Parallel
 ```
 
 **Benefits:**
+
 - When spawning 5 workers, setup happens concurrently
 - Total time = max(setup_times) instead of sum(setup_times)
 
-**Estimated Savings:** 240-360s when spawning 5 workers in parallel (4 * 60-90s)
+**Estimated Savings:** 240-360s when spawning 5 workers in parallel (4 \* 60-90s)
 
 **Implementation Effort:** Low (already supported, just needs documentation)
 
@@ -225,6 +241,7 @@ await Promise.all(
 **Reuse containers for similar worker types**
 
 **Concept:**
+
 ```typescript
 // Keep pool of warm containers
 const pool = {
@@ -246,6 +263,7 @@ async spawn_worker(workerType) {
 ```
 
 **Benefits:**
+
 - First spawn: 60-90s (create container)
 - Subsequent spawns: 2-3s (reset container)
 - Huge savings for repeated worker types
@@ -253,6 +271,7 @@ async spawn_worker(workerType) {
 **Estimated Savings:** 60-90s on 2nd+ spawn of same worker type
 
 **Implementation Effort:** High
+
 - Implement container lifecycle management
 - Handle cleanup and reset logic
 - Manage pool size limits
@@ -264,7 +283,9 @@ async spawn_worker(workerType) {
 **Reduce API round trips through better prompting**
 
 **Strategies:**
+
 1. **Batch operations in prompt:**
+
    ```
    Instead of: "Create file X"
    Use: "Create files X, Y, Z with the following content..."
@@ -281,6 +302,7 @@ async spawn_worker(workerType) {
 **Estimated Savings:** 10-30s depending on task
 
 **Implementation Effort:** Medium
+
 - Refine worker prompts in metadata.json
 - Optimize CLAUDE.md instructions
 - Pre-load common files
@@ -294,11 +316,13 @@ async spawn_worker(workerType) {
 **Current:** Some caching happens automatically
 
 **Improved:**
+
 - Structure prompts to maximize cache hits
 - Reuse prompt prefixes across workers
 - Cache common project context
 
 **Benefits:**
+
 - Faster API responses (cache hits vs cache misses)
 - Lower costs
 - More predictable performance
@@ -306,6 +330,7 @@ async spawn_worker(workerType) {
 **Estimated Savings:** 5-15s per worker (depending on cache hit rate)
 
 **Implementation Effort:** Low
+
 - Already works, just optimize prompt structure
 
 ---
@@ -313,6 +338,7 @@ async spawn_worker(workerType) {
 ## Implementation Roadmap
 
 ### Phase 1: Quick Wins (1-2 weeks)
+
 1. ✅ Document parallel worker spawning
 2. 🔄 Optimize prompts for fewer turns (Priority 6)
 3. 🔄 Batch git operations (Priority 2)
@@ -320,6 +346,7 @@ async spawn_worker(workerType) {
 **Expected Impact:** 20-30s savings per worker
 
 ### Phase 2: Infrastructure (2-4 weeks)
+
 1. 🔄 Create pre-built Docker images (Priority 1)
 2. 🔄 Set up image CI/CD pipeline
 3. 🔄 Deploy and test with all worker types
@@ -327,6 +354,7 @@ async spawn_worker(workerType) {
 **Expected Impact:** 50-70s savings per worker
 
 ### Phase 3: Advanced (4-8 weeks)
+
 1. 🔄 Implement streaming output (Priority 3)
 2. 🔄 Container pooling prototype (Priority 5)
 3. 🔄 Full container lifecycle management
@@ -336,24 +364,29 @@ async spawn_worker(workerType) {
 ## Expected Results
 
 ### Current Performance
+
 - Simple task (date formatter): **360 seconds**
 - Complex task (constitution): **103 seconds**
 
 ### After Phase 1 (Quick Wins)
+
 - Simple task: **240 seconds** (-33%)
 - Complex task: **73 seconds** (-29%)
 
 ### After Phase 2 (Infrastructure)
+
 - Simple task: **120 seconds** (-67%)
 - Complex task: **33 seconds** (-68%)
 
 ### After Phase 3 (Advanced)
+
 - First spawn: **120 seconds**
 - Repeat spawn: **30 seconds** (-92% from original)
 
 ## Monitoring & Metrics
 
 ### Add telemetry to track:
+
 ```typescript
 {
   worker_id: string,
@@ -377,6 +410,7 @@ async spawn_worker(workerType) {
 ```
 
 ### Dashboard metrics:
+
 - P50, P95, P99 latencies per worker type
 - Cache hit rates
 - Container reuse rates

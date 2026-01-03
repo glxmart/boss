@@ -30,7 +30,7 @@ const WORKER_METADATA_SCHEMA_PATH = join(
 const ajv = new Ajv({
   strict: true,
   allErrors: true,
-  verbose: true
+  verbose: true,
 });
 
 let workerMetadataValidator: ValidateFunction | null = null;
@@ -63,7 +63,8 @@ async function loadWorkerMetadataSchema(): Promise<ValidateFunction> {
  */
 export async function validateWorkerMetadata(metadata: any): Promise<void> {
   const validator = await loadWorkerMetadataSchema();
-  const workerType = typeof metadata === 'object' && metadata !== null ? metadata.workerType : 'unknown';
+  const workerType =
+    typeof metadata === 'object' && metadata !== null ? metadata.workerType : 'unknown';
 
   const valid = validator(metadata);
 
@@ -80,8 +81,8 @@ export async function validateWorkerMetadata(metadata: any): Promise<void> {
         details: {
           allErrors: errors,
           schemaPath: WORKER_METADATA_SCHEMA_PATH,
-          metadata
-        }
+          metadata,
+        },
       }
     );
   }
@@ -99,7 +100,14 @@ export function generateWorkerOutputSchema(metadata: any): any {
   const baseSchema = {
     $schema: 'http://json-schema.org/draft-07/schema#',
     type: 'object',
-    required: ['artifacts', 'decisions', 'issues', 'recommendations', 'tasksCompleted', 'workComplete'],
+    required: [
+      'artifacts',
+      'decisions',
+      'issues',
+      'recommendations',
+      'tasksCompleted',
+      'workComplete',
+    ],
     properties: {
       artifacts: {
         type: 'array',
@@ -110,9 +118,9 @@ export function generateWorkerOutputSchema(metadata: any): any {
           properties: {
             path: { type: 'string' },
             action: { type: 'string', enum: ['created', 'updated', 'deleted'] },
-            purpose: { type: 'string' }
-          }
-        }
+            purpose: { type: 'string' },
+          },
+        },
       },
       decisions: {
         type: 'array',
@@ -124,9 +132,9 @@ export function generateWorkerOutputSchema(metadata: any): any {
             decision: { type: 'string' },
             rationale: { type: 'string' },
             impact: { type: 'string', enum: ['high', 'medium', 'low'] },
-            reversible: { type: 'boolean' }
-          }
-        }
+            reversible: { type: 'boolean' },
+          },
+        },
       },
       issues: {
         type: 'array',
@@ -137,30 +145,30 @@ export function generateWorkerOutputSchema(metadata: any): any {
           properties: {
             severity: { type: 'string', enum: ['critical', 'high', 'medium', 'low'] },
             description: { type: 'string' },
-            recommendation: { type: 'string' }
-          }
-        }
+            recommendation: { type: 'string' },
+          },
+        },
       },
       recommendations: {
         type: 'array',
         description: 'Recommendations for BOSS on next steps',
-        items: { type: 'string' }
+        items: { type: 'string' },
       },
       tasksCompleted: {
         type: 'array',
         description: 'Description of tasks completed',
-        items: { type: 'string' }
+        items: { type: 'string' },
       },
       workComplete: {
         type: 'boolean',
-        description: 'Whether the worker has completed its assigned work'
+        description: 'Whether the worker has completed its assigned work',
       },
       nextSteps: {
         type: 'array',
         description: 'Suggested next steps for the workflow',
-        items: { type: 'string' }
-      }
-    }
+        items: { type: 'string' },
+      },
+    },
   };
 
   // Add worker-specific properties based on constraints or outputs
@@ -183,52 +191,52 @@ function getWorkerSpecificProperties(metadata: any): any {
       props.principlesEstablished = {
         type: 'array',
         description: 'Principles established in the constitution',
-        items: { type: 'string' }
+        items: { type: 'string' },
       };
       break;
 
     case 'clarifier':
       props.questionsAsked = {
         type: 'number',
-        description: 'Number of questions asked'
+        description: 'Number of questions asked',
       };
       props.ambiguitiesResolved = {
         type: 'number',
-        description: 'Number of ambiguities resolved'
+        description: 'Number of ambiguities resolved',
       };
       props.userPersonasIdentified = {
         type: 'number',
-        description: 'Number of user personas identified'
+        description: 'Number of user personas identified',
       };
       props.workflowsDocumented = {
         type: 'number',
-        description: 'Number of workflows documented'
+        description: 'Number of workflows documented',
       };
       break;
 
     case 'spec-writer':
       props.userStoriesWritten = {
         type: 'number',
-        description: 'Number of user stories written'
+        description: 'Number of user stories written',
       };
       props.acceptanceCriteriaDefined = {
         type: 'number',
-        description: 'Number of acceptance criteria defined'
+        description: 'Number of acceptance criteria defined',
       };
       props.bddFormat = {
         type: 'boolean',
-        description: 'Whether user stories are in BDD format'
+        description: 'Whether user stories are in BDD format',
       };
       break;
 
     case 'planner':
       props.tasksBrokenDown = {
         type: 'number',
-        description: 'Number of tasks broken down'
+        description: 'Number of tasks broken down',
       };
       props.parallelTasksIdentified = {
         type: 'number',
-        description: 'Number of parallel tasks identified'
+        description: 'Number of parallel tasks identified',
       };
       break;
 
@@ -236,21 +244,21 @@ function getWorkerSpecificProperties(metadata: any): any {
       props.complianceChecksPerformed = {
         type: 'array',
         description: 'Compliance checks performed',
-        items: { type: 'string' }
+        items: { type: 'string' },
       };
       props.violations = {
         type: 'array',
         description: 'Constitution violations found',
-        items: { type: 'object' }
+        items: { type: 'object' },
       };
       props.approvalStatus = {
         type: 'string',
         enum: ['approved', 'rejected', 'retry'],
-        description: 'Approval status of the plan'
+        description: 'Approval status of the plan',
       };
       props.retriesRemaining = {
         type: 'number',
-        description: 'Number of retries remaining'
+        description: 'Number of retries remaining',
       };
       break;
 
@@ -259,28 +267,28 @@ function getWorkerSpecificProperties(metadata: any): any {
     case 'developer-fullstack':
       props.testsPassed = {
         type: 'boolean',
-        description: 'Whether all tests passed'
+        description: 'Whether all tests passed',
       };
       props.coverageAchieved = {
         type: 'number',
-        description: 'Test coverage percentage achieved'
+        description: 'Test coverage percentage achieved',
       };
       if (metadata.workerType === 'developer-backend') {
         props.mutationScore = {
           type: 'number',
-          description: 'Mutation testing score achieved'
+          description: 'Mutation testing score achieved',
         };
       }
       if (metadata.workerType === 'developer-frontend') {
         props.accessibilityAuditPassed = {
           type: 'boolean',
-          description: 'Whether accessibility audit passed'
+          description: 'Whether accessibility audit passed',
         };
       }
       if (metadata.workerType === 'developer-fullstack') {
         props.integrationTestsPassed = {
           type: 'boolean',
-          description: 'Whether integration tests passed'
+          description: 'Whether integration tests passed',
         };
       }
       break;
@@ -288,15 +296,15 @@ function getWorkerSpecificProperties(metadata: any): any {
     case 'tester':
       props.testsCreated = {
         type: 'number',
-        description: 'Number of tests created'
+        description: 'Number of tests created',
       };
       props.coverageAchieved = {
         type: 'number',
-        description: 'Test coverage percentage achieved'
+        description: 'Test coverage percentage achieved',
       };
       props.mutationScore = {
         type: 'number',
-        description: 'Mutation testing score'
+        description: 'Mutation testing score',
       };
       props.testPyramid = {
         type: 'object',
@@ -304,24 +312,24 @@ function getWorkerSpecificProperties(metadata: any): any {
         properties: {
           unit: { type: 'number' },
           integration: { type: 'number' },
-          e2e: { type: 'number' }
-        }
+          e2e: { type: 'number' },
+        },
       };
       break;
 
     case 'code-reviewer':
       props.issuesFound = {
         type: 'number',
-        description: 'Number of issues found'
+        description: 'Number of issues found',
       };
       props.issuesResolved = {
         type: 'number',
-        description: 'Number of issues resolved'
+        description: 'Number of issues resolved',
       };
       props.approvalStatus = {
         type: 'string',
         enum: ['approved', 'changes-requested'],
-        description: 'Code review approval status'
+        description: 'Code review approval status',
       };
       props.reviewCategories = {
         type: 'object',
@@ -331,27 +339,27 @@ function getWorkerSpecificProperties(metadata: any): any {
           testQuality: { type: 'string', enum: ['pass', 'fail'] },
           architecture: { type: 'string', enum: ['pass', 'fail'] },
           performance: { type: 'string', enum: ['pass', 'fail'] },
-          security: { type: 'string', enum: ['pass', 'fail'] }
-        }
+          security: { type: 'string', enum: ['pass', 'fail'] },
+        },
       };
       break;
 
     case 'consolidator':
       props.branchesMerged = {
         type: 'number',
-        description: 'Number of worker branches merged'
+        description: 'Number of worker branches merged',
       };
       props.integrationTestsPassed = {
         type: 'boolean',
-        description: 'Whether integration tests passed'
+        description: 'Whether integration tests passed',
       };
       props.documentationComplete = {
         type: 'boolean',
-        description: 'Whether documentation is complete'
+        description: 'Whether documentation is complete',
       };
       props.allArtifactsPresent = {
         type: 'boolean',
-        description: 'Whether all required artifacts are present'
+        description: 'Whether all required artifacts are present',
       };
       break;
 
@@ -365,13 +373,13 @@ function getWorkerSpecificProperties(metadata: any): any {
           critical: { type: 'number' },
           high: { type: 'number' },
           medium: { type: 'number' },
-          low: { type: 'number' }
-        }
+          low: { type: 'number' },
+        },
       };
       props.complianceChecks = {
         type: 'array',
         description: 'Compliance checks performed',
-        items: { type: 'string' }
+        items: { type: 'string' },
       };
       break;
 
@@ -379,30 +387,30 @@ function getWorkerSpecificProperties(metadata: any): any {
       props.environments = {
         type: 'array',
         description: 'Environments configured',
-        items: { type: 'string' }
+        items: { type: 'string' },
       };
       props.cicdPipelineConfigured = {
         type: 'boolean',
-        description: 'Whether CI/CD pipeline is configured'
+        description: 'Whether CI/CD pipeline is configured',
       };
       props.infrastructureProvisioned = {
         type: 'boolean',
-        description: 'Whether infrastructure is provisioned'
+        description: 'Whether infrastructure is provisioned',
       };
       props.monitoringSetup = {
         type: 'boolean',
-        description: 'Whether monitoring is set up'
+        description: 'Whether monitoring is set up',
       };
       break;
 
     case 'technical-writer':
       props.coverage = {
         type: 'string',
-        description: 'Documentation coverage percentage'
+        description: 'Documentation coverage percentage',
       };
       props.examplesTested = {
         type: 'boolean',
-        description: 'Whether code examples are tested'
+        description: 'Whether code examples are tested',
       };
       break;
 
@@ -413,12 +421,12 @@ function getWorkerSpecificProperties(metadata: any): any {
         properties: {
           P1: { type: 'number' },
           P2: { type: 'number' },
-          P3: { type: 'number' }
-        }
+          P3: { type: 'number' },
+        },
       };
       props.businessValueDelivered = {
         type: 'string',
-        description: 'Business value delivered'
+        description: 'Business value delivered',
       };
       break;
   }
@@ -432,7 +440,8 @@ function getWorkerSpecificProperties(metadata: any): any {
 export function validateWorkerOutput(metadata: any, output: any): void {
   const schema = generateWorkerOutputSchema(metadata);
   const validator = ajv.compile(schema);
-  const workerType = typeof metadata === 'object' && metadata !== null ? metadata.workerType : 'unknown';
+  const workerType =
+    typeof metadata === 'object' && metadata !== null ? metadata.workerType : 'unknown';
 
   const valid = validator(output);
 
@@ -448,8 +457,8 @@ export function validateWorkerOutput(metadata: any, output: any): void {
         workerType,
         details: {
           allErrors: errors,
-          output
-        }
+          output,
+        },
       }
     );
   }
@@ -461,7 +470,7 @@ export function validateWorkerOutput(metadata: any, output: any): void {
  * Format Ajv validation errors for better readability
  */
 function formatValidationErrors(errors: ErrorObject[]): string[] {
-  return errors.map(err => {
+  return errors.map((err) => {
     const path = err.instancePath || 'root';
     const message = err.message || 'validation failed';
     return `${path}: ${message}`;

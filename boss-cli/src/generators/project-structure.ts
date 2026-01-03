@@ -20,11 +20,10 @@ export async function generateProjectStructure(
     'scripts',
     'src',
     'tests',
-    'docs'
+    'docs',
   ];
 
   for (const dir of directories) {
     await ensureDirectory(path.join(projectPath, dir));
   }
 }
-

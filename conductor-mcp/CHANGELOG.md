@@ -7,6 +7,7 @@
 **Problem**: Workers were manually writing JSON to manifest files, which was error-prone and unreliable.
 
 **Previous Approach** (flawed):
+
 ```typescript
 // ❌ Hoping workers update manifest correctly
 echo 'Do work and update .boss/worker-manifest.json' | claude-code --print
@@ -14,6 +15,7 @@ echo 'Do work and update .boss/worker-manifest.json' | claude-code --print
 ```
 
 **New Schema-Based Approach** (reliable):
+
 ```typescript
 // ✅ Conductor controls manifest via validated JSON output
 echo 'Do work' | claude-code --print \
@@ -29,6 +31,7 @@ writeManifest(manifest);
 ```
 
 **Implementation**:
+
 - Added `WorkerResult` type in `types.ts` for schema definition
 - Added `executeTaskWithSchema()` method in `task-executor.ts`
 - Updated `worker-spawner.ts` to use schema-based execution
@@ -37,6 +40,7 @@ writeManifest(manifest);
 - Workers no longer manually write JSON files
 
 **Benefits**:
+
 - ✅ Guaranteed valid manifest format (schema validation)
 - ✅ No worker JSON errors (Claude validates before output)
 - ✅ Consistent data structure across all workers
@@ -44,6 +48,7 @@ writeManifest(manifest);
 - ✅ Conductor has full control over manifest management
 
 **Breaking Changes**:
+
 - Workers must return JSON matching WorkerResult schema
 - Old approach of manually updating manifest files is deprecated
 
@@ -58,6 +63,7 @@ writeManifest(manifest);
 **Root Cause**: Conductor wrote to `/workdir/.claude/CLAUDE.md` (user-specific global config) instead of `/workdir/CLAUDE.md` (project-level context).
 
 **Fix**:
+
 - Changed file path in `environment-manager.ts:72` from `.claude/CLAUDE.md` to root `CLAUDE.md`
 - Workers now receive project-level context that Claude Code reads during execution
 - Workers are now fully specialized agents with complete BOSS knowledge
@@ -73,16 +79,19 @@ writeManifest(manifest);
 **Root Cause**: Design oversight - Conductor loads and uses worker configs but didn't own them.
 
 **Fix**:
+
 - Moved `boss-cli/assets/worker-configs/` → `conductor-mcp/worker-configs/`
 - Updated `worker-loader.ts` to load from conductor package first, then check for project overrides
 - Added `worker-configs` to `package.json` files array for npm publishing
 - Updated `package.json` to include worker-configs in distribution
 
 **Config Loading Priority**:
+
 1. Project override: `.boss/workers/[type]/` (if exists)
 2. Conductor built-in: `conductor-mcp/worker-configs/[type]/`
 
 **Impact**:
+
 - Conductor is now a standalone, self-contained package
 - `npm install @glxmart/conductor-mcp` gets everything needed
 - Projects can customize worker configs while using sensible defaults
@@ -99,6 +108,7 @@ writeManifest(manifest);
 **Implementation**:
 
 #### 1. Manifest Schema (`types.ts`)
+
 ```typescript
 interface WorkerManifest {
   workerId: string;
@@ -107,20 +117,22 @@ interface WorkerManifest {
   startedAt: string;
   lastUpdatedAt: string;
   completedAt?: string;
-  artifacts: WorkerArtifact[];      // Files created/modified
-  decisions: WorkerDecision[];      // Key decisions made
-  issues: WorkerIssue[];            // Problems encountered
-  recommendations: string[];        // Next steps for BOSS
-  tasksCompleted: string[];         // Task descriptions
+  artifacts: WorkerArtifact[]; // Files created/modified
+  decisions: WorkerDecision[]; // Key decisions made
+  issues: WorkerIssue[]; // Problems encountered
+  recommendations: string[]; // Next steps for BOSS
+  tasksCompleted: string[]; // Task descriptions
 }
 ```
 
 #### 2. Conductor Writes Initial Manifest
+
 - `environment-manager.ts` creates `.boss/worker-manifest.json` template when spawning workers
 - Initial status: "running"
 - Empty arrays for artifacts, decisions, issues, recommendations
 
 #### 3. Workers Update Manifest
+
 - Workers instructed via CLAUDE.md to update manifest as they work
 - Add artifacts when creating/modifying files
 - Document decisions with rationale and impact
@@ -128,17 +140,20 @@ interface WorkerManifest {
 - Provide recommendations for BOSS
 
 #### 4. BOSS Reads Manifest
+
 - `get_worker_status` tool reads manifest via `task-executor.ts:getWorkerManifest()`
 - Returns structured data to BOSS without asking worker
 - Includes tasks completed, decisions, issues, recommendations
 
 **Communication Flow**:
+
 ```
 BOSS → Worker: Task prompt (what to do)
 Worker → BOSS: Manifest file (what was done)
 ```
 
 **Impact**:
+
 - No more "what did you do?" questions from BOSS
 - Structured, machine-readable communication
 - Workers document work in real-time
@@ -160,6 +175,7 @@ Worker → BOSS: Manifest file (what was done)
    - Completion checklist
 
 2. **Complete BOSS Project Structure**
+
    ```
    /workdir/
    ├── .boss/                        # BOSS metadata
@@ -190,6 +206,7 @@ Worker → BOSS: Manifest file (what was done)
    - Document everything in manifest
 
 **Impact**:
+
 - Workers are fully specialized agents from spawn
 - Know exact file paths and locations
 - Understand BOSS methodology deeply
@@ -200,6 +217,7 @@ Worker → BOSS: Manifest file (what was done)
 ## Files Modified
 
 ### Core Changes
+
 - `src/lifecycle/environment-manager.ts` - Fixed CLAUDE.md path, added manifest template
 - `src/config/worker-loader.ts` - Load from conductor package, project override support
 - `src/orchestration/task-executor.ts` - Added `getWorkerManifest()` method
@@ -207,14 +225,17 @@ Worker → BOSS: Manifest file (what was done)
 - `src/types.ts` - Added `WorkerManifest`, `WorkerArtifact`, `WorkerDecision`, `WorkerIssue` types
 
 ### Package Configuration
+
 - `package.json` - Added `worker-configs` to files array
 
 ### Worker Configs
+
 - Moved `boss-cli/assets/worker-configs/` → `conductor-mcp/worker-configs/`
 - Enhanced `worker-configs/architect/CLAUDE.md` with comprehensive template
   (Template can be replicated for other 14 worker types)
 
 ### Documentation
+
 - Created this CHANGELOG.md
 
 ---
@@ -222,6 +243,7 @@ Worker → BOSS: Manifest file (what was done)
 ## Migration Notes
 
 ### For BOSS CLI
+
 The next step is to update BOSS CLI to remove worker config generation since Conductor now owns these configs:
 
 1. Remove `src/generators/worker-configs.ts` usage from bootstrap
@@ -229,7 +251,9 @@ The next step is to update BOSS CLI to remove worker config generation since Con
 3. Optionally: Add command to copy conductor configs to `.boss/workers/` for customization
 
 ### For Projects
+
 No migration needed. Conductor will:
+
 1. Use built-in worker configs from conductor package
 2. Check for project overrides in `.boss/workers/`
 3. Fall back to built-in if no override exists
@@ -271,5 +295,6 @@ No migration needed. Conductor will:
 ## Version Bump Recommendation
 
 Given the critical fixes and architecture changes, recommend:
+
 - Current: `0.1.0`
 - New: `0.2.0` (minor version bump for new features and breaking changes)

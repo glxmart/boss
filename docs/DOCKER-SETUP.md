@@ -7,6 +7,7 @@ This docker-compose configuration runs the minimal BOSS infrastructure locally. 
 ## Services Included
 
 ### Knowledge Base Stack (3 containers)
+
 - **PostgreSQL** (port 5432) - Structured data (projects, artifacts, dependencies)
 - **Qdrant** (ports 6333, 6334) - Vector database for embeddings
 - **HuggingFace Text Embeddings Inference** (port 8080) - Local embedding generation
@@ -14,6 +15,7 @@ This docker-compose configuration runs the minimal BOSS infrastructure locally. 
   - Replaces Voyage AI with open-source alternative
 
 ### Project Management via GitHub
+
 - **GitHub** - Pull requests, issues, projects, discussions (already required for code)
   - ✅ No additional infrastructure needed
   - ✅ Native developer workflow
@@ -39,6 +41,7 @@ docker-compose ps
 ### 2. Wait for Services to Initialize
 
 First startup takes 2-5 minutes:
+
 - PostgreSQL database initializes
 - Embeddings model downloads (~1GB)
 - Qdrant vector store starts
@@ -54,11 +57,11 @@ docker-compose ps
 
 ### 3. Access Services
 
-| Service | URL | Credentials |
-|---------|-----|-------------|
-| **Qdrant Dashboard** | http://localhost:6333/dashboard | No auth required |
-| **PostgreSQL** | localhost:5432 | User: `boss`, Pass: `bosssecret`, DB: `boss_knowledge` |
-| **Embeddings API** | http://localhost:8080 | No auth required |
+| Service              | URL                             | Credentials                                            |
+| -------------------- | ------------------------------- | ------------------------------------------------------ |
+| **Qdrant Dashboard** | http://localhost:6333/dashboard | No auth required                                       |
+| **PostgreSQL**       | localhost:5432                  | User: `boss`, Pass: `bosssecret`, DB: `boss_knowledge` |
+| **Embeddings API**   | http://localhost:8080           | No auth required                                       |
 
 ### 4. Configure MCP Servers
 
@@ -100,6 +103,7 @@ Update your Claude Code/Cursor MCP configuration:
 **Note on 1Password:** 1Password CLI (`op`) is used for secret management - there is NO 1Password MCP server.
 
 **Secret Management Workflow:**
+
 1. BOSS identifies secret needs during planning phase
 2. BOSS creates GitHub issue with detailed setup instructions
 3. Human creates secrets in 1Password vault manually using `op` CLI
@@ -318,7 +322,7 @@ If ports are already in use, edit `docker-compose.yml`:
 # Example: Change PostgreSQL port
 postgres:
   ports:
-    - "5433:5432"  # Host:Container (5433 instead of 5432)
+    - '5433:5432' # Host:Container (5433 instead of 5432)
 ```
 
 ### Out of Disk Space
@@ -343,13 +347,13 @@ Edit `docker-compose.yml` to add performance settings:
 ```yaml
 postgres:
   command:
-    - "postgres"
-    - "-c"
-    - "shared_buffers=256MB"
-    - "-c"
-    - "max_connections=200"
-    - "-c"
-    - "work_mem=4MB"
+    - 'postgres'
+    - '-c'
+    - 'shared_buffers=256MB'
+    - '-c'
+    - 'max_connections=200'
+    - '-c'
+    - 'work_mem=4MB'
 ```
 
 ### Qdrant
@@ -372,7 +376,7 @@ For GPU acceleration (requires NVIDIA GPU + Docker GPU support):
 
 ```yaml
 embeddings:
-  image: ghcr.io/huggingface/text-embeddings-inference:latest  # GPU version
+  image: ghcr.io/huggingface/text-embeddings-inference:latest # GPU version
   deploy:
     resources:
       reservations:
@@ -389,13 +393,15 @@ embeddings:
 For production use:
 
 1. **Change default passwords:**
+
    ```yaml
    environment:
-     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}  # Use env var
+     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD} # Use env var
      SECRET_KEY: ${PLANE_SECRET_KEY}
    ```
 
 2. **Use secrets file:**
+
    ```bash
    # Create .env file (add to .gitignore!)
    POSTGRES_PASSWORD=strong-random-password
@@ -407,9 +413,10 @@ For production use:
    - Configure Let's Encrypt certificates
 
 4. **Restrict network access:**
+
    ```yaml
    postgres:
-     ports: []  # Don't expose to host, only internal network
+     ports: [] # Don't expose to host, only internal network
    ```
 
 5. **Regular backups:**
@@ -459,7 +466,7 @@ services:
   prometheus:
     image: prom/prometheus:latest
     ports:
-      - "9091:9090"
+      - '9091:9090'
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
@@ -467,7 +474,7 @@ services:
   grafana:
     image: grafana/grafana:latest
     ports:
-      - "3001:3000"
+      - '3001:3000'
     volumes:
       - grafana_data:/var/lib/grafana
 
@@ -489,6 +496,7 @@ After infrastructure is running:
 ## Support
 
 For issues:
+
 - Check logs: `docker-compose logs -f`
 - Verify health: `docker-compose ps`
 - Restart services: `docker-compose restart`

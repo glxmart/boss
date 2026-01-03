@@ -43,18 +43,18 @@ function resolveNestedProperty(obj: any, path: string): any {
 function interpolateTemplate(template: string, variables: Record<string, any>): string {
   return template.replace(/\$\{([^}]+)\}/g, (match, varPath) => {
     const trimmedPath = varPath.trim();
-    
+
     // Try direct property first
     if (variables[trimmedPath] !== undefined) {
       return String(variables[trimmedPath]);
     }
-    
+
     // Try nested property (e.g., config.name)
     const value = resolveNestedProperty(variables, trimmedPath);
     if (value !== undefined && value !== null) {
       return String(value);
     }
-    
+
     // If not found, return the original placeholder
     return match;
   });
@@ -72,11 +72,11 @@ export async function loadTemplate(
   baseDir?: string
 ): Promise<string> {
   const fullPath = getAssetPath(assetPath, baseDir);
-  
+
   if (!(await fs.pathExists(fullPath))) {
     throw new Error(`Template file not found: ${fullPath}`);
   }
-  
+
   const template = await readFile(fullPath);
   return interpolateTemplate(template, variables);
 }
@@ -87,27 +87,26 @@ export async function loadTemplate(
  */
 export async function discoverWorkers(baseDir?: string): Promise<string[]> {
   const workerConfigsPath = getAssetPath('worker-configs', baseDir);
-  
+
   // Return empty array if directory doesn't exist
   if (!(await fs.pathExists(workerConfigsPath))) {
     return [];
   }
-  
+
   const entries = await fsPromises.readdir(workerConfigsPath, { withFileTypes: true });
   const workers: string[] = [];
-  
+
   for (const entry of entries) {
     // Filter out hidden files and common non-worker directories
     if (entry.name.startsWith('.') || entry.name === 'node_modules') {
       continue;
     }
-    
+
     // Only include directories
     if (entry.isDirectory()) {
       workers.push(entry.name);
     }
   }
-  
+
   return workers.sort(); // Return sorted for consistency
 }
-

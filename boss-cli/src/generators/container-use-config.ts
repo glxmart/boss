@@ -25,9 +25,7 @@ export async function generateContainerUseConfig(projectPath: string): Promise<v
 
     // Install commands run AFTER copying project code
     // Only include project-specific dependencies
-    install_commands: [
-      'pnpm install --frozen-lockfile'
-    ],
+    install_commands: ['pnpm install --frozen-lockfile'],
 
     // Environment variables for all BOSS workers
     environment_variables: {
@@ -46,7 +44,7 @@ export async function generateContainerUseConfig(projectPath: string): Promise<v
       CI: 'true',
 
       // PATH with Spec-Kit scripts
-      PATH: '/usr/local/bin:/usr/bin:/bin:$PWD/.specify/scripts'
+      PATH: '/usr/local/bin:/usr/bin:/bin:$PWD/.specify/scripts',
     },
 
     // Secrets managed via container-use CLI or 1Password
@@ -63,9 +61,9 @@ export async function generateContainerUseConfig(projectPath: string): Promise<v
         'registry.npmjs.org',
 
         // Version control
-        'github.com'
-      ]
-    }
+        'github.com',
+      ],
+    },
   };
 
   await writeFile(
@@ -73,4 +71,3 @@ export async function generateContainerUseConfig(projectPath: string): Promise<v
     JSON.stringify(config, null, 2)
   );
 }
-

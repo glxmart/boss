@@ -127,7 +127,7 @@ describe('logger', () => {
     it('should include context and details in error logs', () => {
       logger.error('error with details', {
         workerId: 'worker-789',
-        errorCode: 500
+        errorCode: 500,
       });
 
       const logOutput = JSON.parse(consoleErrorSpy.mock.calls[0][0]);

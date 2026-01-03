@@ -12,4 +12,3 @@ export async function templatesCommand(): Promise<void> {
 
   console.log('\n');
 }
-

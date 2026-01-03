@@ -7,11 +7,13 @@
 All automated changes have been successfully implemented. Here's what's been done:
 
 ### Phase 1: Changesets Integration ✅
+
 - ✅ Installed `@changesets/cli`
 - ✅ Configured `.changeset/config.json` with public access
 - ✅ Added changeset scripts to root `package.json`
 
 ### Phase 2: Package Configuration ✅
+
 - ✅ Updated `boss-cli/package.json`:
   - Added author: "glxmart"
   - Added publishConfig with public access
@@ -29,6 +31,7 @@ All automated changes have been successfully implemented. Here's what's been don
 - ✅ Created LICENSE files in root, boss-cli, and conductor-mcp
 
 ### Phase 3: Docker Configuration ✅
+
 - ✅ Updated base image to `ghcr.io/glxmart/boss-worker-base:1.0.0-beta.0` in:
   - `conductor-mcp/worker-configs/_base/container-config.json`
   - `boss-cli/src/generators/container-use-config.ts`
@@ -37,9 +40,11 @@ All automated changes have been successfully implemented. Here's what's been don
 - ✅ Updated generator to use constants
 
 ### Phase 4: GitHub Workflows ⚠️ (Manual Creation Required)
+
 - ⚠️ Workflows blocked by security hook - **See section below for files to create**
 
 ### Phase 5: Community Files ✅
+
 - ✅ Created `CODE_OF_CONDUCT.md`
 - ✅ Created `CONTRIBUTING.md`
 - ✅ Created `SECURITY.md`
@@ -48,6 +53,7 @@ All automated changes have been successfully implemented. Here's what's been don
 - ✅ Created `.github/PULL_REQUEST_TEMPLATE.md`
 
 ### Phase 7: Documentation Updates ✅
+
 - ✅ Created `QUICKSTART.md`
 - ✅ Updated root `README.md` with:
   - Status badges (CI, npm versions, Docker image, license)
@@ -55,6 +61,7 @@ All automated changes have been successfully implemented. Here's what's been don
   - Updated prerequisites
 
 ### Phase 8: MCP Configuration ✅
+
 - ✅ MCP generator already uses npm packages (`@glxmart/conductor-mcp`)
 - ✅ No changes needed
 
@@ -351,13 +358,16 @@ jobs:
 ## 📋 Next Steps (In Order)
 
 ### 1. Create GitHub Workflows
+
 Create the 4 workflow files above in `.github/workflows/`:
+
 - `ci.yml`
 - `docker.yml`
 - `release.yml`
 - `publish.yml`
 
 ### 2. Set Up npm Organization
+
 The npm organization **@glxmart** already exists at:
 https://www.npmjs.com/settings/glxmart/packages
 
@@ -368,9 +378,11 @@ https://www.npmjs.com/settings/glxmart/packages
 ⚠️ **Note**: We'll use NPM_TOKEN for now (simpler). In 3 months, we'll migrate to Trusted Publishing (see GitHub issue for migration plan).
 
 #### Create Automation Token:
+
 1. Go to https://www.npmjs.com/settings/YOUR_USERNAME/tokens/create
 2. **Token Type**: Select **"Automation"**
 3. Fill in:
+
    ```
    Token Name: BOSS GitHub Actions (3-month rotation)
    Description: Automation token for @glxmart/boss packages - rotate every 3 months
@@ -383,6 +395,7 @@ https://www.npmjs.com/settings/glxmart/packages
 
    Allowed IP Ranges: (leave empty)
    ```
+
 4. Click **"Generate Token"**
 5. **Copy the token** (starts with `npm_...`) - shown only once!
 6. **Note the creation date** for 3-month rotation
@@ -392,25 +405,31 @@ https://www.npmjs.com/settings/glxmart/packages
 Go to https://github.com/glxmart/boss/settings/secrets/actions
 
 Add secret:
+
 - **Name:** `NPM_TOKEN`
 - **Value:** [paste the token from step 3]
 
 ### 5. Configure GitHub Actions Permissions
+
 Go to https://github.com/glxmart/boss/settings/actions
 
 Under "Workflow permissions":
+
 - ✅ Select "Read and write permissions"
 - ✅ Check "Allow GitHub Actions to create and approve pull requests"
 
 ### 6. Set Up Branch Protection
+
 Go to https://github.com/glxmart/boss/settings/branches
 
 Add rule for `main`:
+
 - ✅ Require pull request reviews (1 approval)
 - ✅ Require status checks: `test-cli`, `test-conductor`, `integration-test`
 - ✅ Require conversation resolution
 
 ### 7. Build and Push Docker Image (Beta)
+
 ```bash
 cd conductor-mcp/docker/boss-worker-base
 
@@ -425,6 +444,7 @@ docker buildx build \
 ```
 
 **Note:** You'll need to authenticate with GHCR first:
+
 ```bash
 echo $GITHUB_TOKEN | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
 ```
@@ -434,6 +454,7 @@ echo $GITHUB_TOKEN | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-std
 ### 8. First npm Beta Release (Manual)
 
 **Publish conductor-mcp first (no dependencies):**
+
 ```bash
 cd conductor-mcp
 pnpm build
@@ -442,6 +463,7 @@ npm publish --access public --tag beta
 ```
 
 **Then publish boss-cli:**
+
 ```bash
 cd ../boss-cli
 
@@ -455,12 +477,14 @@ npm publish --access public --tag beta
 ```
 
 **Users install beta versions with:**
+
 ```bash
 npm install -g @glxmart/boss-cli@beta
 npm install -g @glxmart/conductor-mcp@beta
 ```
 
 ### 9. Create Git Tags (Beta)
+
 ```bash
 git tag conductor-mcp-v0.1.0-beta.0 -m "Beta release conductor-mcp v0.1.0-beta.0"
 git tag boss-cli-v1.0.0-beta.0 -m "Beta release boss-cli v1.0.0-beta.0"
@@ -468,6 +492,7 @@ git push origin --tags
 ```
 
 ### 10. Create GitHub Release (Beta)
+
 Go to https://github.com/glxmart/boss/releases/new
 
 - Tag: `boss-cli-v1.0.0-beta.0`
@@ -476,6 +501,7 @@ Go to https://github.com/glxmart/boss/releases/new
 - ✅ Mark as "Pre-release" checkbox
 
 ### 11. Verify Public Beta Installation
+
 ```bash
 # Test beta installation
 npm install -g @glxmart/boss-cli@beta
@@ -494,6 +520,7 @@ boss bootstrap test-beta-release --template nextjs-app-turbo
 ## 🎯 Summary of Changes Made
 
 ### Files Created (19 files):
+
 1. `.changeset/config.json`
 2. `LICENSE` (root)
 3. `boss-cli/LICENSE`
@@ -506,9 +533,10 @@ boss bootstrap test-beta-release --template nextjs-app-turbo
 10. `.github/ISSUE_TEMPLATE/bug_report.yml`
 11. `.github/ISSUE_TEMPLATE/feature_request.yml`
 12. `.github/PULL_REQUEST_TEMPLATE.md`
-13-16. **[Manual]** 4 workflow files (see above)
+    13-16. **[Manual]** 4 workflow files (see above)
 
 ### Files Modified (7 files):
+
 1. `package.json` (root) - Added changeset scripts
 2. `boss-cli/package.json` - Publishing config, removed pnpm enforcement
 3. `conductor-mcp/package.json` - Publishing config, fixed files array
@@ -518,6 +546,7 @@ boss bootstrap test-beta-release --template nextjs-app-turbo
 7. `README.md` - Added badges and installation instructions
 
 ### Dependencies Added:
+
 - `@changesets/cli` (root devDependency)
 
 ---
@@ -525,6 +554,7 @@ boss bootstrap test-beta-release --template nextjs-app-turbo
 ## ✨ What's Ready
 
 ### ✅ npm Publishing
+
 - Package configurations complete
 - License files in place
 - Author and repository metadata set
@@ -533,12 +563,14 @@ boss bootstrap test-beta-release --template nextjs-app-turbo
 - Publishing hooks configured
 
 ### ✅ Docker Publishing
+
 - Base image updated to ghcr.io/glxmart
 - All references updated consistently
 - Constants file for version management
 - Build scripts ready
 
 ### ✅ Community Infrastructure
+
 - Code of Conduct
 - Contributing guidelines
 - Security policy
@@ -547,11 +579,13 @@ boss bootstrap test-beta-release --template nextjs-app-turbo
 - Quick start guide
 
 ### ✅ Documentation
+
 - Badges showing build status, npm versions, Docker image
 - Installation instructions for npm packages
 - Updated prerequisites and quick start
 
 ### ✅ Automation Ready
+
 - Changesets for version management
 - Workflow files prepared (need manual creation)
 - Release process documented
@@ -561,6 +595,7 @@ boss bootstrap test-beta-release --template nextjs-app-turbo
 ## 🚀 Ready to Launch!
 
 Once you complete the manual steps above, BOSS will be:
+
 - ✅ Fully public and open source
 - ✅ Publishable to npm
 - ✅ Docker images on ghcr.io

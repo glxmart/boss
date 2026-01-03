@@ -21,7 +21,7 @@ describe('github-workflows generator', () => {
       const config: ProjectConfig = {
         name: 'test-project',
         template: 'nextjs-app-turbo',
-        quality: 'production'
+        quality: 'production',
       };
 
       await generateGitHubWorkflows(testDir, config);
@@ -38,7 +38,7 @@ describe('github-workflows generator', () => {
       const config: ProjectConfig = {
         name: 'test-project',
         template: 'nextjs-app-turbo',
-        quality: 'production'
+        quality: 'production',
       };
 
       await generateGitHubWorkflows(testDir, config);
@@ -55,7 +55,7 @@ describe('github-workflows generator', () => {
       const config: ProjectConfig = {
         name: 'test-project',
         template: 'api-service-fastify',
-        quality: 'startup'
+        quality: 'startup',
       };
 
       await generateGitHubWorkflows(testDir, config);
@@ -71,7 +71,7 @@ describe('github-workflows generator', () => {
       const config: ProjectConfig = {
         name: 'test-project',
         template: 'blank',
-        quality: 'enterprise'
+        quality: 'enterprise',
       };
 
       const workflowsDir = path.join(testDir, '.github', 'workflows');
@@ -83,7 +83,11 @@ describe('github-workflows generator', () => {
     });
 
     it('should generate all three files for any quality preset', async () => {
-      const qualities: Array<'startup' | 'production' | 'enterprise'> = ['startup', 'production', 'enterprise'];
+      const qualities: Array<'startup' | 'production' | 'enterprise'> = [
+        'startup',
+        'production',
+        'enterprise',
+      ];
 
       for (const quality of qualities) {
         const qualityTestDir = path.join(testDir, quality);
@@ -92,7 +96,7 @@ describe('github-workflows generator', () => {
         const config: ProjectConfig = {
           name: 'test-project',
           template: 'nextjs-app-turbo',
-          quality
+          quality,
         };
 
         await generateGitHubWorkflows(qualityTestDir, config);

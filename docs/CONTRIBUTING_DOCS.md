@@ -8,14 +8,14 @@ This guide explains when and where to add documentation in the BOSS project.
 
 ## Quick Reference: Where to Add Documentation
 
-| Type of Documentation | Location | Index to Update |
-|----------------------|----------|-----------------|
-| **High-level architecture or design** | `/docs/` | `/docs/README.md` |
-| **BOSS CLI usage, commands, or troubleshooting** | `/boss-cli/docs/` | `/boss-cli/docs/index.md` |
-| **Conductor MCP architecture or API** | `/conductor-mcp/docs/` | `/conductor-mcp/INDEX.md` |
-| **Development process or planning notes** | `/docs/` (with PHASE_ or PLANNING_ prefix) | `/docs/README.md` |
-| **Package-specific README** | Package root (e.g., `/boss-cli/README.md`) | No index update needed |
-| **Root project overview** | `/README.md` | Update `/CLAUDE.md` to match |
+| Type of Documentation                            | Location                                   | Index to Update              |
+| ------------------------------------------------ | ------------------------------------------ | ---------------------------- |
+| **High-level architecture or design**            | `/docs/`                                   | `/docs/README.md`            |
+| **BOSS CLI usage, commands, or troubleshooting** | `/boss-cli/docs/`                          | `/boss-cli/docs/index.md`    |
+| **Conductor MCP architecture or API**            | `/conductor-mcp/docs/`                     | `/conductor-mcp/INDEX.md`    |
+| **Development process or planning notes**        | `/docs/` (with PHASE* or PLANNING* prefix) | `/docs/README.md`            |
+| **Package-specific README**                      | Package root (e.g., `/boss-cli/README.md`) | No index update needed       |
+| **Root project overview**                        | `/README.md`                               | Update `/CLAUDE.md` to match |
 
 ---
 
@@ -144,6 +144,7 @@ See [main documentation](./README.md) or open a GitHub issue.
 Add a navigation breadcrumb at the top (see the `> **📖 Documentation:**` line above).
 
 Include links to:
+
 - Local index (e.g., `./README.md` or `./index.md`)
 - Root README (`../README.md` or `../../README.md`)
 - Related documentation
@@ -153,15 +154,18 @@ Include links to:
 **CRITICAL:** You must update ALL of these:
 
 #### For /docs/ Documents:
+
 - [ ] `/docs/README.md` - Add to appropriate section
 - [ ] `/README.md` - Add to Documentation Structure section
 - [ ] `/CLAUDE.md` - Add to Documentation Structure section (mirror README)
 
 #### For boss-cli/docs/ Documents:
+
 - [ ] `/boss-cli/docs/index.md` - Add to appropriate section
 - [ ] `/boss-cli/README.md` - Add reference if it's a major doc
 
 #### For conductor-mcp/docs/ Documents:
+
 - [ ] `/conductor-mcp/INDEX.md` - Add to appropriate section
 - [ ] `/conductor-mcp/docs/` subdirectory - Add to subsection if applicable
 - [ ] `/conductor-mcp/README.md` - Add reference if it's a major doc
@@ -182,20 +186,20 @@ When adding documentation, **always** update these index files:
 
 ### Primary Indexes
 
-| Index File | Purpose | When to Update |
-|------------|---------|----------------|
-| `/docs/README.md` | Main documentation hub | Any new doc in `/docs/` |
-| `/boss-cli/docs/index.md` | CLI documentation hub | Any new doc in `/boss-cli/docs/` |
-| `/conductor-mcp/INDEX.md` | MCP documentation hub | Any new doc in `/conductor-mcp/docs/` |
+| Index File                | Purpose                | When to Update                        |
+| ------------------------- | ---------------------- | ------------------------------------- |
+| `/docs/README.md`         | Main documentation hub | Any new doc in `/docs/`               |
+| `/boss-cli/docs/index.md` | CLI documentation hub  | Any new doc in `/boss-cli/docs/`      |
+| `/conductor-mcp/INDEX.md` | MCP documentation hub  | Any new doc in `/conductor-mcp/docs/` |
 
 ### Secondary Indexes
 
-| Index File | Purpose | When to Update |
-|------------|---------|----------------|
-| `/README.md` | Project overview | Major docs in `/docs/` |
-| `/CLAUDE.md` | Claude Code instructions | When `/README.md` changes (keep in sync) |
-| `/boss-cli/README.md` | CLI usage | Major CLI docs |
-| `/conductor-mcp/README.md` | MCP overview | Major MCP docs |
+| Index File                 | Purpose                  | When to Update                           |
+| -------------------------- | ------------------------ | ---------------------------------------- |
+| `/README.md`               | Project overview         | Major docs in `/docs/`                   |
+| `/CLAUDE.md`               | Claude Code instructions | When `/README.md` changes (keep in sync) |
+| `/boss-cli/README.md`      | CLI usage                | Major CLI docs                           |
+| `/conductor-mcp/README.md` | MCP overview             | Major MCP docs                           |
 
 ---
 
@@ -224,6 +228,7 @@ Use this checklist when adding documentation:
 **Goal:** Document a new worker orchestration pattern
 
 **Steps:**
+
 1. Create `/docs/BOSS-WORKER-PATTERN.md`
 2. Add navigation: `> **📖 Documentation:** [Index](./README.md) | [Root README](../README.md) | [BOSS Vision](./BOSS-ENHANCED-VISION.md)`
 3. Update `/docs/README.md` - Add to "Core Documentation" section
@@ -238,6 +243,7 @@ Use this checklist when adding documentation:
 **Goal:** Document a common CLI issue
 
 **Steps:**
+
 1. Add section to `/boss-cli/docs/common-issues.md` (existing file)
 2. Update `/boss-cli/docs/index.md` - Ensure common-issues.md is listed
 3. If significant, mention in `/boss-cli/README.md` troubleshooting section
@@ -247,6 +253,7 @@ Use this checklist when adding documentation:
 **Goal:** Document a new MCP tool
 
 **Steps:**
+
 1. Add section to `/conductor-mcp/docs/api/TOOLS.md` (existing file)
 2. Update `/conductor-mcp/INDEX.md` - Ensure TOOLS.md is listed
 3. Update `/conductor-mcp/docs/guides/BOSS-GUIDE.md` - Add usage example
@@ -257,6 +264,7 @@ Use this checklist when adding documentation:
 ## Common Mistakes to Avoid
 
 ### ❌ Don't:
+
 - Create documentation without updating indexes
 - Add docs to wrong location (e.g., CLI docs in root /docs/)
 - Forget to add navigation breadcrumbs
@@ -265,6 +273,7 @@ Use this checklist when adding documentation:
 - Create orphan docs with no links from anywhere
 
 ### ✅ Do:
+
 - Always update all relevant indexes
 - Follow the location guidelines
 - Add navigation at the top of every doc

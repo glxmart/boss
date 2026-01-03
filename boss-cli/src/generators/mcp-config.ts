@@ -4,7 +4,10 @@ import fs from 'fs-extra';
 import { logger } from '../utils/logger.js';
 import type { MCPScope } from '../types/index.js';
 
-export async function generateMCPConfig(projectPath?: string, scope: MCPScope = 'both'): Promise<void> {
+export async function generateMCPConfig(
+  projectPath?: string,
+  scope: MCPScope = 'both'
+): Promise<void> {
   const shouldGenerateUser = scope === 'user' || scope === 'both';
   const shouldGenerateProject = scope === 'project' || scope === 'both';
 
@@ -21,7 +24,7 @@ export async function generateMCPConfig(projectPath?: string, scope: MCPScope = 
     // Generate Claude Code global config
     const claudeCodePath = path.join(homeDir, '.config', 'claude-code', 'mcp-servers.json');
     await fs.ensureDir(path.dirname(claudeCodePath));
-    
+
     let claudeExistingConfig: any = {};
     if (await fs.pathExists(claudeCodePath)) {
       try {
@@ -35,8 +38,8 @@ export async function generateMCPConfig(projectPath?: string, scope: MCPScope = 
     const claudeMergedConfig = {
       mcpServers: {
         ...(claudeExistingConfig.mcpServers || {}),
-        ...bossMCPConfig
-      }
+        ...bossMCPConfig,
+      },
     };
 
     await fs.writeFile(claudeCodePath, JSON.stringify(claudeMergedConfig, null, 2), 'utf8');
@@ -45,7 +48,7 @@ export async function generateMCPConfig(projectPath?: string, scope: MCPScope = 
     // Generate Cursor global config
     const cursorPath = path.join(homeDir, '.cursor', 'mcp-servers.json');
     await fs.ensureDir(path.dirname(cursorPath));
-    
+
     let cursorExistingConfig: any = {};
     if (await fs.pathExists(cursorPath)) {
       try {
@@ -59,8 +62,8 @@ export async function generateMCPConfig(projectPath?: string, scope: MCPScope = 
     const cursorMergedConfig = {
       mcpServers: {
         ...(cursorExistingConfig.mcpServers || {}),
-        ...bossMCPConfig
-      }
+        ...bossMCPConfig,
+      },
     };
 
     await fs.writeFile(cursorPath, JSON.stringify(cursorMergedConfig, null, 2), 'utf8');
@@ -73,9 +76,9 @@ export async function generateMCPConfig(projectPath?: string, scope: MCPScope = 
     const projectMCPPath = path.join(projectPath, '.mcp.json');
     // For project scope, pass projectPath so MCP servers use op run wrapper
     const projectConfig = {
-      mcpServers: getBossMCPConfig(projectPath)
+      mcpServers: getBossMCPConfig(projectPath),
     };
-    
+
     await fs.writeFile(projectMCPPath, JSON.stringify(projectConfig, null, 2), 'utf8');
     logger.info(`Project MCP configuration written to: ${projectMCPPath}`);
 
@@ -96,7 +99,9 @@ export async function generateMCPConfig(projectPath?: string, scope: MCPScope = 
   logger.info('Note: You will need to create secrets in 1Password vault "boss" using op CLI');
   if (shouldGenerateProject && projectPath) {
     logger.info('Note: MCP servers are configured to use op run automatically when they start');
-    logger.info('See: https://1password.com/blog/securing-mcp-servers-with-1password-stop-credential-exposure-in-your-agent');
+    logger.info(
+      'See: https://1password.com/blog/securing-mcp-servers-with-1password-stop-credential-exposure-in-your-agent'
+    );
   }
 }
 
@@ -105,22 +110,22 @@ function getBossMCPConfig(projectPath?: string): Record<string, any> {
   const useOpRun = projectPath !== undefined;
   // Use relative path .env (op run will resolve it relative to current working directory)
   const envFile = '.env';
-  
+
   return {
     'container-use': {
       type: 'stdio',
       command: 'container-use',
       args: ['stdio'],
-      env: {}
+      env: {},
     },
-    'conductor': {
+    conductor: {
       // Use op run to wrap conductor and resolve CLAUDE_CODE_OAUTH_TOKEN from .env
       command: useOpRun ? 'op' : 'npx',
       args: useOpRun
         ? ['run', `--env-file=${envFile}`, '--', 'npx', '@glxmart/conductor-mcp', 'stdio']
         : ['@glxmart/conductor-mcp', 'stdio'],
     },
-    'github': {
+    github: {
       // Use op run to wrap the MCP server command and resolve op:// references from .env
       // This follows the 1Password blog post pattern: op run --env-file=.env -- <command>
       command: useOpRun ? 'op' : 'npx',
@@ -137,9 +142,9 @@ function getBossMCPConfig(projectPath?: string): Record<string, any> {
         QDRANT_URL: 'http://localhost:6333',
         EMBEDDING_SERVICE_URL: 'http://localhost:8080',
         EMBEDDING_MODEL: 'BAAI/bge-large-en-v1.5',
-        EMBEDDING_DIMENSIONS: '1024'
-      }
-    }
+        EMBEDDING_DIMENSIONS: '1024',
+      },
+    },
   };
 }
 
@@ -147,7 +152,7 @@ async function generateMCPEnvFile(projectPath: string): Promise<void> {
   // Generate .env file with op:// references for 1Password secret resolution
   // See: https://1password.com/blog/securing-mcp-servers-with-1password-stop-credential-exposure-in-your-agent
   const envPath = path.join(projectPath, '.env');
-  
+
   const envContent = `# MCP Server Environment Variables
 # These use 1Password secret references (op:// format)
 # Start your IDE with: op run --env-file=.env -- <your-ide-command>
@@ -174,19 +179,19 @@ CLAUDE_CODE_OAUTH_TOKEN=op://glx/claude-code/oauth-token
 async function detectIDE(): Promise<'.claude' | '.cursor'> {
   // Use process.env.HOME if available (for testing), otherwise fall back to os.homedir()
   const homeDir = process.env.HOME || os.homedir();
-  
+
   // Check for Claude Code config directory first (default/preferred)
   const claudeCodeDir = path.join(homeDir, '.config', 'claude-code');
   if (await fs.pathExists(claudeCodeDir)) {
     return '.claude';
   }
-  
+
   // Check for Cursor config directory
   const cursorDir = path.join(homeDir, '.cursor');
   if (await fs.pathExists(cursorDir)) {
     return '.cursor';
   }
-  
+
   // Check for CLI commands as fallback
   const { execa } = await import('execa');
   try {
@@ -202,5 +207,3 @@ async function detectIDE(): Promise<'.claude' | '.cursor'> {
     }
   }
 }
-
-

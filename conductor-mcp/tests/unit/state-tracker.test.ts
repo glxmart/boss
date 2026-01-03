@@ -17,7 +17,7 @@ describe('StateTracker', () => {
       targetBranch: 'main',
       status: 'running',
       startedAt: new Date().toISOString(),
-      artifacts: []
+      artifacts: [],
     };
 
     tracker.registerWorker(state);
@@ -34,7 +34,7 @@ describe('StateTracker', () => {
       targetBranch: 'main',
       status: 'running',
       startedAt: new Date().toISOString(),
-      artifacts: []
+      artifacts: [],
     };
 
     tracker.registerWorker(state);
@@ -52,7 +52,7 @@ describe('StateTracker', () => {
       targetBranch: 'main',
       status: 'running',
       startedAt: new Date().toISOString(),
-      artifacts: []
+      artifacts: [],
     };
 
     const state2: WorkerState = {
@@ -62,7 +62,7 @@ describe('StateTracker', () => {
       targetBranch: 'main',
       status: 'completed',
       startedAt: new Date().toISOString(),
-      artifacts: []
+      artifacts: [],
     };
 
     tracker.registerWorker(state1);
@@ -81,7 +81,7 @@ describe('StateTracker', () => {
       targetBranch: 'main',
       status: 'running',
       startedAt: new Date().toISOString(),
-      artifacts: []
+      artifacts: [],
     };
 
     tracker.registerWorker(state);

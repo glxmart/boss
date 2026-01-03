@@ -89,7 +89,7 @@ export async function loadWorkerConfig(
         workerType,
         projectWorkerDir,
         error: err instanceof Error ? err.message : String(err),
-        code: 'code' in err ? err.code : undefined
+        code: 'code' in err ? err.code : undefined,
       });
     }
 
@@ -108,7 +108,7 @@ export async function loadWorkerConfig(
           workerType,
           workerDir,
           error: err instanceof Error ? err.message : String(err),
-          code: 'code' in err ? err.code : undefined
+          code: 'code' in err ? err.code : undefined,
         });
       }
 
@@ -167,7 +167,7 @@ export async function loadWorkerConfig(
       workerType,
       path: conductorMetadataPath,
       errorType: error.constructor.name,
-      message: error.message
+      message: error.message,
     });
     throw error;
   }
@@ -221,7 +221,11 @@ export async function loadWorkerConfig(
   }
 
   // Load worker-specific container config (optional)
-  const conductorContainerConfigPath = join(CONDUCTOR_WORKER_CONFIGS, workerType, 'container-config.json');
+  const conductorContainerConfigPath = join(
+    CONDUCTOR_WORKER_CONFIGS,
+    workerType,
+    'container-config.json'
+  );
   let workerContainerConfig: any = {};
   let hasWorkerOverride = false;
 
@@ -231,14 +235,14 @@ export async function loadWorkerConfig(
     hasWorkerOverride = true;
     logger.debug('Loaded worker-specific container config override', {
       workerType,
-      path: conductorContainerConfigPath
+      path: conductorContainerConfigPath,
     });
   } catch (error: any) {
     // Worker-specific config is optional - ENOENT is expected for most workers
     if (error.code === 'ENOENT') {
       logger.debug('No worker-specific container config, using base only', {
         workerType,
-        path: conductorContainerConfigPath
+        path: conductorContainerConfigPath,
       });
     } else if (error.code === 'EACCES') {
       // Permission denied is a real error
@@ -273,7 +277,7 @@ export async function loadWorkerConfig(
   logger.info('Container config assembled', {
     workerType,
     hasWorkerOverride,
-    baseImage: containerConfig.base_image
+    baseImage: containerConfig.base_image,
   });
 
   // Check for deprecated prompt.md and warn
@@ -283,7 +287,7 @@ export async function loadWorkerConfig(
     logger.warn('Deprecated: prompt.md found - migrate to metadata.json', {
       workerType,
       path: promptMdPath,
-      message: 'prompt.md is deprecated. Worker configuration should be defined in metadata.json'
+      message: 'prompt.md is deprecated. Worker configuration should be defined in metadata.json',
     });
   } catch {
     // Expected - prompt.md doesn't exist (this is the desired state)
@@ -298,7 +302,7 @@ export async function loadWorkerConfig(
   } catch (sharedError: any) {
     logger.debug('Shared CLAUDE.md not found, attempting worker-specific fallback', {
       sharedPath: sharedClaudeMdPath,
-      error: sharedError.message
+      error: sharedError.message,
     });
 
     // Fallback to worker-specific CLAUDE.md if it exists (for backward compatibility)
@@ -312,7 +316,7 @@ export async function loadWorkerConfig(
         sharedPath: sharedClaudeMdPath,
         workerPath: workerClaudeMdPath,
         sharedError: sharedError.message,
-        workerError: workerError.message
+        workerError: workerError.message,
       });
       throwConductorError(
         ErrorCategory.WORKER_CONFIG_INVALID,
@@ -321,8 +325,8 @@ export async function loadWorkerConfig(
           workerType,
           details: {
             sharedError: sharedError.message,
-            workerError: workerError.message
-          }
+            workerError: workerError.message,
+          },
         }
       );
     }
@@ -349,7 +353,7 @@ export async function loadWorkerConfig(
     phase,
     artifactRequirements,
     claudeFolder,
-    metadata
+    metadata,
   };
 
   logger.info('Worker configuration loaded successfully', { workerType });
@@ -485,24 +489,27 @@ async function loadClaudeFolder(workerDir: string): Promise<WorkerConfig['claude
     return undefined;
   }
 
-  const files: ClaudeFile[] = Array.from(fileMap.entries()).map(
-    ([path, contents]) => ({ path, contents })
-  );
+  const files: ClaudeFile[] = Array.from(fileMap.entries()).map(([path, contents]) => ({
+    path,
+    contents,
+  }));
   return { files };
 }
 
-export async function listAvailableWorkers(projectPath: string = process.cwd()): Promise<WorkerType[]> {
+export async function listAvailableWorkers(
+  projectPath: string = process.cwd()
+): Promise<WorkerType[]> {
   const workers = new Set<WorkerType>();
 
   // First, load from conductor built-in configs
   try {
     const conductorEntries = await readdir(CONDUCTOR_WORKER_CONFIGS, { withFileTypes: true });
     conductorEntries
-      .filter(entry => entry.isDirectory() && entry.name !== '_base') // Exclude _base directory
-      .forEach(entry => workers.add(entry.name as WorkerType));
+      .filter((entry) => entry.isDirectory() && entry.name !== '_base') // Exclude _base directory
+      .forEach((entry) => workers.add(entry.name as WorkerType));
   } catch {
     logger.warn('Failed to load conductor built-in worker configs', {
-      path: CONDUCTOR_WORKER_CONFIGS
+      path: CONDUCTOR_WORKER_CONFIGS,
     });
   }
 
@@ -511,8 +518,8 @@ export async function listAvailableWorkers(projectPath: string = process.cwd()):
   try {
     const projectEntries = await readdir(projectWorkersDir, { withFileTypes: true });
     projectEntries
-      .filter(entry => entry.isDirectory())
-      .forEach(entry => workers.add(entry.name as WorkerType));
+      .filter((entry) => entry.isDirectory())
+      .forEach((entry) => workers.add(entry.name as WorkerType));
   } catch {
     // Project overrides are optional
   }

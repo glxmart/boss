@@ -19,7 +19,7 @@ import {
   WorkerState,
   WorkerManifest,
   WorkerResult,
-  WorkerType
+  WorkerType,
 } from '../types.js';
 import { logger } from '../utils/logger.js';
 import { ConductorException } from '../utils/error-handler.js';
@@ -51,9 +51,7 @@ function createManifestFromResult(
     decisions: existingManifest
       ? [...existingManifest.decisions, ...result.decisions]
       : result.decisions,
-    issues: existingManifest
-      ? [...existingManifest.issues, ...result.issues]
-      : result.issues,
+    issues: existingManifest ? [...existingManifest.issues, ...result.issues] : result.issues,
     recommendations: result.recommendations,
     tasksCompleted: existingManifest
       ? [...existingManifest.tasksCompleted, ...result.tasksCompleted]
@@ -61,7 +59,7 @@ function createManifestFromResult(
     principlesEstablished: result.principlesEstablished || existingManifest?.principlesEstablished,
     requirementsGathered: result.requirementsGathered || existingManifest?.requirementsGathered,
     testsCreated: result.testsCreated || existingManifest?.testsCreated,
-    coverageAchieved: result.coverageAchieved || existingManifest?.coverageAchieved
+    coverageAchieved: result.coverageAchieved || existingManifest?.coverageAchieved,
   };
 }
 
@@ -71,10 +69,7 @@ export class WorkerSpawner {
   private environmentManager: EnvironmentManager;
   private stateTracker: StateTracker;
 
-  constructor(
-    containerUseClient: ContainerUseClient,
-    stateTracker: StateTracker
-  ) {
+  constructor(containerUseClient: ContainerUseClient, stateTracker: StateTracker) {
     this.containerUseClient = containerUseClient;
     this.taskExecutor = new TaskExecutor(containerUseClient);
     this.environmentManager = new EnvironmentManager(containerUseClient);
@@ -96,7 +91,7 @@ export class WorkerSpawner {
       logger.info('Resuming worker in existing environment (Phase 4 optimization)', {
         workerType: input.workerType,
         resumeEnvironmentId: input.resumeEnvironmentId,
-        projectPath
+        projectPath,
       });
 
       return await this.resumeWorkerInEnvironment(
@@ -110,7 +105,7 @@ export class WorkerSpawner {
     // Normal flow: Create new environment
     logger.info('Spawning worker with new environment', {
       workerType: input.workerType,
-      projectPath
+      projectPath,
     });
 
     let environmentId: string | undefined;
@@ -140,7 +135,7 @@ export class WorkerSpawner {
         targetBranch,
         status: 'spawning',
         startedAt: new Date().toISOString(),
-        artifacts: []
+        artifacts: [],
       };
       this.stateTracker.registerWorker(workerState);
 
@@ -156,7 +151,11 @@ export class WorkerSpawner {
       // Worker context (role, responsibilities, methodology) is in CLAUDE.md
       // Path: /workdir/.boss/workers/${workerType}/.claude/CLAUDE.md (written by EnvironmentManager)
       // This isolated location prevents merge conflicts when parallel workers run
-      const workerResult = await this.taskExecutor.executeTaskWithSchema(environmentId, input.taskPrompt, projectPath);
+      const workerResult = await this.taskExecutor.executeTaskWithSchema(
+        environmentId,
+        input.taskPrompt,
+        projectPath
+      );
 
       // 5. Create manifest from worker's structured output
       const manifest = createManifestFromResult(
@@ -173,14 +172,14 @@ export class WorkerSpawner {
       this.stateTracker.updateWorkerStatus(environmentId, {
         status: manifest.status,
         lastTaskExecutedAt: new Date().toISOString(),
-        artifacts: workerResult.artifacts.map(a => a.path)
+        artifacts: workerResult.artifacts.map((a) => a.path),
       });
 
       logger.info('Worker spawned successfully', {
         workerId: environmentId,
         workerType: input.workerType,
         branch,
-        status: manifest.status
+        status: manifest.status,
       });
 
       // 8. Log performance metrics (Phase 6)
@@ -195,9 +194,9 @@ export class WorkerSpawner {
         startedAt: workerState.startedAt,
         completedAt: endTime.toISOString(),
         containerStartTime: 0, // TODO: Instrument container creation timing
-        setupCommandsTime: 0,   // TODO: Instrument setup commands timing
+        setupCommandsTime: 0, // TODO: Instrument setup commands timing
         installCommandsTime: 0, // TODO: Instrument install commands timing
-        configurationTime: 0,   // TODO: Instrument configuration timing
+        configurationTime: 0, // TODO: Instrument configuration timing
         taskExecutionTime: totalTimeMs, // Approximate for now
         totalTime: totalTimeMs,
         usedResumeOptimization: false, // Normal spawn, not resume
@@ -205,7 +204,7 @@ export class WorkerSpawner {
         success: manifest.status === 'completed',
         artifactsCreated: workerResult.artifacts.length,
         decisionsCount: workerResult.decisions.length,
-        issuesCount: workerResult.issues.length
+        issuesCount: workerResult.issues.length,
       });
 
       // 9. Return worker details
@@ -220,21 +219,21 @@ export class WorkerSpawner {
           environmentId,
           containerConfigApplied: true,
           claudeConfigured: true,
-          taskStartedAt: workerState.startedAt
-        }
+          taskStartedAt: workerState.startedAt,
+        },
       };
     } catch (error) {
       logger.error('Failed to spawn worker', {
         workerType: input.workerType,
         environmentId,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
 
       // CRITICAL: Cleanup orphaned container if it was created
       if (environmentId) {
         logger.warn('Cleaning up orphaned container after spawn failure', {
           environmentId,
-          workerType: input.workerType
+          workerType: input.workerType,
         });
 
         try {
@@ -245,14 +244,15 @@ export class WorkerSpawner {
           // Log cleanup failure but don't throw - original error is more important
           logger.error('Failed to cleanup orphaned container', {
             environmentId,
-            cleanupError: cleanupError instanceof Error ? cleanupError.message : String(cleanupError)
+            cleanupError:
+              cleanupError instanceof Error ? cleanupError.message : String(cleanupError),
           });
         }
 
         // Update state tracker to mark worker as failed
         this.stateTracker.updateWorkerStatus(environmentId, {
           status: 'failed',
-          lastTaskExecutedAt: new Date().toISOString()
+          lastTaskExecutedAt: new Date().toISOString(),
         });
       }
 
@@ -264,7 +264,7 @@ export class WorkerSpawner {
           branch: '',
           status: 'failed',
           message: 'Failed to spawn worker',
-          error: error.error
+          error: error.error,
         };
       }
 
@@ -277,7 +277,7 @@ export class WorkerSpawner {
    */
   async executeTask(input: ExecuteTaskInput): Promise<ExecuteTaskOutput> {
     logger.info('Executing task in worker', {
-      workerId: input.workerId
+      workerId: input.workerId,
     });
 
     try {
@@ -288,7 +288,10 @@ export class WorkerSpawner {
       const projectPath = process.cwd();
 
       // Get existing manifest (if any)
-      const existingManifest = await this.taskExecutor.getWorkerManifest(input.workerId, projectPath);
+      const existingManifest = await this.taskExecutor.getWorkerManifest(
+        input.workerId,
+        projectPath
+      );
 
       // Execute task with schema validation (continue existing session)
       const workerResult = await this.taskExecutor.executeTaskWithSchema(
@@ -314,7 +317,7 @@ export class WorkerSpawner {
       this.stateTracker.updateWorkerStatus(input.workerId, {
         status: updatedManifest.status,
         lastTaskExecutedAt: new Date().toISOString(),
-        artifacts: updatedManifest.artifacts.map(a => a.path)
+        artifacts: updatedManifest.artifacts.map((a) => a.path),
       });
 
       return {
@@ -322,12 +325,12 @@ export class WorkerSpawner {
         workerId: input.workerId,
         status: updatedManifest.status,
         executionLog: `Task executed at ${new Date().toISOString()}`,
-        artifacts: updatedManifest.artifacts.map(a => a.path)
+        artifacts: updatedManifest.artifacts.map((a) => a.path),
       };
     } catch (error) {
       logger.error('Failed to execute task', {
         workerId: input.workerId,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
 
       if (error instanceof ConductorException) {
@@ -335,7 +338,7 @@ export class WorkerSpawner {
           success: false,
           workerId: input.workerId,
           status: 'failed',
-          error: error.error
+          error: error.error,
         };
       }
 
@@ -373,7 +376,7 @@ export class WorkerSpawner {
         logger.warn('Worker type mismatch when resuming', {
           environmentId,
           requestedType: workerType,
-          existingType: existingWorker.workerType
+          existingType: existingWorker.workerType,
         });
         // Allow resume but log warning - user may want to repurpose environment
       }
@@ -382,11 +385,14 @@ export class WorkerSpawner {
         environmentId,
         workerType,
         existingStatus: existingWorker.status,
-        branch: existingWorker.branch
+        branch: existingWorker.branch,
       });
 
       // 3. Get existing manifest (if any)
-      const existingManifest = await this.taskExecutor.getWorkerManifest(environmentId, projectPath);
+      const existingManifest = await this.taskExecutor.getWorkerManifest(
+        environmentId,
+        projectPath
+      );
 
       // 4. Execute task with continue=true (uses --continue flag)
       // This reuses the existing Claude session with all previous context intact
@@ -413,14 +419,14 @@ export class WorkerSpawner {
       this.stateTracker.updateWorkerStatus(environmentId, {
         status: updatedManifest.status,
         lastTaskExecutedAt: new Date().toISOString(),
-        artifacts: updatedManifest.artifacts.map(a => a.path)
+        artifacts: updatedManifest.artifacts.map((a) => a.path),
       });
 
       logger.info('Worker resumed successfully', {
         workerId: environmentId,
         workerType,
         status: updatedManifest.status,
-        newArtifacts: workerResult.artifacts.length
+        newArtifacts: workerResult.artifacts.length,
       });
 
       // 8. Log performance metrics (Phase 6 - Resume optimization)
@@ -433,9 +439,9 @@ export class WorkerSpawner {
         startedAt: existingWorker.startedAt,
         completedAt: endTime.toISOString(),
         containerStartTime: 0, // Skipped - resume doesn't create container
-        setupCommandsTime: 0,   // Skipped
+        setupCommandsTime: 0, // Skipped
         installCommandsTime: 0, // Skipped
-        configurationTime: 0,   // Skipped
+        configurationTime: 0, // Skipped
         taskExecutionTime: totalTimeMs,
         totalTime: totalTimeMs,
         usedResumeOptimization: true, // Phase 4 optimization
@@ -443,7 +449,7 @@ export class WorkerSpawner {
         success: updatedManifest.status === 'completed',
         artifactsCreated: workerResult.artifacts.length,
         decisionsCount: workerResult.decisions.length,
-        issuesCount: workerResult.issues.length
+        issuesCount: workerResult.issues.length,
       });
 
       // 9. Return worker details (same format as spawn)
@@ -457,15 +463,15 @@ export class WorkerSpawner {
         executionDetails: {
           environmentId,
           containerConfigApplied: false, // Not applied - reused existing
-          claudeConfigured: false,       // Not configured - reused existing
-          taskStartedAt: new Date().toISOString()
-        }
+          claudeConfigured: false, // Not configured - reused existing
+          taskStartedAt: new Date().toISOString(),
+        },
       };
     } catch (error) {
       logger.error('Failed to resume worker in environment', {
         environmentId,
         workerType,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
 
       if (error instanceof ConductorException) {
@@ -476,7 +482,7 @@ export class WorkerSpawner {
           branch: '',
           status: 'failed',
           message: 'Failed to resume worker',
-          error: error.error
+          error: error.error,
         };
       }
 
@@ -506,7 +512,9 @@ export class WorkerSpawner {
    * @param input Configuration for parallel spawning
    * @returns Results for all workers plus performance summary
    */
-  async spawnWorkersInParallel(input: SpawnWorkersParallelInput): Promise<SpawnWorkersParallelOutput> {
+  async spawnWorkersInParallel(
+    input: SpawnWorkersParallelInput
+  ): Promise<SpawnWorkersParallelOutput> {
     const startTime = Date.now();
     const maxConcurrency = input.maxConcurrency || 5;
     const projectPath = input.projectPath || process.cwd();
@@ -515,12 +523,12 @@ export class WorkerSpawner {
     logger.info('Starting parallel worker spawning (Phase 5 optimization)', {
       totalWorkers: input.workers.length,
       maxConcurrency,
-      projectPath
+      projectPath,
     });
 
     // Batch workers to respect concurrency limit
     const results: SpawnWorkerOutput[] = [];
-    const batches: typeof input.workers[] = [];
+    const batches: (typeof input.workers)[] = [];
 
     for (let i = 0; i < input.workers.length; i += maxConcurrency) {
       batches.push(input.workers.slice(i, i + maxConcurrency));
@@ -533,7 +541,7 @@ export class WorkerSpawner {
 
       logger.info(`Processing batch ${batchIndex + 1}/${batches.length}`, {
         batchSize: batch.length,
-        workerTypes: batch.map(w => w.workerType)
+        workerTypes: batch.map((w) => w.workerType),
       });
 
       // Spawn all workers in this batch concurrently
@@ -544,7 +552,7 @@ export class WorkerSpawner {
             taskPrompt: workerInput.taskPrompt,
             projectPath,
             targetBranch,
-            resumeEnvironmentId: workerInput.resumeEnvironmentId
+            resumeEnvironmentId: workerInput.resumeEnvironmentId,
           };
 
           const result = await this.spawnWorker(spawnInput);
@@ -553,7 +561,7 @@ export class WorkerSpawner {
           logger.error('Worker spawn failed in parallel batch', {
             workerType: workerInput.workerType,
             batchIndex: batchIndex + 1,
-            error: error instanceof Error ? error.message : String(error)
+            error: error instanceof Error ? error.message : String(error),
           });
 
           // Return failed result instead of throwing
@@ -564,7 +572,7 @@ export class WorkerSpawner {
             branch: '',
             status: 'failed' as const,
             message: `Failed to spawn ${workerInput.workerType}: ${error instanceof Error ? error.message : String(error)}`,
-            error: error instanceof ConductorException ? error.error : undefined
+            error: error instanceof ConductorException ? error.error : undefined,
           };
         }
       });
@@ -574,16 +582,16 @@ export class WorkerSpawner {
       results.push(...batchResults);
 
       logger.info(`Batch ${batchIndex + 1}/${batches.length} completed`, {
-        succeeded: batchResults.filter(r => r.success).length,
-        failed: batchResults.filter(r => !r.success).length
+        succeeded: batchResults.filter((r) => r.success).length,
+        failed: batchResults.filter((r) => !r.success).length,
       });
     }
 
     // Calculate summary statistics
     const endTime = Date.now();
     const totalDurationMs = endTime - startTime;
-    const succeeded = results.filter(r => r.success).length;
-    const failed = results.filter(r => !r.success).length;
+    const succeeded = results.filter((r) => r.success).length;
+    const failed = results.filter((r) => !r.success).length;
 
     // Calculate time savings
     // Sequential time: total workers × avg spawn time (180s)
@@ -596,7 +604,7 @@ export class WorkerSpawner {
       succeeded,
       failed,
       timeSaved: this.formatDuration(timeSavedMs),
-      totalDuration: this.formatDuration(totalDurationMs)
+      totalDuration: this.formatDuration(totalDurationMs),
     };
 
     const allSucceeded = failed === 0;
@@ -608,14 +616,14 @@ export class WorkerSpawner {
       ...summary,
       timeSavedMs,
       totalDurationMs,
-      allSucceeded
+      allSucceeded,
     });
 
     return {
       success: allSucceeded,
       results,
       summary,
-      message
+      message,
     };
   }
 

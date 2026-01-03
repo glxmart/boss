@@ -131,4 +131,3 @@ boss bootstrap --template blank --quality startup --name test-project --non-inte
 # Or use tsx directly (no build needed)
 pnpm exec tsx src/index.ts bootstrap --template blank --quality startup --name test-project --non-interactive
 ```
-

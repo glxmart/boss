@@ -30,4 +30,3 @@ ci:
     - dependency-check
     - build
     - e2e-tests
-

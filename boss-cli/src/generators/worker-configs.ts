@@ -37,7 +37,6 @@ export async function generateWorkerConfigs(
 // NOTE: Worker role descriptions and artifact requirements are now defined in conductor-mcp/worker-configs/*/metadata.json
 // These functions are no longer needed as conductor owns the worker specifications
 
-
 async function generateWorkerClaudeMD(
   workerPath: string,
   workerName: string,
@@ -46,16 +45,13 @@ async function generateWorkerClaudeMD(
   // Worker-specific CLAUDE.md with minimal templating
   const claudeMD = await loadTemplate(`worker-configs/${workerName}/CLAUDE.md`, {
     workerName,
-    config
+    config,
   });
 
   await writeFile(path.join(workerPath, 'CLAUDE.md'), claudeMD);
 }
 
-async function copyRelevantSpecKitCommands(
-  idePath: string,
-  workerName: string
-): Promise<void> {
+async function copyRelevantSpecKitCommands(idePath: string, workerName: string): Promise<void> {
   // Copy ONLY the spec-kit commands relevant to this worker
   // Based on primaryCommand field in worker's metadata.json
   // NOTE: BOSS-specific commands (boss-commands.md) stay with BOSS only
@@ -65,7 +61,12 @@ async function copyRelevantSpecKitCommands(
   const __dirname = dirname(__filename);
 
   // Load worker metadata to get primaryCommand
-  const conductorMetadataPath = path.join(__dirname, '../../../conductor-mcp/worker-configs', workerName, 'metadata.json');
+  const conductorMetadataPath = path.join(
+    __dirname,
+    '../../../conductor-mcp/worker-configs',
+    workerName,
+    'metadata.json'
+  );
 
   let primaryCommands: string[] = [];
   try {
@@ -88,10 +89,12 @@ async function copyRelevantSpecKitCommands(
   }
 
   // Map /speckit.XXX to XXX.md
-  const commandFiles = primaryCommands.map(cmd => {
-    const match = cmd.match(/\/speckit\.(\w+)/);
-    return match ? `${match[1]}.md` : null;
-  }).filter(Boolean) as string[];
+  const commandFiles = primaryCommands
+    .map((cmd) => {
+      const match = cmd.match(/\/speckit\.(\w+)/);
+      return match ? `${match[1]}.md` : null;
+    })
+    .filter(Boolean) as string[];
 
   // Copy only the relevant spec-kit command files
   const specKitCommandsPath = path.join(__dirname, '../../templates/spec-kit/templates/commands');
@@ -134,7 +137,7 @@ async function generateWorkerIDEFolder(
     for (const subfolder of ['commands', 'skills']) {
       const assetSubfolder = path.join(assetClaudePath, subfolder);
       const destSubfolder = path.join(idePath, subfolder);
-      
+
       if (await fs.pathExists(assetSubfolder)) {
         const files = await fsPromises.readdir(assetSubfolder);
         for (const file of files) {
@@ -159,4 +162,3 @@ async function generateWorkerIDEFolder(
     }
   }
 }
-

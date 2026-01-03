@@ -1,6 +1,6 @@
 {
   "$schema": "../container-config.schema.json",
-  "base_image": "ghcr.io/glxmart/boss-worker-base:1.0.0-beta.0",
+  "base_image": "ghcr.io/glxmart/boss-worker-base:latest",
   "setup_commands": [],
   "install_commands": [],
   "environment_variables": {

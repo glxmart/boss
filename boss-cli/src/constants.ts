@@ -15,7 +15,7 @@
  * - claude-code (Anthropic CLI)
  */
 export const DOCKER_BASE_IMAGE = 'ghcr.io/glxmart/boss-worker-base';
-export const DOCKER_IMAGE_VERSION = '1.0.0-beta.0';
+export const DOCKER_IMAGE_VERSION = 'latest'; // Auto-updated on version releases (v1.0.0, etc)
 export const DOCKER_IMAGE_FULL = `${DOCKER_BASE_IMAGE}:${DOCKER_IMAGE_VERSION}`;
 
 /**

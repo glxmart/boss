@@ -260,19 +260,29 @@ cd boss-cli && pnpm test:integration
 
 ### 5. Workflow-Specific Debugging
 
-**CI Workflow** (.github/workflows/ci.yml)
-- Runs: Tests for both packages + integration tests
+**Test Workflows** (1.0-test-boss-cli.yml, 1.1-test-conductor-mcp.yml)
+- Runs: Package-specific tests (only when relevant files change)
 - Common fix: Ensure all tests pass locally first
+- Path triggers: Only runs when that package changes
 
-**Release Workflow** (.github/workflows/release.yml)
-- Runs: Builds + tests before publishing via changesets
-- Common fix: Ensure `prepublishOnly` script succeeds
+**Integration Tests** (2.0-integration-tests.yml)
+- Runs: End-to-end integration tests (when either package changes)
+- Common fix: Run `pnpm test:integration` locally first
+- Path triggers: Runs when boss-cli or conductor-mcp changes
+
+**Release Workflow** (3.0-release.yml)
+- Runs: Creates version PR or publishes via changesets
+- Common fix: Ensure valid changeset exists in `.changeset/`
 - Note: Uses `NPM_TOKEN` secret for publishing
+- See: [docs/RELEASE.md](./docs/RELEASE.md) for complete release guide
 
-**Docker Workflow** (.github/workflows/docker.yml)
+**Docker Workflow** (4.0-docker.yml)
 - Runs: Builds and pushes boss-worker-base image
 - Common fix: Verify Dockerfile exists and builds locally
 - Manual build: `cd conductor-mcp/docker/boss-worker-base && ./build.sh`
+- Path triggers: Only runs when Docker files change
+
+**Complete workflow documentation:** [.github/workflows/README.md](./.github/workflows/README.md)
 
 ### 6. Re-trigger Workflows
 
@@ -991,6 +1001,8 @@ Local infrastructure setup (PostgreSQL, Qdrant, embeddings)
 
 ### Development & Planning
 
+- **[docs/RELEASE.md](./docs/RELEASE.md)** - **📦 Release process with Changesets (automated versioning & publishing)**
+- **[.github/workflows/README.md](./.github/workflows/README.md)** - **⚙️ GitHub workflows documentation (numbered naming, path triggers)**
 - **[docs/CONTRIBUTING_DOCS.md](./docs/CONTRIBUTING_DOCS.md)** - **📝 Documentation guidelines (when/where to add docs)**
 - **[docs/PHASE_1_COMPLETE.md](./docs/PHASE_1_COMPLETE.md)** - Phase 1 completion summary
 - **[docs/PHASE_2_COMPLETE.md](./docs/PHASE_2_COMPLETE.md)** - Phase 2 completion summary
@@ -1127,8 +1139,26 @@ See `boss-cli/docs/common-issues.md` for detailed troubleshooting.
 
 ### Release Process
 
-1. Update version in package.json
-2. Update CHANGELOG.md
-3. Build and test
-4. Commit with version tag
-5. Publish (boss-cli: local, conductor-mcp: npm)
+BOSS uses **Changesets** for automated version management and publishing.
+
+**Quick start (PR workflow):**
+```bash
+# 1. Create feature branch
+git checkout -b feature/my-feature
+
+# 2. Make changes and create changeset
+pnpm changeset
+
+# 3. Commit and push
+git add .changeset/*.md
+git commit -m "feat: your changes"
+git push origin feature/my-feature
+
+# 4. Create PR (changeset check validates automatically)
+# 5. Merge PR → Release workflow creates "Version Packages" PR
+# 6. Merge Version PR → automatic npm publish
+```
+
+**Skip changeset:** Add `skip-changeset` label for docs/tests/config-only PRs
+
+**Complete documentation:** [docs/RELEASE.md](./docs/RELEASE.md)

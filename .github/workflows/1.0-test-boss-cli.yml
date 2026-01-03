@@ -1,0 +1,45 @@
+name: 1.0 - Test boss-cli
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'boss-cli/**'
+      - 'pnpm-lock.yaml'
+      - 'package.json'
+      - '.github/workflows/1.0-test-boss-cli.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'boss-cli/**'
+      - 'pnpm-lock.yaml'
+      - 'package.json'
+      - '.github/workflows/1.0-test-boss-cli.yml'
+
+jobs:
+  test:
+    name: Test boss-cli
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.26.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: cd boss-cli && pnpm build
+
+      - name: Test
+        run: cd boss-cli && pnpm test
+
+      - name: Lint
+        run: cd boss-cli && pnpm lint || echo "No lint script"

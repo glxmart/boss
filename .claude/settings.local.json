@@ -52,7 +52,8 @@
       "Bash(op run:*)",
       "Bash(./scripts/gh-with-1password.sh:*)",
       "Bash(xargs:*)",
-      "mcp__github__get_pull_request_status"
+      "mcp__github__get_pull_request_status",
+      "Edit(.github/**)"
     ],
     "deny": [
       "Bash(op read:*)",

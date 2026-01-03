@@ -1,0 +1,44 @@
+name: 2.0 - Integration Tests
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'boss-cli/**'
+      - 'conductor-mcp/**'
+      - 'pnpm-lock.yaml'
+      - 'package.json'
+      - '.github/workflows/2.0-integration-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'boss-cli/**'
+      - 'conductor-mcp/**'
+      - 'pnpm-lock.yaml'
+      - 'package.json'
+      - '.github/workflows/2.0-integration-tests.yml'
+
+jobs:
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.26.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build all packages
+        run: pnpm build
+
+      - name: Run integration tests
+        run: cd boss-cli && pnpm test:integration

@@ -1,9 +1,16 @@
-name: Release
+name: 3.0 - Release
 
 on:
   push:
     branches:
       - main
+    paths:
+      - 'boss-cli/**'
+      - 'conductor-mcp/**'
+      - '.changeset/**'
+      - 'pnpm-lock.yaml'
+      - 'package.json'
+      - '.github/workflows/3.0-release.yml'
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 

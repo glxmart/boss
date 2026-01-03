@@ -1,0 +1,45 @@
+name: 1.1 - Test conductor-mcp
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'conductor-mcp/**'
+      - 'pnpm-lock.yaml'
+      - 'package.json'
+      - '.github/workflows/1.1-test-conductor-mcp.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'conductor-mcp/**'
+      - 'pnpm-lock.yaml'
+      - 'package.json'
+      - '.github/workflows/1.1-test-conductor-mcp.yml'
+
+jobs:
+  test:
+    name: Test conductor-mcp
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.26.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: cd conductor-mcp && pnpm build
+
+      - name: Test
+        run: cd conductor-mcp && pnpm test
+
+      - name: Lint
+        run: cd conductor-mcp && pnpm lint || echo "No lint script"

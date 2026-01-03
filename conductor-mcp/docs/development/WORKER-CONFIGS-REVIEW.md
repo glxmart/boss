@@ -28,6 +28,7 @@
 ## Common Patterns Across Workers
 
 ### File Structure (Consistent ✅)
+
 ```
 worker-configs/
 ├── <worker-name>/
@@ -41,6 +42,7 @@ worker-configs/
 ```
 
 ### Template Variables (All Workers)
+
 - `${workerName}` - Worker type/role name
 - `${phase}` - Development phase
 - `${workerRoleDescription}` - Role description
@@ -61,6 +63,7 @@ worker-configs/
    - Worker manages `workflow.activeWorkers`
 
 **RECOMMENDATION**: Choose ONE approach and standardize across all workers. Schema-based is superior for:
+
 - Validation against schemas
 - Preventing human error
 - Consistent structure
@@ -69,6 +72,7 @@ worker-configs/
 ### Spec-Kit Integration (Consistent ✅)
 
 All workers reference:
+
 - `/speckit.*` commands
 - `.specify/` directory structure
 - `.specify/memory/constitution.md` as governing document
@@ -77,6 +81,7 @@ All workers reference:
 ### Quality Requirements (Consistent ✅)
 
 All workers enforce:
+
 - Test-First (TDD): Red → Green → Refactor
 - BDD: Given/When/Then format
 - Documentation: NON-NEGOTIABLE
@@ -86,6 +91,7 @@ All workers enforce:
 ### Container Configuration (Identical ✅)
 
 All workers use same `container-config.json`:
+
 - Base: `node:22-slim`
 - Tools: git, curl, build-essential, pnpm, @anthropic-ai/claude-code
 - Env vars: WORKER_ROLE, NODE_ENV, SPEC_KIT_MODE, SPEC_KIT_PATH
@@ -103,17 +109,20 @@ All workers use same `container-config.json`:
 **Role**: Establishes technical constitution - the NON-NEGOTIABLE governing principles for all development work.
 
 **Primary Output**:
+
 - `.specify/memory/constitution.md` (Project constitution)
 
 **Primary Spec-Kit Command**: `/speckit.constitution`
 
 **Unique Characteristics**:
+
 - First worker in workflow - sets foundation
 - Non-negotiable standards enforcer
 - Works with Product Owner to translate business constraints to technical principles
 - Constitution governs all other workers
 
 **Expected Outputs for Schema**:
+
 ```json
 {
   "artifacts": [
@@ -146,11 +155,13 @@ All workers use same `container-config.json`:
 ```
 
 **CLAUDE.md Issues**:
+
 - Contains outdated schema-based protocol (lines 11-76)
 - Conflicts with manual project-config.json updates in other workers
 - References worker manifest files that may not exist yet
 
 **Proposed metadata.json**:
+
 ```json
 {
   "workerType": "architect",
@@ -168,7 +179,13 @@ All workers use same `container-config.json`:
         "type": "markdown",
         "description": "Project constitution with NON-NEGOTIABLE principles",
         "schema": {
-          "sections": ["Architectural Principles", "Development Methodology", "Testing Standards", "Documentation Standards", "Quality Gates"]
+          "sections": [
+            "Architectural Principles",
+            "Development Methodology",
+            "Testing Standards",
+            "Documentation Standards",
+            "Quality Gates"
+          ]
         }
       }
     ],
@@ -184,7 +201,12 @@ All workers use same `container-config.json`:
   "workflowPosition": "first",
   "blockers": [],
   "quality": {
-    "constitutionMustInclude": ["Architectural Principles", "Development Methodology", "Testing Standards", "Documentation Standards"],
+    "constitutionMustInclude": [
+      "Architectural Principles",
+      "Development Methodology",
+      "Testing Standards",
+      "Documentation Standards"
+    ],
     "allPrinciplesMustBe": "measurable and enforceable",
     "retries": 3
   }
@@ -200,17 +222,20 @@ All workers use same `container-config.json`:
 **Role**: Identifies ambiguities in requirements and asks targeted clarification questions to reduce downstream rework.
 
 **Primary Output**:
+
 - `.specify/specs/000-requirements/clarification.md` (Clarification questions and answers)
 
 **Primary Spec-Kit Command**: `/speckit.clarify`
 
 **Unique Characteristics**:
+
 - Maximum 5 questions per session (prioritize high-impact)
 - Questions must be answerable in ≤5 words or multiple choice
 - Works with Product Owner for business context
 - Feeds into Spec Writer's work
 
 **Expected Outputs for Schema**:
+
 ```json
 {
   "artifacts": [
@@ -242,6 +267,7 @@ All workers use same `container-config.json`:
 ```
 
 **Proposed metadata.json**:
+
 ```json
 {
   "workerType": "clarifier",
@@ -291,17 +317,20 @@ All workers use same `container-config.json`:
 **Role**: Translates business requirements into technical specifications with user stories in BDD format (Given/When/Then).
 
 **Primary Output**:
+
 - `.specify/specs/[feature-name]/spec.md` (Feature specification)
 
 **Primary Spec-Kit Command**: `/speckit.specify`
 
 **Unique Characteristics**:
+
 - ALL user stories MUST be in Given/When/Then format (BDD)
 - Works closely with Clarifier for resolved ambiguities
 - Specifications become source of truth for implementation
 - Must ensure specs are testable and actionable
 
 **Expected Outputs for Schema**:
+
 ```json
 {
   "artifacts": [
@@ -333,6 +362,7 @@ All workers use same `container-config.json`:
 ```
 
 **Proposed metadata.json**:
+
 ```json
 {
   "workerType": "spec-writer",
@@ -351,7 +381,13 @@ All workers use same `container-config.json`:
         "description": "Feature specification with BDD user stories",
         "schema": {
           "userStoryFormat": "Given/When/Then (MANDATORY)",
-          "sections": ["Overview", "User Stories", "Acceptance Criteria", "Edge Cases", "Non-Functional Requirements"]
+          "sections": [
+            "Overview",
+            "User Stories",
+            "Acceptance Criteria",
+            "Edge Cases",
+            "Non-Functional Requirements"
+          ]
         }
       }
     ],
@@ -382,6 +418,7 @@ All workers use same `container-config.json`:
 **Role**: Creates technical implementation plans and breaks down into actionable tasks with [P] parallel markers.
 
 **Primary Outputs**:
+
 - `.specify/specs/[feature]/plan.md` (Technical implementation plan)
 - `.specify/specs/[feature]/data-model.md` (Data model)
 - `.specify/specs/[feature]/tasks.md` (Task breakdown with [P] markers)
@@ -392,6 +429,7 @@ All workers use same `container-config.json`:
 **Primary Spec-Kit Commands**: `/speckit.plan`, `/speckit.tasks`
 
 **Unique Characteristics**:
+
 - Works in TWO phases (4 and 6)
 - Marks tasks with [P] for parallel execution
 - Ensures TDD structure (test tasks before implementation)
@@ -399,6 +437,7 @@ All workers use same `container-config.json`:
 - Enables parallel development
 
 **Expected Outputs for Schema**:
+
 ```json
 {
   "artifacts": [
@@ -447,6 +486,7 @@ All workers use same `container-config.json`:
 ```
 
 **Proposed metadata.json**:
+
 ```json
 {
   "workerType": "planner",
@@ -508,7 +548,14 @@ All workers use same `container-config.json`:
     "Which tasks can run in parallel",
     "Data model structure"
   ],
-  "collaboratesWith": ["spec-writer", "architect", "developer-*", "reviewer", "devops-engineer", "security-engineer"],
+  "collaboratesWith": [
+    "spec-writer",
+    "architect",
+    "developer-*",
+    "reviewer",
+    "devops-engineer",
+    "security-engineer"
+  ],
   "workflowPosition": "middle",
   "blockers": ["Unresolved clarifications in spec.md"]
 }
@@ -523,17 +570,20 @@ All workers use same `container-config.json`:
 **Role**: Validates technical plans against constitution to ensure compliance before implementation.
 
 **Primary Output**:
+
 - `.specify/specs/[feature]/validation-report.md` (Constitution compliance report)
 
 **Primary Spec-Kit Command**: `/speckit.analyze`
 
 **Unique Characteristics**:
+
 - Quality gatekeeper
 - Validates TDD/BDD/Documentation compliance
 - Allows up to 3 retries for compliance fixes
 - Prevents technical debt early
 
 **Expected Outputs for Schema**:
+
 ```json
 {
   "artifacts": [
@@ -558,6 +608,7 @@ All workers use same `container-config.json`:
 ```
 
 **Proposed metadata.json**:
+
 ```json
 {
   "workerType": "reviewer",
@@ -584,7 +635,12 @@ All workers use same `container-config.json`:
   },
   "constraints": {
     "maxRetries": 3,
-    "mustValidate": ["TDD compliance", "BDD compliance", "Documentation requirements", "Quality gates"]
+    "mustValidate": [
+      "TDD compliance",
+      "BDD compliance",
+      "Documentation requirements",
+      "Quality gates"
+    ]
   },
   "decisionTypes": [
     "Approve or reject plan",
@@ -606,6 +662,7 @@ All workers use same `container-config.json`:
 **Role**: Implements frontend features following TDD+BDD, delivering production-ready, accessible, performant, well-tested code.
 
 **Primary Outputs**:
+
 - `src/components/**/*.tsx` (React/Vue/etc. components)
 - `tests/components/**/*.test.tsx` (BDD + unit tests)
 - `docs/components/**/*.md` (Component documentation)
@@ -614,6 +671,7 @@ All workers use same `container-config.json`:
 **Primary Spec-Kit Command**: `/speckit.implement`
 
 **Unique Characteristics**:
+
 - Accessibility focus (WCAG, keyboard nav, screen readers, ARIA)
 - Performance focus (bundle size, lazy loading, code splitting)
 - Responsive design (mobile-first)
@@ -621,6 +679,7 @@ All workers use same `container-config.json`:
 - Works with Backend for API contracts
 
 **Expected Outputs for Schema**:
+
 ```json
 {
   "artifacts": [
@@ -657,6 +716,7 @@ All workers use same `container-config.json`:
 ```
 
 **Proposed metadata.json**:
+
 ```json
 {
   "workerType": "developer-frontend",
@@ -710,7 +770,15 @@ All workers use same `container-config.json`:
     "Styling approach",
     "Testing strategy"
   ],
-  "collaboratesWith": ["planner", "developer-backend", "tester", "code-reviewer", "devops-engineer", "security-engineer", "technical-writer"],
+  "collaboratesWith": [
+    "planner",
+    "developer-backend",
+    "tester",
+    "code-reviewer",
+    "devops-engineer",
+    "security-engineer",
+    "technical-writer"
+  ],
   "workflowPosition": "implementation",
   "blockers": ["Missing API contracts", "Incomplete tasks.md"]
 }
@@ -725,6 +793,7 @@ All workers use same `container-config.json`:
 **Role**: Implements backend features following TDD+BDD, delivering production-ready, well-tested, documented API and business logic.
 
 **Primary Outputs**:
+
 - `src/api/**/*.ts` (API endpoints, controllers)
 - `src/services/**/*.ts` (Business logic services)
 - `src/models/**/*.ts` (Data models)
@@ -734,6 +803,7 @@ All workers use same `container-config.json`:
 **Primary Spec-Kit Command**: `/speckit.implement`
 
 **Unique Characteristics**:
+
 - API documentation for all endpoints
 - Contract-first development (follows contracts/ from Planner)
 - Performance considerations (latency, throughput)
@@ -741,6 +811,7 @@ All workers use same `container-config.json`:
 - Works with Frontend to ensure API contracts match
 
 **Expected Outputs for Schema**:
+
 ```json
 {
   "artifacts": [
@@ -787,6 +858,7 @@ All workers use same `container-config.json`:
 ```
 
 **Proposed metadata.json**:
+
 ```json
 {
   "workerType": "developer-backend",
@@ -844,7 +916,15 @@ All workers use same `container-config.json`:
     "Data model implementation",
     "Error handling strategy"
   ],
-  "collaboratesWith": ["planner", "developer-frontend", "tester", "code-reviewer", "devops-engineer", "security-engineer", "technical-writer"],
+  "collaboratesWith": [
+    "planner",
+    "developer-frontend",
+    "tester",
+    "code-reviewer",
+    "devops-engineer",
+    "security-engineer",
+    "technical-writer"
+  ],
   "workflowPosition": "implementation",
   "blockers": ["Missing API contracts", "Incomplete data model", "Incomplete tasks.md"]
 }
@@ -859,20 +939,23 @@ All workers use same `container-config.json`:
 **Role**: Implements fullstack features (frontend + backend) following TDD+BDD, ensuring seamless integration.
 
 **Primary Outputs**:
-- Frontend components (src/components/**)
-- Backend APIs (src/api/**)
+
+- Frontend components (src/components/\*\*)
+- Backend APIs (src/api/\*\*)
 - Integration tests
 - Comprehensive documentation
 
 **Primary Spec-Kit Command**: `/speckit.implement`
 
 **Unique Characteristics**:
+
 - Handles both frontend and backend
 - Focus on integration testing
 - Ensures API contracts work end-to-end
 - Comprehensive fullstack documentation
 
 **Expected Outputs for Schema**:
+
 ```json
 {
   "artifacts": [
@@ -915,6 +998,7 @@ All workers use same `container-config.json`:
 ```
 
 **Proposed metadata.json**:
+
 ```json
 {
   "workerType": "developer-fullstack",
@@ -967,7 +1051,14 @@ All workers use same `container-config.json`:
     "Error handling across stack",
     "State management across frontend/backend"
   ],
-  "collaboratesWith": ["planner", "tester", "code-reviewer", "devops-engineer", "security-engineer", "technical-writer"],
+  "collaboratesWith": [
+    "planner",
+    "tester",
+    "code-reviewer",
+    "devops-engineer",
+    "security-engineer",
+    "technical-writer"
+  ],
   "workflowPosition": "implementation",
   "blockers": ["Missing API contracts", "Incomplete tasks.md"]
 }
@@ -982,6 +1073,7 @@ All workers use same `container-config.json`:
 **Role**: Creates comprehensive test suite (BDD, unit, integration, E2E, performance, accessibility) to validate implementations.
 
 **Primary Outputs**:
+
 - `tests/**/*.test.ts` (BDD, unit, integration tests)
 - Test reports (coverage, mutation testing)
 - Test documentation
@@ -989,12 +1081,14 @@ All workers use same `container-config.json`:
 **Primary Spec-Kit Command**: `/speckit.checklist`
 
 **Unique Characteristics**:
+
 - Validates implementations against spec.md acceptance criteria
 - Ensures test coverage ≥80% and mutation score ≥80%
 - Creates test utilities, fixtures, and test data
 - Balances test pyramid (70% unit, 20% integration, 10% E2E)
 
 **Expected Outputs for Schema**:
+
 ```json
 {
   "artifacts": [
@@ -1033,6 +1127,7 @@ All workers use same `container-config.json`:
 ```
 
 **Proposed metadata.json**:
+
 ```json
 {
   "workerType": "tester",
@@ -1103,17 +1198,20 @@ All workers use same `container-config.json`:
 **Role**: Reviews code quality, test quality, architecture compliance, performance, and security before approval.
 
 **Primary Output**:
+
 - `review-report.md` (Code review report)
 
 **Primary Spec-Kit Command**: `/speckit.analyze`
 
 **Unique Characteristics**:
+
 - Provides constructive feedback for learning
 - Reviews code AND test quality
 - Ensures architecture compliance
 - Validates security best practices
 
 **Expected Outputs for Schema**:
+
 ```json
 {
   "artifacts": [
@@ -1143,6 +1241,7 @@ All workers use same `container-config.json`:
 ```
 
 **Proposed metadata.json**:
+
 ```json
 {
   "workerType": "code-reviewer",
@@ -1150,7 +1249,11 @@ All workers use same `container-config.json`:
   "description": "Reviews code and test quality, architecture, performance, security",
   "primaryCommand": "/speckit.analyze",
   "inputs": {
-    "required": ["Implementation code from Developers", "Tests from Tester", ".specify/memory/constitution.md"],
+    "required": [
+      "Implementation code from Developers",
+      "Tests from Tester",
+      ".specify/memory/constitution.md"
+    ],
     "optional": ["plan.md from Planner"]
   },
   "outputs": {
@@ -1160,7 +1263,14 @@ All workers use same `container-config.json`:
         "type": "markdown",
         "description": "Code review report",
         "schema": {
-          "sections": ["Code Quality", "Test Quality", "Architecture Compliance", "Performance", "Security", "Recommendations"],
+          "sections": [
+            "Code Quality",
+            "Test Quality",
+            "Architecture Compliance",
+            "Performance",
+            "Security",
+            "Recommendations"
+          ],
           "approvalStatus": "approved|changes-requested"
         }
       }
@@ -1168,7 +1278,13 @@ All workers use same `container-config.json`:
     "optional": []
   },
   "constraints": {
-    "mustReview": ["Code quality", "Test quality", "Architecture compliance", "Performance", "Security"],
+    "mustReview": [
+      "Code quality",
+      "Test quality",
+      "Architecture compliance",
+      "Performance",
+      "Security"
+    ],
     "feedback": "Constructive and actionable",
     "learningFocus": "Share knowledge and best practices"
   },
@@ -1193,6 +1309,7 @@ All workers use same `container-config.json`:
 **Role**: Merges all worker branches, runs integration tests, creates quickstart.md and checklist.md, prepares for PR.
 
 **Primary Outputs**:
+
 - `.specify/specs/[feature]/quickstart.md` (Setup and usage guide)
 - `.specify/specs/[feature]/checklist.md` (Quality validation checklist)
 - Merged feature branch (ready for PR)
@@ -1200,12 +1317,14 @@ All workers use same `container-config.json`:
 **Primary Spec-Kit Command**: `/speckit.analyze`
 
 **Unique Characteristics**:
+
 - Final quality gate before PR
 - Merges multiple worker branches
 - Validates documentation completeness
 - Ensures all Spec-Kit artifacts are present
 
 **Expected Outputs for Schema**:
+
 ```json
 {
   "artifacts": [
@@ -1234,6 +1353,7 @@ All workers use same `container-config.json`:
 ```
 
 **Proposed metadata.json**:
+
 ```json
 {
   "workerType": "consolidator",
@@ -1241,7 +1361,10 @@ All workers use same `container-config.json`:
   "description": "Merges worker branches and prepares for PR creation",
   "primaryCommand": "/speckit.analyze",
   "inputs": {
-    "required": ["All worker branches from previous phases", "Worker summaries from .boss/project-config.json"],
+    "required": [
+      "All worker branches from previous phases",
+      "Worker summaries from .boss/project-config.json"
+    ],
     "optional": []
   },
   "outputs": {
@@ -1289,6 +1412,7 @@ All workers use same `container-config.json`:
 **Role**: Performs security reviews, threat modeling, vulnerability scanning, and ensures security compliance.
 
 **Primary Outputs**:
+
 - `.specify/specs/[feature]/checklists/security.md` (Security checklist)
 - Threat model documentation
 - Security scan reports
@@ -1297,12 +1421,14 @@ All workers use same `container-config.json`:
 **Primary Spec-Kit Command**: `/speckit.checklist`
 
 **Unique Characteristics**:
+
 - Security by Design - involved early in planning
 - Threat modeling during planning phase
 - Security scanning in CI/CD
 - OWASP Top 10 compliance
 
 **Expected Outputs for Schema**:
+
 ```json
 {
   "artifacts": [
@@ -1336,6 +1462,7 @@ All workers use same `container-config.json`:
 ```
 
 **Proposed metadata.json**:
+
 ```json
 {
   "workerType": "security-engineer",
@@ -1353,7 +1480,12 @@ All workers use same `container-config.json`:
         "type": "markdown",
         "description": "Security checklist and threat model",
         "schema": {
-          "sections": ["Threat Model", "Security Requirements", "OWASP Top 10 Compliance", "Vulnerabilities"]
+          "sections": [
+            "Threat Model",
+            "Security Requirements",
+            "OWASP Top 10 Compliance",
+            "Vulnerabilities"
+          ]
         }
       },
       {
@@ -1390,6 +1522,7 @@ All workers use same `container-config.json`:
 **Role**: Sets up CI/CD pipelines, infrastructure as code, monitoring, and deployment processes.
 
 **Primary Outputs**:
+
 - `.github/workflows/*.yml` (CI/CD pipeline configs)
 - `terraform/` or infrastructure code
 - `.specify/specs/[feature]/quickstart.md` (Deployment instructions)
@@ -1398,6 +1531,7 @@ All workers use same `container-config.json`:
 **Primary Spec-Kit Command**: `/speckit.analyze`
 
 **Unique Characteristics**:
+
 - Infrastructure as Code (Terraform, CloudFormation)
 - CI/CD automation (GitHub Actions, GitLab CI, etc.)
 - Monitoring and observability
@@ -1405,6 +1539,7 @@ All workers use same `container-config.json`:
 - Disaster recovery
 
 **Expected Outputs for Schema**:
+
 ```json
 {
   "artifacts": [
@@ -1438,6 +1573,7 @@ All workers use same `container-config.json`:
 ```
 
 **Proposed metadata.json**:
+
 ```json
 {
   "workerType": "devops-engineer",
@@ -1500,6 +1636,7 @@ All workers use same `container-config.json`:
 **Role**: Creates comprehensive documentation (API docs, user guides, developer docs, quickstart).
 
 **Primary Outputs**:
+
 - `docs/api/**/*.md` (API documentation)
 - `docs/user-guide.md` (User guide)
 - `docs/developer-guide.md` (Developer documentation)
@@ -1508,6 +1645,7 @@ All workers use same `container-config.json`:
 **Primary Spec-Kit Command**: `/speckit.checklist`
 
 **Unique Characteristics**:
+
 - Documentation as Code (version-controlled)
 - API documentation with examples
 - User-facing documentation
@@ -1515,6 +1653,7 @@ All workers use same `container-config.json`:
 - Code examples must be tested
 
 **Expected Outputs for Schema**:
+
 ```json
 {
   "artifacts": [
@@ -1546,6 +1685,7 @@ All workers use same `container-config.json`:
 ```
 
 **Proposed metadata.json**:
+
 ```json
 {
   "workerType": "technical-writer",
@@ -1611,6 +1751,7 @@ All workers use same `container-config.json`:
 **Role**: Represents business and user needs, prioritizes user stories, validates acceptance criteria.
 
 **Primary Outputs**:
+
 - Prioritized user stories in spec.md (P1, P2, P3)
 - Business requirements documentation
 - Acceptance criteria validation
@@ -1618,6 +1759,7 @@ All workers use same `container-config.json`:
 **Primary Spec-Kit Commands**: `/speckit.clarify`, `/speckit.specify`
 
 **Unique Characteristics**:
+
 - Business value focus
 - User-centric approach
 - Prioritization based on business impact
@@ -1625,6 +1767,7 @@ All workers use same `container-config.json`:
 - Validates implementations meet business requirements
 
 **Expected Outputs for Schema**:
+
 ```json
 {
   "artifacts": [
@@ -1650,6 +1793,7 @@ All workers use same `container-config.json`:
 ```
 
 **Proposed metadata.json**:
+
 ```json
 {
   "workerType": "product-owner",
@@ -1700,12 +1844,14 @@ All workers use same `container-config.json`:
 **Issue**: Architect's CLAUDE.md describes schema-based output (lines 11-76), while all other workers' CLAUDE.md files describe manual project-config.json updates.
 
 **Impact**:
+
 - Confusion for workers about how to communicate with BOSS
 - Risk of workers writing JSON incorrectly
 - Inconsistent manifest files
 - Harder to validate outputs
 
 **Recommendation**:
+
 1. **CHOOSE SCHEMA-BASED APPROACH** (from Architect's CLAUDE.md)
    - Workers output JSON at end of work
    - Claude Code validates against schema (--output-format json --json-schema flags)
@@ -1719,7 +1865,8 @@ All workers use same `container-config.json`:
 4. **DOCUMENT IN CONDUCTOR** how schema validation works
 
 **Files to Update**:
-- All 15 worker-configs/*/CLAUDE.md files (remove project-config.json update sections)
+
+- All 15 worker-configs/\*/CLAUDE.md files (remove project-config.json update sections)
 - Add JSON schema definitions to conductor-mcp
 
 ---
@@ -1729,12 +1876,14 @@ All workers use same `container-config.json`:
 **Issue**: NO worker has a metadata.json file. All metadata is embedded in prompt.md and CLAUDE.md as text.
 
 **Impact**:
+
 - Cannot programmatically validate worker outputs
 - Cannot enforce schema validation
 - Hard to query "what does this worker produce?"
 - No machine-readable worker specifications
 
 **Recommendation**:
+
 1. **CREATE metadata.json for each worker** using the proposed schemas in this review
 2. **VALIDATE metadata.json** against a master schema
 3. **USE metadata.json** in Conductor to:
@@ -1744,6 +1893,7 @@ All workers use same `container-config.json`:
    - Enable dynamic worker discovery
 
 **Example metadata.json structure**:
+
 ```json
 {
   "workerType": "string",
@@ -1782,17 +1932,20 @@ All workers use same `container-config.json`:
 **Issue**: All prompt.md files use template variables (${workerName}, ${phase}, etc.) but resolution process is undocumented.
 
 **Impact**:
+
 - Unclear how templates are processed
 - Risk of unresolved variables in worker prompts
 - Hard to test worker configurations
 
 **Recommendation**:
+
 1. **DOCUMENT template resolution** in conductor-mcp README
 2. **CREATE template processor** that validates all variables are resolved
 3. **ADD TEST** to verify template resolution works correctly
 4. **CONSIDER** using metadata.json values to resolve templates
 
 **Template Variables Used**:
+
 - `${workerName}` - Worker type (e.g., "architect", "clarifier")
 - `${phase}` - Development phase number or description
 - `${workerRoleDescription}` - Role description from metadata.json
@@ -1806,17 +1959,19 @@ All workers use same `container-config.json`:
 **Issue**: All workers have `.claude/{agents,commands,skills}/` directories with only .gitkeep files.
 
 **Impact**:
+
 - Missing opportunity for worker-specific skills/commands
 - Workers can't leverage specialized agents
 - No custom commands for common tasks
 
 **Recommendation**:
+
 1. **POPULATE .claude/skills/** with worker-specific skills:
    - architect: constitution-writer.md, architecture-review.md
    - clarifier: question-generator.md, ambiguity-detector.md
    - spec-writer: bdd-formatter.md, acceptance-criteria-generator.md
    - planner: task-breakdown.md, dependency-analyzer.md
-   - developer-*: tdd-helper.md, code-generator.md
+   - developer-\*: tdd-helper.md, code-generator.md
    - tester: test-generator.md, coverage-analyzer.md
    - etc.
 
@@ -1836,13 +1991,15 @@ All workers use same `container-config.json`:
 
 ### 5. Artifact Path Consistency (LOW PRIORITY)
 
-**Issue**: Some artifact paths use placeholders ([feature-name], [feature]), some use wildcard (**), and some use specific names.
+**Issue**: Some artifact paths use placeholders ([feature-name], [feature]), some use wildcard (\*\*), and some use specific names.
 
 **Impact**:
+
 - Inconsistent expectations
 - Hard to validate artifact presence
 
 **Recommendation**:
+
 1. **STANDARDIZE placeholder format**: Use `[feature-id]` consistently
 2. **DOCUMENT path conventions** in conductor-mcp
 3. **CREATE path resolver** that converts placeholders to actual paths
@@ -1929,6 +2086,7 @@ Phase 10: Consolidation
 ### Constitution Compliance (Phase 5 - Reviewer)
 
 **Validates**:
+
 - TDD compliance (tests before implementation)
 - BDD compliance (Given/When/Then format)
 - Documentation requirements addressed
@@ -1943,6 +2101,7 @@ Phase 10: Consolidation
 ### Code Quality (Phase 9 - Code Reviewer)
 
 **Validates**:
+
 - Code quality (readability, maintainability, performance)
 - Test quality (coverage, clarity, edge cases)
 - Architecture compliance
@@ -1957,6 +2116,7 @@ Phase 10: Consolidation
 ### Final Quality Gate (Phase 10 - Consolidator)
 
 **Validates**:
+
 - All worker branches merged successfully
 - Integration tests pass
 - Documentation completeness
@@ -2050,7 +2210,17 @@ Phase 10: Consolidation
               "path": { "type": "string" },
               "type": {
                 "type": "string",
-                "enum": ["markdown", "code", "test", "yaml", "json", "directory", "report", "git-branch", "storybook"]
+                "enum": [
+                  "markdown",
+                  "code",
+                  "test",
+                  "yaml",
+                  "json",
+                  "directory",
+                  "report",
+                  "git-branch",
+                  "storybook"
+                ]
               },
               "description": { "type": "string" },
               "schema": { "type": "object" },
@@ -2067,7 +2237,16 @@ Phase 10: Consolidation
               "path": { "type": "string" },
               "type": {
                 "type": "string",
-                "enum": ["markdown", "code", "test", "yaml", "json", "directory", "report", "storybook"]
+                "enum": [
+                  "markdown",
+                  "code",
+                  "test",
+                  "yaml",
+                  "json",
+                  "directory",
+                  "report",
+                  "storybook"
+                ]
               },
               "description": { "type": "string" },
               "schema": { "type": "object" },
@@ -2236,7 +2415,7 @@ Each worker adds specific fields to the base schema:
 - **spec-writer**: `userStoriesWritten: number`, `acceptanceCriteriaDefined: number`
 - **planner**: `tasksBrokenDown: number`, `parallelTasksIdentified: number`
 - **reviewer**: `complianceChecksPerformed: string[]`, `violations: object[]`, `approvalStatus: string`
-- **developer-***: `testsPassed: boolean`, `coverageAchieved: number`
+- **developer-\***: `testsPassed: boolean`, `coverageAchieved: number`
 - **tester**: `testsCreated: number`, `coverageAchieved: number`, `mutationScore: number`
 - **code-reviewer**: `issuesFound: number`, `issuesResolved: number`, `approvalStatus: string`
 - **consolidator**: `branchesMerged: number`, `integrationTestsPassed: boolean`
@@ -2258,6 +2437,7 @@ This comprehensive review analyzed all 15 worker configurations in conductor-mcp
 5. **LOW**: Inconsistent artifact path conventions
 
 **Recommended Approach**:
+
 - Use schema-based communication (from Architect's CLAUDE.md)
 - Create metadata.json for each worker (schemas provided in this review)
 - Populate .claude/ directories with worker-specific skills/commands
@@ -2265,6 +2445,7 @@ This comprehensive review analyzed all 15 worker configurations in conductor-mcp
 - Standardize artifact path conventions
 
 **Benefits**:
+
 - Automatic output validation
 - Reduced human error
 - Consistent worker behavior

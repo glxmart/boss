@@ -43,4 +43,3 @@ describe('start-boss-sh generator', () => {
     expect(content).toContain('command -v cursor');
   });
 });
-

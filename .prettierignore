@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+pnpm-lock.yaml
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.husky/_
+
+# Boss specific
+.boss/
+.container-use/
+.changeset/
+
+# Docker
+docker-compose.override.yml
+
+# Templates and assets (managed separately)
+boss-cli/templates/
+boss-cli/assets/
+conductor-mcp/worker-configs/
+
+# Generated files
+*.tsbuildinfo

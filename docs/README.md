@@ -16,30 +16,30 @@ Complete documentation for the Business-Orchestrated Software System (BOSS).
 
 ### Core Documentation
 
-| Document | Purpose | Reading Time |
-|----------|---------|--------------|
-| **[BOSS-ENHANCED-VISION.md](./BOSS-ENHANCED-VISION.md)** | Complete system overview, architecture, and examples | 1 hour |
-| **[BOSS-SPEC-KIT-INTEGRATION.md](./BOSS-SPEC-KIT-INTEGRATION.md)** | Spec-driven development methodology (8 phases) | 1.5 hours |
-| **[BOSS-CONTAINER-USE-INTEGRATION.md](./BOSS-CONTAINER-USE-INTEGRATION.md)** | Worker isolation, security, and secret management | 1.5 hours |
-| **[BOSS-GITHUB-INTEGRATION.md](./BOSS-GITHUB-INTEGRATION.md)** | GitHub workflows, PRs, and repository management | 45 min |
+| Document                                                                     | Purpose                                              | Reading Time |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------- | ------------ |
+| **[BOSS-ENHANCED-VISION.md](./BOSS-ENHANCED-VISION.md)**                     | Complete system overview, architecture, and examples | 1 hour       |
+| **[BOSS-SPEC-KIT-INTEGRATION.md](./BOSS-SPEC-KIT-INTEGRATION.md)**           | Spec-driven development methodology (8 phases)       | 1.5 hours    |
+| **[BOSS-CONTAINER-USE-INTEGRATION.md](./BOSS-CONTAINER-USE-INTEGRATION.md)** | Worker isolation, security, and secret management    | 1.5 hours    |
+| **[BOSS-GITHUB-INTEGRATION.md](./BOSS-GITHUB-INTEGRATION.md)**               | GitHub workflows, PRs, and repository management     | 45 min       |
 
 ### Setup Guides
 
-| Document | Purpose |
-|----------|---------|
+| Document                                       | Purpose                                                                     |
+| ---------------------------------------------- | --------------------------------------------------------------------------- |
 | **[BOSS-HOST-SETUP.md](./BOSS-HOST-SETUP.md)** | Complete host machine setup (Docker, 1Password, Container-Use, MCP servers) |
-| **[DOCKER-SETUP.md](./DOCKER-SETUP.md)** | Local infrastructure setup (PostgreSQL, Qdrant, embeddings) |
+| **[DOCKER-SETUP.md](./DOCKER-SETUP.md)**       | Local infrastructure setup (PostgreSQL, Qdrant, embeddings)                 |
 
 ### Development & Planning
 
-| Document | Purpose |
-|----------|---------|
-| **[CONTRIBUTING_DOCS.md](./CONTRIBUTING_DOCS.md)** | **📝 Documentation guidelines - when and where to add docs** |
-| **[PHASE_1_COMPLETE.md](./PHASE_1_COMPLETE.md)** | Phase 1 completion summary and achievements |
-| **[PHASE_2_COMPLETE.md](./PHASE_2_COMPLETE.md)** | Phase 2 completion summary and achievements |
-| **[OPTIMIZATION_PLAN.md](./OPTIMIZATION_PLAN.md)** | Performance optimization strategy and plans |
-| **[PERFORMANCE_ANALYSIS.md](./PERFORMANCE_ANALYSIS.md)** | System performance analysis and metrics |
-| **[OAUTH_TOKEN_IMPLEMENTATION.md](./OAUTH_TOKEN_IMPLEMENTATION.md)** | OAuth token implementation details |
+| Document                                                             | Purpose                                                      |
+| -------------------------------------------------------------------- | ------------------------------------------------------------ |
+| **[CONTRIBUTING_DOCS.md](./CONTRIBUTING_DOCS.md)**                   | **📝 Documentation guidelines - when and where to add docs** |
+| **[PHASE_1_COMPLETE.md](./PHASE_1_COMPLETE.md)**                     | Phase 1 completion summary and achievements                  |
+| **[PHASE_2_COMPLETE.md](./PHASE_2_COMPLETE.md)**                     | Phase 2 completion summary and achievements                  |
+| **[OPTIMIZATION_PLAN.md](./OPTIMIZATION_PLAN.md)**                   | Performance optimization strategy and plans                  |
+| **[PERFORMANCE_ANALYSIS.md](./PERFORMANCE_ANALYSIS.md)**             | System performance analysis and metrics                      |
+| **[OAUTH_TOKEN_IMPLEMENTATION.md](./OAUTH_TOKEN_IMPLEMENTATION.md)** | OAuth token implementation details                           |
 
 ---
 
@@ -101,6 +101,7 @@ Complete documentation for the Business-Orchestrated Software System (BOSS).
 **BOSS is NOT a standalone application.**
 
 BOSS is **Claude Code or Cursor** configured to act as an orchestrator through:
+
 - **MCP Servers** - Container-Use, GitHub, Knowledge Base
 - **1Password CLI** - Secret management
 - **BOSS Skills** - Orchestration capabilities
@@ -153,16 +154,16 @@ BOSS is **Claude Code or Cursor** configured to act as an orchestrator through:
 
 ## 📊 Key Features
 
-| Feature | Benefit |
-|---------|---------|
-| **5-minute bootstrap** | Complete project setup with all configs |
-| **Spec-driven workflow** | Executable specifications, not documentation |
-| **Secure execution** | Workers isolated, secrets from 1Password |
-| **Agent discovery** | Workers identify secret needs automatically |
-| **Parallel execution** | 5 workers simultaneously without conflicts |
-| **Quality gates** | TDD, 80%+ coverage, mutation testing enforced |
-| **Knowledge base** | Organizational memory compounds over time |
-| **Human governance** | Approve at strategic gates, not micro-manage |
+| Feature                  | Benefit                                       |
+| ------------------------ | --------------------------------------------- |
+| **5-minute bootstrap**   | Complete project setup with all configs       |
+| **Spec-driven workflow** | Executable specifications, not documentation  |
+| **Secure execution**     | Workers isolated, secrets from 1Password      |
+| **Agent discovery**      | Workers identify secret needs automatically   |
+| **Parallel execution**   | 5 workers simultaneously without conflicts    |
+| **Quality gates**        | TDD, 80%+ coverage, mutation testing enforced |
+| **Knowledge base**       | Organizational memory compounds over time     |
+| **Human governance**     | Approve at strategic gates, not micro-manage  |
 
 ---
 
@@ -238,17 +239,21 @@ container-use delete <env-id>
 ### By Topic
 
 **Architecture & Design:**
+
 - [BOSS-ENHANCED-VISION.md](./BOSS-ENHANCED-VISION.md) - Complete architecture
 - [BOSS-SPEC-KIT-INTEGRATION.md](./BOSS-SPEC-KIT-INTEGRATION.md) - Workflow design
 
 **Setup & Configuration:**
+
 - [BOSS-HOST-SETUP.md](./BOSS-HOST-SETUP.md) - Host machine setup
 - [DOCKER-SETUP.md](./DOCKER-SETUP.md) - Infrastructure setup
 
 **Security & Execution:**
+
 - [BOSS-CONTAINER-USE-INTEGRATION.md](./BOSS-CONTAINER-USE-INTEGRATION.md) - Worker isolation
 
 **Integration:**
+
 - [BOSS-GITHUB-INTEGRATION.md](./BOSS-GITHUB-INTEGRATION.md) - GitHub workflows
 
 ---

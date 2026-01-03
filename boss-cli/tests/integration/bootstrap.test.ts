@@ -5,7 +5,7 @@ import {
   cleanupTestProject,
   fileExists,
   readProjectFile,
-  listProjectFiles
+  listProjectFiles,
 } from '../helpers/test-utils.js';
 import { getTestProjectPath } from '../setup.js';
 
@@ -26,7 +26,7 @@ describe('Bootstrap Integration Tests', () => {
       quality: 'startup' as const,
       name: projectName,
       nonInteractive: true,
-      projectPath: getTestProjectPath(projectName)
+      projectPath: getTestProjectPath(projectName),
     };
 
     await bootstrapCommand(options);
@@ -48,7 +48,7 @@ describe('Bootstrap Integration Tests', () => {
       quality: 'startup' as const,
       name: projectName,
       nonInteractive: true,
-      projectPath: getTestProjectPath(projectName)
+      projectPath: getTestProjectPath(projectName),
     };
 
     await bootstrapCommand(options);
@@ -66,7 +66,7 @@ describe('Bootstrap Integration Tests', () => {
       quality: 'startup' as const,
       name: projectName,
       nonInteractive: true,
-      projectPath: getTestProjectPath(projectName)
+      projectPath: getTestProjectPath(projectName),
     };
 
     await bootstrapCommand(options);
@@ -80,7 +80,7 @@ describe('Bootstrap Integration Tests', () => {
       'developer-frontend',
       'developer-backend',
       'developer-fullstack',
-      'consolidator'
+      'consolidator',
     ];
 
     for (const worker of workers) {
@@ -97,7 +97,7 @@ describe('Bootstrap Integration Tests', () => {
       quality: 'startup' as const,
       name: projectName,
       nonInteractive: true,
-      projectPath: getTestProjectPath(projectName)
+      projectPath: getTestProjectPath(projectName),
     };
 
     await bootstrapCommand(options);
@@ -116,7 +116,7 @@ describe('Bootstrap Integration Tests', () => {
       quality: 'startup' as const,
       name: projectName,
       nonInteractive: true,
-      projectPath: getTestProjectPath(projectName)
+      projectPath: getTestProjectPath(projectName),
     };
 
     await bootstrapCommand(options);
@@ -132,7 +132,7 @@ describe('Bootstrap Integration Tests', () => {
       quality: 'startup' as const,
       name: projectName,
       nonInteractive: true,
-      projectPath: getTestProjectPath(projectName)
+      projectPath: getTestProjectPath(projectName),
     };
 
     await bootstrapCommand(options);
@@ -147,7 +147,7 @@ describe('Bootstrap Integration Tests', () => {
       quality: 'startup' as const,
       name: projectName,
       nonInteractive: true,
-      projectPath: getTestProjectPath(projectName)
+      projectPath: getTestProjectPath(projectName),
     };
 
     await bootstrapCommand(options);
@@ -164,7 +164,7 @@ describe('Bootstrap Integration Tests', () => {
       quality: 'startup' as const,
       name: projectName,
       nonInteractive: true,
-      projectPath: getTestProjectPath(projectName)
+      projectPath: getTestProjectPath(projectName),
     };
 
     await bootstrapCommand(options);
@@ -182,7 +182,7 @@ describe('Bootstrap Integration Tests', () => {
       quality: 'startup' as const,
       name: projectName,
       nonInteractive: true,
-      projectPath: getTestProjectPath(projectName)
+      projectPath: getTestProjectPath(projectName),
     };
 
     await bootstrapCommand(options);
@@ -196,13 +196,13 @@ describe('Bootstrap Integration Tests', () => {
       quality: 'startup' as const,
       name: projectName,
       nonInteractive: true,
-      projectPath: getTestProjectPath(projectName)
+      projectPath: getTestProjectPath(projectName),
     };
 
     await bootstrapCommand(options);
 
     expect(await fileExists(projectName, 'docs/TEMPLATE.md')).toBe(true);
-    
+
     const content = await readProjectFile(projectName, 'docs/TEMPLATE.md');
     expect(content).toContain('Template Documentation: Blank');
     expect(content).toContain(projectName);
@@ -217,13 +217,13 @@ describe('Bootstrap Integration Tests', () => {
       quality: 'production' as const,
       name: projectName,
       nonInteractive: true,
-      projectPath: getTestProjectPath(projectName)
+      projectPath: getTestProjectPath(projectName),
     };
 
     await bootstrapCommand(options);
 
     expect(await fileExists(projectName, 'docs/TEMPLATE.md')).toBe(true);
-    
+
     const content = await readProjectFile(projectName, 'docs/TEMPLATE.md');
     expect(content).toContain('Template Documentation: Next.js App (Turbo)');
     expect(content).toContain('Next.js');
@@ -231,4 +231,3 @@ describe('Bootstrap Integration Tests', () => {
     expect(content).toContain('production');
   });
 });
-

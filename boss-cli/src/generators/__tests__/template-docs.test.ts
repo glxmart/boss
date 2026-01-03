@@ -112,4 +112,3 @@ describe('template-docs generator', () => {
     expect(content).toContain('Next Steps');
   });
 });
-

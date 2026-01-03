@@ -6,7 +6,7 @@ import type { ProjectConfig } from '../types/index.js';
 
 export async function generateClaudeFolder(
   projectPath: string,
-  config: ProjectConfig
+  _config: ProjectConfig
 ): Promise<void> {
   // Detect which IDE is available and only generate that folder
   const ideFolder = await detectIDE();
@@ -18,19 +18,19 @@ async function detectIDE(): Promise<'.claude' | '.cursor'> {
   const fs = await import('fs-extra');
   // Use process.env.HOME if available (for testing), otherwise fall back to os.homedir()
   const homeDir = process.env.HOME || os.homedir();
-  
+
   // Check for Claude Code config directory first (default/preferred)
   const claudeCodeDir = path.join(homeDir, '.config', 'claude-code');
   if (await fs.pathExists(claudeCodeDir)) {
     return '.claude';
   }
-  
+
   // Check for Cursor config directory
   const cursorDir = path.join(homeDir, '.cursor');
   if (await fs.pathExists(cursorDir)) {
     return '.cursor';
   }
-  
+
   // Check for CLI commands as fallback
   try {
     await execa('claude', ['--version'], { reject: false });
@@ -51,7 +51,7 @@ async function generateIDEFolder(
   folderName: '.claude' | '.cursor'
 ): Promise<void> {
   const idePath = path.join(projectPath, folderName);
-  
+
   // Create directory structure
   await ensureDirectory(path.join(idePath, 'rules'));
   await ensureDirectory(path.join(idePath, 'commands'));
@@ -101,24 +101,17 @@ async function generateBossCommands(claudePath: string): Promise<void> {
 
 async function generateSettings(claudePath: string): Promise<void> {
   const settings = {
-    "spec-kit": {
-      "enabled": true,
-      "path": ".specify"
-    }
+    'spec-kit': {
+      enabled: true,
+      path: '.specify',
+    },
   };
 
-  await writeFile(
-    path.join(claudePath, 'settings.json'),
-    JSON.stringify(settings, null, 2)
-  );
+  await writeFile(path.join(claudePath, 'settings.json'), JSON.stringify(settings, null, 2));
 }
 
 async function generateSettingsLocal(claudePath: string): Promise<void> {
   // Load settings.local.json template
   const content = await loadTemplate('claude-folder/settings.local.json');
-  await writeFile(
-    path.join(claudePath, 'settings.local.json'),
-    content
-  );
+  await writeFile(path.join(claudePath, 'settings.local.json'), content);
 }
-

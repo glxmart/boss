@@ -7,12 +7,15 @@ import {
   promptGitHubConfig,
   promptMCPScope,
   confirmBootstrap,
-  TEMPLATES,
-  QUALITY_PRESETS
 } from '../utils/prompts.js';
-import { validateProjectName, validateTemplate, validateQualityPreset, validateMCPScope } from '../utils/validators.js';
+import {
+  validateProjectName,
+  validateTemplate,
+  validateQualityPreset,
+  validateMCPScope,
+} from '../utils/validators.js';
 import { validateProjectDirectory } from '../utils/validators.js';
-import type { BootstrapOptions, ProjectConfig } from '../types/index.js';
+import type { BootstrapOptions, ProjectConfig, ProjectConfigFile } from '../types/index.js';
 import { initGitRepository } from '../utils/git.js';
 import { generateProjectStructure } from '../generators/project-structure.js';
 import { generateBossConfig } from '../generators/boss-config.js';
@@ -162,13 +165,17 @@ export async function bootstrapCommand(options: BootstrapOptions): Promise<void>
       GIT_AUTHOR_NAME: 'The BOSS',
       GIT_AUTHOR_EMAIL: 'boss@glxmart.com',
       GIT_COMMITTER_NAME: 'The BOSS',
-      GIT_COMMITTER_EMAIL: 'boss@glxmart.com'
+      GIT_COMMITTER_EMAIL: 'boss@glxmart.com',
     };
     // Use --no-verify to skip hooks (dependencies aren't installed yet)
-    await execa('git', ['commit', '--allow-empty', '-m', 'chore: initial empty commit', '--no-verify'], {
-      cwd: projectPath,
-      env: gitEnv
-    });
+    await execa(
+      'git',
+      ['commit', '--allow-empty', '-m', 'chore: initial empty commit', '--no-verify'],
+      {
+        cwd: projectPath,
+        env: gitEnv,
+      }
+    );
     logger.stopSpinner(true, 'Empty main branch committed');
 
     // CRITICAL: Create feature/boss-initial-setup branch BEFORE committing files
@@ -186,7 +193,7 @@ export async function bootstrapCommand(options: BootstrapOptions): Promise<void>
     // Main branch stays empty - all files go via feature branch/PR
     logger.startSpinner('Committing all bootstrap files to feature branch...');
     await addFiles(projectPath, ['.']);
-    
+
     // Verify test file is included before committing
     const { stdout: testFileCheck } = await execa('git', ['ls-files'], { cwd: projectPath });
     const hasTestFile = /\.(test|spec)\.(ts|tsx|js|jsx)$/.test(testFileCheck);
@@ -196,7 +203,7 @@ export async function bootstrapCommand(options: BootstrapOptions): Promise<void>
       await ensureTestFileExists(projectPath, config);
       await addFiles(projectPath, ['tests/']);
     }
-    
+
     await commit(projectPath, 'chore: BOSS bootstrap - initial project structure');
     logger.stopSpinner(true, 'All bootstrap files committed to feature branch');
 
@@ -205,12 +212,15 @@ export async function bootstrapCommand(options: BootstrapOptions): Promise<void>
     logger.success(`Project "${config.name}" has been bootstrapped successfully!`);
     logger.info(`\nNext steps:`);
     logger.info(`  1. cd ${config.name}`);
-    logger.info(`  2. pnpm install (installs dependencies and initializes Husky via prepare script)`);
+    logger.info(
+      `  2. pnpm install (installs dependencies and initializes Husky via prepare script)`
+    );
     logger.info(`  3. docker-compose up -d`);
     logger.info(`  4. Open project in Claude Code/Cursor`);
     logger.info(`  5. Run: ./start-boss.sh`);
-    logger.info(`  6. BOSS will complete initial setup (GitHub repo, remote, branch protection, etc.)`);
-
+    logger.info(
+      `  6. BOSS will complete initial setup (GitHub repo, remote, branch protection, etc.)`
+    );
   } catch (error) {
     logger.error(`Bootstrap failed: ${error instanceof Error ? error.message : String(error)}`);
     throw error;
@@ -229,14 +239,16 @@ async function initializeHuskyAfterPackageJson(projectPath: string): Promise<voi
     // After pnpm install, the prepare script will ensure husky is properly installed
     await execa('npx', ['husky'], {
       cwd: projectPath,
-      stdio: 'pipe'
+      stdio: 'pipe',
     });
     // Husky initialized successfully (silent success)
-  } catch (error) {
+  } catch {
     // If husky is not available, log warning but continue
     // The hooks are in .husky/ directory and prepare script will install them when dependencies are installed
     logger.warning('Husky initialization skipped (husky not available via npx).');
-    logger.warning('Hooks are in .husky/ directory. Run "pnpm install" to activate hooks (prepare script will run husky).');
+    logger.warning(
+      'Hooks are in .husky/ directory. Run "pnpm install" to activate hooks (prepare script will run husky).'
+    );
   }
 }
 
@@ -247,22 +259,22 @@ async function ensureTestFileExists(projectPath: string, config: ProjectConfig):
   const fs = fsModule.default;
   const { writeFile } = await import('../utils/file-system.js');
   const { loadTemplate: loadAssetTemplate } = await import('../utils/template-loader.js');
-  
+
   // Check if any test files exist
   const testsDir = path.join(projectPath, 'tests');
-  
+
   let hasTestFile = false;
   if (await fs.pathExists(testsDir)) {
-    const files = await fs.readdir(testsDir, { recursive: true }) as string[];
+    const files = (await fs.readdir(testsDir, { recursive: true })) as string[];
     hasTestFile = files.some((f) => {
       return /\.(test|spec)\.(ts|tsx|js|jsx)$/.test(f);
     });
   }
-  
+
   // Also check root and src directories
   if (!hasTestFile) {
     try {
-      const rootFiles = await fs.readdir(projectPath) as string[];
+      const rootFiles = await fs.readdir(projectPath);
       hasTestFile = rootFiles.some((f) => {
         return /\.(test|spec)\.(ts|tsx|js|jsx)$/.test(f);
       });
@@ -270,12 +282,12 @@ async function ensureTestFileExists(projectPath: string, config: ProjectConfig):
       // Ignore errors
     }
   }
-  
+
   if (!hasTestFile) {
     const srcDir = path.join(projectPath, 'src');
     if (await fs.pathExists(srcDir)) {
       try {
-        const srcFiles = await fs.readdir(srcDir, { recursive: true }) as string[];
+        const srcFiles = (await fs.readdir(srcDir, { recursive: true })) as string[];
         hasTestFile = srcFiles.some((f) => {
           return /\.(test|spec)\.(ts|tsx|js|jsx)$/.test(f);
         });
@@ -317,9 +329,13 @@ async function createInitialSetupBranch(projectPath: string): Promise<void> {
 
   // CRITICAL: Verify we're on main branch before creating feature branch
   const { execa } = await import('execa');
-  const { stdout: currentBranch } = await execa('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: projectPath });
+  const { stdout: currentBranch } = await execa('git', ['rev-parse', '--abbrev-ref', 'HEAD'], {
+    cwd: projectPath,
+  });
   if (currentBranch.trim() !== 'main' && currentBranch.trim() !== 'master') {
-    logger.warning(`Expected to be on main branch, but on ${currentBranch.trim()}. Switching to main...`);
+    logger.warning(
+      `Expected to be on main branch, but on ${currentBranch.trim()}. Switching to main...`
+    );
     await execa('git', ['checkout', 'main'], { cwd: projectPath });
   }
 
@@ -334,7 +350,7 @@ async function createInitialSetupBranch(projectPath: string): Promise<void> {
   }
 
   const projectConfigContent = await readFile(projectConfigPath);
-  const projectConfig = JSON.parse(projectConfigContent);
+  const projectConfig = JSON.parse(projectConfigContent) as ProjectConfigFile;
   const now = new Date().toISOString();
 
   // Update branch information
@@ -342,7 +358,7 @@ async function createInitialSetupBranch(projectPath: string): Promise<void> {
   if (projectConfig.repository?.branches) {
     projectConfig.repository.branches['feature/boss-initial-setup'] = {
       exists: true,
-      lastCommit: null
+      lastCommit: null,
     };
   }
 
@@ -352,7 +368,7 @@ async function createInitialSetupBranch(projectPath: string): Promise<void> {
 
   // Mark branch creation operation as completed
   const branchOp = projectConfig.initialization.operationsRequired?.find(
-    (op: { operation: string }) => op.operation === 'create-initial-setup-branch'
+    (op) => op.operation === 'create-initial-setup-branch'
   );
   if (branchOp) {
     branchOp.status = 'completed';
@@ -363,13 +379,14 @@ async function createInitialSetupBranch(projectPath: string): Promise<void> {
   projectConfig.currentWorkflow = {
     stage: 'initialization',
     phase: 'remote-setup',
-    status: 'awaiting-remote-creation'
+    status: 'awaiting-remote-creation',
   };
 
   // Update metadata
   if (projectConfig.metadata) {
     projectConfig.metadata.lastUpdated = now;
-    projectConfig.metadata.notes = 'Initial setup branch created. All bootstrap files will be committed to feature branch. Ready for remote repository setup.';
+    projectConfig.metadata.notes =
+      'Initial setup branch created. All bootstrap files will be committed to feature branch. Ready for remote repository setup.';
   }
 
   await writeFile(projectConfigPath, JSON.stringify(projectConfig, null, 2));
@@ -446,11 +463,10 @@ async function collectConfiguration(options: BootstrapOptions): Promise<ProjectC
   }
 
   return {
-    name: name!,
-    template: template!,
-    quality: quality!,
+    name: name,
+    template: template,
+    quality: quality,
     githubRepo,
-    githubOrg
+    githubOrg,
   };
 }
-

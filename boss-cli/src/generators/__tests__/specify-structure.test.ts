@@ -53,8 +53,8 @@ describe('specify-structure generator', () => {
     const bashPath = path.join(scriptsPath, 'bash');
     if (await fs.pathExists(bashPath)) {
       const bashFiles = await fs.readdir(bashPath);
-      const shFiles = bashFiles.filter(f => f.endsWith('.sh'));
-      
+      const shFiles = bashFiles.filter((f) => f.endsWith('.sh'));
+
       if (shFiles.length > 0) {
         // Check that at least one script is executable
         const firstScript = path.join(bashPath, shFiles[0]);
@@ -77,4 +77,3 @@ describe('specify-structure generator', () => {
     }
   });
 });
-

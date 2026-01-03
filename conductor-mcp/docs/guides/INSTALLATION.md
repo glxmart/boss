@@ -36,6 +36,7 @@ npm list @glxmart/conductor-mcp
 ```
 
 **Expected output:**
+
 ```
 @glxmart/boss-cli@1.0.0
 └── @glxmart/conductor-mcp@0.1.0
@@ -46,6 +47,7 @@ npm list @glxmart/conductor-mcp
 When `boss bootstrap` runs, it generates MCP configurations with Conductor:
 
 **Generated config includes:**
+
 ```json
 {
   "mcpServers": {
@@ -74,6 +76,7 @@ npm run dev
 ```
 
 **Expected output:**
+
 ```
 Usage: conductor-mcp stdio
 
@@ -82,11 +85,13 @@ It should be configured in your MCP client (e.g., Claude Code, Cursor).
 ```
 
 **Test with stdio mode:**
+
 ```bash
 timeout 1 npm run dev -- stdio
 ```
 
 **Expected output:**
+
 ```json
 {"timestamp":"2026-01-01T...:...Z","level":"info","message":"Conductor MCP server started"}
 {"timestamp":"2026-01-01T...:...Z","level":"info","message":"Received SIGTERM, shutting down"}
@@ -99,11 +104,13 @@ timeout 1 npm run dev -- stdio
 ### For Development/Testing
 
 1. **Install container-use globally:**
+
    ```bash
    npm install -g container-use
    ```
 
 2. **Create a test project:**
+
    ```bash
    mkdir test-boss-project
    cd test-boss-project
@@ -112,11 +119,13 @@ timeout 1 npm run dev -- stdio
    ```
 
 3. **Run bootstrap:**
+
    ```bash
    boss bootstrap
    ```
 
 4. **Verify Conductor in config:**
+
    ```bash
    cat .mcp.json | grep -A 5 "conductor"
    ```
@@ -132,12 +141,14 @@ timeout 1 npm run dev -- stdio
 When publishing to npm:
 
 1. **Update conductor-mcp version:**
+
    ```bash
    cd /Users/joe/code-glx/boss/conductor-mcp
    npm version patch  # or minor/major
    ```
 
 2. **Publish to npm:**
+
    ```bash
    npm publish --access public
    ```
@@ -146,7 +157,7 @@ When publishing to npm:
    ```json
    {
      "dependencies": {
-       "@glxmart/conductor-mcp": "^0.1.0"  // Use published version
+       "@glxmart/conductor-mcp": "^0.1.0" // Use published version
      }
    }
    ```
@@ -156,16 +167,19 @@ When publishing to npm:
 ## Files Created
 
 ### Documentation
+
 - ✅ `README.md` - General documentation
 - ✅ `BOSS-GUIDE.md` - **BOSS-specific integration guide**
 - ✅ `INSTALLATION.md` - This file
 
 ### Source Code
+
 - ✅ `src/` - 14 TypeScript files
 - ✅ `tests/` - 3 test files (19 tests)
 - ✅ `dist/` - Compiled JavaScript + type definitions
 
 ### Integration
+
 - ✅ Updated `boss-cli/src/generators/mcp-config.ts`
 - ✅ Added to `boss-cli/package.json`
 
@@ -221,6 +235,7 @@ Once configured, BOSS can use these 8 Conductor tools:
 ## Key Benefits
 
 ### Before Conductor
+
 - **6+ manual steps** to spawn a worker
 - **Configuration loading** done by BOSS
 - **Container setup** done by BOSS
@@ -228,6 +243,7 @@ Once configured, BOSS can use these 8 Conductor tools:
 - **Error prone** and complex
 
 ### With Conductor
+
 - **1 simple call** to spawn a worker
 - **Configuration loading** automatic
 - **Container setup** automatic
@@ -243,6 +259,7 @@ Once configured, BOSS can use these 8 Conductor tools:
 ### Issue: "Container-Use MCP is not available"
 
 **Solution:**
+
 ```bash
 npm install -g container-use
 container-use --version
@@ -251,6 +268,7 @@ container-use --version
 ### Issue: "conductor-mcp not found"
 
 **Solution:**
+
 ```bash
 cd /Users/joe/code-glx/boss/boss-cli
 npm install ../conductor-mcp
@@ -260,6 +278,7 @@ npm run build
 ### Issue: MCP config doesn't include conductor
 
 **Solution:**
+
 ```bash
 # Rebuild boss-cli
 cd /Users/joe/code-glx/boss/boss-cli
@@ -275,6 +294,7 @@ boss bootstrap
 ## Support
 
 For detailed usage instructions, see:
+
 - **BOSS-GUIDE.md** - How BOSS uses Conductor
 - **README.md** - General API documentation
 

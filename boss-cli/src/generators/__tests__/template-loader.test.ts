@@ -6,11 +6,11 @@ import type { ProjectConfig } from '../../types/index.js';
 vi.mock('../../utils/file-system.js', () => ({
   copyDirectory: vi.fn(async () => {}),
   writeFile: vi.fn(async () => {}),
-  readFile: vi.fn(async () => '{"name": "test", "version": "1.0.0"}')
+  readFile: vi.fn(async () => '{"name": "test", "version": "1.0.0"}'),
 }));
 
 vi.mock('../../utils/template-loader.js', () => ({
-  loadTemplate: vi.fn(async () => 'template content')
+  loadTemplate: vi.fn(async () => 'template content'),
 }));
 
 // Mock fs-extra
@@ -21,7 +21,7 @@ const mockFs = {
   copy: vi.fn(async () => {}),
   readFile: vi.fn(async () => '{"name": "test", "version": "1.0.0"}'),
   writeFile: vi.fn(async (_file: string, _data: string) => {}),
-  ensureDir: vi.fn(async () => {})
+  ensureDir: vi.fn(async () => {}),
 };
 
 vi.mock('fs-extra', () => ({
@@ -32,7 +32,7 @@ vi.mock('fs-extra', () => ({
   copy: mockFs.copy,
   readFile: mockFs.readFile,
   writeFile: mockFs.writeFile,
-  ensureDir: mockFs.ensureDir
+  ensureDir: mockFs.ensureDir,
 }));
 
 describe('template-loader', () => {
@@ -40,7 +40,7 @@ describe('template-loader', () => {
   const testConfig: ProjectConfig = {
     name: 'test-project',
     template: 'nextjs-app-turbo',
-    quality: 'production'
+    quality: 'production',
   };
 
   beforeEach(() => {
@@ -146,7 +146,7 @@ describe('template-loader', () => {
       const blankConfig: ProjectConfig = {
         name: 'blank-project',
         template: 'blank',
-        quality: 'startup'
+        quality: 'startup',
       };
 
       await loadTemplate(testProjectPath, 'blank', blankConfig);
@@ -160,14 +160,12 @@ describe('template-loader', () => {
     it('should update package.json name for t3-app', async () => {
       mockFs.pathExists.mockResolvedValue(true);
       mockFs.readdir.mockResolvedValue([]);
-      mockFs.readFile.mockResolvedValue(
-        JSON.stringify({ name: 'old-name', version: '1.0.0' })
-      );
+      mockFs.readFile.mockResolvedValue(JSON.stringify({ name: 'old-name', version: '1.0.0' }));
 
       const t3Config: ProjectConfig = {
         name: 'my-t3-app',
         template: 't3-app',
-        quality: 'production'
+        quality: 'production',
       };
 
       await loadTemplate(testProjectPath, 't3-app', t3Config);
@@ -181,14 +179,12 @@ describe('template-loader', () => {
     it('should add pnpm configuration for esbuild in t3-app', async () => {
       mockFs.pathExists.mockResolvedValue(true);
       mockFs.readdir.mockResolvedValue([]);
-      mockFs.readFile.mockResolvedValue(
-        JSON.stringify({ name: 'test', version: '1.0.0' })
-      );
+      mockFs.readFile.mockResolvedValue(JSON.stringify({ name: 'test', version: '1.0.0' }));
 
       await loadTemplate(testProjectPath, 't3-app', testConfig);
 
-      const writeCall = mockFs.writeFile.mock.calls.find(
-        (call) => call[0]?.includes('package.json')
+      const writeCall = mockFs.writeFile.mock.calls.find((call) =>
+        call[0]?.includes('package.json')
       );
       if (writeCall) {
         const packageContent = JSON.parse(writeCall[1]);
@@ -272,19 +268,17 @@ describe('template-loader', () => {
       const templates: Array<'nextjs-app-turbo' | 'api-service-fastify' | 'blank' | 't3-app'> = [
         'nextjs-app-turbo',
         'api-service-fastify',
-        'blank'
+        'blank',
       ];
 
       for (const template of templates) {
         vi.clearAllMocks();
-        mockFs.pathExists
-          .mockResolvedValueOnce(false)
-          .mockResolvedValueOnce(true);
+        mockFs.pathExists.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
 
         const config: ProjectConfig = {
           name: `test-${template}`,
           template,
-          quality: 'production'
+          quality: 'production',
         };
 
         await loadTemplate(testProjectPath, template, config);

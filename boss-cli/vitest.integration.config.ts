@@ -12,13 +12,12 @@ export default defineConfig({
     pool: 'forks',
     poolOptions: {
       forks: {
-        singleFork: true
-      }
+        singleFork: true,
+      },
     },
     // Vitest 4 syntax (but keep poolOptions for backward compatibility)
     singleFork: true,
     // Also disable parallelization at file level
-    fileParallelism: false
-  }
+    fileParallelism: false,
+  },
 });
-

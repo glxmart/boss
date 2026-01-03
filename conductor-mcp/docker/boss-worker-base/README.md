@@ -12,11 +12,11 @@ Pre-configured Docker image for BOSS workers that eliminates 60-90s of setup tim
 
 ## Performance Impact
 
-| Metric | Before | After | Savings |
-|--------|--------|-------|---------|
-| Container Setup | 60-90s | 5-10s | **50-80s** |
-| apt-get operations | 40s | 0s | 40s |
-| npm global installs | 30s | 0s | 30s |
+| Metric              | Before | After | Savings    |
+| ------------------- | ------ | ----- | ---------- |
+| Container Setup     | 60-90s | 5-10s | **50-80s** |
+| apt-get operations  | 40s    | 0s    | 40s        |
+| npm global installs | 30s    | 0s    | 30s        |
 
 ## Usage
 
@@ -178,6 +178,7 @@ dive boss/worker-base:1.0.0
 ## CI/CD Integration
 
 See `.github/workflows/build-docker-images.yml` for automated builds on:
+
 - Push to main (latest tag)
 - Git tags (versioned releases)
 - Pull requests (testing only)
@@ -193,16 +194,19 @@ See `.github/workflows/build-docker-images.yml` for automated builds on:
 ## Maintenance
 
 **Monthly:**
+
 - Update Node.js version if new LTS available
 - Update pnpm and claude-code to latest versions
 - Rebuild and test all workers
 
 **Quarterly:**
+
 - Review system package versions
 - Check for security advisories
 - Optimize image size
 
 **On Breaking Changes:**
+
 - Bump major version (2.0.0)
 - Document migration path
 - Maintain old version for rollback

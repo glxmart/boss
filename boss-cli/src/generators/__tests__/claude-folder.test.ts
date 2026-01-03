@@ -26,7 +26,7 @@ describe('claude-folder generator', () => {
     const config: ProjectConfig = {
       name: 'test',
       template: 'blank',
-      quality: 'startup'
+      quality: 'startup',
     };
 
     await generateClaudeFolder(testDir, config);
@@ -40,7 +40,7 @@ describe('claude-folder generator', () => {
     const config: ProjectConfig = {
       name: 'test',
       template: 'blank',
-      quality: 'startup'
+      quality: 'startup',
     };
 
     await generateClaudeFolder(testDir, config);
@@ -48,14 +48,16 @@ describe('claude-folder generator', () => {
     expect(await fs.pathExists(path.join(testDir, '.claude', 'rules', 'code-style.md'))).toBe(true);
     expect(await fs.pathExists(path.join(testDir, '.claude', 'rules', 'testing.md'))).toBe(true);
     expect(await fs.pathExists(path.join(testDir, '.claude', 'rules', 'security.md'))).toBe(true);
-    expect(await fs.pathExists(path.join(testDir, '.claude', 'rules', 'boss-workflow.md'))).toBe(true);
+    expect(await fs.pathExists(path.join(testDir, '.claude', 'rules', 'boss-workflow.md'))).toBe(
+      true
+    );
   });
 
   it('should generate commands file', async () => {
     const config: ProjectConfig = {
       name: 'test',
       template: 'blank',
-      quality: 'startup'
+      quality: 'startup',
     };
 
     await generateClaudeFolder(testDir, config);
@@ -72,7 +74,7 @@ describe('claude-folder generator', () => {
     const config: ProjectConfig = {
       name: 'test',
       template: 'blank',
-      quality: 'startup'
+      quality: 'startup',
     };
 
     await generateClaudeFolder(testDir, config);
@@ -94,7 +96,7 @@ describe('claude-folder generator', () => {
     const config: ProjectConfig = {
       name: 'test',
       template: 'blank',
-      quality: 'startup'
+      quality: 'startup',
     };
 
     await generateClaudeFolder(testDir, config);
@@ -111,14 +113,14 @@ describe('claude-folder generator', () => {
     const config: ProjectConfig = {
       name: 'test',
       template: 'blank',
-      quality: 'startup'
+      quality: 'startup',
     };
 
     await generateClaudeFolder(testDir, config);
 
     expect(await fs.pathExists(path.join(testDir, '.cursor'))).toBe(true);
     expect(await fs.pathExists(path.join(testDir, '.claude'))).toBe(false);
-    
+
     // Verify Cursor folder has same structure
     expect(await fs.pathExists(path.join(testDir, '.cursor', 'rules'))).toBe(true);
     expect(await fs.pathExists(path.join(testDir, '.cursor', 'commands'))).toBe(true);
@@ -134,7 +136,7 @@ describe('claude-folder generator', () => {
     const config: ProjectConfig = {
       name: 'test',
       template: 'blank',
-      quality: 'startup'
+      quality: 'startup',
     };
 
     await generateClaudeFolder(testDir, config);
@@ -150,7 +152,7 @@ describe('claude-folder generator', () => {
     const config: ProjectConfig = {
       name: 'test',
       template: 'blank',
-      quality: 'startup'
+      quality: 'startup',
     };
 
     await generateClaudeFolder(testDir, config);
@@ -160,4 +162,3 @@ describe('claude-folder generator', () => {
     expect(await fs.pathExists(path.join(testDir, '.cursor'))).toBe(false);
   });
 });
-

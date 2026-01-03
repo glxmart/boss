@@ -22,7 +22,7 @@ describe('boss-config generator', () => {
     const config: ProjectConfig = {
       name: 'test-project',
       template: 'nextjs-app-turbo',
-      quality: 'production'
+      quality: 'production',
     };
 
     await generateBossConfig(testDir, config);
@@ -45,7 +45,7 @@ describe('boss-config generator', () => {
     const config: ProjectConfig = {
       name: 'api-project',
       template: 'api-service-fastify',
-      quality: 'enterprise'
+      quality: 'enterprise',
     };
 
     await generateBossConfig(testDir, config);
@@ -62,7 +62,7 @@ describe('boss-config generator', () => {
     const config: ProjectConfig = {
       name: 'blank-project',
       template: 'blank',
-      quality: 'startup'
+      quality: 'startup',
     };
 
     await generateBossConfig(testDir, config);
@@ -75,4 +75,3 @@ describe('boss-config generator', () => {
     expect(parsed.project.stack).toContain('typescript');
   });
 });
-

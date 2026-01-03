@@ -5,6 +5,7 @@ This document outlines manual testing procedures for the BOSS Bootstrap CLI.
 ## Prerequisites
 
 Before running manual tests, ensure:
+
 - Node.js 22+ installed
 - pnpm installed
 - Git configured
@@ -22,6 +23,7 @@ node dist/index.js bootstrap --template blank --quality startup --name test-manu
 ```
 
 **Verify:**
+
 - ✅ Project directory created
 - ✅ All required files present
 - ✅ Git repository initialized
@@ -35,12 +37,14 @@ node dist/index.js bootstrap
 ```
 
 **Follow prompts:**
+
 - Enter project name
 - Select template
 - Select quality preset
 - Optionally configure GitHub
 
 **Verify:**
+
 - ✅ Prompts work correctly
 - ✅ Validation works
 - ✅ Project created successfully
@@ -61,6 +65,7 @@ node dist/index.js bootstrap --template blank --quality startup --name test-blan
 ```
 
 **Verify for each:**
+
 - ✅ package.json has correct dependencies
 - ✅ Template-specific files created
 - ✅ Project structure matches template
@@ -76,6 +81,7 @@ node dist/index.js bootstrap --template blank --quality enterprise --name test-e
 ```
 
 **Verify:**
+
 - ✅ Quality gates configured correctly in .boss/config.yaml
 - ✅ Coverage thresholds match preset
 - ✅ Git hooks configured appropriately
@@ -87,6 +93,7 @@ node dist/index.js bootstrap --template blank --quality startup --name test-mcp
 ```
 
 **Verify:**
+
 - ✅ MCP config created in ~/.config/claude-code/mcp-servers.json or ~/.cursor/mcp-servers.json
 - ✅ All three MCP servers configured
 - ✅ Secrets use op://boss/ format
@@ -99,6 +106,7 @@ cd test-spec-kit
 ```
 
 **Verify:**
+
 - ✅ .specify/templates/ exists with files
 - ✅ .specify/scripts/ exists with executable scripts
 - ✅ .specify/memory/constitution.md exists
@@ -111,6 +119,7 @@ node dist/index.js bootstrap --template blank --quality startup --name test-work
 ```
 
 **Verify:**
+
 - ✅ All 9 workers have prompt.md and container-config.json
 - ✅ Worker prompts contain Spec-Kit references
 - ✅ Container configs have SPEC_KIT_MODE and PATH variables
@@ -124,6 +133,7 @@ docker-compose up -d
 ```
 
 **Verify:**
+
 - ✅ All services start successfully
 - ✅ PostgreSQL accessible on port 5432
 - ✅ Qdrant accessible on port 6333
@@ -138,6 +148,7 @@ git log --oneline
 ```
 
 **Verify:**
+
 - ✅ Git repository initialized
 - ✅ Spec-Kit committed first
 - ✅ Bootstrap files committed second
@@ -150,6 +161,7 @@ node dist/index.js doctor
 ```
 
 **Verify:**
+
 - ✅ All checks run
 - ✅ Pass/fail/warning statuses displayed correctly
 - ✅ Helpful error messages for missing tools
@@ -161,4 +173,3 @@ After testing, clean up test projects:
 ```bash
 rm -rf test-*
 ```
-

@@ -14,6 +14,7 @@
 
 **Before:**
 Every worker spawn executed:
+
 ```bash
 apt-get update                    # ~20s
 apt-get install -y ... # ~20s
@@ -24,6 +25,7 @@ npm install -g claude-code        # ~15s
 
 **After:**
 All dependencies pre-installed in `boss/worker-base:1.0.0`:
+
 ```dockerfile
 FROM node:22-slim
 RUN apt-get update && apt-get install -y bash git curl build-essential
@@ -40,6 +42,7 @@ RUN npm install -g pnpm@latest @anthropic-ai/claude-code@latest
 **Location:** `conductor-mcp/worker-configs/`
 
 **Architecture:**
+
 ```
 worker-configs/
 ├── _base/
@@ -53,12 +56,14 @@ worker-configs/
 ```
 
 **Benefits:**
+
 - ✅ DRY - Base config defined once
 - ✅ Maintainable - Update base, all workers inherit
 - ✅ Clear - Worker files only show differences
 - ✅ Flexible - Full override capability when needed
 
 **Code Changes:**
+
 - New `deepMerge()` function for config inheritance
 - Updated `loadWorkerConfig()` to load base + worker override
 - Updated `listAvailableWorkers()` to exclude `_base` directory
@@ -68,6 +73,7 @@ worker-configs/
 ### 3. Build & Deployment Infrastructure
 
 **Build Script:** `conductor-mcp/docker/boss-worker-base/build.sh`
+
 ```bash
 # Local build
 ./build.sh
@@ -80,6 +86,7 @@ worker-configs/
 ```
 
 **Package Scripts:** Added to `conductor-mcp/package.json`
+
 ```bash
 pnpm docker:build              # Build local image
 pnpm docker:build:push         # Build and push
@@ -89,6 +96,7 @@ pnpm worker-configs:rollback   # Restore from backup
 ```
 
 **Configuration Update Script:** `conductor-mcp/docker/update-worker-configs.sh`
+
 - Automated config updates with backup
 - Validation of merged configs
 - Rollback capability
@@ -133,16 +141,19 @@ Created comprehensive documentation:
 ## Performance Impact
 
 ### Current State (Measured)
+
 - **Container Setup:** 60-90s per spawn
 - **Total Worker Spawn:** 180-360s per worker
 - **Multi-worker Phase:** 720s for 4 workers (sequential)
 
 ### After Phase 1 (Projected)
+
 - **Container Setup:** 5-10s per spawn ⚡ **-85%**
 - **Total Worker Spawn:** 110-290s per worker ⚡ **-33% to -40%**
 - **Multi-worker Phase:** 720s (unchanged - still sequential)
 
 ### Savings Per Spawn
+
 - **Time Saved:** 50-80s per worker spawn
 - **Percentage:** 33-40% reduction
 - **Multiplier Effect:** Savings compound across 15 worker types
@@ -152,12 +163,14 @@ Created comprehensive documentation:
 ## Testing Status
 
 ### ✅ Completed
+
 - TypeScript compilation successful
 - Docker image builds successfully
 - Config merge logic validated
 - Worker configs updated (13 now inherit from base)
 
 ### ⏳ Next Steps
+
 1. Integration test with actual worker spawn
 2. Performance measurement vs baseline
 3. Roll out to remaining phases (2-6)
@@ -167,6 +180,7 @@ Created comprehensive documentation:
 ## Files Created/Modified
 
 ### New Files
+
 ```
 conductor-mcp/docker/
 ├── boss-worker-base/
@@ -192,6 +206,7 @@ Root:
 ```
 
 ### Modified Files
+
 ```
 conductor-mcp/src/config/worker-loader.ts  # Config merge logic
 conductor-mcp/package.json                 # New docker/config scripts
@@ -208,6 +223,7 @@ conductor-mcp/worker-configs/
 ## Configuration Examples
 
 ### Base Config (`_base/container-config.json`)
+
 ```json
 {
   "base_image": "boss/worker-base:1.0.0",
@@ -220,17 +236,13 @@ conductor-mcp/worker-configs/
     "SPEC_KIT_MODE": "true"
   },
   "network": {
-    "allowed_hosts": [
-      "api.anthropic.com",
-      "claude.ai",
-      "registry.npmjs.org",
-      "github.com"
-    ]
+    "allowed_hosts": ["api.anthropic.com", "claude.ai", "registry.npmjs.org", "github.com"]
   }
 }
 ```
 
 ### Worker Override (Security Engineer)
+
 ```json
 {
   "network": {
@@ -239,9 +251,9 @@ conductor-mcp/worker-configs/
       "claude.ai",
       "registry.npmjs.org",
       "github.com",
-      "nvd.nist.gov",      // Added
-      "cve.mitre.org",     // Added
-      "snyk.io"            // Added
+      "nvd.nist.gov", // Added
+      "cve.mitre.org", // Added
+      "snyk.io" // Added
     ]
   }
 }
@@ -254,25 +266,30 @@ conductor-mcp/worker-configs/
 ## Next Phases
 
 ### Phase 2: Optimized Configuration (Ready to Start)
+
 - Set project-wide defaults via `.container-use/environment.json`
 - Configure environment variables
 - **Expected Savings:** 10-15s
 
 ### Phase 3: Git Operation Batching
+
 - Update worker CLAUDE.md templates
 - Guide workers to batch related changes
 - **Expected Savings:** 10-15s
 
 ### Phase 4: Environment Resume
+
 - Implement resume logic in conductor
 - Reuse environments for iterative work
 - **Expected Savings:** 180s for follow-up tasks
 
 ### Phase 5: Parallel Worker Spawning
+
 - Spawn multiple workers concurrently
 - **Expected Savings:** 540s for 4-worker phases
 
 ### Phase 6: Configuration Learning
+
 - Monitor worker adaptations
 - Import beneficial configs
 - **Benefit:** Continuous improvement
@@ -282,12 +299,14 @@ conductor-mcp/worker-configs/
 ## Risk Assessment
 
 ### ✅ Low Risk (Phase 1)
+
 - Docker images are industry best practice
 - Versioned tags allow rollback
 - Config inheritance is transparent
 - Comprehensive backups before changes
 
 ### Mitigations in Place
+
 - **Versioned images:** `boss/worker-base:1.0.0` (not `latest`)
 - **Config backups:** Automatic before updates
 - **Rollback scripts:** One command to restore
@@ -299,6 +318,7 @@ conductor-mcp/worker-configs/
 ## Success Criteria
 
 ### ✅ Phase 1 Goals Met
+
 - [x] Docker image builds successfully
 - [x] All system dependencies pre-installed
 - [x] Base configuration centralized
@@ -309,6 +329,7 @@ conductor-mcp/worker-configs/
 - [x] Build automation in place
 
 ### 📊 Performance Validation (Pending)
+
 - [ ] Measure actual container startup time
 - [ ] Measure total worker spawn time
 - [ ] Compare vs baseline (180-360s)
@@ -321,17 +342,20 @@ conductor-mcp/worker-configs/
 ### For Developers
 
 **Build Docker Image:**
+
 ```bash
 cd conductor-mcp
 pnpm docker:build
 ```
 
 **Update Worker Configs:**
+
 ```bash
 pnpm worker-configs:update
 ```
 
 **Test Changes:**
+
 ```bash
 pnpm build  # Verify TypeScript compiles
 pnpm test   # Run unit tests
@@ -340,6 +364,7 @@ pnpm test   # Run unit tests
 ### For Production
 
 **Build and Push Image:**
+
 ```bash
 cd conductor-mcp
 pnpm docker:build:push
@@ -349,6 +374,7 @@ cd docker/boss-worker-base
 ```
 
 **Update Container-Use Config:**
+
 ```bash
 container-use config base-image set boss/worker-base:1.0.0
 ```
@@ -358,17 +384,20 @@ container-use config base-image set boss/worker-base:1.0.0
 ## Lessons Learned
 
 ### What Worked Well
+
 1. ✅ **Official documentation first** - Verified container-use capabilities before implementing
 2. ✅ **Centralized config** - Eliminates duplication, makes maintenance trivial
 3. ✅ **Versioned images** - Predictable caching, rollback capability
 4. ✅ **Automation scripts** - Reduces human error, speeds up workflows
 
 ### Surprises
+
 1. 🔍 **claude-code binary** - Package installs but binary not in expected PATH
 2. 🔍 **Config inheritance** - Deep merge strategy works elegantly
 3. 🔍 **Container-use flexibility** - More capable than initially thought
 
 ### Future Improvements
+
 1. 💡 Add performance monitoring/telemetry
 2. 💡 Create CI/CD for automatic image builds
 3. 💡 Implement config profiles (dev/prod)
@@ -389,6 +418,7 @@ container-use config base-image set boss/worker-base:1.0.0
 ## Acknowledgments
 
 This optimization was made possible by:
+
 - Container-use's flexible configuration system
 - Docker's layer caching mechanism
 - Node.js 22's improved performance

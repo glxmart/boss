@@ -8,7 +8,7 @@ import {
   readFile,
   pathExists,
   makeExecutable,
-  copyDirectory
+  copyDirectory,
 } from '../file-system.js';
 
 describe('file-system', () => {
@@ -91,9 +91,9 @@ describe('file-system', () => {
       await fs.writeFile(path.join(srcDir, 'file.txt'), 'content');
       await fs.ensureDir(path.join(srcDir, 'nested'));
       await fs.writeFile(path.join(srcDir, 'nested', 'file2.txt'), 'content2');
-      
+
       await copyDirectory(srcDir, destDir);
-      
+
       expect(await fs.pathExists(path.join(destDir, 'file.txt'))).toBe(true);
       expect(await fs.pathExists(path.join(destDir, 'nested', 'file2.txt'))).toBe(true);
       expect(await fs.readFile(path.join(destDir, 'file.txt'), 'utf8')).toBe('content');
@@ -101,4 +101,3 @@ describe('file-system', () => {
     });
   });
 });
-

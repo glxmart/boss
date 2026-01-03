@@ -40,7 +40,7 @@ const env = await containerUse.createEnvironment({
   install_commands: config.install_commands,
   environment_variables: expandVariables(config.environment_variables),
   secrets: config.secrets,
-  network: config.network
+  network: config.network,
 });
 
 // 3. Configure container (.claude/CLAUDE.md)
@@ -48,7 +48,7 @@ const claudeMd = readFile(`.boss/workers/${workerType}/CLAUDE.md`);
 await containerUse.environmentFileWrite({
   environment_id: env.environment_id,
   target_file: '/workdir/.claude/CLAUDE.md',
-  contents: expandTemplate(claudeMd)
+  contents: expandTemplate(claudeMd),
 });
 
 // 4. Copy .claude folder files (multiple calls)
@@ -56,7 +56,7 @@ for (const file of claudeFiles) {
   await containerUse.environmentFileWrite({
     environment_id: env.environment_id,
     target_file: `/workdir/.claude/${file.path}`,
-    contents: file.contents
+    contents: file.contents,
   });
 }
 
@@ -64,7 +64,7 @@ for (const file of claudeFiles) {
 const prompt = assemblePrompt(workerPrompt, taskPrompt);
 await containerUse.executeInEnvironment({
   environment_id: env.environment_id,
-  command: `echo '${escapePrompt(prompt)}' | claude-code --dangerously-skip-permissions`
+  command: `echo '${escapePrompt(prompt)}' | claude-code --dangerously-skip-permissions`,
 });
 
 // 6. Track state manually
@@ -77,7 +77,7 @@ await containerUse.executeInEnvironment({
 // BOSS just does this:
 const result = await conductor.spawn_worker({
   workerType: 'architect',
-  taskPrompt: 'Create constitution with TDD, BDD, Documentation standards'
+  taskPrompt: 'Create constitution with TDD, BDD, Documentation standards',
 });
 
 // Done! Worker is running with full configuration.
@@ -94,6 +94,7 @@ const result = await conductor.spawn_worker({
 Before BOSS can use Conductor, these must be installed:
 
 1. **container-use CLI** (globally)
+
    ```bash
    npm install -g container-use
    ```
@@ -118,6 +119,7 @@ if (!health.healthy) {
 ```
 
 **Expected healthy response:**
+
 ```json
 {
   "healthy": true,
@@ -126,6 +128,7 @@ if (!health.healthy) {
 ```
 
 **If container-use not installed:**
+
 ```json
 {
   "healthy": false,
@@ -170,6 +173,7 @@ if (!health.healthy) {
 ### BOSS's Responsibilities
 
 ✅ **BOSS DOES:**
+
 - Call Conductor tools to spawn workers
 - Provide task prompts for workers
 - Monitor worker status
@@ -178,6 +182,7 @@ if (!health.healthy) {
 - Manage quality gates and retries
 
 ❌ **BOSS DOES NOT:**
+
 - Load worker configurations (Conductor does this)
 - Create container environments (Conductor does this)
 - Configure .claude/CLAUDE.md (Conductor does this)
@@ -195,11 +200,13 @@ Conductor exposes 8 tools to BOSS:
 **Purpose:** Spawn a worker with full environment setup
 
 **When BOSS calls this:**
+
 - At the start of each phase
 - When spawning parallel workers
 - When retrying a failed worker
 
 **Input:**
+
 ```typescript
 {
   workerType: 'architect' | 'clarifier' | 'spec-writer' | 'planner' |
@@ -214,6 +221,7 @@ Conductor exposes 8 tools to BOSS:
 ```
 
 **Output:**
+
 ```typescript
 {
   success: true,
@@ -232,6 +240,7 @@ Conductor exposes 8 tools to BOSS:
 ```
 
 **Example:**
+
 ```typescript
 // Phase 1: Spawn architect worker
 const architect = await conductor.spawn_worker({
@@ -240,7 +249,7 @@ const architect = await conductor.spawn_worker({
     - Architectural Principles (Test-First, BDD, Documentation)
     - Development Methodology
     - Testing Standards (≥80% coverage)
-    - Documentation Standards`
+    - Documentation Standards`,
 });
 
 console.log(`Architect spawned: ${architect.workerId}`);
@@ -254,11 +263,13 @@ console.log(`Branch: ${architect.branch}`);
 **Purpose:** Execute an additional task in an existing worker
 
 **When BOSS calls this:**
+
 - When a worker needs to perform a follow-up task
 - When adding to a worker's scope
 - When refining worker output
 
 **Input:**
+
 ```typescript
 {
   workerId: string,        // From spawn_worker response
@@ -267,6 +278,7 @@ console.log(`Branch: ${architect.branch}`);
 ```
 
 **Output:**
+
 ```typescript
 {
   success: true,
@@ -278,11 +290,12 @@ console.log(`Branch: ${architect.branch}`);
 ```
 
 **Example:**
+
 ```typescript
 // Architect completed constitution, now add security section
 await conductor.execute_task({
   workerId: architect.workerId,
-  taskPrompt: 'Add Security Principles section to constitution.md covering OWASP Top 10'
+  taskPrompt: 'Add Security Principles section to constitution.md covering OWASP Top 10',
 });
 ```
 
@@ -293,19 +306,22 @@ await conductor.execute_task({
 **Purpose:** Check worker status and get results
 
 **When BOSS calls this:**
+
 - To monitor worker progress
 - To check if worker completed
 - To retrieve artifacts
 - Before merging worker
 
 **Input:**
+
 ```typescript
 {
-  workerId: string
+  workerId: string;
 }
 ```
 
 **Output:**
+
 ```typescript
 {
   workerId: 'env-abc123',
@@ -321,10 +337,11 @@ await conductor.execute_task({
 ```
 
 **Example:**
+
 ```typescript
 // Check if architect finished
 const status = await conductor.get_worker_status({
-  workerId: architect.workerId
+  workerId: architect.workerId,
 });
 
 if (status.status === 'completed') {
@@ -342,11 +359,13 @@ if (status.status === 'completed') {
 **Purpose:** Merge worker's branch into target branch
 
 **When BOSS calls this:**
+
 - After quality gates pass
 - When worker work is approved
 - At end of phase
 
 **Input:**
+
 ```typescript
 {
   workerId: string,
@@ -355,6 +374,7 @@ if (status.status === 'completed') {
 ```
 
 **Output:**
+
 ```typescript
 {
   success: true,
@@ -363,11 +383,12 @@ if (status.status === 'completed') {
 ```
 
 **Example:**
+
 ```typescript
 // Architect passed review, merge it
 await conductor.merge_worker({
   workerId: architect.workerId,
-  targetBranch: 'feature/boss-initial-setup'
+  targetBranch: 'feature/boss-initial-setup',
 });
 
 console.log('Architect work merged!');
@@ -380,18 +401,21 @@ console.log('Architect work merged!');
 **Purpose:** Terminate worker without merging (discard changes)
 
 **When BOSS calls this:**
+
 - When quality gates fail
 - When worker needs to be retried
 - On unrecoverable errors
 
 **Input:**
+
 ```typescript
 {
-  workerId: string
+  workerId: string;
 }
 ```
 
 **Output:**
+
 ```typescript
 {
   success: true,
@@ -400,10 +424,11 @@ console.log('Architect work merged!');
 ```
 
 **Example:**
+
 ```typescript
 // Architect failed validation, terminate and retry
 await conductor.terminate_worker({
-  workerId: architect.workerId
+  workerId: architect.workerId,
 });
 
 // Spawn new architect with improved prompt
@@ -415,7 +440,7 @@ const newArchitect = await conductor.spawn_worker({
     - Architectural Principles
     - Development Methodology
     - Testing Standards
-    - Documentation Standards`
+    - Documentation Standards`,
 });
 ```
 
@@ -426,11 +451,13 @@ const newArchitect = await conductor.spawn_worker({
 **Purpose:** Get available worker types and their descriptions
 
 **When BOSS calls this:**
+
 - During initialization
 - When deciding which workers to spawn
 - For help/documentation
 
 **Input:**
+
 ```typescript
 {
   projectPath?: string
@@ -438,16 +465,17 @@ const newArchitect = await conductor.spawn_worker({
 ```
 
 **Output:**
+
 ```typescript
 {
   workers: [
     {
       type: 'architect',
       description: 'Create constitution with governing principles and standards',
-      phase: 'Phase 1: Constitution'
+      phase: 'Phase 1: Constitution',
     },
     // ... 14 more worker types
-  ]
+  ];
 }
 ```
 
@@ -458,11 +486,13 @@ const newArchitect = await conductor.spawn_worker({
 **Purpose:** List currently active workers
 
 **When BOSS calls this:**
+
 - To monitor parallel workers
 - To check overall progress
 - Before spawning new workers
 
 **Output:**
+
 ```typescript
 {
   workers: [
@@ -472,10 +502,10 @@ const newArchitect = await conductor.spawn_worker({
       status: 'running',
       branch: 'container-use/env-123',
       startedAt: '...',
-      artifacts: []
+      artifacts: [],
     },
     // ... more active workers
-  ]
+  ];
 }
 ```
 
@@ -486,11 +516,13 @@ const newArchitect = await conductor.spawn_worker({
 **Purpose:** Check Conductor and container-use availability
 
 **When BOSS calls this:**
+
 - At startup
 - Before spawning workers
 - When diagnosing issues
 
 **Output:**
+
 ```typescript
 {
   healthy: true,
@@ -514,7 +546,7 @@ if (!health.healthy) {
 // 2. Spawn architect
 const architect = await conductor.spawn_worker({
   workerType: 'architect',
-  taskPrompt: 'Create constitution.md with architectural principles'
+  taskPrompt: 'Create constitution.md with architectural principles',
 });
 
 // 3. Wait for completion (poll or wait)
@@ -522,7 +554,7 @@ let status;
 do {
   await sleep(5000);
   status = await conductor.get_worker_status({
-    workerId: architect.workerId
+    workerId: architect.workerId,
   });
 } while (status.status === 'running');
 
@@ -546,7 +578,7 @@ if (status.artifacts.includes('.specify/memory/constitution.md')) {
 const tasks = [
   { type: 'developer-backend', tasks: ['T001', 'T002', 'T003'] },
   { type: 'developer-frontend', tasks: ['T004', 'T005'] },
-  { type: 'tester', tasks: ['T006', 'T007'] }
+  { type: 'tester', tasks: ['T006', 'T007'] },
 ];
 
 const workers = await Promise.all(
@@ -557,7 +589,7 @@ const workers = await Promise.all(
 
     return await conductor.spawn_worker({
       workerType: type,
-      taskPrompt: prompt
+      taskPrompt: prompt,
     });
   })
 );
@@ -565,7 +597,7 @@ const workers = await Promise.all(
 console.log(`Spawned ${workers.length} workers`);
 
 // Monitor all workers
-const allWorkerIds = workers.map(w => w.workerId);
+const allWorkerIds = workers.map((w) => w.workerId);
 
 // Wait for all to complete
 let allCompleted = false;
@@ -573,10 +605,10 @@ while (!allCompleted) {
   await sleep(10000);
 
   const statuses = await Promise.all(
-    allWorkerIds.map(id => conductor.get_worker_status({ workerId: id }))
+    allWorkerIds.map((id) => conductor.get_worker_status({ workerId: id }))
   );
 
-  allCompleted = statuses.every(s => s.status !== 'running');
+  allCompleted = statuses.every((s) => s.status !== 'running');
 }
 
 // Check quality gates for each
@@ -619,7 +651,7 @@ while (attempts < maxAttempts) {
 
   worker = await conductor.spawn_worker({
     workerType: 'spec-writer',
-    taskPrompt: prompt
+    taskPrompt: prompt,
   });
 
   // Wait for completion
@@ -728,11 +760,13 @@ await conductor.merge_worker({ workerId });
 **Cause:** container-use CLI not installed
 
 **Solution:**
+
 ```bash
 npm install -g container-use
 ```
 
 **Verification:**
+
 ```bash
 container-use --version
 ```
@@ -744,6 +778,7 @@ container-use --version
 **Cause:** `.boss/workers/[type]/` directory missing
 
 **Solution:**
+
 ```bash
 # Ensure project was bootstrapped
 boss bootstrap
@@ -759,6 +794,7 @@ ls .boss/workers/
 **Cause:** Worker task may have hung or failed silently
 
 **Investigation:**
+
 ```typescript
 // Get execution log
 const status = await conductor.get_worker_status({ workerId });
@@ -769,6 +805,7 @@ console.log('Execution log:', status.executionLog);
 ```
 
 **Solution:**
+
 ```typescript
 // Terminate and retry
 await conductor.terminate_worker({ workerId });
@@ -781,11 +818,13 @@ await conductor.terminate_worker({ workerId });
 When conductor spawns a worker, you can directly inspect the container using `container-use` CLI commands:
 
 **List all containers:**
+
 ```bash
 container-use list
 ```
 
 **View worker execution logs:**
+
 ```bash
 # Shows command execution, output, and any errors
 container-use log <worker-id>
@@ -795,6 +834,7 @@ container-use log normal-owl
 ```
 
 **Open interactive terminal in worker container:**
+
 ```bash
 # Useful for inspecting environment and running commands
 container-use terminal <worker-id>
@@ -804,6 +844,7 @@ container-use terminal model-polliwog
 ```
 
 **Inside the container, you can:**
+
 ```bash
 # Check environment variables
 echo $CLAUDE_CODE_OAUTH_TOKEN
@@ -822,6 +863,7 @@ cat .boss/workers/$WORKER_ROLE/CLAUDE.md
 ```
 
 **Delete worker container (cleanup):**
+
 ```bash
 container-use delete <worker-id>
 
@@ -830,6 +872,7 @@ container-use delete normal-owl
 ```
 
 **Common debugging workflow:**
+
 ```bash
 # 1. Spawn a worker via conductor
 # 2. Get worker ID from spawn response
@@ -856,6 +899,7 @@ container-use delete <worker-id>
 **Cause:** Multiple workers modified same files
 
 **Prevention:**
+
 ```typescript
 // Use [P] markers to avoid conflicts
 // Mark independent tasks with [P]
@@ -877,6 +921,7 @@ container-use delete <worker-id>
 **Cause:** Many active workers
 
 **Solution:**
+
 ```typescript
 // Limit concurrent workers
 const MAX_CONCURRENT = 3;

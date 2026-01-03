@@ -7,7 +7,7 @@ import {
   validateTemplate,
   validateQualityPreset,
   validateProjectDirectory,
-  validateMCPScope
+  validateMCPScope,
 } from '../validators.js';
 
 describe('validators', () => {
@@ -142,4 +142,3 @@ describe('validators', () => {
     });
   });
 });
-

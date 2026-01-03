@@ -46,6 +46,7 @@ BOSS provides:
 **BOSS is NOT a standalone application.**
 
 BOSS is your **Claude Code or Cursor instance** configured to act as an orchestrator through:
+
 - **MCP Servers** - Container-Use, GitHub, Knowledge Base
 - **1Password CLI** - Secret management (op CLI for manual secret setup)
 - **BOSS Skills** - Loaded into Claude Code/Cursor for orchestration capabilities
@@ -102,23 +103,27 @@ BOSS is your **Claude Code or Cursor instance** configured to act as an orchestr
 ### CRITICAL: BOSS Operational Constraints
 
 **What BOSS CAN Do (MCP-Only Operations):**
+
 - ✅ **Container-Use MCP** - Spawn workers, execute in containers, manage environments
 - ✅ **GitHub MCP** - Create/manage PRs, issues, projects, labels, milestones, comments, reviews (ALL GitHub operations)
 - ✅ **Knowledge Base MCP** - Query patterns, search artifacts, retrieve context
 - ✅ **Orchestration Logic** - Coordinate workers, enforce quality gates, manage workflow state
 
 **What BOSS CANNOT Do (Host-Level Restrictions):**
+
 - ❌ **NO direct file operations** - Cannot read, write, or edit files on host
 - ❌ **NO direct code execution** - Cannot run shell commands, scripts, or build tools
 - ❌ **NO direct git operations** - Cannot commit, push, or manage git directly
 
 **What Workers CAN Do (Full Execution Inside Containers):**
+
 - ✅ **ALL file operations** - Read, write, edit any files in their workspace
 - ✅ **ALL code execution** - Run shell commands, build tools, tests, scripts
 - ✅ **ALL git operations** - Commit, push, manage branches (via environment tools)
 - ✅ **Full development capabilities** - Everything a human developer can do
 
 **Why This Architecture:**
+
 - **Security** - Workers isolated in containers, BOSS cannot accidentally modify host
 - **Control** - BOSS orchestrates via well-defined MCP interfaces
 - **Observability** - All worker actions logged via container-use
@@ -145,11 +150,13 @@ Bootstrap creates a `start-boss.sh` script that launches BOSS with restricted to
 ```
 
 This script uses the `--allowedTools` flag to ensure BOSS can ONLY use:
+
 - ✅ Container-Use MCP (spawn/manage workers)
 - ✅ GitHub MCP (ALL GitHub operations)
 - ✅ Knowledge Base MCP (query context)
 
 And CANNOT use:
+
 - ❌ Host file system tools (Read, Write, Edit, Glob, Grep)
 - ❌ Host shell execution (Bash)
 - ❌ Direct git operations
@@ -175,6 +182,7 @@ This repository contains comprehensive documentation that defines the complete B
 **The Big Picture** - Read this first!
 
 Comprehensive overview of the BOSS system covering:
+
 - ✅ Two-tier architecture (Bootstrap + Orchestration)
 - ✅ Foundation technologies (Spec-Kit + Container-Use)
 - ✅ Complete workflow (8 phases)
@@ -191,6 +199,7 @@ Comprehensive overview of the BOSS system covering:
 **Spec-Driven Development** - Implementation methodology
 
 Deep dive into how BOSS automates GitHub's Spec-Kit:
+
 - ✅ Seven sequential phases (Principles → Implementation)
 - ✅ Structured artifacts (constitution.md, spec.md, plan.md, tasks.md)
 - ✅ Worker prompts for each phase
@@ -207,6 +216,7 @@ Deep dive into how BOSS automates GitHub's Spec-Kit:
 **Secure Worker Execution** - Isolation & secret management
 
 Complete guide to worker isolation and security:
+
 - ✅ Container-use environment configurations
 - ✅ Worker-specific setups (8 worker types)
 - ✅ 1Password integration (op:// references)
@@ -397,6 +407,7 @@ You: "Build a task management app for remote teams"
 ```
 
 **Key Principles:**
+
 - 📋 Specifications drive implementation (not document it)
 - 🔴 Test-First is NON-NEGOTIABLE (red → green → refactor)
 - 🔀 [P] markers enable parallel execution
@@ -422,6 +433,7 @@ Worker 4 (Developer - Backend)
 ```
 
 **Key Benefits:**
+
 - 🔒 Secrets never exposed to AI models
 - 🔍 Complete command history & audit trail
 - 🗑️ Disposable environments (easy retry)
@@ -492,6 +504,7 @@ boss bootstrap --template nextjs-app-turbo --quality enterprise
 ```
 
 **Creates:**
+
 - ✅ Complete project structure
 - ✅ `.specify/` with Spec-Kit templates
 - ✅ `.boss/` with worker configurations
@@ -502,12 +515,14 @@ boss bootstrap --template nextjs-app-turbo --quality enterprise
 - ✅ Git repository initialized
 
 **Templates Available:**
+
 - `nextjs-app-turbo` - Next.js 15 + Tailwind + Prisma + Vitest
 - `api-service-fastify` - Fastify + TypeScript + Prisma
 - `blank` - Minimal setup (TypeScript + Vitest)
 - `@myorg/custom` - Your organization's templates
 
 **Quality Presets:**
+
 - `startup` - Fast iteration, minimal gates
 - `production` - Balanced quality & speed
 - `enterprise` - Maximum quality, comprehensive checks
@@ -538,6 +553,7 @@ Technology Stack:
 ```
 
 **Auto-Gate Validates:**
+
 - All plans against constitution
 - Up to 3 retries with feedback
 - Escalates to human if still failing
@@ -560,6 +576,7 @@ Implementation Quality Gate:
 ```
 
 **If failed:**
+
 - Worker analyzes issues
 - Fixes automatically (if possible)
 - Reports to BOSS for guidance
@@ -583,6 +600,7 @@ Phase 3: User Stories (Independent parallel)
 ```
 
 **BOSS spawns workers:**
+
 - ✅ T001-T003: 3 workers in parallel
 - ✅ T010: 1 worker (sequential TDD)
 - ✅ T020-T030: 2 workers in parallel
@@ -638,6 +656,7 @@ Workers query before starting:
 ```
 
 **Security Benefits:**
+
 - ✅ Centralized management (1Password)
 - ✅ Safe to commit (op:// references)
 - ✅ Easy rotation (update in 1Password)
@@ -648,7 +667,7 @@ Workers query before starting:
 
 **Agents create detailed setup instructions:**
 
-```markdown
+````markdown
 # secret-requirements.md
 
 ## Required Secret: Stripe Test API Key
@@ -656,24 +675,29 @@ Workers query before starting:
 **Purpose:** Authenticate Stripe API requests in test mode
 
 **How to Generate:**
+
 1. Log in to Stripe Dashboard
 2. Navigate to Developers → API keys
-3. Copy "Secret key" (starts with sk_test_)
+3. Copy "Secret key" (starts with sk*test*)
 4. Store in 1Password: glx/stripe/test-secret-key
 
 **Required Scopes:**
+
 - Customers: Read/Write
 - PaymentIntents: Read/Write
 - Subscriptions: Read/Write
 
 **Configure Container-Use:**
+
 ```bash
 container-use config secret set STRIPE_SECRET_KEY \
   op://glx/stripe/test-secret-key
 ```
+````
 
 **Estimated Time:** 10 minutes
-```
+
+````
 
 **No ambiguity, no guessing - complete instructions!**
 
@@ -832,7 +856,7 @@ git clone https://github.com/your-username/boss
 # See roadmap above
 
 # Submit PR with tests & docs
-```
+````
 
 ---
 
@@ -890,6 +914,7 @@ Autonomous, Spec-Driven Development at Scale
 ```
 
 **From idea to production-ready code:**
+
 - ✅ 5-minute bootstrap with complete configuration
 - ✅ 8-phase Spec-Kit workflow (fully automated)
 - ✅ Workers in isolated containers (secure & observable)

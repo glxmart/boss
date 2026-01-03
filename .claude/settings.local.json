@@ -53,7 +53,9 @@
       "Bash(./scripts/gh-with-1password.sh:*)",
       "Bash(xargs:*)",
       "mcp__github__get_pull_request_status",
-      "Edit(.github/**)"
+      "Edit(.github/**)",
+      "Skill(2-quality-check)",
+      "WebFetch(domain:github.com)"
     ],
     "deny": [
       "Bash(op read:*)",
@@ -85,8 +87,6 @@
       "Delete(//var/**)",
       "Delete(//root/**)"
     ],
-    "ask": [
-      "Bash(rm -rf ./*)"
-    ]
+    "ask": ["Bash(rm -rf ./*)"]
   }
 }

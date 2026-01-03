@@ -23,10 +23,10 @@ async function main() {
     await server.run();
   } catch (error) {
     logger.error('Failed to start server', {
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
     process.exit(1);
   }
 }
 
-main();
+void main();

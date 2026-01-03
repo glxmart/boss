@@ -21,6 +21,7 @@ Worker Container (Claude Code)
 ```
 
 **Problems**:
+
 1. Workers manually write JSON (error-prone)
 2. No validation until BOSS reads manifest
 3. No type safety for workers
@@ -45,6 +46,7 @@ Conductor MCP Instance #2 (Worker's MCP server)
 ```
 
 **Benefits**:
+
 1. ✅ Type-safe manifest operations for workers
 2. ✅ Built-in validation
 3. ✅ Consistent format guaranteed
@@ -74,6 +76,7 @@ Conductor MCP Instance #2 (Worker's MCP server)
 ```
 
 **Why this works**:
+
 - Each container is isolated
 - Each has its own Conductor MCP instance
 - No conflicts between BOSS's Conductor and Worker's Conductor
@@ -98,9 +101,9 @@ export const WORKER_TOOLS = {
         decisions: { type: 'array' },
         issues: { type: 'array' },
         recommendations: { type: 'array' },
-        tasksCompleted: { type: 'array' }
-      }
-    }
+        tasksCompleted: { type: 'array' },
+      },
+    },
   },
 
   add_artifact: {
@@ -112,10 +115,10 @@ export const WORKER_TOOLS = {
         path: { type: 'string' },
         action: { enum: ['created', 'modified', 'deleted'] },
         purpose: { type: 'string' },
-        sections: { type: 'array' }
+        sections: { type: 'array' },
       },
-      required: ['path', 'action', 'purpose']
-    }
+      required: ['path', 'action', 'purpose'],
+    },
   },
 
   add_decision: {
@@ -127,10 +130,10 @@ export const WORKER_TOOLS = {
         decision: { type: 'string' },
         rationale: { type: 'string' },
         impact: { enum: ['high', 'medium', 'low'] },
-        reversible: { type: 'boolean' }
+        reversible: { type: 'boolean' },
       },
-      required: ['decision', 'rationale', 'impact', 'reversible']
-    }
+      required: ['decision', 'rationale', 'impact', 'reversible'],
+    },
   },
 
   add_issue: {
@@ -143,10 +146,10 @@ export const WORKER_TOOLS = {
         description: { type: 'string' },
         impact: { type: 'string' },
         suggestedAction: { type: 'string' },
-        blocksProgress: { type: 'boolean' }
+        blocksProgress: { type: 'boolean' },
       },
-      required: ['severity', 'description', 'impact', 'blocksProgress']
-    }
+      required: ['severity', 'description', 'impact', 'blocksProgress'],
+    },
   },
 
   mark_completed: {
@@ -155,35 +158,42 @@ export const WORKER_TOOLS = {
     inputSchema: {
       type: 'object',
       properties: {
-        finalRecommendations: { type: 'array' }
-      }
-    }
-  }
+        finalRecommendations: { type: 'array' },
+      },
+    },
+  },
 };
 ```
 
 **How workers use these tools**:
 
 Instead of:
+
 ```javascript
 // Manual JSON writing (error-prone!)
 const manifest = JSON.parse(fs.readFileSync('.boss/worker-manifest-env-abc123.json'));
 manifest.artifacts.push({
   path: '.specify/memory/constitution.md',
   action: 'created',
-  purpose: 'Project constitution'
+  purpose: 'Project constitution',
 });
 fs.writeFileSync('.boss/worker-manifest-env-abc123.json', JSON.stringify(manifest, null, 2));
 ```
 
 Workers do:
+
 ```typescript
 // Type-safe MCP tool call!
 await conductor.add_artifact({
   path: '.specify/memory/constitution.md',
   action: 'created',
   purpose: 'Project constitution with governing principles',
-  sections: ['Architectural Principles', 'Development Methodology', 'Testing Standards', 'Documentation Standards']
+  sections: [
+    'Architectural Principles',
+    'Development Methodology',
+    'Testing Standards',
+    'Documentation Standards',
+  ],
 });
 ```
 
@@ -212,9 +222,10 @@ await conductor.add_artifact({
 // Worker calls:
 await conductor.notify_boss({
   type: 'question',
-  message: 'Should I include GraphQL in API design? Constitution mentions REST but requirements suggest GraphQL.',
+  message:
+    'Should I include GraphQL in API design? Constitution mentions REST but requirements suggest GraphQL.',
   priority: 'high',
-  requiresAnswer: true
+  requiresAnswer: true,
 });
 
 // Conductor writes to: .boss/boss-inbox/env-abc123-question-001.json
@@ -228,7 +239,7 @@ BOSS periodically checks `.boss/boss-inbox/` or gets notified.
 // BOSS uses existing ask_worker tool
 await conductor.ask_worker({
   workerId: 'env-abc123',
-  question: 'Include both REST and GraphQL. Prioritize REST for CRUD, GraphQL for complex queries.'
+  question: 'Include both REST and GraphQL. Prioritize REST for CRUD, GraphQL for complex queries.',
 });
 
 // Or BOSS writes to: .boss/worker-inbox/env-abc123-response-001.json
@@ -239,7 +250,7 @@ await conductor.ask_worker({
 
 ### 4. Worker CLAUDE.md Updated Instructions
 
-```markdown
+````markdown
 ## Using Conductor MCP for Manifest Management
 
 **You have Conductor MCP tools available!** Use them instead of manually writing JSON.
@@ -247,61 +258,73 @@ await conductor.ask_worker({
 ### Available Tools:
 
 #### Add an Artifact
+
 When you create/modify a file:
+
 ```typescript
 await conductor.add_artifact({
   path: '.specify/memory/constitution.md',
   action: 'created',
   purpose: 'Project constitution',
-  sections: ['Architectural Principles', 'Development Methodology']
+  sections: ['Architectural Principles', 'Development Methodology'],
 });
 ```
+````
 
 #### Document a Decision
+
 When you make a key decision:
+
 ```typescript
 await conductor.add_decision({
   decision: 'Enforced TDD as non-negotiable',
   rationale: 'Ensures code quality and prevents regressions',
   impact: 'high',
-  reversible: false
+  reversible: false,
 });
 ```
 
 #### Report an Issue
+
 When you encounter a problem:
+
 ```typescript
 await conductor.add_issue({
   severity: 'high',
   description: 'Constitution template not found in .specify/templates/',
   impact: 'Cannot follow standard format',
   suggestedAction: 'BOSS should bootstrap .specify/ structure first',
-  blocksProgress: false
+  blocksProgress: false,
 });
 ```
 
 #### Mark Work Complete
+
 When finished:
+
 ```typescript
 await conductor.mark_completed({
   finalRecommendations: [
     'Clarifier should gather business requirements next',
-    'Constitution should be validated by reviewer'
-  ]
+    'Constitution should be validated by reviewer',
+  ],
 });
 ```
 
 ### Ask BOSS a Question
+
 If you need clarification:
+
 ```typescript
 await conductor.notify_boss({
   type: 'question',
   message: 'Should API support versioning?',
   priority: 'medium',
-  requiresAnswer: true
+  requiresAnswer: true,
 });
 ```
-```
+
+````
 
 ---
 
@@ -329,7 +352,7 @@ await conductor.notify_boss({
     "npm install -g @glxmart/conductor-mcp@0.2.0"  // Pinned version
   ]
 }
-```
+````
 
 ### Challenge 3: Filesystem Permissions
 
@@ -342,18 +365,21 @@ await conductor.notify_boss({
 ## Implementation Phases
 
 ### Phase 1: Basic Manifest Tools (Implement First)
+
 - ✅ Install Conductor in worker containers
 - ✅ Expose `add_artifact`, `add_decision`, `add_issue` tools
 - ✅ Update worker CLAUDE.md with tool instructions
 - ✅ Test with single worker
 
 ### Phase 2: Bidirectional Communication
+
 - Add `notify_boss` tool for workers
 - BOSS polls `.boss/boss-inbox/` for messages
 - Update `ask_worker` to use inbox files
 - Test question/answer flow
 
 ### Phase 3: Advanced Features
+
 - Real-time communication via file watching
 - Manifest diff/validation tools
 - Worker-to-worker communication (optional)
@@ -370,9 +396,7 @@ await conductor.notify_boss({
 ```json
 {
   "base_image": "node:20-alpine",
-  "setup_commands": [
-    "apk add --no-cache git bash"
-  ],
+  "setup_commands": ["apk add --no-cache git bash"],
   "install_commands": [
     "npm install -g @anthropic-ai/claude-code",
     "npm install -g @glxmart/conductor-mcp@0.2.0"
@@ -422,6 +446,7 @@ if (isWorker) {
 ## Expected Benefits
 
 ### For Workers:
+
 1. ✅ Type-safe manifest operations
 2. ✅ No manual JSON writing
 3. ✅ Instant validation
@@ -430,6 +455,7 @@ if (isWorker) {
 6. ✅ Reduced errors
 
 ### For BOSS:
+
 1. ✅ Guaranteed manifest format
 2. ✅ Can interact with workers
 3. ✅ Better error reporting from workers
@@ -437,6 +463,7 @@ if (isWorker) {
 5. ✅ Simplified orchestration
 
 ### For System:
+
 1. ✅ Consistent data format
 2. ✅ Version-compatible manifests
 3. ✅ Easier upgrades
@@ -448,6 +475,7 @@ if (isWorker) {
 ## Testing Strategy
 
 ### Test 1: Single Worker with Conductor
+
 ```bash
 # Spawn architect worker
 conductor spawn_worker architect "Create constitution"
@@ -460,6 +488,7 @@ cat .boss/worker-manifest-env-abc123.json
 ```
 
 ### Test 2: Parallel Workers with Conductor
+
 ```bash
 # Spawn 3 workers in parallel
 conductor spawn_worker developer-backend "Implement API"
@@ -479,6 +508,7 @@ git merge --no-ff container-use/env-ghi789
 ```
 
 ### Test 3: Interactive Communication
+
 ```bash
 # Spawn worker
 conductor spawn_worker architect "Create constitution"
@@ -506,6 +536,7 @@ conductor get_worker_status env-abc123
 ## Future Possibilities
 
 ### Worker-to-Worker Communication
+
 Workers could potentially send messages to each other via shared inbox:
 
 ```
@@ -516,6 +547,7 @@ Workers could potentially send messages to each other via shared inbox:
 ```
 
 ### Shared State Management
+
 Workers could update shared state:
 
 ```
@@ -524,6 +556,7 @@ Workers could update shared state:
 ```
 
 ### Real-Time Collaboration
+
 Workers watching each other's manifests for coordination.
 
 ---

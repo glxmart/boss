@@ -2,7 +2,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { readFile, writeFile } from '../utils/file-system.js';
-import type { QualityPreset } from '../types/index.js';
+import type { QualityPreset, QualityConfig } from '../types/index.js';
 import yaml from 'js-yaml';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -15,11 +15,11 @@ export async function applyQualityPreset(
   // Load preset YAML
   const presetPath = path.join(__dirname, `${quality}.yaml`);
   const fs = await import('fs-extra');
-  
-  let preset: any = {};
+
+  let preset: QualityConfig = {};
   if (await fs.pathExists(presetPath)) {
     const content = await readFile(presetPath);
-    preset = yaml.load(content) as any;
+    preset = yaml.load(content) as QualityConfig;
   } else {
     // Use default preset
     preset = getDefaultPreset(quality);
@@ -28,37 +28,37 @@ export async function applyQualityPreset(
   // Update .boss/config.yaml with quality gates
   const configPath = path.join(projectPath, '.boss', 'config.yaml');
   const configContent = await readFile(configPath);
-  const config = yaml.load(configContent) as any;
+  const config = yaml.load(configContent) as QualityConfig;
 
   config.quality = {
     preset: quality,
-    gates: preset.gates || {}
+    gates: preset.gates || {},
   };
 
   await writeFile(configPath, yaml.dump(config, { indent: 2 }));
 }
 
-function getDefaultPreset(quality: QualityPreset): any {
-  const presets: Record<QualityPreset, any> = {
-    'startup': {
+function getDefaultPreset(quality: QualityPreset): QualityConfig {
+  const presets: Record<QualityPreset, QualityConfig> = {
+    startup: {
       gates: {
         coverage: 60,
         lint: true,
         typecheck: true,
-        test: true
-      }
+        test: true,
+      },
     },
-    'production': {
+    production: {
       gates: {
         coverage: 80,
         mutation: 80,
         lint: true,
         typecheck: true,
         test: true,
-        security: true
-      }
+        security: true,
+      },
     },
-    'enterprise': {
+    enterprise: {
       gates: {
         coverage: 90,
         mutation: 80,
@@ -66,10 +66,9 @@ function getDefaultPreset(quality: QualityPreset): any {
         typecheck: true,
         test: true,
         security: true,
-        dependency_check: true
-      }
-    }
+        dependency_check: true,
+      },
+    },
   };
   return presets[quality];
 }
-

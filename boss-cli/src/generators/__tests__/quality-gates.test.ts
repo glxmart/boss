@@ -43,7 +43,11 @@ describe('quality-gates generator', () => {
       const config = JSON.parse(content);
 
       expect(config.preset).toBe('production');
-      expect(config.git_hooks.pre_commit.commands).toEqual(['lint-staged', 'typecheck', 'test-affected']);
+      expect(config.git_hooks.pre_commit.commands).toEqual([
+        'lint-staged',
+        'typecheck',
+        'test-affected',
+      ]);
       expect(config.git_hooks.commit_msg.type).toBe('conventional-commits');
       expect(config.ci.checks).toEqual(['typecheck', 'lint', 'test', 'coverage', 'security-scan']);
     });
@@ -56,7 +60,11 @@ describe('quality-gates generator', () => {
       const config = JSON.parse(content);
 
       expect(config.preset).toBe('enterprise');
-      expect(config.git_hooks.pre_commit.commands).toEqual(['lint-staged', 'typecheck', 'test-affected']);
+      expect(config.git_hooks.pre_commit.commands).toEqual([
+        'lint-staged',
+        'typecheck',
+        'test-affected',
+      ]);
       expect(config.git_hooks.commit_msg.type).toBe('conventional-commits-with-ticket');
       expect(config.ci.checks).toEqual([
         'typecheck',
@@ -65,7 +73,7 @@ describe('quality-gates generator', () => {
         'coverage',
         'mutation-test',
         'security-scan',
-        'dependency-check'
+        'dependency-check',
       ]);
     });
 

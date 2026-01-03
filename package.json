@@ -6,9 +6,28 @@
   "scripts": {
     "test:local": "pnpm --filter @glxmart/boss-cli test:local",
     "changeset": "changeset",
+    "changeset:add": "./scripts/create-changeset.sh",
     "version-packages": "changeset version",
     "release": "pnpm build && changeset publish",
-    "build": "pnpm --filter @glxmart/boss-cli build && pnpm --filter @glxmart/conductor-mcp build"
+    "build": "pnpm --filter @glxmart/boss-cli build && pnpm --filter @glxmart/conductor-mcp build",
+    "lint": "pnpm --filter @glxmart/boss-cli lint && pnpm --filter @glxmart/conductor-mcp lint",
+    "lint:fix": "pnpm --filter @glxmart/boss-cli lint:fix && pnpm --filter @glxmart/conductor-mcp lint:fix",
+    "test": "pnpm --filter @glxmart/boss-cli test && pnpm --filter @glxmart/conductor-mcp test:unit",
+    "test:unit": "pnpm --filter @glxmart/boss-cli test && pnpm --filter @glxmart/conductor-mcp test:unit",
+    "typecheck": "pnpm --filter @glxmart/boss-cli build && pnpm --filter @glxmart/conductor-mcp build",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
+    "prepare": "husky",
+    "workflow:1-start": "./scripts/1-start-feature.sh",
+    "workflow:2-check": "./scripts/2-quality-check.sh",
+    "workflow:3-changeset": "./scripts/3-create-changeset.sh",
+    "workflow:4-pr": "./scripts/4-create-pr.sh",
+    "gh": "op run --env-file=.env -- gh"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,json,md,yml,yaml}": [
+      "prettier --write"
+    ]
   },
   "engines": {
     "node": ">=18.0.0",
@@ -16,6 +35,9 @@
   },
   "packageManager": "pnpm@10.26.0",
   "devDependencies": {
-    "@changesets/cli": "^2.29.8"
+    "@changesets/cli": "^2.29.8",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.7.4"
   }
 }

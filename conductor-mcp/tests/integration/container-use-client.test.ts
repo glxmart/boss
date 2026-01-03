@@ -15,8 +15,8 @@ vi.mock('../../src/orchestration/mcp-client.js', () => {
       callTool: mockCallTool,
       connect: mockConnect,
       disconnect: mockDisconnect,
-      listTools: mockListTools
-    }))
+      listTools: mockListTools,
+    })),
   };
 });
 
@@ -44,11 +44,11 @@ describe('ContainerUseClient Integration - MCP Protocol', () => {
       // Mock environment_create response
       mockMCPClient.callTool
         .mockResolvedValueOnce({
-          environment_id: 'env-abc123'
+          environment_id: 'env-abc123',
         })
         // Mock environment_config response
         .mockResolvedValueOnce({
-          success: true
+          success: true,
         });
 
       const result = await client.createEnvironment({
@@ -59,14 +59,14 @@ describe('ContainerUseClient Integration - MCP Protocol', () => {
         install_commands: ['npm install'],
         environment_variables: { NODE_ENV: 'test' },
         secrets: ['SECRET_KEY=secret_value'],
-        network: { allowed_hosts: ['*.example.com'] }
+        network: { allowed_hosts: ['*.example.com'] },
       });
 
       // Verify environment_create was called
       expect(mockMCPClient.callTool).toHaveBeenNthCalledWith(1, 'environment_create', {
         environment_source: '/path/to/repo',
         title: 'Test Worker',
-        explanation: 'Creating environment for Test Worker'
+        explanation: 'Creating environment for Test Worker',
       });
 
       // Verify environment_config was called
@@ -76,9 +76,9 @@ describe('ContainerUseClient Integration - MCP Protocol', () => {
         config: {
           base_image: 'node:22-slim',
           setup_commands: ['apt-get update', 'npm install'],
-          envs: ['NODE_ENV=test', 'SECRET_KEY=secret_value']
+          envs: ['NODE_ENV=test', 'SECRET_KEY=secret_value'],
         },
-        explanation: 'Configuring environment with node:22-slim'
+        explanation: 'Configuring environment with node:22-slim',
       });
 
       expect(result.environment_id).toBe('env-abc123');
@@ -97,7 +97,7 @@ describe('ContainerUseClient Integration - MCP Protocol', () => {
           install_commands: [],
           environment_variables: {},
           secrets: [],
-          network: { allowed_hosts: [] }
+          network: { allowed_hosts: [] },
         });
       }).rejects.toThrow();
     });
@@ -115,7 +115,7 @@ describe('ContainerUseClient Integration - MCP Protocol', () => {
         install_commands: ['npm install -g pnpm', 'pnpm install'],
         environment_variables: {},
         secrets: [],
-        network: { allowed_hosts: [] }
+        network: { allowed_hosts: [] },
       });
 
       // Check that environment_config combined all commands
@@ -124,7 +124,7 @@ describe('ContainerUseClient Integration - MCP Protocol', () => {
         'apt-get update',
         'apt-get install -y git',
         'npm install -g pnpm',
-        'pnpm install'
+        'pnpm install',
       ]);
     });
   });
@@ -133,21 +133,25 @@ describe('ContainerUseClient Integration - MCP Protocol', () => {
     it('should call environment_run_cmd MCP tool', async () => {
       mockMCPClient.callTool.mockResolvedValueOnce({
         stdout: 'Test output',
-        output: 'Test output'
+        output: 'Test output',
       });
 
       const result = await client.executeInEnvironment({
         environment_source: '/path/to/repo',
         environment_id: 'env-123',
-        command: 'npm test'
+        command: 'npm test',
       });
 
-      expect(mockMCPClient.callTool).toHaveBeenCalledWith('environment_run_cmd', {
-        environment_source: '/path/to/repo',
-        environment_id: 'env-123',
-        command: 'npm test',
-        explanation: 'Executing command in environment env-123'
-      }, { timeout: 180000 });
+      expect(mockMCPClient.callTool).toHaveBeenCalledWith(
+        'environment_run_cmd',
+        {
+          environment_source: '/path/to/repo',
+          environment_id: 'env-123',
+          command: 'npm test',
+          explanation: 'Executing command in environment env-123',
+        },
+        { timeout: 180000 }
+      );
 
       expect(result.stdout).toBe('Test output');
       expect(result.output).toBe('Test output');
@@ -159,7 +163,7 @@ describe('ContainerUseClient Integration - MCP Protocol', () => {
       const result = await client.executeInEnvironment({
         environment_source: '/path/to/repo',
         environment_id: 'env-123',
-        command: 'echo test'
+        command: 'echo test',
       });
 
       expect(result.stdout).toBe('');
@@ -175,7 +179,7 @@ describe('ContainerUseClient Integration - MCP Protocol', () => {
         environment_source: '/path/to/repo',
         environment_id: 'env-123',
         target_file: '/workdir/.claude/CLAUDE.md',
-        contents: 'Test content'
+        contents: 'Test content',
       });
 
       expect(mockMCPClient.callTool).toHaveBeenCalledWith('environment_file_write', {
@@ -183,7 +187,7 @@ describe('ContainerUseClient Integration - MCP Protocol', () => {
         environment_id: 'env-123',
         target_file: '/workdir/.claude/CLAUDE.md',
         contents: 'Test content',
-        explanation: 'Writing file /workdir/.claude/CLAUDE.md'
+        explanation: 'Writing file /workdir/.claude/CLAUDE.md',
       });
     });
 
@@ -195,7 +199,7 @@ describe('ContainerUseClient Integration - MCP Protocol', () => {
           environment_source: '/path/to/repo',
           environment_id: 'env-123',
           target_file: '/workdir/test.txt',
-          contents: 'content'
+          contents: 'content',
         });
       }).rejects.toThrow();
     });
@@ -204,13 +208,13 @@ describe('ContainerUseClient Integration - MCP Protocol', () => {
   describe('environmentFileRead', () => {
     it('should call environment_file_read MCP tool', async () => {
       mockMCPClient.callTool.mockResolvedValueOnce({
-        contents: 'File contents here'
+        contents: 'File contents here',
       });
 
       const result = await client.environmentFileRead({
         environment_source: '/path/to/repo',
         environment_id: 'env-123',
-        target_file: '/workdir/.boss/manifest.json'
+        target_file: '/workdir/.boss/manifest.json',
       });
 
       expect(mockMCPClient.callTool).toHaveBeenCalledWith('environment_file_read', {
@@ -218,7 +222,7 @@ describe('ContainerUseClient Integration - MCP Protocol', () => {
         environment_id: 'env-123',
         target_file: '/workdir/.boss/manifest.json',
         should_read_entire_file: true,
-        explanation: 'Reading file /workdir/.boss/manifest.json'
+        explanation: 'Reading file /workdir/.boss/manifest.json',
       });
 
       expect(result.contents).toBe('File contents here');
@@ -230,7 +234,7 @@ describe('ContainerUseClient Integration - MCP Protocol', () => {
       const result = await client.environmentFileRead({
         environment_source: '/path/to/repo',
         environment_id: 'env-123',
-        target_file: '/workdir/empty.txt'
+        target_file: '/workdir/empty.txt',
       });
 
       expect(result.contents).toBe('');
@@ -243,7 +247,7 @@ describe('ContainerUseClient Integration - MCP Protocol', () => {
         await client.environmentFileRead({
           environment_source: '/path/to/repo',
           environment_id: 'env-123',
-          target_file: '/workdir/missing.txt'
+          target_file: '/workdir/missing.txt',
         });
       }).rejects.toThrow();
     });
@@ -255,7 +259,7 @@ describe('ContainerUseClient Integration - MCP Protocol', () => {
       // It doesn't make MCP calls (merge is done via CLI)
       await client.mergeEnvironment({
         environment_id: 'env-123',
-        target_branch: 'main'
+        target_branch: 'main',
       });
 
       // No MCP calls should be made
@@ -280,7 +284,7 @@ describe('ContainerUseClient Integration - MCP Protocol', () => {
       mockMCPClient.connect.mockResolvedValueOnce(undefined);
       mockMCPClient.listTools.mockResolvedValueOnce([
         { name: 'environment_create' },
-        { name: 'environment_run_cmd' }
+        { name: 'environment_run_cmd' },
       ]);
 
       const available = await client.checkAvailability();
@@ -302,19 +306,22 @@ describe('ContainerUseClient Integration - MCP Protocol', () => {
   describe('listEnvironments', () => {
     it('should call environment_list MCP tool', async () => {
       const mockEnvs = [
-        { environment_id: 'env-1', title: 'Worker 1' },
-        { environment_id: 'env-2', title: 'Worker 2' }
+        { environment_id: 'env-1', title: 'Worker 1', status: 'unknown' },
+        { environment_id: 'env-2', title: 'Worker 2', status: 'unknown' },
       ];
 
       mockMCPClient.callTool.mockResolvedValueOnce({
-        environments: mockEnvs
+        environments: [
+          { environment_id: 'env-1', title: 'Worker 1' },
+          { environment_id: 'env-2', title: 'Worker 2' },
+        ],
       });
 
       const result = await client.listEnvironments('/path/to/repo');
 
       expect(mockMCPClient.callTool).toHaveBeenCalledWith('environment_list', {
         environment_source: '/path/to/repo',
-        explanation: 'Listing all environments'
+        explanation: 'Listing all environments',
       });
 
       expect(result).toEqual(mockEnvs);
@@ -322,7 +329,7 @@ describe('ContainerUseClient Integration - MCP Protocol', () => {
 
     it('should return empty array if no environments', async () => {
       mockMCPClient.callTool.mockResolvedValueOnce({
-        environments: []
+        environments: [],
       });
 
       const result = await client.listEnvironments('/path/to/repo');

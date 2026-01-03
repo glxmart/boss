@@ -15,6 +15,7 @@
 
 **Before Phase 4:**
 Every worker spawn created a new environment, even for follow-up work:
+
 ```typescript
 // BOSS detects incomplete work, spawns new worker
 const worker1 = await spawn_worker({ workerType: 'developer-backend', ... });  // 180-360s
@@ -27,6 +28,7 @@ const worker2 = await spawn_worker({ workerType: 'developer-backend', ... });  /
 
 **After Phase 4:**
 Workers can resume in existing environments:
+
 ```typescript
 // BOSS spawns worker for initial work
 const worker1 = await spawn_worker({ workerType: 'developer-backend', ... });  // 180-360s
@@ -48,6 +50,7 @@ const worker2 = await spawn_worker({
 ### New `resumeEnvironmentId` Parameter
 
 **Added to `spawn_worker` tool:**
+
 ```typescript
 {
   workerType: 'developer-backend',
@@ -59,15 +62,17 @@ const worker2 = await spawn_worker({
 ### Resume Flow
 
 **1. BOSS calls spawn_worker with resumeEnvironmentId**
+
 ```typescript
 const result = await conductor.spawn_worker({
   workerType: 'developer-backend',
   taskPrompt: 'Add error handling to login endpoint',
-  resumeEnvironmentId: 'env-abc123'  // Previous worker environment
+  resumeEnvironmentId: 'env-abc123', // Previous worker environment
 });
 ```
 
 **2. Conductor checks for resume parameter**
+
 ```typescript
 if (input.resumeEnvironmentId) {
   // Phase 4: Resume existing environment
@@ -79,6 +84,7 @@ if (input.resumeEnvironmentId) {
 ```
 
 **3. Resume logic executes (worker-spawner.ts)**
+
 ```typescript
 private async resumeWorkerInEnvironment() {
   // 1. Verify environment exists (fail fast if not)
@@ -111,6 +117,7 @@ private async resumeWorkerInEnvironment() {
 ```
 
 **What gets SKIPPED (savings breakdown):**
+
 - ❌ Container creation: 60-90s
 - ❌ Configuration setup: 10-20s
 - ❌ Environment initialization: 10-20s
@@ -119,6 +126,7 @@ private async resumeWorkerInEnvironment() {
 - ✅ **Total saved: 90-150s per resume**
 
 **What still happens (necessary work):**
+
 - ✅ Task execution with Claude (same as normal)
 - ✅ Manifest update (merge with existing)
 - ✅ State tracking update
@@ -129,13 +137,13 @@ private async resumeWorkerInEnvironment() {
 
 ### Time Savings Per Resume
 
-| Operation | Normal Spawn | Resume | Savings |
-|-----------|--------------|--------|---------|
-| Container Creation | 60-90s | 0s | **60-90s** |
-| Container Configuration | 10-20s | 0s | **10-20s** |
-| Environment Setup | 10-20s | 0s | **10-20s** |
-| Worker Execution | 60-180s | 60-180s | 0s |
-| **Total** | **180-360s** | **10-30s** | **170-330s (-94%)** |
+| Operation               | Normal Spawn | Resume     | Savings             |
+| ----------------------- | ------------ | ---------- | ------------------- |
+| Container Creation      | 60-90s       | 0s         | **60-90s**          |
+| Container Configuration | 10-20s       | 0s         | **10-20s**          |
+| Environment Setup       | 10-20s       | 0s         | **10-20s**          |
+| Worker Execution        | 60-180s      | 60-180s    | 0s                  |
+| **Total**               | **180-360s** | **10-30s** | **170-330s (-94%)** |
 
 ### Cumulative Performance (Phases 1+2+3+4)
 
@@ -169,7 +177,7 @@ private async resumeWorkerInEnvironment() {
 // Initial implementation (normal spawn)
 const worker1 = await spawn_worker({
   workerType: 'developer-backend',
-  taskPrompt: 'Implement user authentication'
+  taskPrompt: 'Implement user authentication',
 });
 // Result: 80% complete, missing password reset
 
@@ -177,7 +185,7 @@ const worker1 = await spawn_worker({
 const worker2 = await spawn_worker({
   workerType: 'developer-backend',
   taskPrompt: 'Add password reset functionality',
-  resumeEnvironmentId: worker1.workerId  // ← Phase 4
+  resumeEnvironmentId: worker1.workerId, // ← Phase 4
 });
 // Savings: ~180s
 ```
@@ -192,7 +200,7 @@ const worker2 = await spawn_worker({
 // Code review identifies bug
 const review = await spawn_worker({
   workerType: 'code-reviewer',
-  taskPrompt: 'Review authentication implementation'
+  taskPrompt: 'Review authentication implementation',
 });
 // Result: Found SQL injection vulnerability
 
@@ -200,7 +208,7 @@ const review = await spawn_worker({
 const fix = await spawn_worker({
   workerType: 'developer-backend',
   taskPrompt: 'Fix SQL injection in authentication',
-  resumeEnvironmentId: originalWorkerId  // ← Phase 4
+  resumeEnvironmentId: originalWorkerId, // ← Phase 4
 });
 // Savings: ~180s
 ```
@@ -215,14 +223,14 @@ const fix = await spawn_worker({
 // Initial styling implementation
 const worker1 = await spawn_worker({
   workerType: 'developer-frontend',
-  taskPrompt: 'Style login page'
+  taskPrompt: 'Style login page',
 });
 
 // BOSS reviews, requests adjustments
 const worker2 = await spawn_worker({
   workerType: 'developer-frontend',
   taskPrompt: 'Adjust button colors and spacing per design feedback',
-  resumeEnvironmentId: worker1.workerId  // ← Phase 4
+  resumeEnvironmentId: worker1.workerId, // ← Phase 4
 });
 // Savings: ~180s
 ```
@@ -237,21 +245,21 @@ const worker2 = await spawn_worker({
 // Step 1: API endpoints
 const step1 = await spawn_worker({
   workerType: 'developer-backend',
-  taskPrompt: 'Create user management API endpoints'
+  taskPrompt: 'Create user management API endpoints',
 });
 
 // Step 2: Add validation (resume)
 const step2 = await spawn_worker({
   workerType: 'developer-backend',
   taskPrompt: 'Add input validation to all endpoints',
-  resumeEnvironmentId: step1.workerId
+  resumeEnvironmentId: step1.workerId,
 });
 
 // Step 3: Add rate limiting (resume)
 const step3 = await spawn_worker({
   workerType: 'developer-backend',
   taskPrompt: 'Implement rate limiting for authentication endpoints',
-  resumeEnvironmentId: step1.workerId
+  resumeEnvironmentId: step1.workerId,
 });
 // Total savings: ~360s (2 resumes)
 ```
@@ -265,17 +273,19 @@ const step3 = await spawn_worker({
 ### Modified Files
 
 **1. `conductor-mcp/src/types.ts`**
+
 ```typescript
 export interface SpawnWorkerInput {
   workerType: WorkerType;
   taskPrompt: string;
   projectPath?: string;
   targetBranch?: string;
-  resumeEnvironmentId?: string;  // ← NEW: Phase 4 optimization
+  resumeEnvironmentId?: string; // ← NEW: Phase 4 optimization
 }
 ```
 
 **2. `conductor-mcp/src/tools.ts` (Tool Schema)**
+
 ```typescript
 spawn_worker: {
   inputSchema: {
@@ -291,6 +301,7 @@ spawn_worker: {
 ```
 
 **3. `conductor-mcp/src/lifecycle/worker-spawner.ts` (Main Logic)**
+
 ```typescript
 async spawnWorker(input: SpawnWorkerInput): Promise<SpawnWorkerOutput> {
   // Phase 4: Check if resuming existing environment
@@ -314,6 +325,7 @@ private async resumeWorkerInEnvironment(...): Promise<SpawnWorkerOutput> {
 ```
 
 **Lines Changed:**
+
 - types.ts: +1 line (added parameter)
 - tools.ts: +4 lines (added schema property)
 - worker-spawner.ts: +120 lines (added resume logic)
@@ -349,23 +361,24 @@ cd conductor-mcp && pnpm build
 ### BOSS Using Resume Functionality
 
 **Example 1: Iterative Development**
+
 ```typescript
 // BOSS orchestrates multi-step development
 
 // Step 1: Initial implementation
 const worker = await conductor.tools.spawn_worker({
   workerType: 'developer-backend',
-  taskPrompt: 'Implement user registration endpoint'
+  taskPrompt: 'Implement user registration endpoint',
 });
 
-console.log(worker.workerId);  // 'env-abc123'
-console.log(worker.message);   // 'developer-backend worker spawned successfully'
+console.log(worker.workerId); // 'env-abc123'
+console.log(worker.message); // 'developer-backend worker spawned successfully'
 
 // Step 2: Add tests (resume in same environment)
 const tests = await conductor.tools.spawn_worker({
   workerType: 'developer-backend',
   taskPrompt: 'Add comprehensive tests for registration endpoint',
-  resumeEnvironmentId: worker.workerId  // ← Resume
+  resumeEnvironmentId: worker.workerId, // ← Resume
 });
 
 console.log(tests.message);
@@ -373,11 +386,12 @@ console.log(tests.message);
 ```
 
 **Example 2: Bug Fix After Review**
+
 ```typescript
 // Review finds issues
 const review = await conductor.tools.spawn_worker({
   workerType: 'code-reviewer',
-  taskPrompt: 'Review user authentication implementation'
+  taskPrompt: 'Review user authentication implementation',
 });
 
 // Get worker ID from review recommendations
@@ -387,11 +401,12 @@ const originalWorkerId = review.recommendations[0].workerId;
 const fix = await conductor.tools.spawn_worker({
   workerType: 'developer-backend',
   taskPrompt: 'Fix issues identified in code review',
-  resumeEnvironmentId: originalWorkerId  // ← Resume
+  resumeEnvironmentId: originalWorkerId, // ← Resume
 });
 ```
 
 **Example 3: Progressive Feature Implementation**
+
 ```typescript
 // Build feature step by step, reusing environment
 
@@ -400,7 +415,7 @@ const steps = [
   'Add CRUD API endpoints for blog posts',
   'Implement markdown rendering',
   'Add image upload support',
-  'Create admin dashboard'
+  'Create admin dashboard',
 ];
 
 let workerId: string | undefined;
@@ -409,10 +424,10 @@ for (const step of steps) {
   const result = await conductor.tools.spawn_worker({
     workerType: 'developer-fullstack',
     taskPrompt: step,
-    resumeEnvironmentId: workerId  // undefined for first, then resume
+    resumeEnvironmentId: workerId, // undefined for first, then resume
   });
 
-  workerId = result.workerId;  // Use for next iteration
+  workerId = result.workerId; // Use for next iteration
 }
 
 // Total savings: 4 resumes × 180s = 720s (~12 minutes)
@@ -435,6 +450,7 @@ claude-code --continue --prompt "Add tests" --session-id env-abc123
 ```
 
 **Benefits of --continue:**
+
 - Preserves full conversation history
 - Maintains Claude's context and understanding
 - Worker remembers previous decisions
@@ -443,39 +459,38 @@ claude-code --continue --prompt "Add tests" --session-id env-abc123
 ### Manifest Merging
 
 **Before Resume:**
+
 ```json
 {
   "workerId": "env-abc123",
-  "artifacts": [
-    { "path": "src/auth.ts", "type": "implementation" }
-  ],
+  "artifacts": [{ "path": "src/auth.ts", "type": "implementation" }],
   "tasksCompleted": ["Implement authentication"],
-  "decisions": [
-    { "decision": "Use JWT for sessions", "rationale": "Stateless, scalable" }
-  ]
+  "decisions": [{ "decision": "Use JWT for sessions", "rationale": "Stateless, scalable" }]
 }
 ```
 
 **After Resume:**
+
 ```json
 {
   "workerId": "env-abc123",
   "artifacts": [
     { "path": "src/auth.ts", "type": "implementation" },
-    { "path": "tests/auth.test.ts", "type": "test" }  // ← New
+    { "path": "tests/auth.test.ts", "type": "test" } // ← New
   ],
   "tasksCompleted": [
     "Implement authentication",
-    "Add comprehensive test suite"  // ← New
+    "Add comprehensive test suite" // ← New
   ],
   "decisions": [
     { "decision": "Use JWT for sessions", "rationale": "Stateless, scalable" },
-    { "decision": "Test all edge cases", "rationale": "Security critical" }  // ← New
+    { "decision": "Test all edge cases", "rationale": "Security critical" } // ← New
   ]
 }
 ```
 
 **Merge Logic:**
+
 - Arrays (artifacts, decisions, issues, tasksCompleted): Concatenated
 - Scalars (status, workComplete): Latest value wins
 - Timestamps: lastUpdatedAt updated, startedAt preserved
@@ -487,39 +502,42 @@ claude-code --continue --prompt "Add tests" --session-id env-abc123
 ### Validation Checks
 
 **1. Environment Existence**
+
 ```typescript
 const existingWorker = this.stateTracker.getWorkerOrThrow(environmentId);
 // Throws if environment doesn't exist
 ```
 
 **2. Worker Type Mismatch (Warning)**
+
 ```typescript
 if (existingWorker.workerType !== workerType) {
   logger.warn('Worker type mismatch when resuming', {
     requestedType: workerType,
-    existingType: existingWorker.workerType
+    existingType: existingWorker.workerType,
   });
   // Allows resume but logs warning
 }
 ```
 
 **3. State Tracking**
+
 ```typescript
 this.stateTracker.updateWorkerStatus(environmentId, {
   status: updatedManifest.status,
   lastTaskExecutedAt: new Date().toISOString(),
-  artifacts: updatedManifest.artifacts.map(a => a.path)
+  artifacts: updatedManifest.artifacts.map((a) => a.path),
 });
 ```
 
 ### Error Scenarios
 
-| Error | Handling | User Experience |
-|-------|----------|-----------------|
-| Environment not found | Return error, suggest list_active_workers | BOSS knows environment doesn't exist |
-| Worker type mismatch | Log warning, allow resume | BOSS can repurpose environments |
-| Manifest read failure | Continue with null manifest | Fresh start in existing environment |
-| Task execution failure | Return error, preserve environment | BOSS can retry with different prompt |
+| Error                  | Handling                                  | User Experience                      |
+| ---------------------- | ----------------------------------------- | ------------------------------------ |
+| Environment not found  | Return error, suggest list_active_workers | BOSS knows environment doesn't exist |
+| Worker type mismatch   | Log warning, allow resume                 | BOSS can repurpose environments      |
+| Manifest read failure  | Continue with null manifest               | Fresh start in existing environment  |
+| Task execution failure | Return error, preserve environment        | BOSS can retry with different prompt |
 
 ---
 
@@ -528,23 +546,24 @@ this.stateTracker.updateWorkerStatus(environmentId, {
 ### Metrics to Track
 
 **Future Enhancement:**
+
 ```typescript
 interface ResumeMetrics {
   environmentId: string;
   workerType: WorkerType;
   timings: {
-    verifyEnvironment: number;    // ~1ms
-    loadManifest: number;          // ~10-50ms
-    executeTask: number;           // 60-180s (same as normal)
-    updateManifest: number;        // ~10-50ms
-    updateState: number;           // ~1ms
-    total: number;                 // ~60-180s (vs 180-360s)
+    verifyEnvironment: number; // ~1ms
+    loadManifest: number; // ~10-50ms
+    executeTask: number; // 60-180s (same as normal)
+    updateManifest: number; // ~10-50ms
+    updateState: number; // ~1ms
+    total: number; // ~60-180s (vs 180-360s)
   };
   savings: {
-    containerCreation: number;     // 60-90s saved
-    configuration: number;         // 10-20s saved
-    environmentSetup: number;      // 10-20s saved
-    total: number;                 // 80-130s saved
+    containerCreation: number; // 60-90s saved
+    configuration: number; // 10-20s saved
+    environmentSetup: number; // 10-20s saved
+    total: number; // 80-130s saved
   };
   manifestMerge: {
     existingArtifacts: number;
@@ -560,11 +579,13 @@ interface ResumeMetrics {
 ## Next Phases
 
 ### Phase 5: Parallel Worker Spawning (Ready)
+
 - Spawn multiple workers concurrently
 - **Expected savings:** 540s for multi-worker phases
 - Implementation: Promise.all in conductor
 
 ### Phase 6: Configuration Learning
+
 - Monitor worker adaptations
 - Import beneficial configs
 - **Benefit:** Continuous improvement
@@ -576,12 +597,14 @@ interface ResumeMetrics {
 ### Time Savings
 
 **Per Worker Lifecycle:**
+
 - Initial spawn: 85-260s (Phases 1+2+3)
 - Follow-up work (resume): 10-30s (Phase 4)
 - **Total for 2-task lifecycle:** 95-290s (was 360-720s)
 - **Savings:** 265-430s (-73%)
 
 **For Iterative Development (5 resume operations):**
+
 - Without Phase 4: 5 × 180s = 900s (15 minutes)
 - With Phase 4: 1 × 180s + 4 × 15s = 240s (4 minutes)
 - **Savings:** 660s (11 minutes, -73%)
@@ -608,6 +631,7 @@ interface ResumeMetrics {
 ## Acknowledgments
 
 Phase 4 builds on:
+
 - Phase 1's Docker optimization (60-90s baseline savings)
 - Phase 2's config optimization (10-15s baseline savings)
 - Phase 3's git batching (10-15s baseline savings)

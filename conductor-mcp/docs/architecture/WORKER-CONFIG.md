@@ -45,6 +45,7 @@ const config = await loadWorkerConfig('architect', '/path/to/project');
 **Purpose**: Defines worker capabilities, inputs, outputs, and validation rules
 
 **Structure**:
+
 ```json
 {
   "workerType": "architect",
@@ -78,11 +79,7 @@ const config = await loadWorkerConfig('architect', '/path/to/project');
     "bdd": "BDD format is MANDATORY",
     "documentation": "Documentation is REQUIRED"
   },
-  "decisionTypes": [
-    "Architectural principles",
-    "Development methodology",
-    "Quality gates"
-  ],
+  "decisionTypes": ["Architectural principles", "Development methodology", "Quality gates"],
   "collaboratesWith": ["product-owner", "clarifier", "reviewer"],
   "workflowPosition": "first",
   "blockers": []
@@ -90,6 +87,7 @@ const config = await loadWorkerConfig('architect', '/path/to/project');
 ```
 
 **Uses**:
+
 - Generate JSON schema for output validation
 - Document worker capabilities
 - Enable programmatic worker discovery
@@ -102,32 +100,40 @@ const config = await loadWorkerConfig('architect', '/path/to/project');
 **Purpose**: Describes worker's role, responsibilities, and workflow
 
 **Structure**:
+
 ```markdown
 # ${workerName} Worker
 
 ## Role
+
 ${workerRoleDescription}
 
 ## Phase
+
 ${phase}
 
 ## Responsibilities
+
 - Responsibility 1
 - Responsibility 2
 
 ## Deliverables
+
 ${artifactRequirements}
 
 ## Quality Standards
+
 - Standard 1
 - Standard 2
 
 ## Workflow
+
 1. Step 1
 2. Step 2
 ```
 
 **Template Variables**:
+
 - `${workerName}` - Worker type name
 - `${phase}` - Development phase
 - `${workerRoleDescription}` - Role description from metadata.json
@@ -140,7 +146,8 @@ ${artifactRequirements}
 **Purpose**: Provides execution context for worker (Claude Code in container)
 
 **Structure**:
-```markdown
+
+````markdown
 # ${workerType} Worker - Execution Context
 
 ## Your Role & Identity
@@ -152,6 +159,7 @@ You are a **fully specialized ${workerType} agent** running in an isolated conta
 ### Schema-Based Output
 
 You are executed with `--output-format json --json-schema` flags. This means:
+
 - You return structured JSON data at the end of your work
 - Conductor automatically validates and updates the manifest
 - You DON'T manually write `.boss/worker-manifest-${workerId}.json` files
@@ -169,6 +177,7 @@ You are executed with `--output-format json --json-schema` flags. This means:
   "nextSteps": [...]
 }
 ```
+````
 
 ## BOSS Project Structure
 
@@ -193,6 +202,7 @@ You are executed with `--output-format json --json-schema` flags. This means:
 ## Spec-Kit Integration
 
 Use these commands:
+
 - `/speckit.${primaryCommand}` - Your primary tool
 
 ## Expected Deliverables
@@ -202,6 +212,7 @@ Use these commands:
 ## Quality Checklist
 
 Before marking `workComplete: true`:
+
 - [ ] Deliverable 1 created
 - [ ] Quality standard 1 met
 - [ ] ...
@@ -212,7 +223,8 @@ Before marking `workComplete: true`:
 - **BDD Layer**: All user stories use Given/When/Then format
 - **Documentation Standards**: Comprehensive documentation required
 - **Constitution Compliance**: Follow .specify/memory/constitution.md
-```
+
+````
 
 **Template Variables**:
 - `${workerType}` - Worker type (e.g., 'architect')
@@ -259,9 +271,10 @@ Before marking `workComplete: true`:
     ]
   }
 }
-```
+````
 
 **Template Variables**:
+
 - `${workerType}` - Worker type name
 - `${workerId}` - Runtime worker instance ID
 
@@ -272,6 +285,7 @@ Before marking `workComplete: true`:
 **Purpose**: Worker-specific resources (commands, skills, agents)
 
 **Structure**:
+
 ```
 .claude/
 ├── agents/
@@ -295,10 +309,7 @@ See [Worker Configs Review](../development/WORKER-CONFIGS-REVIEW.md) for recomme
 Template variables are resolved at runtime:
 
 ```typescript
-function resolveTemplate(
-  template: string,
-  variables: Record<string, string>
-): string {
+function resolveTemplate(template: string, variables: Record<string, string>): string {
   return template.replace(/\$\{(\w+)\}/g, (_, key) => {
     return variables[key] || '';
   });
@@ -307,25 +318,27 @@ function resolveTemplate(
 
 ### Common Variables
 
-| Variable | Source | Example |
-|----------|--------|---------|
-| `workerName` | Worker type | 'architect' |
-| `workerType` | Worker type | 'architect' |
-| `workerId` | Runtime | 'env-abc123' |
-| `phase` | metadata.json | '1' or 'Phase 1: Foundation' |
-| `workerRoleDescription` | metadata.json | 'Establishes constitution...' |
-| `artifactRequirements` | metadata.json outputs | '.specify/memory/constitution.md' |
-| `primaryCommand` | metadata.json | '/speckit.constitution' |
+| Variable                | Source                | Example                           |
+| ----------------------- | --------------------- | --------------------------------- |
+| `workerName`            | Worker type           | 'architect'                       |
+| `workerType`            | Worker type           | 'architect'                       |
+| `workerId`              | Runtime               | 'env-abc123'                      |
+| `phase`                 | metadata.json         | '1' or 'Phase 1: Foundation'      |
+| `workerRoleDescription` | metadata.json         | 'Establishes constitution...'     |
+| `artifactRequirements`  | metadata.json outputs | '.specify/memory/constitution.md' |
+| `primaryCommand`        | metadata.json         | '/speckit.constitution'           |
 
 ### Example
 
 **Input (CLAUDE.md)**:
+
 ```markdown
 You are a ${workerType} worker (ID: ${workerId}).
 Your primary command is ${primaryCommand}.
 ```
 
 **Variables**:
+
 ```json
 {
   "workerType": "architect",
@@ -335,6 +348,7 @@ Your primary command is ${primaryCommand}.
 ```
 
 **Output**:
+
 ```markdown
 You are a architect worker (ID: env-abc123).
 Your primary command is /speckit.constitution.
@@ -347,12 +361,14 @@ Your primary command is /speckit.constitution.
 To customize a worker for your project:
 
 1. **Copy built-in config**:
+
    ```bash
    cp -r node_modules/@glxmart/conductor-mcp/worker-configs/architect \
          .boss/workers/architect
    ```
 
 2. **Modify as needed**:
+
    ```bash
    cd .boss/workers/architect
    # Edit metadata.json, CLAUDE.md, etc.
@@ -363,30 +379,33 @@ To customize a worker for your project:
    // Automatically loads from .boss/workers/architect/
    const worker = await conductor.spawn_worker({
      workerType: 'architect',
-     taskPrompt: '...'
+     taskPrompt: '...',
    });
    ```
 
 ### Common Customizations
 
 **Add project-specific skills**:
+
 ```bash
 mkdir -p .boss/workers/architect/.claude/skills
 echo "..." > .boss/workers/architect/.claude/skills/custom-validation.md
 ```
 
 **Modify container image**:
+
 ```json
 {
-  "base_image": "node:20-alpine",  // Changed from node:22-slim
+  "base_image": "node:20-alpine", // Changed from node:22-slim
   "install_commands": [
     "npm install -g @anthropic-ai/claude-code",
-    "npm install -g my-custom-tool"  // Added
+    "npm install -g my-custom-tool" // Added
   ]
 }
 ```
 
 **Add worker-specific commands**:
+
 ```bash
 mkdir -p .boss/workers/architect/.claude/commands
 echo "#!/bin/bash\n..." > .boss/workers/architect/.claude/commands/validate.sh
@@ -439,6 +458,7 @@ During execution:
 ---
 
 **Related Documentation:**
+
 - [Architecture Overview](OVERVIEW.md)
 - [Manifest Protocol](MANIFEST-PROTOCOL.md)
 - [Worker Configs Review](../development/WORKER-CONFIGS-REVIEW.md)

@@ -71,23 +71,23 @@ Complete guide to setting up your local machine to run BOSS (Business-Orchestrat
 
 ### Required Software
 
-| Software | Version | Purpose | Installation |
-|----------|---------|---------|--------------|
-| **Docker Desktop** | Latest | Container runtime for workers | [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop) |
-| **Node.js** | 22 LTS | Runtime for BOSS and workers | [nodejs.org](https://nodejs.org) |
-| **pnpm** | Latest | Package manager | `npm install -g pnpm` |
-| **1Password CLI** | 2.x | Secret management | [1password.com/downloads/command-line](https://1password.com/downloads/command-line/) |
-| **Container-Use** | Latest | Worker isolation | [container-use.com](https://container-use.com) |
-| **Claude Code** or **Cursor** | Latest | AI coding assistant (BOSS interface) | [claude.ai/claude-code](https://claude.ai/claude-code) or [cursor.sh](https://cursor.sh) |
-| **Git** | 2.x+ | Version control | [git-scm.com](https://git-scm.com) |
+| Software                      | Version | Purpose                              | Installation                                                                             |
+| ----------------------------- | ------- | ------------------------------------ | ---------------------------------------------------------------------------------------- |
+| **Docker Desktop**            | Latest  | Container runtime for workers        | [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop)     |
+| **Node.js**                   | 22 LTS  | Runtime for BOSS and workers         | [nodejs.org](https://nodejs.org)                                                         |
+| **pnpm**                      | Latest  | Package manager                      | `npm install -g pnpm`                                                                    |
+| **1Password CLI**             | 2.x     | Secret management                    | [1password.com/downloads/command-line](https://1password.com/downloads/command-line/)    |
+| **Container-Use**             | Latest  | Worker isolation                     | [container-use.com](https://container-use.com)                                           |
+| **Claude Code** or **Cursor** | Latest  | AI coding assistant (BOSS interface) | [claude.ai/claude-code](https://claude.ai/claude-code) or [cursor.sh](https://cursor.sh) |
+| **Git**                       | 2.x+    | Version control                      | [git-scm.com](https://git-scm.com)                                                       |
 
 ### Optional but Recommended
 
-| Software | Purpose |
-|----------|---------|
-| **GitHub CLI (gh)** | PR creation, repo management |
-| **PostgreSQL** | Knowledge base (if running locally) |
-| **Qdrant** | Vector database (if running locally) |
+| Software            | Purpose                              |
+| ------------------- | ------------------------------------ |
+| **GitHub CLI (gh)** | PR creation, repo management         |
+| **PostgreSQL**      | Knowledge base (if running locally)  |
+| **Qdrant**          | Vector database (if running locally) |
 
 ---
 
@@ -111,6 +111,7 @@ open -a Docker
 ```
 
 **Post-Install:**
+
 - Allocate at least 8GB RAM to Docker
 - Enable "Use the WSL 2 based engine" (Windows)
 - Go to Docker Desktop → Settings → Resources → Advanced
@@ -266,11 +267,11 @@ docker-compose ps
 
 **Services Started:**
 
-| Service | Port | Purpose |
-|---------|------|---------|
-| PostgreSQL | 5432 | Knowledge base (projects, artifacts, dependencies) |
-| Qdrant | 6333, 6334 | Vector database for embeddings |
-| HuggingFace TEI | 8080 | Local embeddings (BAAI/bge-large-en-v1.5) |
+| Service         | Port       | Purpose                                            |
+| --------------- | ---------- | -------------------------------------------------- |
+| PostgreSQL      | 5432       | Knowledge base (projects, artifacts, dependencies) |
+| Qdrant          | 6333, 6334 | Vector database for embeddings                     |
+| HuggingFace TEI | 8080       | Local embeddings (BAAI/bge-large-en-v1.5)          |
 
 **First-Time Setup:**
 
@@ -284,6 +285,7 @@ docker-compose exec postgres psql -U boss -d boss_knowledge -f /docker-entrypoin
 ```
 
 **See [DOCKER-SETUP.md](./DOCKER-SETUP.md) for:**
+
 - Complete setup guide
 - Database initialization scripts
 - Backup/restore procedures
@@ -481,6 +483,7 @@ op item edit database \
 ```
 
 **References:**
+
 - `op://glx/database/connection-url`
 - `op://glx/database/test-url`
 
@@ -501,6 +504,7 @@ op item create \
 ```
 
 **References:**
+
 - `op://glx/stripe/test-secret-key`
 - `op://glx/stripe/webhook-secret`
 - `op://glx/stripe/publishable-key`
@@ -533,6 +537,7 @@ op item create \
 ```
 
 **References:**
+
 - `op://glx/aws/access-key`
 - `op://glx/aws/secret-key`
 
@@ -574,9 +579,7 @@ Create `.container-use/environment.json` in your project:
     "git config --global user.email 'worker@boss.local'"
   ],
 
-  "install_commands": [
-    "pnpm install --frozen-lockfile"
-  ],
+  "install_commands": ["pnpm install --frozen-lockfile"],
 
   "environment_variables": {
     "NODE_ENV": "development",
@@ -617,11 +620,7 @@ Create `.container-use/environment.json` in your project:
     "description": "Default Claude Code worker agent configuration",
     "max_retries": 3,
     "timeout_minutes": 30,
-    "quality_gates": [
-      "pnpm typecheck",
-      "pnpm lint",
-      "pnpm test"
-    ]
+    "quality_gates": ["pnpm typecheck", "pnpm lint", "pnpm test"]
   }
 }
 ```
@@ -648,15 +647,10 @@ Create `.container-use/environment.json` in your project:
     "NODE_ENV": "development"
   },
 
-  "secrets": [
-    "CLAUDE_CODE_OAUTH_TOKEN=op://glx/claude-code/oauth-token"
-  ],
+  "secrets": ["CLAUDE_CODE_OAUTH_TOKEN=op://glx/claude-code/oauth-token"],
 
   "network": {
-    "allowed_hosts": [
-      "api.anthropic.com",
-      "claude.ai"
-    ]
+    "allowed_hosts": ["api.anthropic.com", "claude.ai"]
   },
 
   "resources": {
@@ -689,10 +683,7 @@ Create `.container-use/environment.json` in your project:
     "git config --global user.email 'dev@boss.local'"
   ],
 
-  "install_commands": [
-    "pnpm install --frozen-lockfile",
-    "pnpm prisma generate"
-  ],
+  "install_commands": ["pnpm install --frozen-lockfile", "pnpm prisma generate"],
 
   "environment_variables": {
     "WORKER_ROLE": "developer-backend",
@@ -738,12 +729,7 @@ Create `.container-use/environment.json` in your project:
     "description": "Backend developer with TDD and integration testing",
     "max_retries": 3,
     "timeout_minutes": 45,
-    "quality_gates": [
-      "pnpm typecheck",
-      "pnpm lint",
-      "pnpm test",
-      "pnpm test:integration"
-    ]
+    "quality_gates": ["pnpm typecheck", "pnpm lint", "pnpm test", "pnpm test:integration"]
   }
 }
 ```
@@ -764,9 +750,7 @@ Create `.container-use/environment.json` in your project:
     "git config --global commit.gpgsign false"
   ],
 
-  "install_commands": [
-    "pnpm install --frozen-lockfile"
-  ],
+  "install_commands": ["pnpm install --frozen-lockfile"],
 
   "environment_variables": {
     "WORKER_ROLE": "developer-frontend",
@@ -799,12 +783,7 @@ Create `.container-use/environment.json` in your project:
   "agent": {
     "description": "Frontend developer with component testing",
     "timeout_minutes": 45,
-    "quality_gates": [
-      "pnpm typecheck",
-      "pnpm lint",
-      "pnpm test",
-      "pnpm build"
-    ]
+    "quality_gates": ["pnpm typecheck", "pnpm lint", "pnpm test", "pnpm build"]
   }
 }
 ```
@@ -878,6 +857,7 @@ Create/edit `~/.config/claude-code/mcp-servers.json`:
 1Password CLI (`op`) is used for secret management - there is **NO 1Password MCP server**.
 
 **Secret Management Workflow:**
+
 1. Install 1Password CLI (`op`)
 2. BOSS identifies secret needs during planning phase
 3. BOSS creates GitHub issue with detailed setup instructions
@@ -894,11 +874,13 @@ Create/edit `~/.cursor/mcp-servers.json` (same structure as above).
 ### MCP Server Summary
 
 **MCP Servers (Connected to Claude Code/Cursor):**
+
 - `boss-knowledge` → PostgreSQL + Qdrant + HuggingFace TEI (all local)
 - `github` → GitHub API for repo operations & project management
 - `container-use` → Container-Use CLI for worker spawning
 
 **Secret Management (Not an MCP Server):**
+
 - **1Password CLI** (`op`) - Manual secret resolution
 - BOSS identifies secret needs → creates GitHub issue with instructions
 - Humans create secrets in 1Password vault using `op` CLI
@@ -1268,6 +1250,7 @@ After completing this setup:
 **You're ready to use BOSS!**
 
 Proceed to:
+
 - **[README.md](./README.md)** - Overview and quick start
 - **[BOSS-ENHANCED-VISION.md](./BOSS-ENHANCED-VISION.md)** - Complete system vision
 - **[BOSS-CONTAINER-USE-INTEGRATION.md](./BOSS-CONTAINER-USE-INTEGRATION.md)** - Deep dive on workers

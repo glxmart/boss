@@ -19,6 +19,7 @@ When invoked, I will:
 
 1. **Detect changed packages** - Check which packages have changes (boss-cli, conductor-mcp, or both)
 2. **Run quality gates for each package**:
+
    ```bash
    # Install dependencies (if needed)
    pnpm install
@@ -45,30 +46,36 @@ When invoked, I will:
 Based on your quality preset in `.boss/boss.json`:
 
 ### Startup Preset
+
 - Test coverage: 50%
 - Mutation score: 60%
 
 ### Production Preset (default)
+
 - Test coverage: 80%
 - Mutation score: 80%
 
 ### Enterprise Preset
+
 - Test coverage: 90%
 - Mutation score: 90%
 
 ## What Gets Checked
 
 **Build:**
+
 - TypeScript compilation
 - No type errors
 - All dependencies resolved
 
 **Lint:**
+
 - ESLint rules
 - Code style consistency
 - Import organization
 
 **Tests:**
+
 - Unit tests pass
 - Integration tests pass
 - Coverage thresholds met
@@ -76,6 +83,7 @@ Based on your quality preset in `.boss/boss.json`:
 ## Fixing Issues
 
 **Build errors:**
+
 ```bash
 # Check TypeScript errors
 pnpm build
@@ -83,6 +91,7 @@ pnpm build
 ```
 
 **Lint errors:**
+
 ```bash
 # Auto-fix lint issues
 pnpm --filter <package> lint --fix
@@ -92,6 +101,7 @@ pnpm --filter <package> lint
 ```
 
 **Test failures:**
+
 ```bash
 # Run specific test file
 pnpm --filter <package> test path/to/test
@@ -101,6 +111,7 @@ pnpm --filter <package> test:watch
 ```
 
 **Coverage gaps:**
+
 ```bash
 # Generate coverage report
 pnpm --filter <package> test:coverage
@@ -113,6 +124,7 @@ open conductor-mcp/coverage/index.html
 ## Next Steps
 
 After all checks pass:
+
 1. Run `/3-create-changeset` (for code changes)
 2. Run `/4-create-pr` to submit
 

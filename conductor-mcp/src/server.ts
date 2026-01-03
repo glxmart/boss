@@ -4,10 +4,7 @@
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from '@modelcontextprotocol/sdk/types.js';
+import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import {
   TOOL_SCHEMAS,
   handleSpawnWorker,
@@ -21,7 +18,7 @@ import {
   handleConductorHealth,
   handleAskWorker,
   handleInspectWorkerConfig,
-  handleImportWorkerConfig
+  handleImportWorkerConfig,
 } from './tools.js';
 import { logger } from './utils/logger.js';
 import { ConductorException } from './utils/error-handler.js';
@@ -36,11 +33,11 @@ const TOOL_HANDLERS: Record<string, ToolHandler> = {
   merge_worker: handleMergeWorker,
   terminate_worker: handleTerminateWorker,
   list_worker_types: handleListWorkerTypes,
-  list_active_workers: handleListActiveWorkers,
+  list_active_workers: async () => Promise.resolve(handleListActiveWorkers()),
   conductor_health: handleConductorHealth,
   ask_worker: handleAskWorker,
   inspect_worker_config: handleInspectWorkerConfig,
-  import_worker_config: handleImportWorkerConfig
+  import_worker_config: handleImportWorkerConfig,
 };
 
 export class ConductorServer {
@@ -64,11 +61,11 @@ export class ConductorServer {
 
   private setupHandlers(): void {
     // List tools handler
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+    this.server.setRequestHandler(ListToolsRequestSchema, () => {
       logger.debug('Listing available tools');
 
       return {
-        tools: Object.values(TOOL_SCHEMAS)
+        tools: Object.values(TOOL_SCHEMAS),
       };
     });
 
@@ -91,14 +88,14 @@ export class ConductorServer {
           content: [
             {
               type: 'text',
-              text: JSON.stringify(result, null, 2)
-            }
-          ]
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
         };
       } catch (error) {
         logger.error('Tool execution failed', {
           toolName,
-          error: error instanceof Error ? error.message : String(error)
+          error: error instanceof Error ? error.message : String(error),
         });
 
         if (error instanceof ConductorException) {
@@ -106,13 +103,17 @@ export class ConductorServer {
             content: [
               {
                 type: 'text',
-                text: JSON.stringify({
-                  success: false,
-                  error: error.error
-                }, null, 2)
-              }
+                text: JSON.stringify(
+                  {
+                    success: false,
+                    error: error.error,
+                  },
+                  null,
+                  2
+                ),
+              },
             ],
-            isError: false
+            isError: false,
           };
         }
 
@@ -128,16 +129,20 @@ export class ConductorServer {
     logger.info('Conductor MCP server started');
 
     // Handle process signals
-    process.on('SIGINT', async () => {
-      logger.info('Received SIGINT, shutting down');
-      await this.server.close();
-      process.exit(0);
+    process.on('SIGINT', () => {
+      void (async () => {
+        logger.info('Received SIGINT, shutting down');
+        await this.server.close();
+        process.exit(0);
+      })();
     });
 
-    process.on('SIGTERM', async () => {
-      logger.info('Received SIGTERM, shutting down');
-      await this.server.close();
-      process.exit(0);
+    process.on('SIGTERM', () => {
+      void (async () => {
+        logger.info('Received SIGTERM, shutting down');
+        await this.server.close();
+        process.exit(0);
+      })();
     });
   }
 }

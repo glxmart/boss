@@ -5,6 +5,7 @@ This document describes the automated release process for BOSS packages using Ch
 ## Overview
 
 BOSS uses [Changesets](https://github.com/changesets/changesets) for:
+
 - **Automated version management** - No manual version bumping
 - **Changelog generation** - Auto-generated from changeset descriptions
 - **Coordinated releases** - Handle monorepo dependencies automatically
@@ -21,11 +22,16 @@ git checkout -b feature/my-feature
 # 2. Make your changes
 # ... edit code ...
 
-# 3. Create a changeset
+# 3. Create a changeset (choose one method):
+
+# Non-interactive (works everywhere)
+pnpm changeset:add patch "boss-cli,conductor-mcp" "Your feature description"
+
+# OR interactive (local terminal only)
 pnpm changeset
 
 # 4. Commit and push
-git add .changeset/*.md
+git add .
 git commit -m "feat: your feature description"
 git push origin feature/my-feature
 
@@ -40,11 +46,12 @@ git push origin feature/my-feature
 
 ```bash
 # 1. Make your changes
+
 # 2. Create a changeset
-pnpm changeset
+pnpm changeset:add patch "boss-cli,conductor-mcp" "Your feature description"
 
 # 3. Commit and push
-git add .changeset/*.md
+git add .
 git commit -m "feat: your feature description"
 git push
 
@@ -75,6 +82,7 @@ gh pr edit <PR-number> --add-label skip-changeset
 ```
 
 **When to skip:**
+
 - Documentation-only changes (`docs/`, `README.md`, etc.)
 - Test-only changes
 - CI/CD configuration changes
@@ -85,7 +93,38 @@ gh pr edit <PR-number> --add-label skip-changeset
 
 ### Step 1: Create a Changeset
 
-After making changes to code, create a changeset:
+After making changes to code, create a changeset using one of two methods:
+
+#### Method 1: Non-Interactive (Recommended for Automation)
+
+Use this in CI/CD, scripts, or Claude Code environments:
+
+```bash
+pnpm changeset:add <bump-type> <packages> <message>
+```
+
+**Examples:**
+
+```bash
+# Single package
+pnpm changeset:add patch "conductor-mcp" "Fix container error handling"
+
+# Multiple packages
+pnpm changeset:add minor "boss-cli,conductor-mcp" "Add worker resume optimization"
+
+# Breaking change
+pnpm changeset:add major "boss-cli" "BREAKING: Update worker schema to v2"
+```
+
+**Parameters:**
+
+- `<bump-type>`: `patch`, `minor`, or `major`
+- `<packages>`: Comma-separated (e.g., `"boss-cli,conductor-mcp"`)
+- `<message>`: Summary (appears in CHANGELOG.md)
+
+#### Method 2: Interactive (Local Terminal Only)
+
+Use this when working in your local terminal:
 
 ```bash
 pnpm changeset
@@ -94,27 +133,22 @@ pnpm changeset
 **Interactive prompts:**
 
 1. **Select packages** that changed (Space to select, Enter to confirm)
-   ```
-   ◯ @glxmart/boss-cli
-   ◯ @glxmart/conductor-mcp
-   ```
-
 2. **Choose version bump type** for each package:
    - **patch** (0.0.X) - Bug fixes, documentation, minor updates
    - **minor** (0.X.0) - New features, backwards compatible
    - **major** (X.0.0) - Breaking changes
-
 3. **Write summary** - Describe the changes (appears in CHANGELOG.md)
-   ```
-   Added worker resume optimization for faster iterative development
-   ```
 
-**Generated file:** `.changeset/random-words-here.md`
+**Note:** Interactive mode requires TTY and won't work in CI/CD or Claude Code.
+
+#### Generated File
+
+Both methods create: `.changeset/random-words-here.md`
 
 ```markdown
 ---
-"@glxmart/boss-cli": minor
-"@glxmart/conductor-mcp": patch
+'@glxmart/boss-cli': minor
+'@glxmart/conductor-mcp': patch
 ---
 
 Added worker resume optimization for faster iterative development
@@ -148,6 +182,7 @@ When code with changesets reaches `main`:
    - All pending changes grouped together
 
 **Example PR:**
+
 ```
 Title: chore: version packages
 
@@ -164,11 +199,13 @@ CHANGELOG updates:
 ### Step 4: Review and Merge
 
 **Review the Version PR:**
+
 - ✅ Check version bumps are correct
 - ✅ Review changelog entries
 - ✅ Verify no unintended changes
 
 **Merge the PR:**
+
 ```bash
 # Via GitHub UI or CLI
 ./scripts/gh-with-1password.sh pr merge <PR-number>
@@ -191,6 +228,7 @@ CHANGELOG updates:
 ### Patch (0.0.X)
 
 **When to use:**
+
 - Bug fixes
 - Documentation updates
 - Internal refactoring (no API changes)
@@ -198,6 +236,7 @@ CHANGELOG updates:
 - Performance improvements (no breaking changes)
 
 **Examples:**
+
 ```bash
 # Fix bug in bootstrap command
 pnpm changeset
@@ -209,6 +248,7 @@ pnpm changeset
 ### Minor (0.X.0)
 
 **When to use:**
+
 - New features
 - New worker types
 - New MCP tools
@@ -216,6 +256,7 @@ pnpm changeset
 - Deprecated (but not removed) APIs
 
 **Examples:**
+
 ```bash
 # Add parallel worker spawning
 pnpm changeset
@@ -227,6 +268,7 @@ pnpm changeset
 ### Major (X.0.0)
 
 **When to use:**
+
 - Breaking API changes
 - Removed features
 - Changed worker config schemas
@@ -234,6 +276,7 @@ pnpm changeset
 - Major architectural changes
 
 **Examples:**
+
 ```bash
 # Change worker metadata schema
 pnpm changeset
@@ -390,6 +433,7 @@ git tag -l
 **Problem:** Pushed changesets but no PR appeared
 
 **Solutions:**
+
 1. Check workflow ran: `./scripts/gh-with-1password.sh run list`
 2. View workflow logs: `./scripts/gh-with-1password.sh run view <run-id> --log`
 3. Verify changeset format:
@@ -404,6 +448,7 @@ git tag -l
 **Problem:** Version PR merged but packages didn't publish
 
 **Solutions:**
+
 1. Check workflow logs for `pnpm release` step
 2. Verify `NPM_TOKEN` secret is valid:
    ```bash
@@ -425,7 +470,9 @@ git tag -l
 **Problem:** Used wrong version type (patch instead of minor)
 
 **Solutions:**
+
 1. **Before merging version PR:**
+
    ```bash
    # Edit the changeset file
    vim .changeset/your-changeset.md
@@ -448,6 +495,7 @@ git tag -l
 **Problem:** Merged code without changeset
 
 **Solutions:**
+
 ```bash
 # Create changeset on main after merge
 git checkout main
@@ -528,6 +576,7 @@ Location: `.changeset/config.json`
 ```
 
 **Key settings:**
+
 - `commit: false` - Don't auto-commit (we commit manually)
 - `access: "public"` - Publish as public packages
 - `baseBranch: "main"` - Release from main branch
@@ -538,11 +587,13 @@ Location: `.changeset/config.json`
 Location: `.github/workflows/3.0-release.yml`
 
 **Triggers:**
+
 - Push to `main` branch
 - Changes to package code or changesets
 - Path filters prevent unnecessary runs
 
 **Required secrets:**
+
 - `GITHUB_TOKEN` - Auto-provided by GitHub
 - `NPM_TOKEN` - Must be configured in repository settings
 

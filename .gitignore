@@ -43,3 +43,9 @@ coverage/
 
 # OS
 Thumbs.db
+
+# Changesets (only allowed in monorepo root)
+# Prevent accidental package-level .changeset directories
+boss-cli/.changeset/
+conductor-mcp/.changeset/
+*/node_modules/.changeset/

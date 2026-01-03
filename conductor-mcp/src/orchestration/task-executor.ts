@@ -26,10 +26,10 @@ const WORKER_RESULT_SCHEMA = {
           purpose: { type: 'string' },
           sections: { type: 'array', items: { type: 'string' } },
           linesAdded: { type: 'number' },
-          linesModified: { type: 'number' }
+          linesModified: { type: 'number' },
         },
-        required: ['path', 'action', 'purpose']
-      }
+        required: ['path', 'action', 'purpose'],
+      },
     },
     decisions: {
       type: 'array',
@@ -39,10 +39,10 @@ const WORKER_RESULT_SCHEMA = {
           decision: { type: 'string' },
           rationale: { type: 'string' },
           impact: { enum: ['high', 'medium', 'low'] },
-          reversible: { type: 'boolean' }
+          reversible: { type: 'boolean' },
         },
-        required: ['decision', 'rationale', 'impact', 'reversible']
-      }
+        required: ['decision', 'rationale', 'impact', 'reversible'],
+      },
     },
     issues: {
       type: 'array',
@@ -51,36 +51,43 @@ const WORKER_RESULT_SCHEMA = {
         properties: {
           severity: { enum: ['critical', 'high', 'medium', 'low'] },
           description: { type: 'string' },
-          recommendation: { type: 'string' }
+          recommendation: { type: 'string' },
         },
-        required: ['severity', 'description', 'recommendation']
-      }
+        required: ['severity', 'description', 'recommendation'],
+      },
     },
     recommendations: {
       type: 'array',
-      items: { type: 'string' }
+      items: { type: 'string' },
     },
     tasksCompleted: {
       type: 'array',
-      items: { type: 'string' }
+      items: { type: 'string' },
     },
     principlesEstablished: {
       type: 'array',
-      items: { type: 'string' }
+      items: { type: 'string' },
     },
     requirementsGathered: {
       type: 'array',
-      items: { type: 'string' }
+      items: { type: 'string' },
     },
     testsCreated: { type: 'number' },
     coverageAchieved: { type: 'number' },
     workComplete: { type: 'boolean' },
     nextSteps: {
       type: 'array',
-      items: { type: 'string' }
-    }
+      items: { type: 'string' },
+    },
   },
-  required: ['artifacts', 'decisions', 'issues', 'recommendations', 'tasksCompleted', 'workComplete']
+  required: [
+    'artifacts',
+    'decisions',
+    'issues',
+    'recommendations',
+    'tasksCompleted',
+    'workComplete',
+  ],
 } as const;
 
 export class TaskExecutor {
@@ -98,11 +105,16 @@ export class TaskExecutor {
    * @param projectPath - Absolute path to git repository
    * @param continueSession - Whether to continue previous session
    */
-  async executeTask(environmentId: string, taskPrompt: string, projectPath: string, continueSession: boolean = false): Promise<void> {
+  async executeTask(
+    environmentId: string,
+    taskPrompt: string,
+    projectPath: string,
+    continueSession: boolean = false
+  ): Promise<void> {
     logger.info('Executing task in environment', {
       environment_id: environmentId,
       promptLength: taskPrompt.length,
-      continueSession
+      continueSession,
     });
 
     // Escape the prompt for shell execution
@@ -111,10 +123,7 @@ export class TaskExecutor {
     // Build claude command with proper flags
     // --print: Print response and exit (non-interactive mode)
     // --dangerously-skip-permissions: Skip permission prompts (requires IS_SANDBOX=1 for root)
-    const flags = [
-      '--print',
-      '--dangerously-skip-permissions'
-    ];
+    const flags = ['--print', '--dangerously-skip-permissions'];
 
     if (continueSession) {
       flags.push('--continue');
@@ -125,14 +134,14 @@ export class TaskExecutor {
     logger.debug('Executing claude command', {
       environment_id: environmentId,
       commandLength: command.length,
-      continueSession
+      continueSession,
     });
 
     // Execute in the container environment
     await this.containerUseClient.executeInEnvironment({
       environment_source: projectPath,
       environment_id: environmentId,
-      command
+      command,
     });
 
     logger.info('Task execution completed', { environment_id: environmentId });
@@ -142,27 +151,27 @@ export class TaskExecutor {
    * Get execution log from environment
    * This would query Container-Use for the command history/logs
    */
-  async getExecutionLog(environmentId: string): Promise<string> {
+  getExecutionLog(environmentId: string): Promise<string> {
     logger.debug('Getting execution log', { environment_id: environmentId });
 
     // TODO: Implement log retrieval from Container-Use
     // This would call something like container-use log <env-id>
 
-    return `Execution log for ${environmentId} (not yet implemented)`;
+    return Promise.resolve(`Execution log for ${environmentId} (not yet implemented)`);
   }
 
   /**
    * Get artifacts created by worker
    * This would query the environment for files created
    */
-  async getArtifacts(environmentId: string): Promise<string[]> {
+  getArtifacts(environmentId: string): Promise<string[]> {
     logger.debug('Getting artifacts', { environment_id: environmentId });
 
     // TODO: Implement artifact retrieval from Container-Use
     // This would call something like container-use diff <env-id>
     // and parse the output to find created/modified files
 
-    return [];
+    return Promise.resolve([]);
   }
 
   /**
@@ -187,7 +196,7 @@ export class TaskExecutor {
     logger.info('Executing task with schema validation', {
       environment_id: environmentId,
       promptLength: taskPrompt.length,
-      continueSession
+      continueSession,
     });
 
     const escapedPrompt = escapePromptForShell(taskPrompt);
@@ -196,10 +205,7 @@ export class TaskExecutor {
     const schemaJson = JSON.stringify(WORKER_RESULT_SCHEMA);
     const schemaBase64 = Buffer.from(schemaJson).toString('base64');
 
-    const flags = [
-      '--dangerously-skip-permissions',
-      '--output-format json'
-    ];
+    const flags = ['--dangerously-skip-permissions', '--output-format json'];
 
     if (continueSession) {
       flags.push('--continue');
@@ -212,13 +218,13 @@ export class TaskExecutor {
       environment_id: environmentId,
       commandLength: command.length,
       continueSession,
-      fullCommand: command.substring(0, 200) + '...'
+      fullCommand: command.substring(0, 200) + '...',
     });
 
     const result = await this.containerUseClient.executeInEnvironment({
       environment_source: projectPath,
       environment_id: environmentId,
-      command
+      command,
     });
 
     return this.parseWorkerResult(environmentId, result);
@@ -241,7 +247,7 @@ export class TaskExecutor {
       logger.error('Worker produced no output', {
         environment_id: environmentId,
         stdout: result.stdout,
-        output: result.output
+        output: result.output,
       });
 
       throwConductorError(
@@ -252,25 +258,30 @@ export class TaskExecutor {
           details: {
             stdout: result.stdout,
             output: result.output,
-            message: 'Worker must produce JSON output when using --output-format json'
-          }
+            message: 'Worker must produce JSON output when using --output-format json',
+          },
         }
       );
     }
 
     // Parse JSON
     try {
-      const parsedOutput = JSON.parse(outputText);
+      const parsedOutput = JSON.parse(outputText) as
+        | WorkerResult
+        | { structured_output?: WorkerResult };
 
       // Claude Code with --output-format json returns a wrapper object
       // Extract structured_output field if present, otherwise use the parsed output directly
-      const workerResult: WorkerResult = parsedOutput.structured_output || parsedOutput;
+      const workerResult: WorkerResult =
+        'structured_output' in parsedOutput && parsedOutput.structured_output
+          ? parsedOutput.structured_output
+          : (parsedOutput as WorkerResult);
 
       logger.info('Worker result parsed successfully', {
         environment_id: environmentId,
         artifactsCount: workerResult.artifacts?.length || 0,
         decisionsCount: workerResult.decisions?.length || 0,
-        workComplete: workerResult.workComplete
+        workComplete: workerResult.workComplete,
       });
 
       return workerResult;
@@ -281,7 +292,7 @@ export class TaskExecutor {
       logger.error('Worker output JSON parsing failed - worker execution likely failed', {
         environment_id: environmentId,
         parseError,
-        rawOutputPreview: rawOutput.substring(0, 500)
+        rawOutputPreview: rawOutput.substring(0, 500),
       });
 
       throwConductorError(
@@ -292,8 +303,8 @@ export class TaskExecutor {
           details: {
             parseError,
             rawOutput: rawOutput.substring(0, 1000),
-            expectedSchema: 'WorkerResult'
-          }
+            expectedSchema: 'WorkerResult',
+          },
         }
       );
     }
@@ -308,7 +319,10 @@ export class TaskExecutor {
    *
    * Returns null if manifest doesn't exist (new worker), throws on read/parse errors
    */
-  async getWorkerManifest(environmentId: string, projectPath: string): Promise<WorkerManifest | null> {
+  async getWorkerManifest(
+    environmentId: string,
+    projectPath: string
+  ): Promise<WorkerManifest | null> {
     logger.debug('Getting worker manifest', { environment_id: environmentId });
 
     const manifestPath = `/workdir/.boss/worker-manifest-${environmentId}.json`;
@@ -317,7 +331,7 @@ export class TaskExecutor {
       const result = await this.containerUseClient.environmentFileRead({
         environment_source: projectPath,
         environment_id: environmentId,
-        target_file: manifestPath
+        target_file: manifestPath,
       });
 
       const manifestContent = result.contents;
@@ -325,7 +339,7 @@ export class TaskExecutor {
       // Empty file - manifest hasn't been written yet (new worker)
       if (!manifestContent || manifestContent.trim() === '') {
         logger.debug('Worker manifest not yet created (new worker)', {
-          environment_id: environmentId
+          environment_id: environmentId,
         });
         return null;
       }
@@ -333,13 +347,13 @@ export class TaskExecutor {
       // Parse JSON
       let manifest: WorkerManifest;
       try {
-        manifest = JSON.parse(manifestContent);
+        manifest = JSON.parse(manifestContent) as WorkerManifest;
       } catch (parseError) {
         // JSON corruption is a serious error - don't hide it
         logger.error('Worker manifest contains corrupted JSON', {
           environment_id: environmentId,
           parseError: parseError instanceof Error ? parseError.message : String(parseError),
-          manifestPreview: manifestContent.substring(0, 200)
+          manifestPreview: manifestContent.substring(0, 200),
         });
 
         throwConductorError(
@@ -349,8 +363,8 @@ export class TaskExecutor {
             workerId: environmentId,
             details: {
               manifestPath,
-              parseError: parseError instanceof Error ? parseError.message : String(parseError)
-            }
+              parseError: parseError instanceof Error ? parseError.message : String(parseError),
+            },
           }
         );
       }
@@ -358,15 +372,19 @@ export class TaskExecutor {
       logger.debug('Worker manifest retrieved', {
         environment_id: environmentId,
         status: manifest.status,
-        artifactCount: manifest.artifacts.length
+        artifactCount: manifest.artifacts.length,
       });
 
       return manifest;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const isNodeError = error && typeof error === 'object' && 'code' in error;
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorCode = isNodeError ? String((error as { code: unknown }).code) : undefined;
+
       // File not found - manifest doesn't exist yet (OK for new workers)
-      if (error.code === 'ENOENT' || error.message?.includes('not found')) {
+      if (errorCode === 'ENOENT' || errorMessage.includes('not found')) {
         logger.debug('Worker manifest file does not exist yet', {
-          environment_id: environmentId
+          environment_id: environmentId,
         });
         return null;
       }
@@ -374,16 +392,16 @@ export class TaskExecutor {
       // Permission or other I/O error - serious problem
       logger.error('Failed to read worker manifest due to I/O error', {
         environment_id: environmentId,
-        error: error.message,
-        code: error.code
+        error: errorMessage,
+        code: errorCode,
       });
 
       throwConductorError(
         ErrorCategory.WORKER_EXECUTION_FAILED,
-        `Failed to read worker ${environmentId} manifest at ${manifestPath}: ${error.message}. Check file permissions and container state.`,
+        `Failed to read worker ${environmentId} manifest at ${manifestPath}: ${errorMessage}. Check file permissions and container state.`,
         {
           workerId: environmentId,
-          details: { manifestPath, error: error.message, code: error.code }
+          details: { manifestPath, error: errorMessage, code: errorCode },
         }
       );
     }
@@ -401,7 +419,7 @@ export class TaskExecutor {
   ): Promise<void> {
     logger.debug('Updating worker manifest', {
       environment_id: environmentId,
-      status: manifest.status
+      status: manifest.status,
     });
 
     const manifestPath = `/workdir/.boss/worker-manifest-${environmentId}.json`;
@@ -410,12 +428,12 @@ export class TaskExecutor {
       environment_source: projectPath,
       environment_id: environmentId,
       target_file: manifestPath,
-      contents: JSON.stringify(manifest, null, 2)
+      contents: JSON.stringify(manifest, null, 2),
     });
 
     logger.info('Worker manifest updated', {
       environment_id: environmentId,
-      artifactsCount: manifest.artifacts.length
+      artifactsCount: manifest.artifacts.length,
     });
   }
 }

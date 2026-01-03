@@ -42,6 +42,7 @@ Conductor MCP is a middleware layer that sits between BOSS (the orchestrator) an
 ### 1. MCP Server (`src/server.ts`)
 
 Entry point for the MCP server. Handles:
+
 - Tool registration
 - Request routing
 - Error handling
@@ -50,6 +51,7 @@ Entry point for the MCP server. Handles:
 ### 2. Tools (`src/tools.ts`)
 
 Defines and implements 8 MCP tools:
+
 - `spawn_worker` - Spawn worker with full setup
 - `execute_task` - Execute additional task
 - `get_worker_status` - Check worker status
@@ -62,6 +64,7 @@ Defines and implements 8 MCP tools:
 ### 3. Worker Spawner (`src/lifecycle/worker-spawner.ts`)
 
 Orchestrates the worker spawning process:
+
 1. Load worker configuration
 2. Create container environment
 3. Configure container (CLAUDE.md, .claude/)
@@ -72,6 +75,7 @@ Orchestrates the worker spawning process:
 ### 4. Environment Manager (`src/lifecycle/environment-manager.ts`)
 
 Manages container environment configuration:
+
 - Writes CLAUDE.md to container
 - Copies .claude/ directory files
 - Creates initial manifest template
@@ -80,6 +84,7 @@ Manages container environment configuration:
 ### 5. Task Executor (`src/orchestration/task-executor.ts`)
 
 Handles task execution:
+
 - Executes tasks with schema validation
 - Parses structured JSON output
 - Reads and updates manifests
@@ -88,6 +93,7 @@ Handles task execution:
 ### 6. Container-Use Client (`src/orchestration/container-use-client.ts`)
 
 Interface to container-use CLI:
+
 - `createEnvironment` - Create container
 - `executeInEnvironment` - Run claude-code
 - `writeEnvironmentFile` - Write files
@@ -98,6 +104,7 @@ Interface to container-use CLI:
 ### 7. Worker Loader (`src/config/worker-loader.ts`)
 
 Loads worker configurations:
+
 - Priority 1: Project override (`.boss/workers/[type]/`)
 - Priority 2: Built-in configs (`conductor-mcp/worker-configs/[type]/`)
 - Resolves template variables
@@ -106,6 +113,7 @@ Loads worker configurations:
 ### 8. State Tracker (`src/lifecycle/state-tracker.ts`)
 
 Tracks active workers:
+
 - In-memory state management
 - Worker registration
 - Status updates
@@ -175,6 +183,7 @@ See [Worker Configuration](WORKER-CONFIG.md) for details.
 ### Per-Worker Manifests
 
 Each worker gets its own manifest file:
+
 ```
 .boss/
 ├── worker-manifest-env-abc123.json  # Worker 1
@@ -239,6 +248,7 @@ See [Error Handling](../api/ERRORS.md) for complete error categories.
 ### Parallel Execution
 
 Multiple workers can run in parallel:
+
 - Each has own container
 - Each has own manifest file
 - No resource conflicts
@@ -247,6 +257,7 @@ Multiple workers can run in parallel:
 ### Concurrency Limits
 
 Recommended limits:
+
 - **Max concurrent workers**: 3-5 (configurable)
 - **Memory per worker**: ~500MB-1GB
 - **CPU per worker**: 1-2 cores
@@ -254,6 +265,7 @@ Recommended limits:
 ### Resource Management
 
 Conductor tracks:
+
 - Active worker count
 - Container resource usage
 - Manifest file sizes
@@ -303,6 +315,7 @@ Conductor tracks:
 ### Custom Tools
 
 Conductor's tool system is extensible:
+
 1. Define tool schema in `tools.ts`
 2. Implement handler function
 3. Register in server
@@ -352,6 +365,7 @@ tests/
 ### Logging
 
 Structured JSON logging:
+
 ```json
 {
   "timestamp": "2026-01-02T10:00:00Z",
@@ -363,6 +377,7 @@ Structured JSON logging:
 ```
 
 Log levels:
+
 - `debug` - Verbose debugging
 - `info` - General information (default)
 - `warn` - Warnings
@@ -371,6 +386,7 @@ Log levels:
 ### Metrics
 
 Conductor tracks:
+
 - Worker spawn count
 - Success/failure rates
 - Average execution time
@@ -380,12 +396,14 @@ Conductor tracks:
 ## Future Enhancements
 
 See [Design Documents](../design/) for proposed improvements:
+
 - [Conductor in Workers](../design/CONDUCTOR-IN-WORKERS.md) - Workers use Conductor tools
 - [Worker Config Architecture](../design/WORKER-CONFIG-ARCHITECTURE.md) - metadata.json approach
 
 ---
 
 **Related Documentation:**
+
 - [Worker Configuration](WORKER-CONFIG.md)
 - [Manifest Protocol](MANIFEST-PROTOCOL.md)
 - [API Tools](../api/TOOLS.md)

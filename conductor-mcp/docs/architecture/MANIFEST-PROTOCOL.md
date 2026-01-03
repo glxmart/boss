@@ -18,6 +18,7 @@ Each worker gets its own manifest file to enable parallel execution:
 ```
 
 **Benefits:**
+
 - No merge conflicts between parallel workers
 - Clean git history
 - Independent worker tracking
@@ -31,12 +32,12 @@ All worker manifests follow this base structure:
 
 ```typescript
 interface WorkerManifest {
-  workerId: string;              // e.g., 'env-abc123'
-  workerType: WorkerType;        // e.g., 'architect'
-  status: WorkerStatus;          // 'running' | 'completed' | 'failed'
-  startedAt: string;             // ISO 8601 timestamp
-  lastUpdatedAt: string;         // ISO 8601 timestamp
-  completedAt?: string;          // ISO 8601 timestamp
+  workerId: string; // e.g., 'env-abc123'
+  workerType: WorkerType; // e.g., 'architect'
+  status: WorkerStatus; // 'running' | 'completed' | 'failed'
+  startedAt: string; // ISO 8601 timestamp
+  lastUpdatedAt: string; // ISO 8601 timestamp
+  completedAt?: string; // ISO 8601 timestamp
   artifacts: WorkerArtifact[];
   decisions: WorkerDecision[];
   issues: WorkerIssue[];
@@ -51,15 +52,16 @@ Documents files created, modified, or deleted:
 
 ```typescript
 interface WorkerArtifact {
-  path: string;                           // e.g., '.specify/memory/constitution.md'
+  path: string; // e.g., '.specify/memory/constitution.md'
   action: 'created' | 'modified' | 'deleted';
-  purpose: string;                        // Human-readable description
-  sections?: string[];                    // For markdown files
-  filesChanged?: string[];                // For directories
+  purpose: string; // Human-readable description
+  sections?: string[]; // For markdown files
+  filesChanged?: string[]; // For directories
 }
 ```
 
 **Example:**
+
 ```json
 {
   "path": ".specify/memory/constitution.md",
@@ -80,14 +82,15 @@ Documents key decisions made during work:
 
 ```typescript
 interface WorkerDecision {
-  decision: string;        // What was decided
-  rationale: string;       // Why it was decided
+  decision: string; // What was decided
+  rationale: string; // Why it was decided
   impact: 'high' | 'medium' | 'low';
-  reversible: boolean;     // Can this be changed later?
+  reversible: boolean; // Can this be changed later?
 }
 ```
 
 **Example:**
+
 ```json
 {
   "decision": "Enforced TDD as non-negotiable",
@@ -104,14 +107,15 @@ Documents problems encountered:
 ```typescript
 interface WorkerIssue {
   severity: 'critical' | 'high' | 'medium' | 'low';
-  description: string;          // What went wrong
-  impact: string;               // How it affects the project
-  suggestedAction: string;      // What BOSS should do
-  blocksProgress: boolean;      // Does this prevent completion?
+  description: string; // What went wrong
+  impact: string; // How it affects the project
+  suggestedAction: string; // What BOSS should do
+  blocksProgress: boolean; // Does this prevent completion?
 }
 ```
 
 **Example:**
+
 ```json
 {
   "severity": "high",
@@ -173,6 +177,7 @@ interface WorkerResult {
 Each worker type can add specific fields:
 
 **Architect:**
+
 ```typescript
 {
   ...baseFields,
@@ -181,6 +186,7 @@ Each worker type can add specific fields:
 ```
 
 **Clarifier:**
+
 ```typescript
 {
   ...baseFields,
@@ -190,6 +196,7 @@ Each worker type can add specific fields:
 ```
 
 **Spec Writer:**
+
 ```typescript
 {
   ...baseFields,
@@ -199,6 +206,7 @@ Each worker type can add specific fields:
 ```
 
 **Planner:**
+
 ```typescript
 {
   ...baseFields,
@@ -208,6 +216,7 @@ Each worker type can add specific fields:
 ```
 
 **Developer:**
+
 ```typescript
 {
   ...baseFields,
@@ -217,6 +226,7 @@ Each worker type can add specific fields:
 ```
 
 **Tester:**
+
 ```typescript
 {
   ...baseFields,
@@ -303,7 +313,7 @@ Conductor updates manifest with worker result:
 
 ```typescript
 const status = await conductor.get_worker_status({
-  workerId: 'env-abc123'
+  workerId: 'env-abc123',
 });
 
 console.log('Status:', status.status);
@@ -333,27 +343,39 @@ Conductor validates worker output against generated schema:
 ```typescript
 const schema = {
   type: 'object',
-  required: ['artifacts', 'decisions', 'issues', 'recommendations', 'tasksCompleted', 'workComplete'],
+  required: [
+    'artifacts',
+    'decisions',
+    'issues',
+    'recommendations',
+    'tasksCompleted',
+    'workComplete',
+  ],
   properties: {
     artifacts: {
       type: 'array',
-      items: { /* WorkerArtifact schema */ }
+      items: {
+        /* WorkerArtifact schema */
+      },
     },
     decisions: {
       type: 'array',
-      items: { /* WorkerDecision schema */ }
+      items: {
+        /* WorkerDecision schema */
+      },
     },
     // ...
-  }
+  },
 };
 
 // Claude validates output before returning
-const workerResult = JSON.parse(stdout);  // Guaranteed valid
+const workerResult = JSON.parse(stdout); // Guaranteed valid
 ```
 
 ### Manifest Integrity
 
 Conductor ensures:
+
 - All required fields present
 - Valid timestamps (ISO 8601)
 - Valid status values
@@ -401,6 +423,7 @@ Conductor ensures:
 ---
 
 **Related Documentation:**
+
 - [Architecture Overview](OVERVIEW.md)
 - [Worker Configuration](WORKER-CONFIG.md)
 - [API Tools](../api/TOOLS.md)

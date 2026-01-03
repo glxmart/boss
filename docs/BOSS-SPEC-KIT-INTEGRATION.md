@@ -48,14 +48,14 @@ No cross-project       →           Knowledge base integration
 
 ### Key Artifacts Created
 
-| Phase | Artifact | Purpose |
-|-------|----------|---------|
-| 1. Constitution | `constitution.md` | Governing principles (non-negotiable) |
-| 3. Specification | `spec.md` | User stories & acceptance criteria |
-| 4. Planning | `plan.md`, `data-model.md`, `contracts/` | Technical approach |
-| 5. Validation | `validation-report.md` | Constitution compliance |
-| 6. Task Breakdown | `tasks.md` | Ordered tasks with `[P]` markers |
-| 8. Consolidation | `quickstart.md`, `checklist.md` | Delivery artifacts |
+| Phase             | Artifact                                 | Purpose                               |
+| ----------------- | ---------------------------------------- | ------------------------------------- |
+| 1. Constitution   | `constitution.md`                        | Governing principles (non-negotiable) |
+| 3. Specification  | `spec.md`                                | User stories & acceptance criteria    |
+| 4. Planning       | `plan.md`, `data-model.md`, `contracts/` | Technical approach                    |
+| 5. Validation     | `validation-report.md`                   | Constitution compliance               |
+| 6. Task Breakdown | `tasks.md`                               | Ordered tasks with `[P]` markers      |
+| 8. Consolidation  | `quickstart.md`, `checklist.md`          | Delivery artifacts                    |
 
 ---
 
@@ -66,6 +66,7 @@ No cross-project       →           Knowledge base integration
 **Spec-Kit** is GitHub's open-source toolkit for "Spec-Driven Development."
 
 **Key Principles:**
+
 - Specifications are **executable**, not temporary scaffolding
 - Test-First methodology is **non-negotiable**
 - Multi-step refinement (7 phases)
@@ -73,6 +74,7 @@ No cross-project       →           Knowledge base integration
 - Constitution governs all decisions
 
 **Spec-Kit Phases:**
+
 ```
 1. Principles      → Establish constitution
 2. Clarification   → Gather requirements
@@ -86,12 +88,14 @@ No cross-project       →           Knowledge base integration
 ### 2. How BOSS Automates Spec-Kit
 
 **Traditional Spec-Kit:**
+
 - Human runs `/speckit.*` commands
 - Manual phase progression
 - Single developer implementation
 - No cross-project learning
 
 **BOSS + Spec-Kit:**
+
 - Workers execute phases automatically
 - Parallel execution where possible
 - Multiple specialized workers
@@ -120,6 +124,7 @@ BOSS (Claude Code/Cursor)
 **Important:** BOSS is NOT a standalone application.
 
 **BOSS is:**
+
 - Claude Code or Cursor running on your machine
 - Configured with BOSS skills
 - Connected to MCP servers
@@ -129,14 +134,14 @@ BOSS (Claude Code/Cursor)
 ```typescript
 // This is what happens under the hood
 const env = await mcp.containerUse.createEnvironment({
-  title: "clarifier-worker",
-  config: ".boss/workers/clarifier/container-config.json"
+  title: 'clarifier-worker',
+  config: '.boss/workers/clarifier/container-config.json',
 });
 
 await mcp.containerUse.executeInEnvironment({
   env_id: env.env_id,
   prompt: clarifierPrompt,
-  skills: ["business-analysis", "requirements-gathering"]
+  skills: ['business-analysis', 'requirements-gathering'],
 });
 ```
 
@@ -169,6 +174,7 @@ Merge branch    Delete environment
 ```
 
 **Quality Checks:**
+
 - ✅ TypeScript: No errors
 - ✅ Lint: No warnings
 - ✅ Tests: All passing
@@ -303,6 +309,7 @@ US3: Password Reset (T029-T035)  [P] Parallel with US2
 ```
 
 **Timeline:**
+
 - Traditional: 3 stories × 2 hours = 6 hours
 - BOSS parallel: max(2h, 2h, 2h) = 2 hours
 
@@ -315,11 +322,13 @@ US3: Password Reset (T029-T035)  [P] Parallel with US2
 **Action:** BOSS creates `.specify/` structure during project bootstrap
 
 **Command:**
+
 ```bash
 boss bootstrap --template nextjs-app-turbo --quality production
 ```
 
 **Created:**
+
 ```
 .specify/
 ├── memory/
@@ -340,11 +349,13 @@ boss bootstrap --template nextjs-app-turbo --quality production
 **Worker:** `architect`
 
 **Input:**
+
 - Bootstrap template
 - Quality preset
 - Tech stack policy
 
 **Output:**
+
 - `.specify/memory/constitution.md`
 
 **Constitution Sections:**
@@ -365,11 +376,13 @@ boss bootstrap --template nextjs-app-turbo --quality production
 ## Development Methodology
 
 ### Test-First (NON-NEGOTIABLE)
+
 - All code MUST be written using TDD
 - Cycle: Red (write failing test) → Green (make it pass) → Refactor
 - No implementation without tests first
 
 ## Testing Standards
+
 - Unit test coverage: ≥80%
 - Mutation testing score: ≥80%
 - Integration tests for all API endpoints
@@ -378,17 +391,20 @@ boss bootstrap --template nextjs-app-turbo --quality production
 ## Technology Stack
 
 ### Allowed
+
 - TypeScript (strict mode)
 - Next.js 15 (App Router)
 - Prisma ORM
 - Vitest (testing)
 
 ### Prohibited
+
 - JavaScript (must use TypeScript)
 - Jest (use Vitest)
 - Class components (use functional)
 
 ### Rationale
+
 - TypeScript: Type safety prevents runtime errors
 - Vitest: Faster, better DX than Jest
 ```
@@ -404,22 +420,26 @@ boss bootstrap --template nextjs-app-turbo --quality production
 **Worker:** `clarifier`
 
 **Role:**
+
 - Ask **business** questions (not technical)
 - Understand users and their needs
 - Document pain points and workflows
 
 **Questions to Ask:**
+
 - **Who** are the users?
 - **What** problems do they face?
 - **Why** does this solution matter?
 - **How** do they work today?
 
 **NOT to Ask:**
+
 - Technology choices (governed by constitution)
 - Architecture patterns (planned later)
 - Implementation details (not relevant yet)
 
 **Output:**
+
 - `.specify/specs/000-requirements/clarification.md`
 
 **Example Output:**
@@ -428,20 +448,24 @@ boss bootstrap --template nextjs-app-turbo --quality production
 # Requirement Clarification
 
 ## User Personas
+
 - **Team Leads** - Manage 5-10 people, need visibility
 - **Team Members** - Execute tasks, need clarity
 
 ## Current Workflow
+
 1. Manager assigns tasks verbally
 2. Tasks tracked in spreadsheet
 3. Status updates in daily standup
 
 ## Problems
+
 - Tasks get lost in spreadsheets
 - No visibility into progress
 - Difficult to track dependencies
 
 ## Success Criteria
+
 - 95% of tasks tracked digitally
 - Real-time progress visibility
 - < 2 minutes to assign a task
@@ -458,11 +482,13 @@ boss bootstrap --template nextjs-app-turbo --quality production
 **Worker:** `spec-writer`
 
 **Input:**
+
 - Clarification summary
 - Constitution
 - Knowledge base (similar specs)
 
 **Output:**
+
 - `.specify/specs/001-${feature}/spec.md`
 
 **Spec Structure:**
@@ -471,6 +497,7 @@ boss bootstrap --template nextjs-app-turbo --quality production
 # Feature: Task Management
 
 ## Metadata
+
 - Branch: feature/task-management
 - Status: Draft
 - Created: 2024-01-15
@@ -478,22 +505,26 @@ boss bootstrap --template nextjs-app-turbo --quality production
 ## User Stories
 
 ### US1 (P1): Task Creation
+
 As a team lead, I need to create tasks so team members know what to do.
 
 **Priority:** P1 - Foundational feature
 **Testing:** Can test task creation independently
 
 **Scenarios:**
+
 - Given valid task data, When I create task, Then task saved with ID
 - Given missing title, When I create task, Then error shown
 - Given invalid assignee, When I create task, Then validation error
 
 **Edge Cases:**
+
 - Very long task descriptions (>10,000 chars)
 - Special characters in title
 - Assigning to user not in team
 
 ### US2 (P2): Task Assignment
+
 As a team lead, I need to assign tasks to specific members.
 
 **Priority:** P2 - Depends on US1
@@ -504,19 +535,23 @@ As a team lead, I need to assign tasks to specific members.
 ## Requirements
 
 ### Functional
+
 - FR-001: System shall support task creation with title, description, assignee
 - FR-002: System shall validate assignee exists in team
 - FR-003: System shall send notification on assignment
 
 ### Non-Functional
+
 - NFR-001: Task creation shall complete in <200ms
 - NFR-002: Support 1000 concurrent task creations
 
 ## Key Entities
+
 - Task (id, title, description, assignee_id, status, created_at)
 - User (id, name, email, team_id)
 
 ## Success Criteria
+
 - SC-001: 95% of tasks tracked digitally within 1 week
 - SC-002: Task creation takes <2 minutes
 - SC-003: 0 lost tasks (100% persistence)
@@ -535,12 +570,14 @@ BOSS creates PR for review. User approves via GitHub PR review.
 **Worker:** `planner`
 
 **Input:**
+
 - Approved spec.md
 - Constitution
 - Tech stack policy
 - Knowledge base (similar plans)
 
 **Output:**
+
 - `.specify/specs/001-${feature}/plan.md`
 - `.specify/specs/001-${feature}/data-model.md`
 - `.specify/specs/001-${feature}/contracts/`
@@ -569,10 +606,11 @@ BOSS creates PR for review. User approves via GitHub PR review.
 
 **Example plan.md:**
 
-```markdown
+````markdown
 # Implementation Plan: Task Management
 
 ## Summary
+
 Enable team leads to create and assign tasks digitally.
 
 Technical Approach: REST API with PostgreSQL, Next.js frontend
@@ -591,23 +629,25 @@ Technical Approach: REST API with PostgreSQL, Next.js frontend
 
 ## Constitution Check
 
-| Principle | Compliance | Notes |
-|-----------|------------|-------|
-| Architectural | ✅ | REST API pattern per constitution |
-| Test-First | ✅ | TDD planned for all endpoints |
-| Tech Stack | ✅ | All allowed technologies |
-| Testing Standards | ✅ | Unit + integration + E2E planned |
+| Principle         | Compliance | Notes                             |
+| ----------------- | ---------- | --------------------------------- |
+| Architectural     | ✅         | REST API pattern per constitution |
+| Test-First        | ✅         | TDD planned for all endpoints     |
+| Tech Stack        | ✅         | All allowed technologies          |
+| Testing Standards | ✅         | Unit + integration + E2E planned  |
 
 ## Architecture Decisions
 
 ### ADR-001: REST vs GraphQL
+
 **Decision:** REST API
 **Rationale:**
+
 - Constitution specifies REST
 - Simpler for this use case
 - Existing auth uses REST
-**Alternatives:** GraphQL (more complex, not needed)
-**Consequences:** Need versioning strategy
+  **Alternatives:** GraphQL (more complex, not needed)
+  **Consequences:** Need versioning strategy
 
 ## Data Model
 
@@ -627,17 +667,20 @@ User:
   email: string
   team_id: uuid (FK → Team)
 ```
+````
 
 ## API Contracts
 
 See `contracts/task-api.yaml` (OpenAPI 3.0)
 
 Key endpoints:
+
 - POST /api/tasks - Create task
 - GET /api/tasks/:id - Get task
 - PATCH /api/tasks/:id - Update task
 - POST /api/tasks/:id/assign - Assign task
-```
+
+````
 
 **Gate:** None (will be validated next phase)
 
@@ -679,7 +722,7 @@ Key endpoints:
 - [ ] All dependencies are allowed
 - [ ] No prohibited technologies used
 - [ ] Rationale provided for choices
-```
+````
 
 **Validation Result:**
 
@@ -695,7 +738,7 @@ compliance:
   cross_cutting: PASS
 
 warnings:
-  - "Mutation testing setup needs clarification"
+  - 'Mutation testing setup needs clarification'
 
 violations: []
 
@@ -718,11 +761,13 @@ retry_count: 0
 **Worker:** `planner`
 
 **Input:**
+
 - Approved plan.md
 - spec.md (user stories)
 - Constitution
 
 **Output:**
+
 - `.specify/specs/001-${feature}/tasks.md`
 
 **Task Format:**
@@ -737,6 +782,7 @@ retry_count: 0
 ```
 
 **Fields:**
+
 - `[ID]` - Unique identifier (T001, T002, ...)
 - `[P]` - Parallelization flag (can run parallel)
 - `[Story]` - User story (US1, US2) or SETUP, POLISH
@@ -746,6 +792,7 @@ retry_count: 0
 
 ```markdown
 ## Phase 1: Setup [P]
+
 All tasks can run in parallel
 
 [T001] [P] [SETUP] Initialize PostgreSQL schema with Task table
@@ -754,28 +801,33 @@ All tasks can run in parallel
 [T004] [P] [SETUP] Configure API error handling → src/api/middleware/errors.ts
 
 ## Phase 2: Foundation
+
 Sequential - each builds on previous
 
 [T005] [FOUNDATION] Create Task model → src/models/task.ts
 [T006] [FOUNDATION] Create API contract tests → tests/contracts/task.test.ts
 
 ## Phase 3: User Story 1 - Task Creation
+
 Sequential TDD cycle
 
 # Tests (write first)
+
 [T007] [US1] Write failing test: POST /api/tasks with valid data returns 201
 [T008] [US1] Write failing test: POST /api/tasks with missing title returns 400
 [T009] [US1] Write failing test: POST /api/tasks with invalid assignee returns 404
 
 # Implementation (make tests pass)
+
 [T010] [US1] Implement create endpoint → src/api/tasks/create.ts
-     Dependencies: T007, T008, T009
+Dependencies: T007, T008, T009
 [T011] [US1] Implement task validation service → src/services/task.service.ts
-     Dependencies: T010
+Dependencies: T010
 [T012] [US1] Integration test: Full task creation flow
-     Dependencies: T010, T011
+Dependencies: T010, T011
 
 ## Phase 4: User Story 2 - Task Assignment [P]
+
 Can run parallel with US1
 
 [T013] [P] [US2] Write failing test: POST /api/tasks/:id/assign
@@ -785,15 +837,16 @@ Can run parallel with US1
 ## Dependencies
 
 dependencies:
-  T010:  # Create endpoint
-    depends_on: [T007, T008, T009]  # All tests first
-  T012:  # Integration
-    depends_on: [T010, T011]  # All implementation done
+T010: # Create endpoint
+depends_on: [T007, T008, T009] # All tests first
+T012: # Integration
+depends_on: [T010, T011] # All implementation done
 ```
 
 **Parallelization Rules:**
 
 Tasks marked `[P]` can run parallel IF:
+
 1. No dependencies on each other
 2. Work on different files
 3. Independently testable
@@ -816,23 +869,23 @@ Tasks marked `[P]` can run parallel IF:
 const executionPlan = {
   phase1_setup: {
     tasks: [T001, T002, T003, T004],
-    parallel: true,          // All marked [P]
-    workers: 4
+    parallel: true, // All marked [P]
+    workers: 4,
   },
 
   phase3_us1: {
-    tasks: [T007-T012],
-    parallel: false,         // TDD - sequential
+    tasks: [T007 - T012],
+    parallel: false, // TDD - sequential
     workers: 1,
-    worker_type: 'developer-backend'
+    worker_type: 'developer-backend',
   },
 
   phase4_us2: {
-    tasks: [T013-T015],
-    parallel: true,          // Can run with US1
+    tasks: [T013 - T015],
+    parallel: true, // Can run with US1
     workers: 1,
-    worker_type: 'developer-backend'
-  }
+    worker_type: 'developer-backend',
+  },
 };
 ```
 
@@ -842,13 +895,11 @@ const executionPlan = {
 // 1. Write failing test [T007]
 describe('POST /api/tasks', () => {
   it('creates task with valid data', async () => {
-    const response = await request(app)
-      .post('/api/tasks')
-      .send({
-        title: 'Test task',
-        description: 'Test description',
-        assignee_id: testUser.id
-      });
+    const response = await request(app).post('/api/tasks').send({
+      title: 'Test task',
+      description: 'Test description',
+      assignee_id: testUser.id,
+    });
 
     expect(response.status).toBe(201);
     expect(response.body).toHaveProperty('id');
@@ -864,7 +915,7 @@ export async function createTask(req: Request, res: Response) {
   const { title, description, assignee_id } = req.body;
 
   const task = await prisma.task.create({
-    data: { title, description, assignee_id }
+    data: { title, description, assignee_id },
   });
 
   return res.status(201).json(task);
@@ -913,6 +964,7 @@ Creating PR #2: User Story 1 - Task Creation
 **Worker:** `consolidator`
 
 **Input:**
+
 - All worker PRs
 - tasks.md
 - Constitution
@@ -920,6 +972,7 @@ Creating PR #2: User Story 1 - Task Creation
 **Tasks:**
 
 1. **Merge Branches**
+
    ```bash
    git checkout -b integration/run_001
    git merge container-use/worker_001  # US1
@@ -928,6 +981,7 @@ Creating PR #2: User Story 1 - Task Creation
    ```
 
 2. **Integration Tests**
+
    ```typescript
    // Test complete system
    describe('Complete Task Management', () => {
@@ -944,7 +998,7 @@ Creating PR #2: User Story 1 - Task Creation
 
        // Verify in database
        const task = await prisma.task.findUnique({
-         where: { id: createRes.body.id }
+         where: { id: createRes.body.id },
        });
        expect(task.assignee_id).toBe(newUser.id);
      });
@@ -954,28 +1008,34 @@ Creating PR #2: User Story 1 - Task Creation
 3. **Create Final Artifacts**
 
    **quickstart.md:**
-   ```markdown
+
+   ````markdown
    # Task Management - Quick Start
 
    ## Prerequisites
+
    - Node.js 22+
    - PostgreSQL 16
 
    ## Setup
+
    1. `pnpm install`
    2. Copy `.env.example` to `.env`
    3. `pnpm prisma migrate dev`
    4. `pnpm dev`
 
    ## Test
+
    ```bash
    curl -X POST http://localhost:3000/api/tasks \
      -H "Content-Type: application/json" \
      -d '{"title":"Test task","assignee_id":"..."}'
    ```
+   ````
 
    Expected: `{"id":"...","title":"Test task",...}`
-   ```
+
+   ````
 
    **checklist.md:**
    ```markdown
@@ -1002,9 +1062,10 @@ Creating PR #2: User Story 1 - Task Creation
    - [x] API documented (OpenAPI)
    - [x] README complete
    - [x] Quickstart guide
-   ```
+   ````
 
 4. **Final Quality Gate**
+
    ```bash
    pnpm typecheck      # ✅
    pnpm lint           # ✅
@@ -1015,6 +1076,7 @@ Creating PR #2: User Story 1 - Task Creation
    ```
 
 5. **Create Main PR**
+
    ```
    PR #7: Complete Task Management Feature
 
@@ -1060,7 +1122,7 @@ function selectWorker(task: Task): WorkerType {
   if (hasReact) return 'developer-frontend';
   if (hasNode || hasDB) return 'developer-backend';
 
-  return 'developer-fullstack';  // Default
+  return 'developer-fullstack'; // Default
 }
 
 function analyzeTaskSkills(task: Task): string[] {
@@ -1090,6 +1152,7 @@ Each worker receives detailed context:
 # Developer - User Story 1: Task Creation
 
 ## Context
+
 - Feature: Task Management
 - Spec: [spec.md content]
 - Plan: [plan.md content]
@@ -1100,28 +1163,35 @@ Each worker receives detailed context:
 ## Your Tasks (TDD Cycle)
 
 ### 1. Write Tests FIRST [T007-T009]
+
 [Failing test examples...]
 
 ### 2. Implement [T010-T011]
+
 [Implementation to make tests pass...]
 
 ### 3. Integration Test [T012]
+
 [Full flow test...]
 
 ### 4. Checkpoint
+
 - [ ] All tests passing
 - [ ] Coverage ≥ 80%
 - [ ] Can deploy independently
 - [ ] Mutation score ≥ 80%
 
 ## Constitution Compliance
+
 - ✅ Test-First (NON-NEGOTIABLE)
 - ✅ TDD Cycle: Red → Green → Refactor
 - ✅ Coverage ≥ 80%
 - ✅ Allowed tech stack only
 
 ## Output
+
 When complete:
+
 1. Create PR
 2. Include test results
 3. Link to spec/tasks
@@ -1133,12 +1203,12 @@ When complete:
 
 ### Gate Types
 
-| Gate | Type | Phase | Trigger |
-|------|------|-------|---------|
-| **Gate 1** | Human | After Specification | Manual PR approval |
-| **Auto-Gate** | Automated | After Validation | Automatic (3 retries) |
+| Gate             | Type      | Phase                 | Trigger               |
+| ---------------- | --------- | --------------------- | --------------------- |
+| **Gate 1**       | Human     | After Specification   | Manual PR approval    |
+| **Auto-Gate**    | Automated | After Validation      | Automatic (3 retries) |
 | **Worker Gates** | Automated | During Implementation | Per worker completion |
-| **Gate 2** | Human | After Consolidation | Manual PR approval |
+| **Gate 2**       | Human     | After Consolidation   | Manual PR approval    |
 
 ### Quality Checks
 
@@ -1251,16 +1321,16 @@ Phase 8: Consolidation
 
 ### Spec-Kit Principles Enforced
 
-| Principle | How BOSS Enforces |
-|-----------|-------------------|
-| **Specifications executable** | spec.md drives entire implementation |
-| **Test-First mandatory** | Constitution enforces, quality gates verify |
-| **Multi-step refinement** | 8 sequential phases |
-| **Independent testability** | Checkpoints in each user story |
-| **Dependency-ordered** | tasks.md with explicit dependencies |
-| **Parallelization** | `[P]` markers → parallel workers |
-| **Constitution governs** | All phases validated against constitution |
-| **Human governance** | Strategic gates (planning, review) |
+| Principle                     | How BOSS Enforces                           |
+| ----------------------------- | ------------------------------------------- |
+| **Specifications executable** | spec.md drives entire implementation        |
+| **Test-First mandatory**      | Constitution enforces, quality gates verify |
+| **Multi-step refinement**     | 8 sequential phases                         |
+| **Independent testability**   | Checkpoints in each user story              |
+| **Dependency-ordered**        | tasks.md with explicit dependencies         |
+| **Parallelization**           | `[P]` markers → parallel workers            |
+| **Constitution governs**      | All phases validated against constitution   |
+| **Human governance**          | Strategic gates (planning, review)          |
 
 ### Key Innovations
 
@@ -1323,11 +1393,11 @@ Examples:
 
 ```yaml
 dependencies:
-  T006:  # Task ID
-    depends_on: [T005]  # Must complete T005 first
+  T006: # Task ID
+    depends_on: [T005] # Must complete T005 first
 
-  T012:  # Integration test
-    depends_on: [T006, T007, T008]  # All implementation done
+  T012: # Integration test
+    depends_on: [T006, T007, T008] # All implementation done
 ```
 
 ---

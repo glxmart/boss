@@ -20,7 +20,7 @@ describe('claude-md generator', () => {
     const config: ProjectConfig = {
       name: 'test-project',
       template: 'nextjs-app-turbo',
-      quality: 'production'
+      quality: 'production',
     };
 
     await generateClaudeMD(testDir, config);
@@ -32,7 +32,9 @@ describe('claude-md generator', () => {
 
     // Check for mandatory verbatim text (updated to match current template)
     expect(content).toContain('**CRITICAL: BOSS vs Workers Distinction**');
-    expect(content).toContain('Workers ALWAYS use Container-Use MCP environments for ALL file, code, or shell operations');
+    expect(content).toContain(
+      'Workers ALWAYS use Container-Use MCP environments for ALL file, code, or shell operations'
+    );
     expect(content).toContain('container-use log <env_id>');
     expect(content).toContain('container-use checkout <env_id>');
   });
@@ -41,7 +43,7 @@ describe('claude-md generator', () => {
     const config: ProjectConfig = {
       name: 'my-awesome-project',
       template: 'api-service-fastify',
-      quality: 'enterprise'
+      quality: 'enterprise',
     };
 
     await generateClaudeMD(testDir, config);
@@ -56,7 +58,7 @@ describe('claude-md generator', () => {
     const config: ProjectConfig = {
       name: 'test',
       template: 'blank',
-      quality: 'startup'
+      quality: 'startup',
     };
 
     await generateClaudeMD(testDir, config);
@@ -67,4 +69,3 @@ describe('claude-md generator', () => {
     expect(content).toContain('Feature Documentation (NON-NEGOTIABLE)');
   });
 });
-

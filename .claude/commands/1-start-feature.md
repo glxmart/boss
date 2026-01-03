@@ -34,16 +34,19 @@ When invoked, I will:
 ## Examples
 
 **New Feature:**
+
 ```bash
 git checkout -b feature/worker-resume-optimization
 ```
 
 **Bug Fix:**
+
 ```bash
 git checkout -b fix/bootstrap-template-path
 ```
 
 **Documentation:**
+
 ```bash
 git checkout -b docs/update-release-guide
 ```
@@ -51,6 +54,7 @@ git checkout -b docs/update-release-guide
 ## Next Steps
 
 After branch is created:
+
 1. Make your code changes
 2. Run `/2-quality-check` to validate
 3. Run `/3-create-changeset` (if code changes)

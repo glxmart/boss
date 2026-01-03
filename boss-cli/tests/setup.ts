@@ -24,4 +24,3 @@ afterAll(async () => {
 export function getTestProjectPath(projectName: string): string {
   return path.join(TEST_TEMP_DIR, projectName);
 }
-

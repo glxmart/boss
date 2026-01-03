@@ -10,6 +10,7 @@ import { execa } from 'execa';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+import { ErrorCategory } from '../../src/types.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -37,11 +38,11 @@ describe('E2E: BOSS Workflow with Conductor MCP', () => {
     console.log('\n📦 Building boss-cli...');
     await execa('pnpm', ['install'], {
       cwd: BOSS_CLI_PATH,
-      stdio: 'inherit'
+      stdio: 'inherit',
     });
     await execa('pnpm', ['build'], {
       cwd: BOSS_CLI_PATH,
-      stdio: 'inherit'
+      stdio: 'inherit',
     });
 
     // Bootstrap test project
@@ -51,19 +52,25 @@ describe('E2E: BOSS Workflow with Conductor MCP', () => {
       [
         path.join(BOSS_CLI_PATH, 'dist/index.js'),
         'bootstrap',
-        '--template', 'blank',
-        '--quality', 'startup',
-        '--name', TEST_PROJECT_NAME,
-        '--non-interactive'
+        '--template',
+        'blank',
+        '--quality',
+        'startup',
+        '--name',
+        TEST_PROJECT_NAME,
+        '--non-interactive',
       ],
       {
         cwd: TEST_DIR,
-        stdio: 'inherit'
+        stdio: 'inherit',
       }
     );
 
     // Verify project was created
-    const exists = await fs.access(projectPath).then(() => true).catch(() => false);
+    const exists = await fs
+      .access(projectPath)
+      .then(() => true)
+      .catch(() => false);
     if (!exists) {
       throw new Error(`Test project was not created at ${projectPath}`);
     }
@@ -78,8 +85,8 @@ describe('E2E: BOSS Workflow with Conductor MCP', () => {
         stdio: 'inherit',
         env: {
           ...process.env,
-          HUSKY: '0' // Disable Husky during install
-        }
+          HUSKY: '0', // Disable Husky during install
+        },
       });
       console.log('✅ Dependencies installed');
 
@@ -100,7 +107,7 @@ describe('E2E: BOSS Workflow with Conductor MCP', () => {
     console.log('\n🔧 Disabling git hooks for testing...');
     try {
       await execa('git', ['config', 'core.hooksPath', '/dev/null'], {
-        cwd: projectPath
+        cwd: projectPath,
       });
       console.log('✅ Git hooks disabled for testing');
     } catch (err) {
@@ -129,26 +136,27 @@ describe('E2E: BOSS Workflow with Conductor MCP', () => {
       '.container-use',
       '.claude',
       '.git',
-      '.boss/workers'
+      '.boss/workers',
     ];
 
     for (const p of criticalPaths) {
       const fullPath = path.join(projectPath, p);
-      const exists = await fs.access(fullPath).then(() => true).catch(() => false);
+      const exists = await fs
+        .access(fullPath)
+        .then(() => true)
+        .catch(() => false);
       expect(exists, `${p} should exist`).toBe(true);
     }
 
     // Verify critical files exist
-    const criticalFiles = [
-      'CLAUDE.md',
-      'start-boss.sh',
-      'docker-compose.yml',
-      '.boss/config.yaml'
-    ];
+    const criticalFiles = ['CLAUDE.md', 'start-boss.sh', 'docker-compose.yml', '.boss/config.yaml'];
 
     for (const f of criticalFiles) {
       const fullPath = path.join(projectPath, f);
-      const exists = await fs.access(fullPath).then(() => true).catch(() => false);
+      const exists = await fs
+        .access(fullPath)
+        .then(() => true)
+        .catch(() => false);
       expect(exists, `${f} should exist`).toBe(true);
     }
   });
@@ -169,46 +177,85 @@ describe('E2E: BOSS Workflow with Conductor MCP', () => {
 
     // Verify CLAUDE.md exists (used by both Claude Code and Cursor)
     const claudeMdPath = path.join(architectWorkerDir, 'CLAUDE.md');
-    const claudeMdExists = await fs.access(claudeMdPath).then(() => true).catch(() => false);
+    const claudeMdExists = await fs
+      .access(claudeMdPath)
+      .then(() => true)
+      .catch(() => false);
     expect(claudeMdExists, 'architect/CLAUDE.md should exist').toBe(true);
 
     // Verify .claude folder exists (used by both tools)
     const claudeFolderPath = path.join(architectWorkerDir, '.claude');
-    const claudeFolderExists = await fs.access(claudeFolderPath).then(() => true).catch(() => false);
+    const claudeFolderExists = await fs
+      .access(claudeFolderPath)
+      .then(() => true)
+      .catch(() => false);
     expect(claudeFolderExists, 'architect/.claude folder should exist').toBe(true);
 
     // Verify .claude has commands and skills (but NOT agents - workers are already agents)
     const commandsPath = path.join(claudeFolderPath, 'commands');
-    const commandsExists = await fs.access(commandsPath).then(() => true).catch(() => false);
+    const commandsExists = await fs
+      .access(commandsPath)
+      .then(() => true)
+      .catch(() => false);
     expect(commandsExists, 'architect/.claude/commands should exist').toBe(true);
 
     const skillsPath = path.join(claudeFolderPath, 'skills');
-    const skillsExists = await fs.access(skillsPath).then(() => true).catch(() => false);
+    const skillsExists = await fs
+      .access(skillsPath)
+      .then(() => true)
+      .catch(() => false);
     expect(skillsExists, 'architect/.claude/skills should exist').toBe(true);
 
     // Verify architect gets its relevant Spec-Kit command (constitution.md based on primaryCommand)
     const constitutionPath = path.join(commandsPath, 'constitution.md');
-    const constitutionExists = await fs.access(constitutionPath).then(() => true).catch(() => false);
-    expect(constitutionExists, 'architect/.claude/commands/constitution.md should exist (architect\'s primary command)').toBe(true);
+    const constitutionExists = await fs
+      .access(constitutionPath)
+      .then(() => true)
+      .catch(() => false);
+    expect(
+      constitutionExists,
+      "architect/.claude/commands/constitution.md should exist (architect's primary command)"
+    ).toBe(true);
 
     // Verify boss-commands.md is NOT copied to workers (BOSS-specific only)
     const bossCommandsPath = path.join(commandsPath, 'boss-commands.md');
-    const bossCommandsExists = await fs.access(bossCommandsPath).then(() => true).catch(() => false);
-    expect(bossCommandsExists, 'architect/.claude/commands/boss-commands.md should NOT exist (BOSS-specific only)').toBe(false);
+    const bossCommandsExists = await fs
+      .access(bossCommandsPath)
+      .then(() => true)
+      .catch(() => false);
+    expect(
+      bossCommandsExists,
+      'architect/.claude/commands/boss-commands.md should NOT exist (BOSS-specific only)'
+    ).toBe(false);
 
     // Verify NO .cursor folder (Cursor uses .claude config)
     const cursorFolderPath = path.join(architectWorkerDir, '.cursor');
-    const cursorFolderExists = await fs.access(cursorFolderPath).then(() => true).catch(() => false);
-    expect(cursorFolderExists, 'architect/.cursor folder should NOT exist (Cursor uses .claude)').toBe(false);
+    const cursorFolderExists = await fs
+      .access(cursorFolderPath)
+      .then(() => true)
+      .catch(() => false);
+    expect(
+      cursorFolderExists,
+      'architect/.cursor folder should NOT exist (Cursor uses .claude)'
+    ).toBe(false);
 
     // Verify prompt.md and container-config.json DO NOT exist in project (conductor owns these)
     const promptMdPath = path.join(architectWorkerDir, 'prompt.md');
-    const promptMdExists = await fs.access(promptMdPath).then(() => true).catch(() => false);
+    const promptMdExists = await fs
+      .access(promptMdPath)
+      .then(() => true)
+      .catch(() => false);
     expect(promptMdExists, 'architect/prompt.md should NOT exist in project').toBe(false);
 
     const containerConfigPath = path.join(architectWorkerDir, 'container-config.json');
-    const containerConfigExists = await fs.access(containerConfigPath).then(() => true).catch(() => false);
-    expect(containerConfigExists, 'architect/container-config.json should NOT exist in project').toBe(false);
+    const containerConfigExists = await fs
+      .access(containerConfigPath)
+      .then(() => true)
+      .catch(() => false);
+    expect(
+      containerConfigExists,
+      'architect/container-config.json should NOT exist in project'
+    ).toBe(false);
   });
 
   it('should have container-use available', async () => {
@@ -225,7 +272,10 @@ describe('E2E: BOSS Workflow with Conductor MCP', () => {
     // Conductor reads metadata.json and container-config.json from its own worker-configs/ directory
     const conductorWorkerConfigsPath = path.resolve(__dirname, '../../worker-configs');
     const architectMetadataPath = path.join(conductorWorkerConfigsPath, 'architect/metadata.json');
-    const architectContainerConfigPath = path.join(conductorWorkerConfigsPath, 'architect/container-config.json');
+    const architectContainerConfigPath = path.join(
+      conductorWorkerConfigsPath,
+      'architect/container-config.json'
+    );
 
     // Verify metadata.json exists and is valid
     const metadataContent = await fs.readFile(architectMetadataPath, 'utf-8');
@@ -254,18 +304,24 @@ describe('E2E: BOSS Workflow with Conductor MCP', () => {
 
     // Verify the project has worker-specific CLAUDE.md (not the container config)
     const projectClaudeMdPath = path.join(projectPath, '.boss/workers/architect/CLAUDE.md');
-    const projectClaudeMdExists = await fs.access(projectClaudeMdPath).then(() => true).catch(() => false);
+    const projectClaudeMdExists = await fs
+      .access(projectClaudeMdPath)
+      .then(() => true)
+      .catch(() => false);
     expect(projectClaudeMdExists, 'Project should have worker-specific CLAUDE.md').toBe(true);
   });
 
   it('should have git repository initialized', async () => {
     const gitDir = path.join(projectPath, '.git');
-    const exists = await fs.access(gitDir).then(() => true).catch(() => false);
+    const exists = await fs
+      .access(gitDir)
+      .then(() => true)
+      .catch(() => false);
     expect(exists, '.git directory should exist').toBe(true);
 
     // Verify git status works
     const { stdout } = await execa('git', ['status', '--porcelain'], {
-      cwd: projectPath
+      cwd: projectPath,
     });
 
     // Should have clean working directory (everything committed)
@@ -296,20 +352,38 @@ describe('E2E: BOSS Workflow with Conductor MCP', () => {
 
     // Check metadata.json exists (required for all workers)
     const metadataPath = path.join(architectPath, 'metadata.json');
-    const metadataExists = await fs.access(metadataPath).then(() => true).catch(() => false);
-    expect(metadataExists, 'conductor worker-configs/architect/metadata.json should exist').toBe(true);
+    const metadataExists = await fs
+      .access(metadataPath)
+      .then(() => true)
+      .catch(() => false);
+    expect(metadataExists, 'conductor worker-configs/architect/metadata.json should exist').toBe(
+      true
+    );
 
     // Check base container config exists (required for all workers)
-    const baseContainerConfigPath = path.join(conductorWorkerConfigsPath, '_base', 'container-config.json');
-    const baseConfigExists = await fs.access(baseContainerConfigPath).then(() => true).catch(() => false);
-    expect(baseConfigExists, 'conductor worker-configs/_base/container-config.json should exist').toBe(true);
+    const baseContainerConfigPath = path.join(
+      conductorWorkerConfigsPath,
+      '_base',
+      'container-config.json'
+    );
+    const baseConfigExists = await fs
+      .access(baseContainerConfigPath)
+      .then(() => true)
+      .catch(() => false);
+    expect(
+      baseConfigExists,
+      'conductor worker-configs/_base/container-config.json should exist'
+    ).toBe(true);
 
     // Load base container config
     const baseContainerConfig = JSON.parse(await fs.readFile(baseContainerConfigPath, 'utf-8'));
 
     // Check if worker has specific overrides (optional)
     const workerContainerConfigPath = path.join(architectPath, 'container-config.json');
-    const workerConfigExists = await fs.access(workerContainerConfigPath).then(() => true).catch(() => false);
+    const workerConfigExists = await fs
+      .access(workerContainerConfigPath)
+      .then(() => true)
+      .catch(() => false);
 
     // Use base config (worker config is optional)
     const containerConfig = workerConfigExists
@@ -371,17 +445,44 @@ describe('E2E: BOSS Workflow with Conductor MCP', () => {
       // The task should be clear and not require additional user input
       const result = await spawner.spawnWorker({
         workerType: 'clarifier',
-        taskPrompt: 'Analyze this requirement: "Create a simple TODO app with add, delete, and mark complete functionality." List the key features and any assumptions you need to make. Provide your analysis in the structured JSON format.',
+        taskPrompt:
+          'Analyze this requirement: "Create a simple TODO app with add, delete, and mark complete functionality." List the key features and any assumptions you need to make. Provide your analysis in the structured JSON format.',
         projectPath,
-        targetBranch: 'feature/boss-initial-setup'
+        targetBranch: 'feature/boss-initial-setup',
       });
+
+      // Check if spawn was successful
+      if (!result.success) {
+        // Check if this is a Docker image availability issue (expected in CI/local environments)
+        // The underlying error from container-use will contain image pull failure details
+        const errorCategory = result.error?.category;
+        const errorDetails = result.error?.details;
+
+        if (
+          errorCategory === ErrorCategory.CONTAINER_CREATION_FAILED &&
+          errorDetails instanceof Error &&
+          (errorDetails.message.includes('failed to resolve image') ||
+            errorDetails.message.includes('401 Unauthorized'))
+        ) {
+          console.log('⚠️  Docker image not available, skipping worker spawn test');
+          console.log('   This is expected if boss-worker-base image is not published');
+          console.log('   Category:', errorCategory);
+          console.log('   Details:', errorDetails.message);
+          return;
+        }
+
+        console.error('❌ Worker spawn failed:', result.message);
+        console.error('   Error:', result.error);
+        throw new Error(`Worker spawn failed: ${result.message}`);
+      }
 
       workerId = result.workerId;
       console.log(`✅ Worker spawned: ${workerId}`);
 
       // Verify worker ID format
       expect(workerId).toBeTruthy();
-      expect(workerId).toBeTruthy(); // container-use generates friendly names like "optimum-sloth"
+      expect(typeof workerId).toBe('string');
+      expect(workerId.length).toBeGreaterThan(0); // container-use generates friendly names like "optimum-sloth"
 
       // Verify worker state was tracked
       const workerState = stateTracker.getWorker(workerId);
@@ -394,7 +495,10 @@ describe('E2E: BOSS Workflow with Conductor MCP', () => {
 
       // Verify worker manifest was created
       const manifestPath = path.join(projectPath, '.boss', `worker-manifest-${workerId}.json`);
-      const manifestExists = await fs.access(manifestPath).then(() => true).catch(() => false);
+      const manifestExists = await fs
+        .access(manifestPath)
+        .then(() => true)
+        .catch(() => false);
       expect(manifestExists, 'Worker manifest should be created').toBe(true);
 
       if (manifestExists) {
@@ -410,7 +514,6 @@ describe('E2E: BOSS Workflow with Conductor MCP', () => {
       }
 
       console.log('✅ Worker spawning test completed successfully');
-
     } catch (error: any) {
       console.error('❌ Worker spawning failed:', error.message);
       throw error;

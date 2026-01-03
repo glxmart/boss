@@ -110,6 +110,7 @@
 ```
 
 **Key Innovation:**
+
 - **Spec-Kit** (GitHub) provides executable specifications & constitutional governance
 - **Container-Use** provides isolated worker execution with secure secret management
 - **BOSS** orchestrates everything with multi-agent coordination
@@ -158,21 +159,21 @@
 
 ### Traditional vs BOSS
 
-| Aspect | Traditional Development | BOSS Development |
-|--------|------------------------|------------------|
-| **Project Setup** | Hours of manual configuration | 5 minutes with `boss bootstrap` |
-| **Requirements** | Meetings, documents, back-and-forth | Conversational clarification with BOSS |
-| **Specifications** | Manual PRDs, often outdated | Spec-Kit artifacts (executable, versioned) |
-| **Architecture** | Manual design, inconsistent patterns | Constitutional governance + knowledge base |
-| **Implementation** | Manual coding, context switching | Parallel workers in isolated containers |
-| **Testing** | Often afterthought, low coverage | TDD enforced, ≥80% coverage + mutation |
-| **Code Review** | Manual, inconsistent standards | Automated quality gates + human approval |
-| **Integration** | Manual, error-prone | Automated consolidation with tests |
-| **Security** | Secrets in .env files, often committed | 1Password integration, AI never sees values |
-| **Knowledge** | Tribal, forgotten, siloed | Shared knowledge base, compounds over time |
-| **Cross-Project** | Manual coordination, duplicate work | Automatic dependency detection & reuse |
-| **Quality** | Varies by developer/team | Enforced by quality gates, consistent |
-| **Time to PR** | Days to weeks | Hours with BOSS orchestration |
+| Aspect             | Traditional Development                | BOSS Development                            |
+| ------------------ | -------------------------------------- | ------------------------------------------- |
+| **Project Setup**  | Hours of manual configuration          | 5 minutes with `boss bootstrap`             |
+| **Requirements**   | Meetings, documents, back-and-forth    | Conversational clarification with BOSS      |
+| **Specifications** | Manual PRDs, often outdated            | Spec-Kit artifacts (executable, versioned)  |
+| **Architecture**   | Manual design, inconsistent patterns   | Constitutional governance + knowledge base  |
+| **Implementation** | Manual coding, context switching       | Parallel workers in isolated containers     |
+| **Testing**        | Often afterthought, low coverage       | TDD enforced, ≥80% coverage + mutation      |
+| **Code Review**    | Manual, inconsistent standards         | Automated quality gates + human approval    |
+| **Integration**    | Manual, error-prone                    | Automated consolidation with tests          |
+| **Security**       | Secrets in .env files, often committed | 1Password integration, AI never sees values |
+| **Knowledge**      | Tribal, forgotten, siloed              | Shared knowledge base, compounds over time  |
+| **Cross-Project**  | Manual coordination, duplicate work    | Automatic dependency detection & reuse      |
+| **Quality**        | Varies by developer/team               | Enforced by quality gates, consistent       |
+| **Time to PR**     | Days to weeks                          | Hours with BOSS orchestration               |
 
 ---
 
@@ -185,6 +186,7 @@
 **IMPORTANT: BOSS is NOT a standalone application.**
 
 **BOSS IS:**
+
 - Your **Claude Code or Cursor instance** configured to act as an orchestrator
 - A set of **BOSS skills** loaded into Claude Code/Cursor for orchestration capabilities
 - **MCP server connections** (Container-Use, GitHub, Knowledge Base)
@@ -198,22 +200,23 @@ When you bootstrap a BOSS project and open it in Claude Code/Cursor, your AI ass
 
 Modern software development faces critical challenges:
 
-| Problem | Impact |
-|---------|--------|
-| **Manual project setup** | Hours spent configuring tools, linting, testing, git hooks |
-| **Context switching overload** | Multiple projects, multiple tech stacks, forgotten decisions |
-| **Inconsistent quality** | Different standards across projects, team members |
-| **AI assistants that forget** | No organizational memory between conversations |
-| **No cross-project coordination** | Dependencies discovered too late, duplicate work |
-| **Manual orchestration** | Humans coordinating what should be automated |
-| **Insecure secret management** | .env files committed, credentials exposed to AI |
-| **No testing discipline** | Low coverage, tests written after (or never) |
+| Problem                           | Impact                                                       |
+| --------------------------------- | ------------------------------------------------------------ |
+| **Manual project setup**          | Hours spent configuring tools, linting, testing, git hooks   |
+| **Context switching overload**    | Multiple projects, multiple tech stacks, forgotten decisions |
+| **Inconsistent quality**          | Different standards across projects, team members            |
+| **AI assistants that forget**     | No organizational memory between conversations               |
+| **No cross-project coordination** | Dependencies discovered too late, duplicate work             |
+| **Manual orchestration**          | Humans coordinating what should be automated                 |
+| **Insecure secret management**    | .env files committed, credentials exposed to AI              |
+| **No testing discipline**         | Low coverage, tests written after (or never)                 |
 
 ### The BOSS Solution
 
 A **two-tier system** that addresses all these challenges:
 
 **1. Bootstrap CLI** - Sets up new projects with everything configured
+
 - .boss/ directory with worker configurations
 - .specify/ directory for Spec-Kit artifacts
 - MCP servers configured
@@ -221,6 +224,7 @@ A **two-tier system** that addresses all these challenges:
 - Tech stack policy enforced
 
 **2. BOSS-Configured Claude Code/Cursor** - Your AI assistant becomes the orchestrator
+
 - Loaded with BOSS skills and MCP connections
 - Runs Spec-Kit's 8 phases automatically
 - Spawns workers in isolated containers
@@ -242,13 +246,13 @@ BOSS is built on two powerful foundations:
 
 #### What Spec-Kit Provides
 
-| Component | Description |
-|-----------|-------------|
-| **Eight Sequential Phases** | Bootstrap → Constitution → Clarification → Specification → Planning → Validation → Task Breakdown → Implementation → Consolidation |
-| **Structured Artifacts** | constitution.md, spec.md, plan.md, tasks.md, data-model.md, contracts/, quickstart.md, checklist.md |
-| **Test-First Methodology** | TDD is NON-NEGOTIABLE (red → green → refactor) |
-| **Parallelization Markers** | Tasks marked with `[P]` can run in parallel |
-| **Constitutional Governance** | All work validated against project principles |
+| Component                     | Description                                                                                                                        |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **Eight Sequential Phases**   | Bootstrap → Constitution → Clarification → Specification → Planning → Validation → Task Breakdown → Implementation → Consolidation |
+| **Structured Artifacts**      | constitution.md, spec.md, plan.md, tasks.md, data-model.md, contracts/, quickstart.md, checklist.md                                |
+| **Test-First Methodology**    | TDD is NON-NEGOTIABLE (red → green → refactor)                                                                                     |
+| **Parallelization Markers**   | Tasks marked with `[P]` can run in parallel                                                                                        |
+| **Constitutional Governance** | All work validated against project principles                                                                                      |
 
 #### How BOSS Transforms Spec-Kit
 
@@ -269,6 +273,7 @@ Manual knowledge sharing     →    Knowledge base compounds
 ```
 
 **Enhanced Capabilities:**
+
 - ✅ Automates all eight phases with specialized workers
 - ✅ Parallel execution based on `[P]` markers
 - ✅ Constitutional auto-validation with retry logic
@@ -284,13 +289,13 @@ Manual knowledge sharing     →    Knowledge base compounds
 
 #### What Container-Use Provides
 
-| Feature | Benefit |
-|---------|---------|
-| **Isolated Environments** | Each worker in own container + Git branch |
-| **Secure Secrets** | 1Password integration (op:// references), AI never sees values |
-| **Full Observability** | Complete command history and audit trail |
-| **Disposable Execution** | Clean environments, easy rollback |
-| **Parallel Workers** | Multiple agents without conflicts |
+| Feature                   | Benefit                                                        |
+| ------------------------- | -------------------------------------------------------------- |
+| **Isolated Environments** | Each worker in own container + Git branch                      |
+| **Secure Secrets**        | 1Password integration (op:// references), AI never sees values |
+| **Full Observability**    | Complete command history and audit trail                       |
+| **Disposable Execution**  | Clean environments, easy rollback                              |
+| **Parallel Workers**      | Multiple agents without conflicts                              |
 
 #### How BOSS Leverages Container-Use
 
@@ -322,8 +327,9 @@ BOSS Architecture with Container-Use
 ```
 
 **Integration Benefits:**
+
 - ✅ BOSS runs locally (Claude Code/Cursor), workers in containers
-- ✅ Each worker gets isolated environment (container-use/env-*)
+- ✅ Each worker gets isolated environment (container-use/env-\*)
 - ✅ Secrets injected from 1Password (never exposed to AI)
 - ✅ Agents auto-discover secret requirements during planning
 - ✅ Integration tests run with real API credentials (test mode)
@@ -340,6 +346,7 @@ BOSS Architecture with Container-Use
 The bootstrap tool initializes new projects with **complete, opinionated configuration** based on project type and quality requirements.
 
 **In 5 minutes you get:**
+
 - Fully configured project structure
 - All tooling set up (TypeScript, linting, testing, git hooks)
 - BOSS configuration with worker templates
@@ -451,6 +458,7 @@ Quality: enterprise"
 **CRITICAL:** Bootstrap creates a `CLAUDE.md` file in the project root containing mandatory operational constraints for workers.
 
 **Why This Exists:**
+
 - Workers run in isolated container-use environments
 - Workers MUST use environment tools for ALL operations
 - Workers MUST NOT use raw git CLI (breaks environment integrity)
@@ -466,20 +474,25 @@ Quality: enterprise"
 **ALWAYS use ONLY Environments for ANY and ALL file, code, or shell operations—NO EXCEPTIONS—even for simple or generic requests.**
 
 ### What This Means
+
 - ✅ DO: Use environment tools for ALL operations
 - ❌ DO NOT: Use raw git CLI with environment_run_cmd
 - ❌ DO NOT: Execute file operations outside environment tools
 
 ### User Visibility
+
 You MUST inform the user how to view your work:
+
 - `container-use log <env_id>` - View command history
 - `container-use checkout <env_id>` - Checkout branch to inspect code
 
 ## [Template-Specific Guidelines]
+
 [Next.js patterns, API design patterns, etc. based on template]
 ```
 
 **Template-Specific Content:**
+
 - `nextjs-app-turbo`: Next.js App Router, Server Components, Tailwind, Prisma
 - `api-service-fastify`: Fastify patterns, OpenAPI, REST design
 - `blank`: Generic TypeScript patterns
@@ -491,6 +504,7 @@ See [BOSS-CONTAINER-USE-INTEGRATION.md](./BOSS-CONTAINER-USE-INTEGRATION.md) for
 **CRITICAL:** Bootstrap creates a `start-boss.sh` script that enforces BOSS can ONLY use MCP tools.
 
 **Why This Is Essential:**
+
 - **Security**: Prevents BOSS from accessing host file system, shell, or git
 - **Enforcement**: Uses `--allowedTools` flag to whitelist only MCP tools
 - **Isolation**: Guarantees BOSS operates exclusively via Container-Use, GitHub, and Knowledge Base MCPs
@@ -522,11 +536,13 @@ mcp__knowledge-base__*
 ```
 
 **What Gets Blocked:**
+
 - ❌ Read, Write, Edit, Glob, Grep (host file operations)
 - ❌ Bash (host shell execution)
 - ❌ Direct git commands
 
 **What's Allowed:**
+
 - ✅ All Container-Use MCP operations (spawn workers, manage environments)
 - ✅ All GitHub MCP operations (PRs, issues, projects, labels, etc.)
 - ✅ All Knowledge Base MCP operations (search, query, insert)
@@ -634,10 +650,10 @@ quality:
       reviewers: [user]
 
   rules:
-    test_first: true                # Tests before implementation (NON-NEGOTIABLE)
-    mutation_coverage: 80           # Mutation testing threshold
-    no_console_logs: true           # No console.logs in production
-    strict_typescript: true         # Strict TS mode
+    test_first: true # Tests before implementation (NON-NEGOTIABLE)
+    mutation_coverage: 80 # Mutation testing threshold
+    no_console_logs: true # No console.logs in production
+    strict_typescript: true # Strict TS mode
 
 tech_stack_policy:
   allowed:
@@ -648,17 +664,17 @@ tech_stack_policy:
     deployment: [kamal, railway]
 
   prohibited:
-    - webpack  # Use Next.js built-in
-    - create-react-app  # Deprecated
-    - jest  # Use Vitest
+    - webpack # Use Next.js built-in
+    - create-react-app # Deprecated
+    - jest # Use Vitest
 
-  reasoning: "See tech-stack-decisions.md"
+  reasoning: 'See tech-stack-decisions.md'
 
 integrations:
   github:
     enabled: true
     repo: user/my-project
-    projects: true  # Use GitHub Projects for task management
+    projects: true # Use GitHub Projects for task management
 
   knowledge_base:
     enabled: true
@@ -718,10 +734,10 @@ templates:
 
 Different quality levels affect hooks, workflows, and gates:
 
-| Preset | Description | Hooks | Gates | CI |
-|--------|-------------|-------|-------|-----|
-| **startup** | Fast iteration, minimal gates | lint-staged, typecheck | planning: optional, implementation: [typecheck, test] | basic-tests |
-| **production** | Balanced quality and speed | lint-staged, typecheck, test-affected, conventional-commits | planning: required, architecture: automated, implementation: [typecheck, lint, test, coverage:80] | typecheck, lint, test, security-scan |
+| Preset         | Description                           | Hooks                                                                                          | Gates                                                                                                                                                                     | CI                                                                                      |
+| -------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| **startup**    | Fast iteration, minimal gates         | lint-staged, typecheck                                                                         | planning: optional, implementation: [typecheck, test]                                                                                                                     | basic-tests                                                                             |
+| **production** | Balanced quality and speed            | lint-staged, typecheck, test-affected, conventional-commits                                    | planning: required, architecture: automated, implementation: [typecheck, lint, test, coverage:80]                                                                         | typecheck, lint, test, security-scan                                                    |
 | **enterprise** | Maximum quality, comprehensive checks | lint-staged, typecheck, test-affected, test-all, build, conventional-commits, ticket-reference | planning: required, architecture: automated + manual-review, implementation: [typecheck, lint, test, coverage:90, mutation:80, security-scan], pr: required + 2-approvers | typecheck, lint, test, mutation-test, security-scan, dependency-check, build, e2e-tests |
 
 ### Bootstrap Evolution
@@ -754,6 +770,7 @@ boss-bootstrap/
 ```
 
 **Community contributions welcome:**
+
 - New templates for different stacks
 - New quality presets
 - New worker types
@@ -768,6 +785,7 @@ boss-bootstrap/
 **BOSS is NOT a standalone application.**
 
 **BOSS IS:**
+
 - Your **Claude Code or Cursor instance** configured to act as an orchestrator
 - A set of **BOSS skills** loaded into Claude Code/Cursor for orchestration capabilities
 - **MCP server connections** (Container-Use, GitHub, Knowledge Base)
@@ -783,26 +801,27 @@ Claude Code/Cursor must run on the host machine to orchestrate via MCP servers.
 
 **What BOSS CAN Do (MCP-Only Operations):**
 
-| Capability | How It Works |
-|------------|--------------|
-| **Orchestrate worker containers** | Via Container-Use MCP |
-| **Create PRs, manage issues** | Via GitHub MCP (ALL GitHub operations) |
-| **Query patterns and context** | Via Knowledge Base MCP |
-| **Manage workflow state** | Coordinate workers |
-| **Interact with you** | When needed |
-| **Request secrets** | Via GitHub issues (humans create in 1Password using op CLI) |
+| Capability                        | How It Works                                                |
+| --------------------------------- | ----------------------------------------------------------- |
+| **Orchestrate worker containers** | Via Container-Use MCP                                       |
+| **Create PRs, manage issues**     | Via GitHub MCP (ALL GitHub operations)                      |
+| **Query patterns and context**    | Via Knowledge Base MCP                                      |
+| **Manage workflow state**         | Coordinate workers                                          |
+| **Interact with you**             | When needed                                                 |
+| **Request secrets**               | Via GitHub issues (humans create in 1Password using op CLI) |
 
 **What BOSS CANNOT Do (Host-Level Restrictions):**
 
-| Restriction | Reason |
-|-------------|--------|
-| ❌ **NO direct file operations** | Cannot read, write, or edit files on host |
-| ❌ **NO direct code execution** | Cannot run shell commands, scripts, or build tools |
-| ❌ **NO direct git operations** | Cannot commit, push, or manage git directly |
+| Restriction                      | Reason                                             |
+| -------------------------------- | -------------------------------------------------- |
+| ❌ **NO direct file operations** | Cannot read, write, or edit files on host          |
+| ❌ **NO direct code execution**  | Cannot run shell commands, scripts, or build tools |
+| ❌ **NO direct git operations**  | Cannot commit, push, or manage git directly        |
 
 **BOSS orchestrates ONLY via well-defined MCP interfaces. All actual code/file/git operations happen inside worker containers.**
 
 **Why Workers Use Container-Use:**
+
 - ✅ **Full execution capabilities** - Workers CAN execute ALL file/code/shell/git operations
 - ✅ **Isolation** - Can't break main branch or affect host
 - ✅ **Security** - Secrets injected, never exposed to AI models
@@ -866,6 +885,7 @@ Claude Code/Cursor must run on the host machine to orchestrate via MCP servers.
 ```
 
 **Key:**
+
 - `cu/###` = Container-use environment ID
 - Secrets injected from 1Password (op:// references) - never visible to AI
 - Each worker = isolated container + Git branch + Claude Code + role-specific skills
@@ -974,6 +994,7 @@ worker: developer-frontend
 BOSS enforces quality gates configured during bootstrap:
 
 **Passing Gate:**
+
 ```
 Quality Gate: Implementation
 ├── TypeCheck: ✅ Passed
@@ -987,6 +1008,7 @@ Quality Gate: Implementation
 ```
 
 **Failing Gate (with Retry):**
+
 ```
 Quality Gate: Implementation
 ├── TypeCheck: ❌ 3 errors
@@ -1083,12 +1105,12 @@ Multiple BOSS-configured projects (Claude Code/Cursor instances) share knowledge
 
 #### What BOSSES Share
 
-| Category | Examples |
-|----------|----------|
+| Category                      | Examples                                                                             |
+| ----------------------------- | ------------------------------------------------------------------------------------ |
 | **Project Specs & Decisions** | All specifications, Architecture Decision Records (ADRs), API contracts, Data models |
-| **Code Patterns** | Component patterns, API patterns, Testing patterns, Error handling patterns |
-| **Organizational Knowledge** | Tech stack decisions, Security patterns, Performance patterns, Deployment patterns |
-| **Dependency Information** | Shared libraries, API dependencies, Database schemas, Service contracts |
+| **Code Patterns**             | Component patterns, API patterns, Testing patterns, Error handling patterns          |
+| **Organizational Knowledge**  | Tech stack decisions, Security patterns, Performance patterns, Deployment patterns   |
+| **Dependency Information**    | Shared libraries, API dependencies, Database schemas, Service contracts              |
 
 ### Knowledge Engine Gatekeeper Pattern
 
@@ -1257,6 +1279,7 @@ BOSS uses GitHub PRs and Issues for approval workflow:
 ```
 
 **Why GitHub?**
+
 - ✅ No additional infrastructure (already using GitHub for code)
 - ✅ Native developer workflow (no context switching)
 - ✅ Built-in approval gates (PR reviews)
@@ -1734,7 +1757,7 @@ workers:
 artifacts:
   - id
   - project_id
-  - type  # prd, spec, plan, task, adr, contract
+  - type # prd, spec, plan, task, adr, contract
   - path
   - content
   - embedding_id
@@ -1743,7 +1766,7 @@ dependencies:
   - id
   - from_project_id
   - to_project_id
-  - type  # api, library, data, deployment
+  - type # api, library, data, deployment
   - status
 ```
 
@@ -1892,6 +1915,7 @@ You are a frontend developer specialized in React and Next.js.
 ## Knowledge Base Access
 
 You have access to:
+
 - Component patterns from previous projects
 - Design system guidelines
 - Accessibility patterns
@@ -1955,12 +1979,12 @@ export default class DeployPreviewCommand extends Command {
     // Deploy to Vercel
     const deployment = await this.vercel.deploy({
       branch,
-      env: 'preview'
+      env: 'preview',
     });
 
     // Comment on PR
     await this.github.commentOnPR({
-      message: `Preview deployed: ${deployment.url}`
+      message: `Preview deployed: ${deployment.url}`,
     });
 
     return deployment.url;
@@ -2082,29 +2106,29 @@ BOSS 3:
 
 ### Key Design Principles
 
-| Principle | Description |
-|-----------|-------------|
-| **1. Local Controller, Remote Workers** | BOSS runs locally (your machine), Workers run in containers (isolated, observable). Cannot have container-use spawn container-use (architectural constraint). |
-| **2. Bootstrap Once, Evolve Forever** | Bootstrap creates perfect initial setup. Templates evolve in GitHub. Pull latest templates anytime. Customize everything. |
-| **3. Opinionated About Tech, Flexible About Business** | Tech stack defined by policy. Business requirements drive features. Quality enforced, not suggested. |
-| **4. Knowledge Compounds** | Every project teaches BOSS. Patterns emerge organically. Future projects benefit from past projects. Organizational intelligence grows. |
-| **5. Human Governance, AI Execution** | Humans decide WHAT and approve QUALITY. AI figures out HOW and executes. Strategic gates, not constant interruptions. |
-| **6. Cross-BOSS Coordination** | BOSSES see each other's work. Dependencies managed proactively. Duplicate work avoided. Optimal scheduling suggested. |
+| Principle                                              | Description                                                                                                                                                   |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1. Local Controller, Remote Workers**                | BOSS runs locally (your machine), Workers run in containers (isolated, observable). Cannot have container-use spawn container-use (architectural constraint). |
+| **2. Bootstrap Once, Evolve Forever**                  | Bootstrap creates perfect initial setup. Templates evolve in GitHub. Pull latest templates anytime. Customize everything.                                     |
+| **3. Opinionated About Tech, Flexible About Business** | Tech stack defined by policy. Business requirements drive features. Quality enforced, not suggested.                                                          |
+| **4. Knowledge Compounds**                             | Every project teaches BOSS. Patterns emerge organically. Future projects benefit from past projects. Organizational intelligence grows.                       |
+| **5. Human Governance, AI Execution**                  | Humans decide WHAT and approve QUALITY. AI figures out HOW and executes. Strategic gates, not constant interruptions.                                         |
+| **6. Cross-BOSS Coordination**                         | BOSSES see each other's work. Dependencies managed proactively. Duplicate work avoided. Optimal scheduling suggested.                                         |
 
 ### Success Metrics
 
 BOSS succeeds when:
 
-| Metric | Target | Impact |
-|--------|--------|--------|
-| **Bootstrap time** | < 5 minutes | From empty folder to fully configured project |
-| **Idea to PR** | < 4 hours | For typical CRUD apps |
-| **Quality gate failures** | Zero | Workers produce production-ready code |
-| **Test coverage** | 90%+ | Automatically achieved |
-| **Duplicate work** | Zero | BOSSES coordinate effectively |
-| **Knowledge compounds** | Yes | Each project makes future projects faster |
-| **Consistent quality** | Yes | Same standards across all projects |
-| **You stay strategic** | Yes | BOSS handles execution details |
+| Metric                    | Target      | Impact                                        |
+| ------------------------- | ----------- | --------------------------------------------- |
+| **Bootstrap time**        | < 5 minutes | From empty folder to fully configured project |
+| **Idea to PR**            | < 4 hours   | For typical CRUD apps                         |
+| **Quality gate failures** | Zero        | Workers produce production-ready code         |
+| **Test coverage**         | 90%+        | Automatically achieved                        |
+| **Duplicate work**        | Zero        | BOSSES coordinate effectively                 |
+| **Knowledge compounds**   | Yes         | Each project makes future projects faster     |
+| **Consistent quality**    | Yes         | Same standards across all projects            |
+| **You stay strategic**    | Yes         | BOSS handles execution details                |
 
 ---
 
@@ -2159,13 +2183,13 @@ boss start
 
 ### Development Phases
 
-| Phase | Status | Components |
-|-------|--------|------------|
-| **Phase 1: Core (MVP)** | ✅ | Bootstrap CLI, Template system, BOSS controller, Worker spawning, Basic quality gates, GitHub integration |
-| **Phase 2: Intelligence** | 🚧 | Knowledge base (PostgreSQL + Qdrant), Voyage AI embeddings, Context assembly, Pattern recognition |
-| **Phase 3: Coordination** | 📋 | BOSS network, Cross-BOSS messaging, Dependency graph, Roadmap sharing |
-| **Phase 4: GitHub Integration** | 📋 | GitHub Projects automation, Human approval gates via PR reviews, Issue-based task tracking, Status updates via GitHub API |
-| **Phase 5: Ecosystem** | 📋 | Template marketplace, Plugin system, Custom worker types, Community contributions |
+| Phase                           | Status | Components                                                                                                                |
+| ------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------- |
+| **Phase 1: Core (MVP)**         | ✅     | Bootstrap CLI, Template system, BOSS controller, Worker spawning, Basic quality gates, GitHub integration                 |
+| **Phase 2: Intelligence**       | 🚧     | Knowledge base (PostgreSQL + Qdrant), Voyage AI embeddings, Context assembly, Pattern recognition                         |
+| **Phase 3: Coordination**       | 📋     | BOSS network, Cross-BOSS messaging, Dependency graph, Roadmap sharing                                                     |
+| **Phase 4: GitHub Integration** | 📋     | GitHub Projects automation, Human approval gates via PR reviews, Issue-based task tracking, Status updates via GitHub API |
+| **Phase 5: Ecosystem**          | 📋     | Template marketplace, Plugin system, Custom worker types, Community contributions                                         |
 
 ### Ecosystem Growth
 
@@ -2214,7 +2238,7 @@ export default class CustomReviewerPlugin extends Plugin {
     return {
       score: 95,
       issues: [],
-      suggestions: ['Consider using React.memo here']
+      suggestions: ['Consider using React.memo here'],
     };
   }
 
@@ -2237,12 +2261,12 @@ boss marketplace update @vendor/ai-reviewer
 
 #### 1. Solves Real Pain
 
-| Pain Point | Solution |
-|------------|----------|
-| Project setup takes hours | Now takes 5 minutes |
-| Quality inconsistent | Now enforced automatically |
-| AI forgets context | Now has organizational memory |
-| Manual coordination | Now automated |
+| Pain Point                | Solution                      |
+| ------------------------- | ----------------------------- |
+| Project setup takes hours | Now takes 5 minutes           |
+| Quality inconsistent      | Now enforced automatically    |
+| AI forgets context        | Now has organizational memory |
+| Manual coordination       | Now automated                 |
 
 #### 2. Technical Innovation
 
@@ -2276,6 +2300,7 @@ For detailed implementation information, see:
 #### 📚 [BOSS-SPEC-KIT-INTEGRATION.md](./BOSS-SPEC-KIT-INTEGRATION.md)
 
 Complete phase-by-phase automation of GitHub's Spec-Kit:
+
 - Constitution creation and governance
 - All 8 phases with worker prompts
 - Spec-Kit artifact specifications (spec.md, plan.md, tasks.md, etc.)
@@ -2286,6 +2311,7 @@ Complete phase-by-phase automation of GitHub's Spec-Kit:
 #### 🔐 [BOSS-CONTAINER-USE-INTEGRATION.md](./BOSS-CONTAINER-USE-INTEGRATION.md)
 
 Worker isolation and secret management with container-use:
+
 - Container-use environment configurations
 - 1Password integration (op:// references)
 - Secret discovery by agents

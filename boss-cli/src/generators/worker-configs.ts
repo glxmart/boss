@@ -1,11 +1,10 @@
 import path from 'path';
 import { promises as fsPromises } from 'fs';
-import { execa } from 'execa';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { writeFile, ensureDirectory } from '../utils/file-system.js';
 import { loadTemplate, discoverWorkers, getAssetPath } from '../utils/template-loader.js';
-import type { ProjectConfig } from '../types/index.js';
+import type { ProjectConfig, WorkerMetadata } from '../types/index.js';
 
 // NOTE: Worker phases and metadata are now defined in conductor-mcp/worker-configs/*/metadata.json
 // Boss-cli only generates worker-specific CLAUDE.md and IDE folders
@@ -37,7 +36,6 @@ export async function generateWorkerConfigs(
 // NOTE: Worker role descriptions and artifact requirements are now defined in conductor-mcp/worker-configs/*/metadata.json
 // These functions are no longer needed as conductor owns the worker specifications
 
-
 async function generateWorkerClaudeMD(
   workerPath: string,
   workerName: string,
@@ -46,16 +44,13 @@ async function generateWorkerClaudeMD(
   // Worker-specific CLAUDE.md with minimal templating
   const claudeMD = await loadTemplate(`worker-configs/${workerName}/CLAUDE.md`, {
     workerName,
-    config
+    config,
   });
 
   await writeFile(path.join(workerPath, 'CLAUDE.md'), claudeMD);
 }
 
-async function copyRelevantSpecKitCommands(
-  idePath: string,
-  workerName: string
-): Promise<void> {
+async function copyRelevantSpecKitCommands(idePath: string, workerName: string): Promise<void> {
   // Copy ONLY the spec-kit commands relevant to this worker
   // Based on primaryCommand field in worker's metadata.json
   // NOTE: BOSS-specific commands (boss-commands.md) stay with BOSS only
@@ -65,12 +60,17 @@ async function copyRelevantSpecKitCommands(
   const __dirname = dirname(__filename);
 
   // Load worker metadata to get primaryCommand
-  const conductorMetadataPath = path.join(__dirname, '../../../conductor-mcp/worker-configs', workerName, 'metadata.json');
+  const conductorMetadataPath = path.join(
+    __dirname,
+    '../../../conductor-mcp/worker-configs',
+    workerName,
+    'metadata.json'
+  );
 
   let primaryCommands: string[] = [];
   try {
     const metadataContent = await fsPromises.readFile(conductorMetadataPath, 'utf-8');
-    const metadata = JSON.parse(metadataContent);
+    const metadata = JSON.parse(metadataContent) as WorkerMetadata;
 
     if (metadata.primaryCommand) {
       // Handle both string and array formats
@@ -78,7 +78,7 @@ async function copyRelevantSpecKitCommands(
         ? metadata.primaryCommand
         : [metadata.primaryCommand];
     }
-  } catch (error) {
+  } catch {
     // If metadata doesn't exist or has no primaryCommand, this worker gets no spec-kit commands
     return;
   }
@@ -88,10 +88,12 @@ async function copyRelevantSpecKitCommands(
   }
 
   // Map /speckit.XXX to XXX.md
-  const commandFiles = primaryCommands.map(cmd => {
-    const match = cmd.match(/\/speckit\.(\w+)/);
-    return match ? `${match[1]}.md` : null;
-  }).filter(Boolean) as string[];
+  const commandFiles = primaryCommands
+    .map((cmd) => {
+      const match = cmd.match(/\/speckit\.(\w+)/);
+      return match ? `${match[1]}.md` : null;
+    })
+    .filter(Boolean) as string[];
 
   // Copy only the relevant spec-kit command files
   const specKitCommandsPath = path.join(__dirname, '../../templates/spec-kit/templates/commands');
@@ -134,7 +136,7 @@ async function generateWorkerIDEFolder(
     for (const subfolder of ['commands', 'skills']) {
       const assetSubfolder = path.join(assetClaudePath, subfolder);
       const destSubfolder = path.join(idePath, subfolder);
-      
+
       if (await fs.pathExists(assetSubfolder)) {
         const files = await fsPromises.readdir(assetSubfolder);
         for (const file of files) {
@@ -148,7 +150,7 @@ async function generateWorkerIDEFolder(
                   { workerName }
                 );
                 await writeFile(path.join(destSubfolder, file), content);
-              } catch (error) {
+              } catch {
                 // If template loading fails, just copy the file directly
                 await fs.copy(assetFilePath, path.join(destSubfolder, file));
               }
@@ -159,4 +161,3 @@ async function generateWorkerIDEFolder(
     }
   }
 }
-

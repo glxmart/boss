@@ -1,7 +1,7 @@
 name: Feature Request
 description: Suggest an idea for BOSS
-title: "[Feature]: "
-labels: ["enhancement", "triage"]
+title: '[Feature]: '
+labels: ['enhancement', 'triage']
 body:
   - type: markdown
     attributes:
@@ -14,10 +14,10 @@ body:
       label: Package
       description: Which package would this feature apply to?
       options:
-        - "@boss/cli"
-        - "@boss/conductor-mcp"
-        - "Both"
-        - "Documentation"
+        - '@boss/cli'
+        - '@boss/conductor-mcp'
+        - 'Both'
+        - 'Documentation'
     validations:
       required: true
 

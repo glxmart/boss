@@ -16,7 +16,7 @@ export async function cleanupTestProject(name: string): Promise<void> {
       await fs.remove(projectPath);
     } catch (error) {
       // If removal fails, try again after a short delay (handles file locks)
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
       try {
         await fs.remove(projectPath);
       } catch (retryError) {
@@ -66,4 +66,3 @@ export async function listProjectFiles(projectName: string, dir: string = '.'): 
   await walk(targetPath, projectPath);
   return files.sort();
 }
-

@@ -1,0 +1,2 @@
+# Run pre-push validation
+bash scripts/pre-push.sh

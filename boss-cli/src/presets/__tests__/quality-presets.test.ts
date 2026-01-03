@@ -16,7 +16,7 @@ describe('quality-presets', () => {
     const initialConfig = {
       name: 'test-project',
       version: '1.0.0',
-      workers: []
+      workers: [],
     };
     await fs.writeFile(configPath, yaml.dump(initialConfig));
   });
@@ -81,7 +81,7 @@ describe('quality-presets', () => {
         name: 'test-project',
         version: '1.0.0',
         workers: ['architect', 'developer'],
-        customField: 'customValue'
+        customField: 'customValue',
       };
       await fs.writeFile(configPath, yaml.dump(existingConfig));
 
@@ -110,15 +110,19 @@ describe('quality-presets', () => {
 
     it('should load preset from YAML file if it exists', async () => {
       // Create a custom preset YAML file
-      const presetPath = path.join(path.dirname(path.dirname(__dirname)), 'presets', 'startup.yaml');
+      const presetPath = path.join(
+        path.dirname(path.dirname(__dirname)),
+        'presets',
+        'startup.yaml'
+      );
       const customPreset = {
         gates: {
           coverage: 65,
           lint: true,
           typecheck: true,
           test: true,
-          custom: 'value'
-        }
+          custom: 'value',
+        },
       };
 
       await fs.ensureDir(path.dirname(presetPath));
@@ -141,7 +145,11 @@ describe('quality-presets', () => {
     });
 
     it('should handle all preset types through default path', async () => {
-      const presets: Array<'startup' | 'production' | 'enterprise'> = ['startup', 'production', 'enterprise'];
+      const presets: Array<'startup' | 'production' | 'enterprise'> = [
+        'startup',
+        'production',
+        'enterprise',
+      ];
       const expectedCoverages = { startup: 60, production: 80, enterprise: 90 };
 
       for (const preset of presets) {

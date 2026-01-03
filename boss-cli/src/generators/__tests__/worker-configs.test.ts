@@ -27,7 +27,7 @@ describe('worker-configs generator', () => {
     const config: ProjectConfig = {
       name: 'test-project',
       template: 'blank',
-      quality: 'startup'
+      quality: 'startup',
     };
 
     await generateWorkerConfigs(testDir, config);
@@ -41,7 +41,7 @@ describe('worker-configs generator', () => {
       'developer-frontend',
       'developer-backend',
       'developer-fullstack',
-      'consolidator'
+      'consolidator',
     ];
 
     for (const worker of workers) {
@@ -57,7 +57,7 @@ describe('worker-configs generator', () => {
     const config: ProjectConfig = {
       name: 'test',
       template: 'blank',
-      quality: 'startup'
+      quality: 'startup',
     };
 
     await generateWorkerConfigs(testDir, config);
@@ -76,7 +76,7 @@ describe('worker-configs generator', () => {
     const config: ProjectConfig = {
       name: 'test',
       template: 'blank',
-      quality: 'startup'
+      quality: 'startup',
     };
 
     await generateWorkerConfigs(testDir, config);
@@ -98,7 +98,7 @@ describe('worker-configs generator', () => {
     const config: ProjectConfig = {
       name: 'test',
       template: 'blank',
-      quality: 'startup'
+      quality: 'startup',
     };
 
     await generateWorkerConfigs(testDir, config);
@@ -116,7 +116,7 @@ describe('worker-configs generator', () => {
     const config: ProjectConfig = {
       name: 'test',
       template: 'blank',
-      quality: 'startup'
+      quality: 'startup',
     };
 
     await generateWorkerConfigs(testDir, config);
@@ -140,7 +140,7 @@ describe('worker-configs generator', () => {
     const config: ProjectConfig = {
       name: 'test',
       template: 'blank',
-      quality: 'startup'
+      quality: 'startup',
     };
 
     await generateWorkerConfigs(testDir, config);
@@ -151,4 +151,3 @@ describe('worker-configs generator', () => {
     expect(await fs.pathExists(path.join(workerPath, '.cursor'))).toBe(false);
   });
 });
-

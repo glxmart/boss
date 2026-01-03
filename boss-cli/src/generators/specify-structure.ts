@@ -9,14 +9,14 @@ const __dirname = dirname(__filename);
 export async function copySpecKitStructure(projectPath: string): Promise<void> {
   // Get path to bundled Spec-Kit in CLI
   const specKitPath = path.join(__dirname, '../../templates/spec-kit');
-  
+
   // Ensure .specify directory exists
   await ensureDirectory(path.join(projectPath, '.specify'));
 
   // Copy Spec-Kit structure from CLI bundle to project
-  if (await import('fs-extra').then(m => m.default.pathExists(specKitPath))) {
+  if (await import('fs-extra').then((m) => m.default.pathExists(specKitPath))) {
     const fs = await import('fs-extra');
-    
+
     // Copy templates
     if (await fs.pathExists(path.join(specKitPath, 'templates'))) {
       await copyDirectory(
@@ -52,11 +52,9 @@ export async function copySpecKitStructure(projectPath: string): Promise<void> {
     }
   } else {
     // If Spec-Kit bundle doesn't exist, create minimal structure
-    const fs = await import('fs-extra');
     await ensureDirectory(path.join(projectPath, '.specify', 'templates'));
     await ensureDirectory(path.join(projectPath, '.specify', 'scripts'));
     await ensureDirectory(path.join(projectPath, '.specify', 'memory'));
     await ensureDirectory(path.join(projectPath, '.specify', 'specs'));
   }
 }
-

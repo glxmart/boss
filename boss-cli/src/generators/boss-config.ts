@@ -12,37 +12,31 @@ export async function generateBossConfig(
     boss: {
       version: '1.0.0',
       template: config.template,
-      quality: config.quality
+      quality: config.quality,
     },
     project: {
       name: config.name,
       type: getProjectType(config.template),
-      stack: getStackForTemplate(config.template)
+      stack: getStackForTemplate(config.template),
     },
     workers: {
       max_concurrent: 5,
-      timeout: 3600
+      timeout: 3600,
     },
     quality: {
       preset: config.quality,
-      gates: {} // Will be populated by quality preset
-    }
+      gates: {}, // Will be populated by quality preset
+    },
   };
 
   const yamlContent = yaml.dump(bossConfig, { indent: 2 });
-  await writeFile(
-    path.join(projectPath, '.boss', 'config.yaml'),
-    yamlContent
-  );
+  await writeFile(path.join(projectPath, '.boss', 'config.yaml'), yamlContent);
 
   // Generate project-config.json for status tracking
   await generateProjectConfig(projectPath, config);
 }
 
-async function generateProjectConfig(
-  projectPath: string,
-  config: ProjectConfig
-): Promise<void> {
+async function generateProjectConfig(projectPath: string, config: ProjectConfig): Promise<void> {
   const templateInfo = TEMPLATES[config.template];
   const qualityInfo = QUALITY_PRESETS[config.quality];
   const projectType = getProjectType(config.template);
@@ -57,18 +51,18 @@ async function generateProjectConfig(
         id: config.template,
         name: templateInfo.name,
         description: templateInfo.description,
-        stack: stack
+        stack: stack,
       },
       quality: {
         preset: config.quality,
         name: qualityInfo.name,
         description: qualityInfo.description,
-        gates: qualityInfo.gates
+        gates: qualityInfo.gates,
       },
       organization: config.githubOrg || null,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     },
-    
+
     // Initialization Status
     initialization: {
       stage: 'bootstrap',
@@ -84,45 +78,45 @@ async function generateProjectConfig(
         'Create GitHub repository using GitHub MCP',
         'Add remote using Container-Use MCP',
         'Push initial commit to remote',
-        'Mark initialization.stage as "ready"'
+        'Mark initialization.stage as "ready"',
       ],
       operationsRequired: [
         {
           operation: 'create-initial-setup-branch',
           description: 'Create feature/boss-initial-setup branch for BOSS work',
           status: 'pending',
-          required: true
+          required: true,
         },
         {
           operation: 'check-remote-repository',
           description: 'Check if GitHub remote repository exists',
           status: 'pending',
-          required: true
+          required: true,
         },
         {
           operation: 'create-github-repository',
           description: 'Create GitHub repository if it does not exist',
           status: 'pending',
           required: false,
-          dependsOn: ['check-remote-repository']
+          dependsOn: ['check-remote-repository'],
         },
         {
           operation: 'add-remote',
           description: 'Add remote using Container-Use MCP',
           status: 'pending',
           required: true,
-          dependsOn: ['create-github-repository']
+          dependsOn: ['create-github-repository'],
         },
         {
           operation: 'push-initial-commit',
           description: 'Push initial commit to remote',
           status: 'pending',
           required: true,
-          dependsOn: ['add-remote']
-        }
-      ]
+          dependsOn: ['add-remote'],
+        },
+      ],
     },
-    
+
     // Repository Information
     repository: {
       remote: null,
@@ -135,23 +129,23 @@ async function generateProjectConfig(
       branches: {
         main: {
           exists: true,
-          lastCommit: null
+          lastCommit: null,
         },
         'feature/boss-initial-setup': {
           exists: false,
-          lastCommit: null
-        }
-      }
+          lastCommit: null,
+        },
+      },
     },
-    
+
     // Current State
     currentBranch: 'main',
     currentWorkflow: {
       stage: 'initialization',
       phase: 'bootstrap-complete',
-      status: 'ready-for-setup'
+      status: 'ready-for-setup',
     },
-    
+
     // Workflow Tracking
     workflow: {
       stage: 'initialization',
@@ -161,36 +155,36 @@ async function generateProjectConfig(
       pendingTasks: [
         'Complete initial setup (remote repository)',
         'Switch to feature/boss-initial-setup branch',
-        'Begin Spec-Kit workflow (Constitution → Clarification → Specification → Planning → Implementation)'
-      ]
+        'Begin Spec-Kit workflow (Constitution → Clarification → Specification → Planning → Implementation)',
+      ],
     },
-    
+
     // Worker Management
     workers: {
       summaries: [],
       availableWorkers: [
         // Phase-Specific Workers
-        'architect',              // Phase 1: Constitution
-        'clarifier',              // Phase 2: Clarification
-        'spec-writer',            // Phase 3: Specification
-        'planner',                // Phase 4: Planning & Phase 6: Task Breakdown
-        'reviewer',               // Phase 5: Validation
-        'developer-frontend',     // Phase 7: Implementation
-        'developer-backend',      // Phase 7: Implementation
-        'developer-fullstack',    // Phase 7: Implementation
-        'tester',                 // Phase 7: Implementation (Testing)
-        'code-reviewer',          // Phase 7: Implementation (Code Review)
-        'consolidator',           // Phase 8: Consolidation
+        'architect', // Phase 1: Constitution
+        'clarifier', // Phase 2: Clarification
+        'spec-writer', // Phase 3: Specification
+        'planner', // Phase 4: Planning & Phase 6: Task Breakdown
+        'reviewer', // Phase 5: Validation
+        'developer-frontend', // Phase 7: Implementation
+        'developer-backend', // Phase 7: Implementation
+        'developer-fullstack', // Phase 7: Implementation
+        'tester', // Phase 7: Implementation (Testing)
+        'code-reviewer', // Phase 7: Implementation (Code Review)
+        'consolidator', // Phase 8: Consolidation
         // Cross-Phase Workers
-        'product-owner',          // Cross-Phase: Business & Requirements
-        'security-engineer',      // Cross-Phase: Security
-        'devops-engineer',         // Cross-Phase: Infrastructure & Deployment
-        'technical-writer'        // Cross-Phase: Documentation
+        'product-owner', // Cross-Phase: Business & Requirements
+        'security-engineer', // Cross-Phase: Security
+        'devops-engineer', // Cross-Phase: Infrastructure & Deployment
+        'technical-writer', // Cross-Phase: Documentation
       ],
       maxConcurrent: 5,
-      timeout: 3600
+      timeout: 3600,
     },
-    
+
     // Quality Gates Configuration
     qualityGates: {
       preset: config.quality,
@@ -200,15 +194,15 @@ async function generateProjectConfig(
         lint: qualityInfo.gates.lint ?? false,
         typecheck: qualityInfo.gates.typecheck ?? false,
         test: qualityInfo.gates.test ?? false,
-        security: qualityInfo.gates.security ?? false
+        security: qualityInfo.gates.security ?? false,
       },
       enforcement: {
         testFirst: true,
         bdd: true,
-        documentation: true
-      }
+        documentation: true,
+      },
     },
-    
+
     // BOSS Configuration
     boss: {
       version: '1.0.0',
@@ -216,31 +210,31 @@ async function generateProjectConfig(
       mcpServers: {
         'container-use': {
           enabled: true,
-          purpose: 'Worker management and file operations'
+          purpose: 'Worker management and file operations',
         },
-        'github': {
+        github: {
           enabled: true,
-          purpose: 'Repository and PR management'
+          purpose: 'Repository and PR management',
         },
         'knowledge-base': {
           enabled: true,
-          purpose: 'Context and pattern search'
-        }
+          purpose: 'Context and pattern search',
+        },
       },
       restrictions: {
         noGitCLI: true,
         noHostFileSystem: true,
-        mcpOnly: true
-      }
+        mcpOnly: true,
+      },
     },
-    
+
     // Metadata
     metadata: {
       bootstrapVersion: '1.0.0',
       bootstrapDate: new Date().toISOString(),
       lastUpdated: new Date().toISOString(),
-      notes: 'Project bootstrapped successfully. Ready for initial setup.'
-    }
+      notes: 'Project bootstrapped successfully. Ready for initial setup.',
+    },
   };
 
   await writeFile(
@@ -261,8 +255,7 @@ function getStackForTemplate(template: string): string[] {
     'nextjs-app-turbo': ['nextjs', 'typescript', 'tailwind', 'prisma', 'vitest', 'shadcn-ui'],
     'api-service-fastify': ['fastify', 'typescript', 'prisma', 'vitest'],
     't3-app': ['nextjs', 'typescript', 'tailwind', 'prisma', 'trpc', 'nextauth'],
-    'blank': ['typescript', 'vitest']
+    blank: ['typescript', 'vitest'],
   };
   return stacks[template] || [];
 }
-

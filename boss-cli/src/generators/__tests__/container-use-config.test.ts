@@ -103,4 +103,3 @@ describe('container-use-config generator', () => {
     expect(config.network.allowed_hosts).toContain('github.com');
   });
 });
-

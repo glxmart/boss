@@ -34,16 +34,18 @@ See [Installation Guide](docs/guides/INSTALLATION.md) for complete setup instruc
 ### Basic Usage
 
 **Before Conductor (6+ manual steps):**
+
 ```typescript
 // Load config, create environment, configure container,
 // write files, execute task, track state...
 ```
 
 **With Conductor (1 simple call):**
+
 ```typescript
 await conductor.spawn_worker({
   workerType: 'architect',
-  taskPrompt: 'Create constitution with TDD, BDD, Documentation standards'
+  taskPrompt: 'Create constitution with TDD, BDD, Documentation standards',
 });
 ```
 
@@ -80,21 +82,21 @@ Manifest (validated, type-safe)
 
 ### Core Tools
 
-| Tool | Purpose |
-|------|---------|
-| `spawn_worker` | Spawn worker with full setup |
-| `execute_task` | Execute additional task in worker |
-| `get_worker_status` | Check worker status |
-| `merge_worker` | Merge worker branch |
-| `terminate_worker` | Terminate worker (discard) |
+| Tool                | Purpose                           |
+| ------------------- | --------------------------------- |
+| `spawn_worker`      | Spawn worker with full setup      |
+| `execute_task`      | Execute additional task in worker |
+| `get_worker_status` | Check worker status               |
+| `merge_worker`      | Merge worker branch               |
+| `terminate_worker`  | Terminate worker (discard)        |
 
 ### Management Tools
 
-| Tool | Purpose |
-|------|---------|
-| `list_worker_types` | Get available workers |
-| `list_active_workers` | List active workers |
-| `conductor_health` | Health check |
+| Tool                  | Purpose               |
+| --------------------- | --------------------- |
+| `list_worker_types`   | Get available workers |
+| `list_active_workers` | List active workers   |
+| `conductor_health`    | Health check          |
 
 See [API Reference](docs/api/TOOLS.md) for complete tool documentation.
 
@@ -102,19 +104,19 @@ See [API Reference](docs/api/TOOLS.md) for complete tool documentation.
 
 Conductor supports 15 specialized worker types across 10 phases:
 
-| Phase | Workers | Purpose |
-|-------|---------|---------|
-| 1 | architect | Create constitution with governing principles |
-| 2 | clarifier, product-owner | Gather business requirements |
-| 3 | spec-writer | Create user stories in BDD format |
-| 4 | planner | Create technical plans |
-| 5 | reviewer | Validate against constitution |
-| 6 | planner | Break down into tasks |
-| 7 | developer-* | Implement features with TDD+BDD |
-| 8 | tester | Create comprehensive test suites |
-| 9 | code-reviewer | Review code quality |
-| 10 | consolidator | Merge all worker branches |
-| Ongoing | security-engineer, devops-engineer, technical-writer | Cross-phase support |
+| Phase   | Workers                                              | Purpose                                       |
+| ------- | ---------------------------------------------------- | --------------------------------------------- |
+| 1       | architect                                            | Create constitution with governing principles |
+| 2       | clarifier, product-owner                             | Gather business requirements                  |
+| 3       | spec-writer                                          | Create user stories in BDD format             |
+| 4       | planner                                              | Create technical plans                        |
+| 5       | reviewer                                             | Validate against constitution                 |
+| 6       | planner                                              | Break down into tasks                         |
+| 7       | developer-\*                                         | Implement features with TDD+BDD               |
+| 8       | tester                                               | Create comprehensive test suites              |
+| 9       | code-reviewer                                        | Review code quality                           |
+| 10      | consolidator                                         | Merge all worker branches                     |
+| Ongoing | security-engineer, devops-engineer, technical-writer | Cross-phase support                           |
 
 ## Documentation
 
@@ -155,6 +157,7 @@ Conductor uses `claude-code --output-format json --json-schema` to get validated
 #### Worker Metadata (metadata.json)
 
 Each worker has a `metadata.json` file that defines:
+
 - **Inputs**: Required and optional inputs for the worker
 - **Outputs**: Expected artifacts and deliverables (with schemas)
 - **Constraints**: Worker-specific requirements and rules
@@ -162,6 +165,7 @@ Each worker has a `metadata.json` file that defines:
 - **Quality Requirements**: Validation rules and quality gates
 
 **Example metadata.json for Architect:**
+
 ```json
 {
   "workerType": "architect",
@@ -199,15 +203,16 @@ Each worker has a `metadata.json` file that defines:
 #### Worker Output Schema (Common Fields)
 
 All workers return JSON with these base fields:
+
 ```json
 {
-  "artifacts": [],        // Files created/updated/deleted
-  "decisions": [],        // Key decisions made
-  "issues": [],          // Problems encountered
+  "artifacts": [], // Files created/updated/deleted
+  "decisions": [], // Key decisions made
+  "issues": [], // Problems encountered
   "recommendations": [], // Next steps for BOSS
-  "tasksCompleted": [],  // Description of work done
-  "workComplete": true,  // Completion status
-  "nextSteps": []        // Suggested workflow steps
+  "tasksCompleted": [], // Description of work done
+  "workComplete": true, // Completion status
+  "nextSteps": [] // Suggested workflow steps
 }
 ```
 
@@ -239,6 +244,7 @@ Each worker gets its own manifest file for parallel execution:
 Conductor is automatically configured when you run `boss bootstrap`.
 
 The MCP configuration is added to:
+
 - `~/.config/claude-code/mcp-servers.json` (Claude Code)
 - `~/.cursor/mcp-servers.json` (Cursor)
 - `.mcp.json` (project-specific)
@@ -270,15 +276,15 @@ Conductor provides rich error categories with retry guidance:
 
 ```typescript
 enum ErrorCategory {
-  WORKER_CONFIG_NOT_FOUND,      // Retryable: false
-  WORKER_CONFIG_INVALID,         // Retryable: false
-  CONTAINER_CREATION_FAILED,     // Retryable: true
-  CONTAINER_CONFIG_FAILED,       // Retryable: true
-  WORKER_EXECUTION_FAILED,       // Retryable: true
-  WORKER_NOT_FOUND,              // Retryable: false
-  WORKER_ALREADY_MERGED,         // Retryable: false
-  MERGE_FAILED,                  // Retryable: true
-  CONTAINER_USE_UNAVAILABLE      // Retryable: true
+  WORKER_CONFIG_NOT_FOUND, // Retryable: false
+  WORKER_CONFIG_INVALID, // Retryable: false
+  CONTAINER_CREATION_FAILED, // Retryable: true
+  CONTAINER_CONFIG_FAILED, // Retryable: true
+  WORKER_EXECUTION_FAILED, // Retryable: true
+  WORKER_NOT_FOUND, // Retryable: false
+  WORKER_ALREADY_MERGED, // Retryable: false
+  MERGE_FAILED, // Retryable: true
+  CONTAINER_USE_UNAVAILABLE, // Retryable: true
 }
 ```
 
@@ -291,6 +297,7 @@ See [Error Handling](docs/api/ERRORS.md) for complete documentation.
 Revolutionary change: Conductor controls manifest via JSON schema instead of manual worker updates.
 
 **Benefits:**
+
 - Guaranteed valid manifest format
 - No worker JSON errors
 - Consistent data structure
@@ -309,6 +316,7 @@ BOSS CLI Team
 ---
 
 **Quick Links:**
+
 - [Full Documentation Index](INDEX.md)
 - [Installation Guide](docs/guides/INSTALLATION.md)
 - [BOSS Integration Guide](docs/guides/BOSS-GUIDE.md)

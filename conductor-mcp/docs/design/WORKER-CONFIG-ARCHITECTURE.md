@@ -3,6 +3,7 @@
 ## Problem Statement
 
 Current worker configs have duplication between `prompt.md` and `CLAUDE.md`, causing:
+
 - Maintenance overhead (update in two places)
 - Inconsistency risk
 - Unclear separation of concerns
@@ -57,6 +58,7 @@ worker-configs/[worker-type]/
 ```
 
 **Benefits**:
+
 - Structured, parseable by BOSS
 - Clear orchestration guidance
 - Easy to query programmatically
@@ -66,7 +68,7 @@ worker-configs/[worker-type]/
 
 **Purpose**: Tell the worker (Claude Code in container) everything it needs to know
 
-```markdown
+````markdown
 # Architect Worker - Full Context
 
 You are a **fully specialized Architect agent** running in an isolated container environment.
@@ -82,11 +84,13 @@ You are a **fully specialized Architect agent** running in an isolated container
 ### How Communication Works (You Don't Write JSON Manually!)
 
 **IMPORTANT**: You are executed with `--output-format json` and `--json-schema` flags. This means:
+
 - **You return structured JSON data** at the end of your work
 - **Conductor automatically updates the manifest** based on your output
 - **You DON'T manually write** `.boss/worker-manifest-{workerId}.json` files
 
 **Your Output Format** (automatically validated):
+
 ```json
 {
   "artifacts": [
@@ -94,7 +98,12 @@ You are a **fully specialized Architect agent** running in an isolated container
       "path": ".specify/memory/constitution.md",
       "action": "created",
       "purpose": "Project constitution with governing principles",
-      "sections": ["Architectural Principles", "Development Methodology", "Testing Standards", "Documentation Standards"]
+      "sections": [
+        "Architectural Principles",
+        "Development Methodology",
+        "Testing Standards",
+        "Documentation Standards"
+      ]
     }
   ],
   "decisions": [
@@ -112,9 +121,15 @@ You are a **fully specialized Architect agent** running in an isolated container
   ],
   "tasksCompleted": ["Created project constitution", "Established quality gates"],
   "workComplete": true,
-  "principlesEstablished": ["TDD Mandatory", "BDD Required", "80% Coverage", "Documentation Standards"]
+  "principlesEstablished": [
+    "TDD Mandatory",
+    "BDD Required",
+    "80% Coverage",
+    "Documentation Standards"
+  ]
 }
 ```
+````
 
 ## BOSS Project Structure (Critical Knowledge)
 
@@ -130,12 +145,14 @@ You are a **fully specialized Architect agent** running in an isolated container
 ## Spec-Kit Integration
 
 **You MUST use Spec-Kit commands:**
+
 - `/speckit.constitution` - Your primary tool
 - `/speckit.analyze` - Validate consistency
 
 ## Expected Deliverables
 
 **Required Sections in Constitution**:
+
 1. **Architectural Principles**: Core patterns and conventions
 2. **Development Methodology**: TDD, BDD, workflow
 3. **Testing Standards**: Coverage ≥80%, mutation ≥80%
@@ -144,13 +161,15 @@ You are a **fully specialized Architect agent** running in an isolated container
 ## Quality Checklist
 
 Before marking `workComplete: true`, verify:
+
 - [ ] Constitution created at `.specify/memory/constitution.md`
 - [ ] All 4 required sections present
 - [ ] TDD declared as NON-NEGOTIABLE
 - [ ] BDD declared as NON-NEGOTIABLE
 - [ ] Documentation standards clear
 - [ ] Principles are measurable and enforceable
-```
+
+````
 
 **Benefits**:
 - Complete worker context
@@ -180,21 +199,24 @@ await conductor.spawn_worker({
 // - Task prompt (above)
 // - Full CLAUDE.md context (loaded into container)
 // - Schema validation (enforced by Conductor)
-```
+````
 
 ## Migration Strategy
 
 ### Phase 1: Add metadata.json (Keep prompt.md for now)
+
 1. Create metadata.json for all 15 workers
 2. Update worker-loader.ts to read both
 3. Deprecate prompt.md usage
 
 ### Phase 2: Enhance all CLAUDE.md files
+
 1. Update all 15 CLAUDE.md with schema-based protocol
 2. Add complete BOSS project structure
 3. Add worker-specific output expectations
 
 ### Phase 3: Remove prompt.md
+
 1. Remove prompt.md from all workers
 2. Update worker-loader.ts to only use metadata.json
 3. Update documentation
@@ -212,6 +234,7 @@ await conductor.spawn_worker({
 ## Example: How Each File is Used
 
 **BOSS orchestrating workflow**:
+
 ```typescript
 // 1. Query available workers
 const workers = await listWorkerTypes();
@@ -231,6 +254,7 @@ const metadata = await loadWorkerMetadata(workerType);
 ```
 
 **Worker executing task**:
+
 ```bash
 # 1. Container starts
 # 2. Conductor writes CLAUDE.md to /workdir/CLAUDE.md

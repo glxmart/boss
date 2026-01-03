@@ -1,10 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { bootstrapCommand } from '../../src/commands/bootstrap.js';
-import {
-  cleanupTestProject,
-  fileExists,
-  readProjectFile
-} from '../helpers/test-utils.js';
+import { cleanupTestProject, fileExists, readProjectFile } from '../helpers/test-utils.js';
 import { getTestProjectPath } from '../setup.js';
 
 describe('Template Integration Tests', () => {
@@ -29,7 +25,7 @@ describe('Template Integration Tests', () => {
         quality: 'production' as const,
         name: projectName,
         nonInteractive: true,
-        projectPath: getTestProjectPath(projectName)
+        projectPath: getTestProjectPath(projectName),
       };
 
       await bootstrapCommand(options);
@@ -54,7 +50,7 @@ describe('Template Integration Tests', () => {
         quality: 'production' as const,
         name: projectName,
         nonInteractive: true,
-        projectPath: getTestProjectPath(projectName)
+        projectPath: getTestProjectPath(projectName),
       };
 
       await bootstrapCommand(options);
@@ -79,7 +75,7 @@ describe('Template Integration Tests', () => {
         quality: 'startup' as const,
         name: projectName,
         nonInteractive: true,
-        projectPath: getTestProjectPath(projectName)
+        projectPath: getTestProjectPath(projectName),
       };
 
       await bootstrapCommand(options);
@@ -90,4 +86,3 @@ describe('Template Integration Tests', () => {
     });
   });
 });
-

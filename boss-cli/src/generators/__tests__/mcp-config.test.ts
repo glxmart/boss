@@ -22,7 +22,7 @@ describe('mcp-config generator', () => {
   it('should create MCP config files for both Claude Code and Cursor (user scope)', async () => {
     const claudeConfigPath = path.join(testHomeDir, '.config', 'claude-code', 'mcp-servers.json');
     const cursorConfigPath = path.join(testHomeDir, '.cursor', 'mcp-servers.json');
-    
+
     await generateMCPConfig();
 
     // Both configs should be created
@@ -124,17 +124,17 @@ describe('mcp-config generator', () => {
   it('should merge with existing config for both IDEs', async () => {
     const claudeConfigPath = path.join(testHomeDir, '.config', 'claude-code', 'mcp-servers.json');
     const cursorConfigPath = path.join(testHomeDir, '.cursor', 'mcp-servers.json');
-    
+
     await fs.ensureDir(path.dirname(claudeConfigPath));
     await fs.ensureDir(path.dirname(cursorConfigPath));
-    
+
     const existingClaudeConfig = {
       mcpServers: {
         'existing-server': {
           command: 'existing',
-          args: []
-        }
-      }
+          args: [],
+        },
+      },
     };
     await fs.writeFile(claudeConfigPath, JSON.stringify(existingClaudeConfig, null, 2));
 
@@ -142,9 +142,9 @@ describe('mcp-config generator', () => {
       mcpServers: {
         'another-server': {
           command: 'another',
-          args: []
-        }
-      }
+          args: [],
+        },
+      },
     };
     await fs.writeFile(cursorConfigPath, JSON.stringify(existingCursorConfig, null, 2));
 
@@ -161,4 +161,3 @@ describe('mcp-config generator', () => {
     expect(cursorConfig.mcpServers['container-use']).toBeDefined();
   });
 });
-

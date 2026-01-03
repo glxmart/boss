@@ -8,4 +8,3 @@ export async function generateStartBossScript(projectPath: string): Promise<void
   await writeFile(scriptPath, script);
   await makeExecutable(scriptPath);
 }
-

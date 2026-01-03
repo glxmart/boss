@@ -24,4 +24,3 @@ ci:
     - test
     - coverage
     - security-scan
-

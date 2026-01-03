@@ -27,6 +27,7 @@ pnpm test:integration
 ## Test Coverage
 
 Tests cover:
+
 - ✅ Input validation
 - ✅ File system operations
 - ✅ Config generation (BOSS, MCP, Container-Use)
@@ -44,4 +45,3 @@ Tests cover:
 2. Integration tests go in `tests/integration/`
 3. Use test helpers from `tests/helpers/test-utils.ts`
 4. Clean up test projects in `afterEach` hooks
-

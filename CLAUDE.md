@@ -867,7 +867,6 @@ BOSS provides numbered commands for a clear, step-by-step development workflow:
 | `/2-quality-check` | Run build, lint, tests, coverage | "Run quality check" |
 | `/3-create-changeset` | Create changeset for release | "Create a changeset" |
 | `/4-create-pr` | Submit pull request | "Create a pull request" |
-| `/create-feature-pr` | Workflow overview & reference | "Show me the PR workflow" |
 
 ### Typical Workflow
 
@@ -915,11 +914,6 @@ git commit -m "feat: implement feature"
 - After changeset is created
 - When ready for review
 - Handles conventional commit format
-
-**`/create-feature-pr`**
-- Need workflow overview
-- Want to see complete examples
-- Looking for troubleshooting guidance
 
 For complete documentation, see:
 - Individual command files in `.claude/commands/`
@@ -1247,4 +1241,4 @@ git push origin feature/my-feature
 
 **Complete documentation:**
 - [docs/RELEASE.md](./docs/RELEASE.md) - Release process
-- `.claude/commands/create-feature-pr.md` - Complete workflow guide
+- `.claude/commands/` - Individual workflow command guides

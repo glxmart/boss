@@ -40,28 +40,28 @@
       "Read(**)",
       "Read(.*)",
       "Read(.*/**)",
-      
+
       "Write(*)",
       "Write(**)",
       "Write(.*)",
       "Write(.*/**)",
-      
+
       "Edit(*)",
       "Edit(**)",
       "Edit(.*)",
       "Edit(.*/**)",
       "Edit(.github/**)",
-      
+
       "Delete(*)",
       "Delete(**)",
-    
+
       "Search(pattern:*)",
       "WebFetch(domain:*)",
 
       "mcp__github__create_issue",
       "mcp__github__get_file_contents",
       "mcp__github__get_pull_request_status",
-     
+
       "Skill(*)"
     ],
     "deny": [
@@ -94,8 +94,6 @@
       "Delete(//var/**)",
       "Delete(//root/**)"
     ],
-    "ask": [
-      "Bash(rm -rf ./*)"
-    ]
+    "ask": ["Bash(rm -rf ./*)"]
   }
 }

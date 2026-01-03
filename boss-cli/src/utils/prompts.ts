@@ -10,7 +10,8 @@ import type {
 export const TEMPLATES: Record<Template, TemplateInfo> = {
   'nextjs-app-turbo': {
     name: 'Next.js Turbo Monorepo',
-    description: 'Next.js 15 + Turborepo + shadcn/ui + Prisma + tRPC + NextAuth + Vitest + Storybook + Kamal',
+    description:
+      'Next.js 15 + Turborepo + shadcn/ui + Prisma + tRPC + NextAuth + Vitest + Storybook + Kamal',
     stack: [
       'nextjs',
       'turborepo',

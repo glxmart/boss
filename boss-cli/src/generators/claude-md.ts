@@ -1,16 +1,24 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import { writeFile, copyDirectory } from '../utils/file-system.js';
-import { loadTemplate } from '../utils/template-loader.js';
+import { writeFile, copyDirectory, readFile } from '../utils/file-system.js';
+import { getAssetPath } from '../utils/template-loader.js';
 import { TEMPLATES, QUALITY_PRESETS } from '../utils/prompts.js';
 import type { ProjectConfig } from '../types/index.js';
+import Handlebars from 'handlebars';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Template feature flags derived from stack
-type TemplateFeature = 'monorepo' | 'database' | 'docker' | 'nextauth' | 'shadcn' | 'trpc' | 'storybook';
+type TemplateFeature =
+  | 'monorepo'
+  | 'database'
+  | 'docker'
+  | 'nextauth'
+  | 'shadcn'
+  | 'trpc'
+  | 'storybook';
 
 const FEATURE_STACK_MAPPING: Record<TemplateFeature, string[]> = {
   monorepo: ['turborepo'],
@@ -42,20 +50,17 @@ export async function generateClaudeMD(projectPath: string, config: ProjectConfi
   const qualityInfo = QUALITY_PRESETS[config.quality];
   const features = getTemplateFeatures(config.template);
 
-  const content = await loadTemplate('claude-md/template.md', {
+  // Load template file
+  const templatePath = getAssetPath('claude-md/template.md');
+  const templateSource = await readFile(templatePath);
+
+  // Compile and render with Handlebars
+  const template = Handlebars.compile(templateSource);
+  const content = template({
     config,
     templateInfo: {
       name: templateInfo?.name || config.template,
       stack: formatStackForDisplay(templateInfo?.stack || []),
-    },
-    qualityInfo: {
-      name: qualityInfo?.name || config.quality,
-      gates: {
-        coverage: qualityInfo?.gates.coverage || 80,
-        mutation: qualityInfo?.gates.mutation || 80,
-      },
-    },
-    features: {
       isMonorepo: features.has('monorepo'),
       hasDatabase: features.has('database'),
       hasDocker: features.has('docker'),
@@ -63,6 +68,13 @@ export async function generateClaudeMD(projectPath: string, config: ProjectConfi
       hasShadcn: features.has('shadcn'),
       hasTRPC: features.has('trpc'),
       hasStorybook: features.has('storybook'),
+    },
+    qualityInfo: {
+      name: qualityInfo?.name || config.quality,
+      gates: {
+        coverage: qualityInfo?.gates.coverage || 80,
+        mutation: qualityInfo?.gates.mutation || 80,
+      },
     },
   });
 
@@ -94,7 +106,5 @@ const STACK_DISPLAY_NAMES: Record<string, string> = {
 };
 
 function formatStackForDisplay(stack: string[]): string {
-  return stack
-    .map((item) => STACK_DISPLAY_NAMES[item] || item)
-    .join(', ');
+  return stack.map((item) => STACK_DISPLAY_NAMES[item] || item).join(', ');
 }

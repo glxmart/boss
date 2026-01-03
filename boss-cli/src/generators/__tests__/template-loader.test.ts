@@ -190,9 +190,7 @@ describe('template-loader', () => {
 
       await loadTemplate(testProjectPath, 't3-app', testConfig);
 
-      const writeCall = mockWriteFile.mock.calls.find((call) =>
-        call[0]?.includes('package.json')
-      );
+      const writeCall = mockWriteFile.mock.calls.find((call) => call[0]?.includes('package.json'));
       if (writeCall) {
         const packageContent = JSON.parse(writeCall[1]);
         expect(packageContent.pnpm).toBeDefined();
@@ -406,11 +404,11 @@ describe('template-loader', () => {
 
       // Should write to all specified files with replaced variables
       const writeFileCalls = mockWriteFile.mock.calls;
-      const processedFiles = writeFileCalls.map(call => call[0]);
+      const processedFiles = writeFileCalls.map((call) => call[0]);
 
       // Verify template variables were replaced
-      const contentWritten = writeFileCalls.find(call =>
-        typeof call[1] === 'string' && call[1].includes('test-project')
+      const contentWritten = writeFileCalls.find(
+        (call) => typeof call[1] === 'string' && call[1].includes('test-project')
       );
       expect(contentWritten).toBeDefined();
     });
@@ -434,9 +432,9 @@ describe('template-loader', () => {
       mockPathExists.mockResolvedValue(true);
 
       // Should throw error about unreplaced placeholders
-      await expect(
-        loadTemplate(testProjectPath, 'nextjs-app-turbo', testConfig)
-      ).rejects.toThrow(/unreplaced/i);
+      await expect(loadTemplate(testProjectPath, 'nextjs-app-turbo', testConfig)).rejects.toThrow(
+        /unreplaced/i
+      );
     });
 
     it('should copy template-specific GitHub workflows when present', async () => {
@@ -486,9 +484,9 @@ describe('template-loader', () => {
       // Make chmod fail
       mockChmod.mockRejectedValueOnce(new Error('Permission denied'));
 
-      await expect(
-        loadTemplate(testProjectPath, 'nextjs-app-turbo', testConfig)
-      ).rejects.toThrow(/Failed to make script executable/);
+      await expect(loadTemplate(testProjectPath, 'nextjs-app-turbo', testConfig)).rejects.toThrow(
+        /Failed to make script executable/
+      );
     });
   });
 });

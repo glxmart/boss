@@ -88,7 +88,9 @@ describe('Template Integration Tests', () => {
       expect(await fileExists(projectName, 'apps/admin/app/page.tsx')).toBe(true);
 
       // Verify web app package.json
-      const webPackageJson = JSON.parse(await readProjectFile(projectName, 'apps/web/package.json'));
+      const webPackageJson = JSON.parse(
+        await readProjectFile(projectName, 'apps/web/package.json')
+      );
       expect(webPackageJson.name).toBe('web');
       expect(webPackageJson.dependencies.next).toBeDefined();
       expect(webPackageJson.dependencies['@repo/ui']).toBeDefined();
@@ -97,7 +99,9 @@ describe('Template Integration Tests', () => {
       expect(webPackageJson.dependencies['@repo/auth']).toBeDefined();
 
       // Verify admin app package.json
-      const adminPackageJson = JSON.parse(await readProjectFile(projectName, 'apps/admin/package.json'));
+      const adminPackageJson = JSON.parse(
+        await readProjectFile(projectName, 'apps/admin/package.json')
+      );
       expect(adminPackageJson.name).toBe('admin');
       expect(adminPackageJson.dependencies.next).toBeDefined();
       expect(adminPackageJson.dependencies['@repo/ui']).toBeDefined();
@@ -137,23 +141,31 @@ describe('Template Integration Tests', () => {
       await bootstrapCommand(createTestOptions(projectName, 'nextjs-app-turbo'));
 
       // Verify ui package dependencies
-      const uiPackageJson = JSON.parse(await readProjectFile(projectName, 'packages/ui/package.json'));
+      const uiPackageJson = JSON.parse(
+        await readProjectFile(projectName, 'packages/ui/package.json')
+      );
       expect(uiPackageJson.name).toBe('@repo/ui');
       expect(uiPackageJson.dependencies['@repo/utils']).toBeDefined();
 
       // Verify trpc package dependencies
-      const trpcPackageJson = JSON.parse(await readProjectFile(projectName, 'packages/trpc/package.json'));
+      const trpcPackageJson = JSON.parse(
+        await readProjectFile(projectName, 'packages/trpc/package.json')
+      );
       expect(trpcPackageJson.name).toBe('@repo/trpc');
       expect(trpcPackageJson.dependencies['@repo/database']).toBeDefined();
       expect(trpcPackageJson.dependencies['@repo/auth']).toBeDefined();
 
       // Verify auth package dependencies
-      const authPackageJson = JSON.parse(await readProjectFile(projectName, 'packages/auth/package.json'));
+      const authPackageJson = JSON.parse(
+        await readProjectFile(projectName, 'packages/auth/package.json')
+      );
       expect(authPackageJson.name).toBe('@repo/auth');
       expect(authPackageJson.dependencies['@repo/database']).toBeDefined();
 
       // Verify utils package has tests
-      const utilsPackageJson = JSON.parse(await readProjectFile(projectName, 'packages/utils/package.json'));
+      const utilsPackageJson = JSON.parse(
+        await readProjectFile(projectName, 'packages/utils/package.json')
+      );
       expect(utilsPackageJson.name).toBe('@repo/utils');
       expect(utilsPackageJson.scripts.test).toBeDefined();
     });
@@ -201,7 +213,9 @@ describe('Template Integration Tests', () => {
       expect(await fileExists(projectName, '.boss/config.yaml')).toBe(true);
       expect(await fileExists(projectName, '.boss/project-config.json')).toBe(true);
 
-      const projectConfig = JSON.parse(await readProjectFile(projectName, '.boss/project-config.json'));
+      const projectConfig = JSON.parse(
+        await readProjectFile(projectName, '.boss/project-config.json')
+      );
 
       // Verify monorepo-specific config
       expect(projectConfig.project.type).toBe('monorepo');

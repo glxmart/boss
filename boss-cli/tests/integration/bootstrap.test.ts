@@ -225,9 +225,9 @@ describe('Bootstrap Integration Tests', () => {
     expect(await fileExists(projectName, 'docs/TEMPLATE.md')).toBe(true);
 
     const content = await readProjectFile(projectName, 'docs/TEMPLATE.md');
-    expect(content).toContain('Template Documentation: Next.js App (Turbo)');
+    expect(content).toContain('Template Documentation: Next.js Turbo Monorepo');
     expect(content).toContain('Next.js');
-    expect(content).toContain('React');
+    expect(content).toContain('Turborepo');
     expect(content).toContain('production');
   });
 });

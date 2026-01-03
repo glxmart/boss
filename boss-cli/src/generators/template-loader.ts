@@ -33,10 +33,7 @@ async function getFs(): Promise<FsExtra> {
  * Copies files from a source directory, handling underscore-prefixed dotfiles.
  * Files starting with '_' are copied with the underscore removed (e.g., _gitignore -> .gitignore).
  */
-async function copyBaseFiles(
-  srcDir: string,
-  destDir: string
-): Promise<void> {
+async function copyBaseFiles(srcDir: string, destDir: string): Promise<void> {
   const fs = await getFs();
   const files = await fs.readdir(srcDir);
 
@@ -211,7 +208,10 @@ async function loadMonorepoTemplate(
     // Copy template-specific GitHub workflows (override defaults)
     const templateWorkflowsPath = path.join(extrasPath, 'boss-cli', 'assets', 'github-workflows');
     if (await fs.pathExists(templateWorkflowsPath)) {
-      await copyDirectoryIfExists(templateWorkflowsPath, path.join(projectPath, '.github', 'workflows'));
+      await copyDirectoryIfExists(
+        templateWorkflowsPath,
+        path.join(projectPath, '.github', 'workflows')
+      );
     }
   }
 

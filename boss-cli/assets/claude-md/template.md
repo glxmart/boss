@@ -130,11 +130,30 @@ This project is configured for BOSS (Business-Orchestrated Software System) work
 
 ### Working with BOSS
 
+**CRITICAL: BOSS vs Workers Distinction**
+
+**For BOSS (Orchestrator)**:
+- Use Conductor MCP (spawn/manage workers)
+- Use GitHub MCP (ALL GitHub operations)
+- Use Knowledge Base MCP (query patterns)
+- Orchestrate workflow logic and tasks
+- Perform direct git operations when required
+- Create PRs after work is done
+- **CANNOT** do the work directly - must spawn workers
+- **CANNOT** work or push to the main branch
+
+**For Workers (Inside Containers)**:
+- ALL file operations
+- ALL code execution
+- Full development capabilities
+- Workers ALWAYS use Container-Use MCP environments
+- Execute tasks in isolated containers
+- Work on dedicated feature branches
+
+**General Workflow**:
 - Main branch is protected - all work in feature branches
-- BOSS orchestrator cannot edit files directly
-- Workers execute tasks in isolated containers
-- Use GitHub MCP for all repository operations
 - Quality gates run automatically on pre-commit
+- Use GitHub MCP for all repository operations
 
 ## Best Practices
 

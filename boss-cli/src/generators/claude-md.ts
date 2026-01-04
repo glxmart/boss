@@ -45,10 +45,28 @@ function getTemplateFeatures(template: string): Set<TemplateFeature> {
   return features;
 }
 
+function getMonorepoType(template: string): string | null {
+  const templateInfo = TEMPLATES[template as keyof typeof TEMPLATES];
+  if (!templateInfo) {
+    return null;
+  }
+
+  if (templateInfo.stack.includes('turborepo')) {
+    return 'Turborepo';
+  }
+  // Future: add other monorepo types here
+  // if (templateInfo.stack.includes('nx')) {
+  //   return 'Nx';
+  // }
+
+  return null;
+}
+
 export async function generateClaudeMD(projectPath: string, config: ProjectConfig): Promise<void> {
   const templateInfo = TEMPLATES[config.template];
   const qualityInfo = QUALITY_PRESETS[config.quality];
   const features = getTemplateFeatures(config.template);
+  const monorepoType = getMonorepoType(config.template);
 
   // Load template file
   const templatePath = getAssetPath('claude-md/template.md');
@@ -62,6 +80,7 @@ export async function generateClaudeMD(projectPath: string, config: ProjectConfi
       name: templateInfo?.name || config.template,
       stack: formatStackForDisplay(templateInfo?.stack || []),
       isMonorepo: features.has('monorepo'),
+      monorepoType: monorepoType,
       hasDatabase: features.has('database'),
       hasDocker: features.has('docker'),
       hasNextAuth: features.has('nextauth'),

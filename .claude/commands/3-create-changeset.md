@@ -20,6 +20,8 @@ This changeset is used to:
 
 **Invoke with:** "Create a changeset" or "Add changeset for my changes"
 
+**CRITICAL:** You MUST use `./scripts/create-changeset.sh` shell script (NOT `pnpm changeset`). The pnpm command requires interactive TTY which doesn't work in Claude Code.
+
 ## When to Create Changeset
 
 **CREATE changeset for:**
@@ -40,42 +42,53 @@ This changeset is used to:
 
 ## Process
 
-When invoked, I will create a changeset using the non-interactive script:
+**IMPORTANT: Use the non-interactive shell script (NOT pnpm changeset)**
+
+When invoked, I will create a changeset using the shell script at `scripts/create-changeset.sh`:
 
 **Command**:
 
 ```bash
-pnpm changeset:add <bump-type> <packages> <message>
+./scripts/create-changeset.sh <bump-type> <packages> <message>
 ```
 
 **Parameters**:
 
 - `<bump-type>`: `patch`, `minor`, or `major` (see [Version Bump Guidelines](#version-bump-guidelines))
-- `<packages>`: Comma-separated package names (e.g., `"boss-cli,conductor-mcp"`)
-- `<message>`: User-facing summary of changes (use quotes for multi-line)
+- `<packages>`: Comma-separated package names WITHOUT @glxmart/ prefix (e.g., `"boss-cli,conductor-mcp"`)
+- `<message>`: User-facing summary of changes (multiline messages work in quotes)
 
 **Examples**:
 
 ```bash
 # Single package, patch bump
-pnpm changeset:add patch "conductor-mcp" "Fix container error handling"
+./scripts/create-changeset.sh patch "conductor-mcp" "Fix container error handling"
 
 # Multiple packages, minor bump
-pnpm changeset:add minor "boss-cli,conductor-mcp" "Add worker resume optimization"
+./scripts/create-changeset.sh minor "boss-cli,conductor-mcp" "Add worker resume optimization"
 
 # Major breaking change
-pnpm changeset:add major "boss-cli" "BREAKING: Update worker schema to v2"
+./scripts/create-changeset.sh major "boss-cli" "BREAKING: Update worker schema to v2"
+
+# Multiline message (just use quotes)
+./scripts/create-changeset.sh minor "boss-cli" "Customize worker CLAUDE.md files
+
+All 15 worker CLAUDE.md files customized with:
+- Role descriptions
+- Quality requirements
+- Success criteria"
 ```
 
 **What happens**:
 
-1. ✅ Creates changeset file with random name (`.changeset/random-words-here.md`)
-2. ✅ Generates proper frontmatter with package versions
-3. ✅ Adds your message as the summary
-4. ✅ Shows preview of created file
-5. ✅ Automatically stages the changeset
+1. ✅ Script ensures `.changeset/` directory exists (creates if missing)
+2. ✅ Creates changeset file with random name (`.changeset/random-words-here.md`)
+3. ✅ Generates proper frontmatter with package versions
+4. ✅ Adds `@glxmart/` prefix automatically to package names
+5. ✅ Adds your message as the summary
+6. ✅ Shows preview of created file
 
-**Note**: The `@glxmart/` prefix is added automatically to package names.
+**Note**: The `@glxmart/` prefix is added automatically by the script, so you only need to provide the package name (e.g., `"boss-cli"` not `"@glxmart/boss-cli"`).
 
 ## Alternative: Interactive Mode (Local Terminal Only)
 

@@ -26,8 +26,10 @@ jobs:
           # Check if any .changeset/*.md files were added (excluding README.md and config.json)
           CHANGESET_FILES=$(git diff --name-only origin/main...HEAD | grep "^\.changeset/.*\.md$" | grep -v "README.md" || true)
 
-          # Check if code files changed (excluding docs, tests config)
-          CODE_CHANGES=$(git diff --name-only origin/main...HEAD | grep -E "^(boss-cli|conductor-mcp)/.*\.(ts|js|tsx|jsx|json)$" | grep -v -E "(test|spec|\.test\.|\.spec\.)" || true)
+          # Check if functional files changed (code, assets, templates, worker configs)
+          # Includes: .ts/.js/.json code files, boss-cli/assets/, boss-cli/templates/, conductor-mcp/worker-configs/
+          # Excludes: tests, root docs/README, package-level docs/
+          CODE_CHANGES=$(git diff --name-only origin/main...HEAD | grep -E "^(boss-cli|conductor-mcp)/" | grep -E "\.(ts|js|tsx|jsx|json)$|^boss-cli/(assets|templates)/|^conductor-mcp/worker-configs/" | grep -v -E "(test|spec|\.test\.|\.spec\.)|^(boss-cli|conductor-mcp)/(README\.md|CHANGELOG\.md|docs/)" || true)
 
           if [ -n "$CODE_CHANGES" ] && [ -z "$CHANGESET_FILES" ]; then
             echo "has_code_changes=true" >> $GITHUB_OUTPUT

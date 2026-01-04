@@ -35,34 +35,31 @@
       "Bash(gh run list:*)",
       "Bash(./test-local.sh:*)",
       "Bash(./scripts/gh-with-1password.sh:*)",
-
       "Read(*)",
       "Read(**)",
       "Read(.*)",
       "Read(.*/**)",
-
       "Write(*)",
       "Write(**)",
       "Write(.*)",
       "Write(.*/**)",
-
       "Edit(*)",
       "Edit(**)",
       "Edit(.*)",
       "Edit(.*/**)",
       "Edit(.github/**)",
-
       "Delete(*)",
       "Delete(**)",
-
       "Search(pattern:*)",
       "WebFetch(domain:*)",
-
       "mcp__github__create_issue",
       "mcp__github__get_file_contents",
       "mcp__github__get_pull_request_status",
-
-      "Skill(*)"
+      "Skill(*)",
+      "Bash(tee:*)",
+      "Bash(for worker in code-reviewer security-engineer devops-engineer technical-writer product-owner consolidator)",
+      "Bash(do echo \"Processing $worker...\")",
+      "Bash(done)"
     ],
     "deny": [
       "Bash(op read:*)",

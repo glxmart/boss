@@ -19,7 +19,7 @@
      - Only verify `node_modules` directory exists (if missing, that's unexpected - `start-boss.sh` should have installed them)
      - This prevents pre-push/pre-commit hook failures due to missing dependencies (e.g., `tsc` not found)
    - If feature branch doesn't exist, create it from main
-   - Switch to this branch using Container-Use MCP (create environment on this branch)
+   - Switch to this branch using git commands
    - Update `project-config.json` with `currentBranch: "feature/boss-initial-setup"`
 
 3. **Run Initial Setup Checklist**
@@ -98,7 +98,7 @@
           - **Base branch:** `"main"`
           - **Head branch:** `"feature/boss-initial-setup"`
           - **DO NOT ask user** - create PR automatically
-     - [ ] **DO NOT create Container-Use environments for initialization** - BOSS handles this via git commands
+     - [ ] **DO NOT create worker environments for initialization** - BOSS handles this via git commands
      - [ ] **NEVER push feature branch before main branch** - main must be pushed first
      - [ ] **After initial setup, NEVER push directly to main** - always use PRs
 

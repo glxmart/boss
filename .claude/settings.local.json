@@ -1,20 +1,31 @@
 {
-  "sandbox": {
-    "enabled": true,
-    "autoAllowBashIfSandboxed": true,
-    "excludedCommands": ["git", "gh", "curl", "npm", "pnpm", "npx", "op"]
-  },
   "permissions": {
-    "defaultMode": "acceptEdits",
     "allow": [
       "Bash(git:*)",
       "Bash(gh:*)",
       "Bash(op run:*)",
       "WebSearch",
       "WebFetch(domain:*)",
+      "Skill",
       "mcp__github__*",
-      "Skill(*)"
+      "WebFetch(domain:github.com)"
     ],
-    "deny": ["Bash(op read:*)"]
+    "deny": [
+      "Bash(op read:*)"
+    ],
+    "defaultMode": "acceptEdits"
+  },
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true,
+    "excludedCommands": [
+      "git",
+      "gh",
+      "curl",
+      "npm",
+      "pnpm",
+      "npx",
+      "op"
+    ]
   }
 }

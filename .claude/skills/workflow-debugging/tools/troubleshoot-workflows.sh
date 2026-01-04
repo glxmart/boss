@@ -1,8 +1,15 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Workflow troubleshooting script
 # Diagnoses and fixes GitHub Actions workflow failures
 
 set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$(cd "$SKILL_DIR/../../.." && pwd)"
+
+# Change to project root for all operations
+cd "$PROJECT_ROOT"
 
 # Colors for output
 RED='\033[0;31m'
@@ -99,9 +106,8 @@ if ! command -v op &> /dev/null; then
   GH_CMD="gh"
 else
   # Use 1Password for authentication
-  REPO_ROOT="$(git rev-parse --show-toplevel)"
-  if [ -f "$REPO_ROOT/.env" ]; then
-    GH_CMD="op run --env-file=$REPO_ROOT/.env -- gh"
+  if [ -f "$PROJECT_ROOT/.env" ]; then
+    GH_CMD="op run --env-file=$PROJECT_ROOT/.env -- gh"
   else
     print_warning ".env file not found, using system GitHub auth"
     GH_CMD="gh"
@@ -262,11 +268,11 @@ if [ "$FAILED_COUNT" -gt 0 ]; then
   echo ""
   echo "Manual Investigation:"
   echo "  - View specific run: gh run view <run-id>"
-  echo "  - Download logs: ./scripts/troubleshoot-workflows.sh --download-logs"
-  echo "  - Re-run failed: ./scripts/troubleshoot-workflows.sh --rerun"
+  echo "  - Download logs: $0 --download-logs"
+  echo "  - Re-run failed: $0 --rerun"
   echo ""
   echo "Get Help:"
-  echo "  - ./scripts/troubleshoot-workflows.sh --help"
+  echo "  - $0 --help"
   echo "  - Workflow docs: .github/workflows/README.md"
   echo "  - Debugging guide: CLAUDE.md (search 'Debugging GitHub Workflows')"
 else

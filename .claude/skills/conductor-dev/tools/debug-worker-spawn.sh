@@ -1,8 +1,15 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Debug script to test worker spawning via Conductor MCP
-# Usage: pnpm debug:spawn [worker-type] [project-path]
+# Usage: debug-worker-spawn.sh [worker-type] [project-path]
 
 set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$(cd "$SKILL_DIR/../../.." && pwd)"
+
+# Change to project root for all operations
+cd "$PROJECT_ROOT"
 
 WORKER_TYPE="${1:-clarifier}"
 PROJECT_PATH="${2:-/tmp/conductor-e2e-test}"
@@ -24,7 +31,7 @@ node -e "
 const { spawn } = require('child_process');
 
 // Use op run to resolve secrets from .env
-const mcp = spawn('op', ['run', '--env-file=$PROJECT_PATH/.env', '--', 'npx', '@boss/conductor-mcp', 'stdio'], {
+const mcp = spawn('op', ['run', '--env-file=$PROJECT_PATH/.env', '--', 'npx', '@glxmart/conductor-mcp', 'stdio'], {
   stdio: ['pipe', 'pipe', 'inherit']
 });
 

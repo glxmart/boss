@@ -5,7 +5,11 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$(cd "$SKILL_DIR/../../.." && pwd)"
+
+# Change to project root for all git operations
+cd "$PROJECT_ROOT"
 
 # Colors
 GREEN='\033[0;32m'
@@ -86,7 +90,7 @@ echo -e "${GREEN}✅ Feature branch created successfully!${NC}"
 echo ""
 echo -e "${BLUE}Next steps:${NC}"
 echo "  1. Make your changes"
-echo "  2. Run: scripts/2-quality-check.sh (or pnpm run quality-check)"
-echo "  3. Run: scripts/3-create-changeset.sh (or pnpm run changeset)"
-echo "  4. Run: scripts/4-create-pr.sh (or pnpm run create-pr)"
+echo "  2. Run: .claude/skills/workflow-management/tools/2-quality-check.sh"
+echo "  3. Run: .claude/skills/workflow-management/tools/3-create-changeset.sh"
+echo "  4. Run: .claude/skills/workflow-management/tools/4-create-pr.sh"
 echo ""

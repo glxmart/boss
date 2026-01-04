@@ -5,7 +5,11 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$(cd "$SKILL_DIR/../../.." && pwd)"
+
+# Change to project root
+cd "$PROJECT_ROOT"
 
 # Colors
 GREEN='\033[0;32m'
@@ -58,7 +62,7 @@ else
   read -p "Continue without changeset? You'll need to add 'skip-changeset' label. (y/n) " -n 1 -r
   echo
   if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo -e "${RED}❌ Aborted. Run scripts/3-create-changeset.sh first${NC}"
+    echo -e "${RED}❌ Aborted. Run .claude/skills/workflow-management/tools/3-create-changeset.sh first${NC}"
     exit 1
   fi
 fi

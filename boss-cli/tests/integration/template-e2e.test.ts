@@ -134,7 +134,7 @@ describe('Template E2E Tests', () => {
     });
 
     it(
-      'should bootstrap successfully',
+      'should bootstrap and pass all quality gates',
       async () => {
         // Bootstrap project
         await bootstrapCommand(createTestOptions(projectName, 'nextjs-app-turbo', 'startup'));
@@ -145,15 +145,32 @@ describe('Template E2E Tests', () => {
         expect(await fileExists(projectName, 'turbo.json')).toBe(true);
         expect(await fileExists(projectName, '.husky/pre-commit')).toBe(true);
 
-        // Install dependencies
+        // Verify .gitignore includes node_modules/
+        const gitignore = await runInProject(projectName, 'cat .gitignore');
+        expect(gitignore.stdout).toContain('node_modules/');
+
+        // Install dependencies (this should also generate Prisma client via postinstall)
         await runInProject(projectName, 'pnpm install');
 
-        // Generate Prisma client (required before type check)
-        await runInProject(projectName, 'cd packages/database && pnpm db:generate');
+        // Verify Prisma client was generated
+        expect(
+          await fileExists(
+            projectName,
+            'node_modules/.pnpm/@prisma+client@5.19.1/node_modules/@prisma/client'
+          )
+        ).toBe(true);
 
-        // Note: Type check is expected to fail due to next-auth v5 beta type issues
-        // This is documented in TEMPLATE_TEST_RESULTS.md
-        // Skipping full quality gates for this template until next-auth issues are resolved
+        // Run type check (should pass with our NextAuth fix)
+        const { stdout: typecheckOutput } = await runInProject(projectName, 'pnpm typecheck');
+        expect(typecheckOutput).not.toContain('error TS');
+
+        // Run lint (should pass with ESLint configs)
+        const { stdout: lintOutput } = await runInProject(projectName, 'pnpm lint');
+        expect(lintOutput).not.toContain('error');
+
+        // Run tests (should pass with skeleton test files)
+        const { stdout: testOutput } = await runInProject(projectName, 'pnpm test:unit');
+        expect(testOutput).toContain('passed');
       },
       E2E_TIMEOUT
     );

@@ -85,4 +85,5 @@ export const authConfig: NextAuthConfig = {
   ],
 };
 
-export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const { handlers, auth, signIn, signOut } = NextAuth(authConfig) as any;

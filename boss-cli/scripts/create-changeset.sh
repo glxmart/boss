@@ -27,11 +27,21 @@ BUMP_TYPE="$1"
 PACKAGES="$2"
 MESSAGE="$3"
 
+# Find the monorepo root (where pnpm-workspace.yaml or .git exists)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Ensure we're in the root directory
+cd "$REPO_ROOT"
+
 # Validate bump type
 if [[ ! "$BUMP_TYPE" =~ ^(patch|minor|major)$ ]]; then
   echo "Error: bump-type must be patch, minor, or major"
   exit 1
 fi
+
+# Ensure .changeset directory exists
+mkdir -p .changeset
 
 # Generate random changeset filename (similar to changesets CLI)
 ADJECTIVE=(happy sad brave calm cool warm)

@@ -22,6 +22,12 @@ This changeset is used to:
 
 **CRITICAL:** You MUST use `./scripts/create-changeset.sh` shell script (NOT `pnpm changeset`). The pnpm command requires interactive TTY which doesn't work in Claude Code.
 
+**Note:** The script automatically creates changesets in the repository root `.changeset/` directory regardless of your current working directory. It will:
+
+- Find the monorepo root automatically
+- Create `.changeset/` directory if it doesn't exist
+- Place changeset files in the correct location
+
 ## When to Create Changeset
 
 **CREATE changeset for:**

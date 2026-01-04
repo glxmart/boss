@@ -5,27 +5,29 @@
       "Bash(gh:*)",
       "Bash(op run:*)",
       "WebSearch",
-      "WebFetch(domain:*)",
       "Skill",
       "mcp__github__*",
       "WebFetch(domain:github.com)"
     ],
-    "deny": [
-      "Bash(op read:*)"
-    ],
+    "deny": ["Bash(op read:*)"],
     "defaultMode": "acceptEdits"
   },
   "sandbox": {
     "enabled": true,
     "autoAllowBashIfSandboxed": true,
-    "excludedCommands": [
-      "git",
-      "gh",
-      "curl",
-      "npm",
-      "pnpm",
-      "npx",
-      "op"
+    "excludedCommands": ["git", "gh", "curl", "npm", "pnpm", "npx", "op"]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "../scripts/claude-deny-check.sh"
+          }
+        ]
+      }
     ]
   }
 }

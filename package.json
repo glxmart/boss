@@ -25,7 +25,7 @@
     "gh": "op run --env-file=.env -- gh"
   },
   "lint-staged": {
-    "*.{ts,tsx,js,jsx,json,md,yml,yaml}": [
+    "**/*.{ts,tsx,js,jsx,json,md,yml,yaml}": [
       "prettier --write"
     ]
   },

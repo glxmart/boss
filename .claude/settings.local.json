@@ -71,7 +71,8 @@
       "Bash(done)",
       "Bash(./.claude/skills/workflow-management/tools/4-create-pr.sh:*)",
       "Bash(./.claude/skills/workflow-management/tools/1-start-feature.sh:*)",
-      "Bash(./.claude/skills/workflow-management/tools/2-quality-check.sh:*)"
+      "Bash(./.claude/skills/workflow-management/tools/2-quality-check.sh:*)",
+      "Bash(node dist/index.js:*)"
     ],
     "deny": [
       "Bash(op read:*)",

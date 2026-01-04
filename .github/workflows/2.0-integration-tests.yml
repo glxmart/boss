@@ -34,11 +34,11 @@ jobs:
           node-version: 20
           cache: 'pnpm'
 
-      - name: Install dependencies
+      - name: Install dependencies (monorepo)
         run: pnpm install --frozen-lockfile
 
-      - name: Build all packages
+      - name: Build all packages (monorepo orchestrated)
         run: pnpm build
 
-      - name: Run integration tests
-        run: cd boss-cli && pnpm test:integration
+      - name: Run integration tests (monorepo orchestrated)
+        run: pnpm --filter @glxmart/boss-cli test:integration

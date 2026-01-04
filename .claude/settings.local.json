@@ -65,7 +65,11 @@
       "Bash(git -C /Users/joe/code-glx/boss log --oneline -1)",
       "Bash(/Users/joe/code-glx/boss/test-bootstrap.sh)",
       "Bash(bash:*)",
-      "Bash(node /Users/joe/code-glx/boss/boss-cli/dist/index.js:*)"
+      "Bash(node /Users/joe/code-glx/boss/boss-cli/dist/index.js:*)",
+      "Bash(for i in 1 2 3 4)",
+      "Bash(do ln -s ../.claude/skills/workflow-management/tools/$i-*.sh .)",
+      "Bash(done)",
+      "Bash(./.claude/skills/workflow-management/tools/4-create-pr.sh:*)"
     ],
     "deny": [
       "Bash(op read:*)",

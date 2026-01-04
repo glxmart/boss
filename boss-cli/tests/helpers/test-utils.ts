@@ -42,6 +42,17 @@ export async function readProjectFile(projectName: string, filePath: string): Pr
   return await fs.readFile(path.join(projectPath, filePath), 'utf8');
 }
 
+export async function writeProjectFile(
+  projectName: string,
+  filePath: string,
+  content: string
+): Promise<void> {
+  const projectPath = getTestProjectPath(projectName);
+  const fullPath = path.join(projectPath, filePath);
+  await fs.ensureDir(path.dirname(fullPath));
+  await fs.writeFile(fullPath, content, 'utf8');
+}
+
 export async function listProjectFiles(projectName: string, dir: string = '.'): Promise<string[]> {
   const projectPath = getTestProjectPath(projectName);
   const targetPath = path.join(projectPath, dir);

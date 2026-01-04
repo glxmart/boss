@@ -8,7 +8,7 @@
   ],
   "exports": {
     "./components": "./src/components/index.ts",
-    "./components/*": "./src/components/*.tsx",
+    "./components/*": "./src/components/ui/*.tsx",
     "./hooks": "./src/hooks/index.ts",
     "./lib/utils": "./src/lib/utils.ts",
     "./styles": "./src/styles/globals.css"

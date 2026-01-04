@@ -106,65 +106,44 @@ These workers can be spawned at any phase as needed:
 
 **Worker Execution (MANDATORY - BOSS Must Spawn Workers):**
 
-**CRITICAL:** BOSS must ALWAYS spawn workers using `mcp_container-use_execute_in_environment`. BOSS must NEVER write deliverables directly.
+**CRITICAL:** BOSS must ALWAYS spawn workers using Conductor MCP. BOSS must NEVER write deliverables directly.
 
-1. **Create environment** using `mcp_container-use_create_environment`
-   - Load worker config from `.boss/workers/[worker-name]/container-config.json`
+1. **Spawn worker using Conductor:**
+   ```typescript
+   await conductor.spawn_worker({
+     workerType: 'architect',
+     taskPrompt: 'Create constitution with TDD, BDD, and quality standards',
+     targetBranch: 'feature/boss-initial-setup'
+   });
+   ```
 
-2. **Load worker configuration:**
-   - Read `.boss/workers/[worker-name]/prompt.md` to understand worker's role and instructions
-   - Read `.boss/workers/[worker-name]/CLAUDE.md` for execution guidelines
-   - Check for worker-specific `.claude` folder: `.boss/workers/[worker-name]/.claude/`
+2. **Conductor handles everything:**
+   - Loads worker config from `.boss/workers/[worker-name]/`
+   - Creates container environment
+   - Configures `.claude/CLAUDE.md` with worker-specific instructions
+   - Copies worker-specific `.claude/` files to container
+   - Executes worker task in isolated environment
+   - Tracks worker state and manifest
 
-3. **Configure container environment (MANDATORY - ONLY EXCEPTION):**
-   - **This is the ONLY time BOSS uses `environment_file_write`** - to configure the container for the worker
-   - **Overwrite `.claude/CLAUDE.md` in container:**
-     - Read `.boss/workers/[worker-name]/CLAUDE.md` from host
-     - Use `mcp_container-use_environment_file_write` to write to `/workdir/.claude/CLAUDE.md` in container
-     - **CRITICAL PATH:** Host `.boss/workers/architect/CLAUDE.md` → Container `/workdir/.claude/CLAUDE.md`
-     - Container needs worker's instructions, not BOSS's orchestration instructions
-   - **Copy worker-specific `.claude` files to container:**
-     - If `.boss/workers/[worker-name]/.claude/` exists, copy all files maintaining directory structure
-     - **CRITICAL PATH TRANSFORMATION:**
-       - Remove `.boss/workers/[worker-name]/` prefix
-       - Keep `.claude/` structure
-       - Example: `.boss/workers/architect/.claude/commands/file.md` → `/workdir/.claude/commands/file.md`
-     - Copy all subdirectories:
-       - `.claude/commands/` → `/workdir/.claude/commands/`
-       - `.claude/skills/` → `/workdir/.claude/skills/`
-       - `.claude/agents/` → `/workdir/.claude/agents/`
-       - `.claude/settings*.json` → `/workdir/.claude/settings*.json`
-     - Use `mcp_container-use_environment_file_write` for each file
-   - **Why:** Container's Claude Code reads from `/workdir/.claude/` by convention - we must copy files there
-   - **Why NOT environment variables:** Claude Code reads from `.claude/` folder by convention, cannot be changed with env vars
+3. **Review work:**
+   - Check worker status: `conductor.get_worker_status({ workerId })`
+   - Review worker manifest for deliverables
 
-4. **Assemble task prompt:**
-   - Combine worker prompt with specific task instructions
-   - Include context (constitution, specs, requirements)
-   - Include quality gates and deliverables
+4. **Merge worker branch:**
+   - Use `conductor.merge_worker({ workerId })` to merge worker's branch
 
-5. **Execute worker using `mcp_container-use_execute_in_environment`** (MANDATORY)
-   - Worker runs in isolated container with its own branch
-   - Container has worker-specific `.claude/CLAUDE.md` and `.claude/` config files
-   - **WORKER writes all deliverables** (constitution.md, spec.md, plan.md, code, tests, etc.)
-   - **BOSS does NOT write deliverables** - BOSS only orchestrates
-
-6. **Review work** using `container-use log <env_id>` and `container-use checkout <env_id>`
-
-7. **Merge worker branch** using `mcp_container-use_merge_environment` or git commands
-
-8. **Update `project-config.json`** with worker summary
+5. **Update `project-config.json`** with worker summary
 
 **BOSS MUST NEVER:**
 - NOT OK Write deliverables directly (constitution.md, spec.md, plan.md, code, tests, etc.)
-- NOT OK Use `environment_file_write` to create deliverables - workers write deliverables
-- NOT OK Use `environment_run_cmd` to execute code that creates deliverables - workers do this
+- NOT OK Use container-use MCP directly - use Conductor instead
 - NOT OK Read worker prompts and then do the work yourself - spawn the worker instead
 
-**BOSS CAN ONLY use `environment_file_write` for:**
-- OK **Configuring container environment** - Overwrite `.claude/CLAUDE.md` with worker's CLAUDE.md
-- OK **Copying worker config files** - Copy `.boss/workers/[worker-name]/.claude/` files to `.claude/` in container
-- OK This is the ONLY exception - configuring the container, not doing the work
+**BOSS ONLY:**
+- OK Call Conductor tools to spawn workers
+- OK Provide task prompts for workers
+- OK Monitor worker status
+- OK Decide when to merge or terminate workers
 
 **Communication Guidelines:**
 - **CRITICAL:** Use plain text only when communicating with workers - NO emojis

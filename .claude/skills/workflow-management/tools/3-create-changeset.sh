@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Get project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$(cd "$SKILL_DIR/../../.." && pwd)"
+
+# Change to project root
+cd "$PROJECT_ROOT"
+
 # Create changeset non-interactively
 # Usage: ./scripts/create-changeset.sh <bump-type> <packages> <message>
 #

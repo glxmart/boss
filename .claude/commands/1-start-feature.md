@@ -2,6 +2,8 @@
 
 Create a new feature branch from main with the latest changes.
 
+> **💡 TIP**: This command uses the [`workflow-management`](.claude/skills/workflow-management/SKILL.md) skill for execution.
+
 ## What This Does
 
 1. Switches to main branch
@@ -13,42 +15,35 @@ Create a new feature branch from main with the latest changes.
 
 **Invoke with:** "Start a new feature" or "Create feature branch"
 
-When invoked, I will:
+When invoked, I will execute:
 
-1. **Ask for branch name** - You provide the feature name
-2. **Determine branch type** based on name:
-   - `feature/` - New features (likely minor version)
-   - `fix/` - Bug fixes (likely patch version)
-   - `docs/` - Documentation (skip-changeset)
-   - `refactor/` - Code refactoring (patch/skip-changeset)
-   - `test/` - Test additions (skip-changeset)
-   - `chore/` - Tooling/config (skip-changeset)
-3. **Execute workflow**:
-   ```bash
-   git checkout main
-   git pull origin main
-   git checkout -b <branch-type>/<feature-name>
-   git status
-   ```
+```bash
+.claude/skills/workflow-management/tools/1-start-feature.sh
+```
+
+This tool will:
+
+1. **Ask for branch type** (feature/fix/chore/docs)
+2. **Ask for feature name** (kebab-case)
+3. **Create branch** `{type}/{name}`
+4. **Show next steps**
 
 ## Examples
 
 **New Feature:**
 
-```bash
-git checkout -b feature/worker-resume-optimization
+```
+→ Feature type: feature
+→ Feature name: worker-resume
+✅ Created: feature/worker-resume
 ```
 
 **Bug Fix:**
 
-```bash
-git checkout -b fix/bootstrap-template-path
 ```
-
-**Documentation:**
-
-```bash
-git checkout -b docs/update-release-guide
+→ Feature type: fix
+→ Feature name: validation-error
+✅ Created: fix/validation-error
 ```
 
 ## Next Steps
@@ -60,8 +55,9 @@ After branch is created:
 3. Run `/3-create-changeset` (if code changes)
 4. Run `/4-create-pr` to submit
 
-## Related Commands
+## Related
 
-- `/2-quality-check` - Run tests and linting
-- `/3-create-changeset` - Create changeset for release
-- `/4-create-pr` - Create pull request
+- `/2-quality-check` - Validate code quality
+- `/3-create-changeset` - Create version bump
+- `/4-create-pr` - Submit pull request
+- [workflow-management skill](.claude/skills/workflow-management/SKILL.md) - Complete documentation

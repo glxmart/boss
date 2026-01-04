@@ -1339,7 +1339,18 @@ git push origin feature/my-feature
 # 6. Merge Version PR → automatic npm publish
 ```
 
-**Skip changeset:** Add `skip-changeset` label for docs/tests/config-only PRs
+**What requires changesets:**
+
+- ✅ Source code changes (`.ts`, `.js`, `.json`)
+- ✅ `boss-cli/assets/**` - Affects bootstrap output
+- ✅ `boss-cli/templates/**` - Affects scaffolded projects
+- ✅ `conductor-mcp/worker-configs/**` - Affects worker behavior
+
+**Skip changeset:** Add `skip-changeset` label for:
+
+- ❌ Documentation only (`docs/**`, `*.md` in package root)
+- ❌ Test-only changes
+- ❌ Config-only changes (workflows, eslint, etc.)
 
 **Complete documentation:**
 

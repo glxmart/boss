@@ -33,8 +33,13 @@ describe('claude-md generator', () => {
     // Check for BOSS integration section
     expect(content).toContain('BOSS Integration');
     expect(content).toContain('Constitutional Governance');
-    expect(content).toContain('Worker Isolation');
-    expect(content).toContain('BOSS Workflow Phases');
+    expect(content).toContain('Spec-Kit Integration');
+    expect(content).toContain('Quality Automation');
+
+    // Check for BOSS documentation links
+    expect(content).toContain('docs/conductor.md');
+    expect(content).toContain('docs/workflow.md');
+    expect(content).toContain('docs/workers.md');
   });
 
   it('should include project name and template info placeholders', async () => {

@@ -54,10 +54,10 @@ describe('Bootstrap Integration Tests', () => {
     await bootstrapCommand(options);
 
     const claudeContent = await readProjectFile(projectName, 'CLAUDE.md');
-    expect(claudeContent).toContain('**CRITICAL: BOSS vs Workers Distinction**');
-    expect(claudeContent).toContain('For BOSS (Orchestrator)');
-    expect(claudeContent).toContain('For Workers (Inside Containers)');
-    expect(claudeContent).toContain('Workers ALWAYS use Container-Use MCP environments');
+    expect(claudeContent).toContain('BOSS Integration');
+    expect(claudeContent).toContain('Constitutional Governance');
+    expect(claudeContent).toContain('Spec-Kit Integration');
+    expect(claudeContent).toContain('docs/conductor.md');
   });
 
   it('should generate all worker configurations', async () => {

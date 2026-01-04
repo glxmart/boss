@@ -1,135 +1,67 @@
 # Quality Check
 
-Run quality gates: build, lint, tests, and coverage checks.
+Run comprehensive quality validation on your code.
+
+> **💡 Powered by**: [`workflow-management`](.claude/skills/workflow-management/SKILL.md) + [`quality-gates`](.claude/skills/quality-gates/SKILL.md) skills
 
 ## What This Does
 
-Validates your changes meet BOSS quality standards before creating a changeset or PR:
+Validates your changes meet quality standards:
 
-1. **Build Check** - Ensures code compiles without errors
-2. **Lint Check** - Validates code style and patterns
-3. **Test Suite** - Runs all unit and integration tests
-4. **Coverage Check** - Verifies test coverage meets thresholds
+1. **Build** - TypeScript compilation
+2. **Lint** - ESLint validation
+3. **Type Check** - TypeScript types
+4. **Tests** - Unit and integration tests
+5. **Security** - Secret detection and vulnerabilities
 
 ## Usage
 
-**Invoke with:** "Run quality check" or "Check if my code passes quality gates"
+**Invoke with:** "Run quality check" or "Validate code"
 
-When invoked, I will:
+Executes: `.claude/skills/workflow-management/tools/2-quality-check.sh`
 
-1. **Detect changed packages** - Check which packages have changes (boss-cli, conductor-mcp, or both)
-2. **Run quality gates for each package**:
+## Expected Result
 
-   ```bash
-   # Install dependencies (if needed)
-   pnpm install
+```
+🔍 Running Quality Checks
 
-   # Build packages
-   pnpm build
+📦 Building packages...
+✅ Build passed
 
-   # Run linting
-   pnpm --filter @glxmart/boss-cli lint
-   pnpm --filter @glxmart/conductor-mcp lint
+🔧 Running lint check...
+✅ Lint passed
 
-   # Run tests with coverage
-   pnpm --filter @glxmart/boss-cli test:coverage
-   pnpm --filter @glxmart/conductor-mcp test:coverage
-   ```
+📝 Running type check...
+✅ Type check passed
 
-3. **Report results**:
-   - ✅ All checks passed
-   - ❌ Which checks failed and why
-   - 📊 Coverage statistics
+🧪 Running tests...
+✅ Tests passed
 
-## Quality Thresholds
+🔒 Running security checks...
+✅ Security checks passed
 
-Based on your quality preset in `.boss/boss.json`:
+✅ All quality checks passed!
+```
 
-### Startup Preset
-
-- Test coverage: 50%
-- Mutation score: 60%
-
-### Production Preset (default)
-
-- Test coverage: 80%
-- Mutation score: 80%
-
-### Enterprise Preset
-
-- Test coverage: 90%
-- Mutation score: 90%
-
-## What Gets Checked
-
-**Build:**
-
-- TypeScript compilation
-- No type errors
-- All dependencies resolved
-
-**Lint:**
-
-- ESLint rules
-- Code style consistency
-- Import organization
-
-**Tests:**
-
-- Unit tests pass
-- Integration tests pass
-- Coverage thresholds met
-
-## Fixing Issues
-
-**Build errors:**
+## If Checks Fail
 
 ```bash
-# Check TypeScript errors
+# Fix build errors
 pnpm build
-# Fix type errors in reported files
-```
 
-**Lint errors:**
-
-```bash
 # Auto-fix lint issues
-pnpm --filter <package> lint --fix
+pnpm lint --fix
 
-# Check remaining issues
-pnpm --filter <package> lint
-```
-
-**Test failures:**
-
-```bash
-# Run specific test file
-pnpm --filter <package> test path/to/test
-
-# Watch mode for development
-pnpm --filter <package> test:watch
-```
-
-**Coverage gaps:**
-
-```bash
-# Generate coverage report
-pnpm --filter <package> test:coverage
-
-# Open HTML report
-open boss-cli/coverage/index.html
-open conductor-mcp/coverage/index.html
+# Run tests with details
+pnpm test
 ```
 
 ## Next Steps
 
-After all checks pass:
+1. `/3-create-changeset` - Create version bump
+2. `/4-create-pr` - Submit pull request
 
-1. Run `/3-create-changeset` (for code changes)
-2. Run `/4-create-pr` to submit
+## Documentation
 
-## Related Commands
-
-- `/1-start-feature` - Create feature branch
-- `/3-create-changeset` - Create changeset for release
-- `/4-create-pr` - Create pull request
+- [workflow-management skill](.claude/skills/workflow-management/SKILL.md)
+- [quality-gates skill](.claude/skills/quality-gates/SKILL.md)

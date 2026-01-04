@@ -72,6 +72,27 @@ if ! pnpm test:unit > /dev/null 2>&1; then
   exit 1
 fi
 
+# Run integration tests (to catch template/bootstrap issues before CI)
+# Skip for first empty push to main
+if [ "$FIRST_PUSH_TO_MAIN" != "true" ]; then
+  echo "  ✓ Running integration tests..."
+  if ! pnpm test:integration > /dev/null 2>&1; then
+    echo "❌ Integration tests failing. Fix them before pushing."
+    pnpm test:integration
+    exit 1
+  fi
+
+  # Run E2E tests if they exist
+  if grep -q "test:e2e" package.json 2>/dev/null; then
+    echo "  ✓ Running E2E tests..."
+    if ! pnpm test:e2e > /dev/null 2>&1; then
+      echo "❌ E2E tests failing. Fix them before pushing."
+      pnpm test:e2e
+      exit 1
+    fi
+  fi
+fi
+
 # Check for unused exports (warn only, not blocking)
 echo "  ✓ Checking for unused exports..."
 if ! pnpm check:unused > /dev/null 2>&1; then

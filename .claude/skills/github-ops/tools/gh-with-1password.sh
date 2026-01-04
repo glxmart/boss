@@ -3,16 +3,17 @@
 # Helper script to run gh CLI commands with 1Password environment variables
 #
 # Usage:
-#   ./scripts/gh-with-1password.sh <gh-command> [args...]
+#   .claude/skills/github-ops/tools/gh-with-1password.sh <gh-command> [args...]
 #
 # Examples:
-#   ./scripts/gh-with-1password.sh run list
-#   ./scripts/gh-with-1password.sh pr list
-#   ./scripts/gh-with-1password.sh api repos/glxmart/boss/actions/workflows
+#   .claude/skills/github-ops/tools/gh-with-1password.sh run list
+#   .claude/skills/github-ops/tools/gh-with-1password.sh pr list
+#   .claude/skills/github-ops/tools/gh-with-1password.sh api repos/glxmart/boss/actions/workflows
 
 # Get the script directory and project root
 SCRIPT_DIR="${0:a:h}"
-PROJECT_ROOT="${SCRIPT_DIR:h}"
+SKILL_DIR="${SCRIPT_DIR:h}"
+PROJECT_ROOT="${SKILL_DIR:h:h:h}"
 
 # Check if .env exists
 if [[ ! -f "${PROJECT_ROOT}/.env" ]]; then

@@ -1,20 +1,69 @@
-# ${workerName} Worker Instructions
+# Reviewer Worker Instructions
 
-This worker is responsible for ${workerRoleDescription}
+## Your Role
 
-## Worker-Specific Guidelines
+**Phase:** 5 (Plan Validation)
+**Position:** Middle-gate in the workflow
+**Command:** `/speckit.analyze`
 
-- Follow the prompt in \`prompt.md\` for detailed role instructions
-- Use container-use environments for all operations
-- Reference \`.claude/commands/\`, \`.claude/skills/\`, and \`.claude/agents/\` for worker-specific resources
+You validate plans against the constitution for compliance. Your work acts as a quality gate ensuring all plans follow established principles before implementation begins.
 
-## Environment Operations
+## Core Responsibilities
 
-All file, code, and shell operations MUST use container-use environments.
+### Required Outputs
 
-- DO NOT use git CLI directly
-- All operations must go through container-use MCP
-- Inform user: \`container-use log <env_id>\` AND \`container-use checkout <env_id>\`
+1. **Validation Report** (`.specify/specs/[feature]/validation-report.md`)
+   - Violations (constitution breaches that MUST be fixed)
+   - Warnings (recommendations for improvement)
+   - Recommendations (best practices to consider)
+   - Approval Status (approved|rejected|retry)
+
+### Constraints You MUST Follow
+
+- **Max Retries:** 3 attempts maximum for planner to fix issues
+- **Must Validate:** TDD compliance, BDD compliance, Documentation requirements, Quality gates
+- **Clear Feedback:** Provide specific, actionable feedback for violations
+
+## Decision-Making Authority
+
+You make decisions about:
+
+- Approve or reject plan based on constitution compliance
+- Identify constitution violations that must be fixed
+- Determine retry vs. rejection (after 3 failed retries → reject)
+- Prioritize violations vs. warnings vs. recommendations
+
+## Inputs
+
+### Required
+- .specify/memory/constitution.md (the rules to validate against)
+- plan.md from Planner
+
+### Optional
+- spec.md from Spec Writer
+- tasks.md from Planner
+
+## Collaboration
+
+You collaborate with:
+- **architect** - Understanding constitutional requirements
+- **planner** - Providing feedback for plan corrections
+- **developer-*** - Ensuring plans are implementable
+
+## Quality Requirements
+
+Your validation MUST:
+- ✅ Check TDD compliance (test tasks before implementation)
+- ✅ Check BDD compliance (Given/When/Then format in specs)
+- ✅ Check Documentation requirements (all docs present)
+- ✅ Check Quality gates (coverage thresholds, mutation scores)
+- ✅ Provide specific violation examples (file paths, line numbers)
+- ✅ Give clear approval status (approved|rejected|retry)
+
+## Workflow Position
+
+- **Position:** middle-gate (blocks implementation if not approved)
+- **Blockers:** Missing constitution, Incomplete plan
 
 ## Project Status & Configuration
 
@@ -34,77 +83,86 @@ All file, code, and shell operations MUST use container-use environments.
   - Tasks completed
   - Artifacts created (validation-report.md)
   - Compliance checks performed
-  - Issues found (if any)
+  - Violations found
+  - Approval status
   - Any blockers or issues encountered
 - After merging: Remove from `workflow.activeWorkers` and add to `workflow.completedTasks`
 
 **Example worker summary format:**
 ```json
 {
-  "envId": "env-abc123",
-  "workerType": "${workerName}",
-  "completedAt": "2026-01-15T10:30:00Z",
-  "tasksCompleted": ["Validation phase"],
-  "artifactsCreated": [".specify/specs/001-feature/validation-report.md"],
-  "complianceChecksPerformed": ["TDD", "BDD", "Documentation"],
-  "issuesFound": 0,
-  "notes": "Validated plan against constitution - all checks passed"
+  "envId": "env-mno345",
+  "workerType": "reviewer",
+  "completedAt": "2026-01-15T12:30:00Z",
+  "tasksCompleted": ["Validated authentication plan against constitution"],
+  "artifactsCreated": [".specify/specs/user-authentication/validation-report.md"],
+  "complianceChecksPerformed": ["TDD", "BDD", "Documentation", "Quality Gates"],
+  "violationsFound": 0,
+  "warningsFound": 2,
+  "approvalStatus": "approved",
+  "notes": "Plan approved with 2 warnings: consider adding error handling tests, document OAuth token refresh strategy."
 }
 ```
-
-**IMPORTANT:**
-- NEVER use git commands to check project status - read project-config.json instead
-- ALWAYS update project-config.json when completing work
-- Keep summaries concise but informative for BOSS to track progress
 
 ## Git Commit Strategy
 
 **IMPORTANT:** Batch related changes into logical commits to reduce overhead and improve workflow efficiency.
 
-### Batching Guidelines
+### Batching Guidelines for Validation Work
 
-1. **Group files by feature/fix** (not by file type)
-2. **Aim for 1-3 commits per task** instead of 5-10
-3. **Use meaningful commit messages** following Conventional Commits
-4. **Only commit when reaching a logical checkpoint**
+1. **Single commit for validation report**
+2. **Use meaningful commit messages** following Conventional Commits
+3. **Only commit when validation is complete**
 
 ### Good Practice ✅
 
 ```bash
-# Create validation artifacts in one commit
-git add .specify/specs/001-feature/validation-report.md .specify/specs/001-feature/compliance-checks.md
-git commit -m "docs: add validation report and compliance checks"
+# Complete validation in one commit
+git add .specify/specs/[feature]/validation-report.md
+git commit -m "docs: validate plan against constitution - approved with 2 warnings"
 
-# Or batch validation findings
-git add .specify/specs/001-feature/validation-report.md .specify/specs/001-feature/plan.md
-git commit -m "docs: complete validation and update plan with compliance requirements"
+# Or with plan updates if violations were found
+git add .specify/specs/[feature]/validation-report.md .specify/specs/[feature]/plan.md
+git commit -m "docs: validate plan and document required TDD compliance fixes"
 ```
 
 ### Bad Practice ❌
 
 ```bash
-# Individual commits for related work (too granular)
-git add .specify/specs/001-feature/validation-report.md
-git commit -m "docs: add report"
-
-git add .specify/specs/001-feature/compliance-checks.md
-git commit -m "docs: add checks"
-
-git add .specify/specs/001-feature/plan.md
-git commit -m "docs: update plan"
+# Individual commits for validation phases (too granular)
+git commit -m "docs: check TDD"
+git commit -m "docs: check BDD"
+git commit -m "docs: add validation report"
 ```
 
 ### Commit Message Format
 
 Follow Conventional Commits:
 - `docs:` - Documentation changes (primary for reviewer)
-- `fix:` - Compliance issue fixes
 
 ### Expected Behavior
 
-- **Simple task:** 1-2 commits (validation + updates)
-- **Complex task:** 2-3 commits (major validation phases)
-- **Avoid:** 5-10 commits for small changes
+- **Approved plan:** 1 commit (validation report)
+- **Rejected plan:** 1-2 commits (validation report + plan updates if helping planner)
+- **Avoid:** 3+ commits for validation phase
 
-This batching strategy reduces git overhead by ~10-15 seconds per task and creates cleaner commit history.
+This batching strategy reduces git overhead and creates cleaner commit history.
 
+## Environment Operations
+
+All file, code, and shell operations MUST use container-use environments.
+
+- DO NOT use git CLI directly
+- All operations must go through container-use MCP
+- Reference `.claude/commands/`, `.claude/skills/`, and `.claude/agents/` for worker-specific resources
+
+## Success Criteria
+
+✅ Validation report created with all required sections
+✅ TDD compliance checked (test tasks before implementation tasks)
+✅ BDD compliance checked (Given/When/Then format)
+✅ Documentation requirements checked (all docs present)
+✅ Quality gates checked (coverage, mutation scores)
+✅ Clear approval status provided (approved|rejected|retry)
+✅ Specific violations cited with file paths and examples
+✅ project-config.json updated with your summary

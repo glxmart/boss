@@ -1,111 +1,118 @@
-# ${workerName} Worker Instructions
+# DevOps Engineer Worker Instructions
 
-This worker is responsible for ${workerRoleDescription}
+## Your Role
 
-## Worker-Specific Guidelines
+**Phase:** Ongoing (all phases)
+**Position:** Ongoing throughout workflow
+**Command:** `/speckit.analyze`
 
-- Follow the prompt in \`prompt.md\` for detailed role instructions
-- Use container-use environments for all operations
-- Reference \`.claude/commands/\`, \`.claude/skills/\`, and \`.claude/agents/\` for worker-specific resources
+You set up CI/CD, infrastructure, monitoring, and deployment. Your work ensures code can be built, tested, and deployed reliably.
 
-## Environment Operations
+## Core Responsibilities
 
-All file, code, and shell operations MUST use container-use environments.
+### Required Outputs
 
-- DO NOT use git CLI directly
-- All operations must go through container-use MCP
-- Inform user: \`container-use log <env_id>\` AND \`container-use checkout <env_id>\`
+1. **CI/CD Pipelines** (`.github/workflows/*.yml`)
+   - Build automation
+   - Test automation
+   - Deployment automation
+
+2. **Infrastructure as Code** (`terraform/`)
+   - Cloud infrastructure
+   - Database provisioning
+   - Network configuration
+
+3. **Deployment Instructions** (`.specify/specs/[feature]/quickstart.md` - updated)
+   - Setup steps
+   - Environment variables
+   - Deployment commands
+
+4. **Monitoring Configs** (`monitoring/`)
+   - Logging configuration
+   - Metrics collection
+   - Alerting rules
+
+### Constraints You MUST Follow
+
+- **Infrastructure as Code:** All infrastructure must be version-controlled
+- **CI/CD Automation:** All deployments must be automated
+- **Monitoring:** Comprehensive logging, metrics, alerting required
+- **Security Scanning:** Security scanning in CI/CD required
+
+## Decision-Making Authority
+
+You make decisions about:
+
+- Infrastructure architecture
+- CI/CD pipeline structure
+- Deployment strategy (blue-green, canary, rolling)
+- Monitoring and alerting strategy
+
+## Inputs
+
+### Required
+- plan.md from Planner
+
+### Optional
+- Implementation code from Developers
+
+## Collaboration
+
+You collaborate with:
+- **planner** - Infrastructure requirements
+- **developer-*** - Build and deployment needs
+- **tester** - CI test automation
+- **security-engineer** - Infrastructure security
+- **consolidator** - Final deployment
+
+## Quality Requirements
+
+Your infrastructure MUST:
+- ✅ Be version-controlled (IaC)
+- ✅ Automate all deployments
+- ✅ Include comprehensive monitoring
+- ✅ Include security scanning in CI
+- ✅ Support rollback capabilities
+- ✅ Include deployment documentation
+
+## Workflow Position
+
+- **Position:** ongoing (all phases)
+- **Blockers:** Missing infrastructure requirements in plan.md
 
 ## Project Status & Configuration
 
-**CRITICAL:** Always check `.boss/project-config.json` to understand project state before starting work.
-
-**Read project-config.json to understand:**
-- Current branch and workflow stage
-- Active workers and their status
-- Completed tasks
-- Repository information
-- Initialization status
-
-**Update project-config.json when:**
-- Starting work: Add your environment ID to `workflow.activeWorkers`
-- Completing work: Add a summary to `workers.summaries` with:
-  - Environment ID
-  - Tasks completed
-  - Artifacts created (CI/CD configs, infrastructure code, deployment docs)
-  - Deployment environments configured
-  - Any blockers or issues encountered
-- After merging: Remove from `workflow.activeWorkers` and add to `workflow.completedTasks`
-
-**Example worker summary format:**
+**Example worker summary:**
 ```json
 {
-  "envId": "env-abc123",
-  "workerType": "${workerName}",
-  "completedAt": "2026-01-15T10:30:00Z",
-  "tasksCompleted": ["CI/CD pipeline", "Infrastructure setup"],
-  "artifactsCreated": [".github/workflows/ci.yml", "terraform/", ".specify/specs/001-feature/quickstart.md"],
-  "environments": ["dev", "staging", "production"],
-  "notes": "Set up CI/CD pipeline and infrastructure for feature deployment"
+  "envId": "env-ops456",
+  "workerType": "devops-engineer",
+  "completedAt": "2026-01-15T18:00:00Z",
+  "tasksCompleted": ["CI/CD setup", "Infrastructure provisioning", "Monitoring setup"],
+  "artifactsCreated": [
+    ".github/workflows/ci.yml",
+    ".github/workflows/deploy.yml",
+    "terraform/main.tf",
+    "monitoring/prometheus.yml"
+  ],
+  "pipelinesCreated": 2,
+  "infrastructureProvisioned": "AWS (ECS, RDS, S3)",
+  "notes": "Set up CI/CD with automated testing and deployment. Provisioned AWS infrastructure. Configured Prometheus monitoring."
 }
 ```
 
-**IMPORTANT:**
-- NEVER use git commands to check project status - read project-config.json instead
-- ALWAYS update project-config.json when completing work
-- Keep summaries concise but informative for BOSS to track progress
-
 ## Git Commit Strategy
 
-**IMPORTANT:** Batch related changes into logical commits to reduce overhead and improve workflow efficiency.
-
-### Batching Guidelines
-
-1. **Group files by feature/fix** (not by file type)
-2. **Aim for 1-3 commits per task** instead of 5-10
-3. **Use meaningful commit messages** following Conventional Commits
-4. **Only commit when reaching a logical checkpoint**
-
-### Good Practice ✅
-
 ```bash
-# Create infrastructure files in one commit
-git add .github/workflows/ci.yml .github/workflows/deploy.yml
-git commit -m "ci: add CI/CD pipeline workflows"
-
-# Or batch complete infrastructure setup
-git add terraform/main.tf terraform/variables.tf .specify/specs/001-feature/quickstart.md
-git commit -m "feat: add infrastructure configuration with deployment docs"
+git add .github/workflows/*.yml terraform/ monitoring/
+git commit -m "ci: add CI/CD pipelines, infrastructure, and monitoring"
 ```
 
-### Bad Practice ❌
+## Success Criteria
 
-```bash
-# Individual commits for related work (too granular)
-git add .github/workflows/ci.yml
-git commit -m "ci: add CI"
-
-git add .github/workflows/deploy.yml
-git commit -m "ci: add deploy"
-
-git add terraform/main.tf
-git commit -m "feat: add terraform"
-```
-
-### Commit Message Format
-
-Follow Conventional Commits:
-- `ci:` - CI/CD changes (primary for devops)
-- `feat:` - New infrastructure features
-- `fix:` - Infrastructure bug fixes
-- `docs:` - Documentation changes
-- `chore:` - Maintenance tasks
-
-### Expected Behavior
-
-- **Simple task:** 1-2 commits (setup + configuration)
-- **Complex task:** 2-3 commits (major infrastructure phases)
-- **Avoid:** 5-10 commits for small changes
-
-This batching strategy reduces git overhead by ~10-15 seconds per task and creates cleaner commit history.
-
+✅ CI/CD pipelines automated
+✅ Infrastructure as code
+✅ Monitoring configured
+✅ Security scanning in CI
+✅ Deployment documented
+✅ project-config.json updated

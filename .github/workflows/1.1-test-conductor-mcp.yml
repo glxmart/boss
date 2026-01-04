@@ -32,17 +32,17 @@ jobs:
           node-version: 20
           cache: 'pnpm'
 
-      - name: Install dependencies
+      - name: Install dependencies (monorepo)
         run: pnpm install --frozen-lockfile
 
-      - name: Build
-        run: cd conductor-mcp && pnpm build
+      - name: Build (monorepo orchestrated)
+        run: pnpm --filter @glxmart/conductor-mcp build
 
-      - name: Test
-        run: cd conductor-mcp && pnpm test
+      - name: Test (monorepo orchestrated)
+        run: pnpm --filter @glxmart/conductor-mcp test
 
-      - name: Lint
-        run: cd conductor-mcp && pnpm lint
+      - name: Lint (monorepo orchestrated)
+        run: pnpm --filter @glxmart/conductor-mcp lint
 
-      - name: Format check
+      - name: Format check (monorepo)
         run: pnpm format:check

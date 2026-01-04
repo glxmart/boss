@@ -12,86 +12,68 @@ This file provides guidance to Claude Code when working with this project.
 {{#if templateInfo.isMonorepo}}
 ## Monorepo Structure
 
-This is a **Turborepo monorepo** with multiple applications and shared packages.
-
-### Applications
-
-- **apps/web** - Main Next.js application (port 3000)
-- **apps/admin** - Admin dashboard (port 3001)
-
-### Shared Packages
-
-- **packages/ui** - Component library with shadcn/ui + Storybook
-- **packages/database** - Prisma schema and client
-- **packages/trpc** - tRPC routers and type-safe API
-- **packages/auth** - NextAuth.js authentication
-- **packages/config** - Shared ESLint, TypeScript, Tailwind configs
-- **packages/utils** - Shared utility functions
+This is a{{#if templateInfo.monorepoType}} **{{templateInfo.monorepoType}}**{{/if}} monorepo with multiple applications and shared packages.
 
 ### Workspace Commands
 
 ```bash
 # Development
 pnpm dev                    # Run all apps in dev mode
-pnpm dev --filter web       # Run only web app
-pnpm dev --filter admin     # Run only admin app
+pnpm dev --filter <app>     # Run specific app
 
 # Building
 pnpm build                  # Build all apps and packages
-pnpm build --filter web     # Build only web app
+pnpm build --filter <app>   # Build specific app
 
 # Testing
 pnpm test                   # Run all tests
-pnpm test --filter ui       # Test specific package
+pnpm test --filter <package> # Test specific package
+```
 
+{{#if templateInfo.hasDatabase}}
+```bash
 # Database
 pnpm db:generate            # Generate Prisma client
 pnpm db:migrate             # Run database migrations
 pnpm db:push                # Push schema changes
 pnpm db:studio              # Open Prisma Studio
-
-# Storybook
-pnpm storybook              # Run Storybook for UI package
 ```
+{{/if}}
 
-### Adding New Components (shadcn/ui)
+{{#if templateInfo.hasStorybook}}
+```bash
+# Storybook
+pnpm storybook              # Run Storybook
+```
+{{/if}}
+
+{{#if templateInfo.hasShadcn}}
+### Adding Components (shadcn/ui)
 
 ```bash
-# Install component in packages/ui
-cd packages/ui
+# Install component (adjust path based on your structure)
 npx shadcn@latest add <component-name>
 
-# Use in apps
-import { Button } from "@repo/ui/components/button";
+# Use in your app
+import { Button } from "@/components/ui/button";
 ```
+{{/if}}
 
-### Worker-Friendly Patterns
+{{#if templateInfo.hasTRPC}}
+### Working with tRPC
 
-When working as a BOSS worker in this monorepo:
+- Create/update routers in your tRPC router files
+- Add procedures to the root router
+- Use tRPC client in your application
+{{/if}}
 
-1. **Package-scoped changes**: Use `pnpm --filter <package>` commands
-2. **Minimal context**: Only read files in relevant packages
-3. **Clear dependencies**: Update package.json when adding workspace deps
-4. **Batch commits**: Group related changes across packages into single commits
+{{#if templateInfo.hasDatabase}}
+### Database Schema
 
-### Common Workflows
-
-#### Add a new UI component
-1. Create component in `packages/ui/src/components/ui/`
-2. Export from `packages/ui/src/components/index.ts`
-3. Add Storybook story in `packages/ui/src/components/ui/<component>.stories.tsx`
-4. Use in app: `import { Component } from "@repo/ui/components"`
-
-#### Add a new tRPC procedure
-1. Create/update router in `packages/trpc/src/routers/<router>.ts`
-2. Add to root router in `packages/trpc/src/routers/_app.ts`
-3. Use in app via tRPC client
-
-#### Update database schema
-1. Edit `packages/database/prisma/schema.prisma`
-2. Run `pnpm db:generate` to update Prisma client
-3. Create migration: `pnpm --filter database prisma migrate dev`
-4. Test in apps using `@repo/database`
+- Edit Prisma schema file (location depends on your structure)
+- Run `pnpm db:generate` to update Prisma client
+- Create migrations: `pnpm db:migrate dev`
+{{/if}}
 
 {{/if}}
 
@@ -100,7 +82,29 @@ When working as a BOSS worker in this monorepo:
 {{#if templateInfo.isMonorepo}}
 All commands should be run from the project root using pnpm workspace commands.
 {{else}}
-Standard npm/pnpm commands apply.
+Standard npm/pnpm commands apply. Common commands:
+
+```bash
+pnpm dev          # Start development server
+pnpm build        # Build for production
+pnpm start        # Start production server
+pnpm test         # Run tests
+pnpm lint         # Lint code
+pnpm typecheck    # Type check
+```
+{{/if}}
+
+{{#if templateInfo.hasDatabase}}
+{{#unless templateInfo.isMonorepo}}
+### Database Commands
+
+```bash
+pnpm db:generate  # Generate Prisma client
+pnpm db:migrate   # Run database migrations
+pnpm db:push      # Push schema changes (development)
+pnpm db:studio    # Open Prisma Studio
+```
+{{/unless}}
 {{/if}}
 
 ## Quality Gates
@@ -110,50 +114,25 @@ Standard npm/pnpm commands apply.
 
 ## BOSS Integration
 
-This project is configured for BOSS (Business-Orchestrated Software System) workflow:
+This project uses BOSS (Business-Orchestrated Software System) workflow:
 
 - **Constitutional Governance**: Immutable principles in `.specify/constitution.md`
 - **Spec-Kit Integration**: Executable specifications drive development
-- **Worker Isolation**: Development happens in isolated container environments
 - **Quality Automation**: Pre-commit hooks enforce quality gates
 
-### BOSS Workflow Phases
+For BOSS orchestration details, see the BOSS documentation. Worker-specific instructions are configured in `.boss/workers/` directories.
 
-1. **Constitution** - Establish non-negotiable principles
-2. **Clarification** - Gather requirements and constraints
-3. **Specification** - Write executable specifications
-4. **Planning** - Create implementation roadmap
-5. **Validation** - Review specs against constitution
-6. **Task Breakdown** - Parallel task distribution
-7. **Implementation** - Parallel development with quality gates
-8. **Consolidation** - Merge and finalize
+## Documentation
 
-### Working with BOSS
+Additional BOSS documentation is available in the `docs/` directory:
 
-**CRITICAL: BOSS vs Workers Distinction**
-
-**For BOSS (Orchestrator)**:
-- Use Conductor MCP (spawn/manage workers)
-- Use GitHub MCP (ALL GitHub operations)
-- Use Knowledge Base MCP (query patterns)
-- Orchestrate workflow logic and tasks
-- Perform direct git operations when required
-- Create PRs after work is done
-- **CANNOT** do the work directly - must spawn workers
-- **CANNOT** work or push to the main branch
-
-**For Workers (Inside Containers)**:
-- ALL file operations
-- ALL code execution
-- Full development capabilities
-- Workers ALWAYS use Container-Use MCP environments
-- Execute tasks in isolated containers
-- Work on dedicated feature branches
-
-**General Workflow**:
-- Main branch is protected - all work in feature branches
-- Quality gates run automatically on pre-commit
-- Use GitHub MCP for all repository operations
+- **[Conductor MCP](docs/conductor.md)** - How BOSS uses Conductor to orchestrate workers
+- **[Workflow](docs/workflow.md)** - Branch management and workflow processes
+- **[Workers](docs/workers.md)** - Available workers and their roles
+- **[GitHub Operations](docs/github-operations.md)** - Repository management and PR creation
+- **[Spec-Kit](docs/spec-kit.md)** - Specification-driven development commands
+- **[Quality Standards](docs/quality-standards.md)** - Testing and quality requirements
+- **[Initialization](docs/initialization.md)** - Initial project setup workflow
 
 ## Best Practices
 
@@ -179,7 +158,7 @@ This project is configured for BOSS (Business-Orchestrated Software System) work
 - Use conventional commits (feat, fix, docs, etc.)
 - Keep commits atomic and focused
 {{#if templateInfo.isMonorepo}}
-- Scope commits to packages: `feat(ui): add new button variant`
+- Scope commits to packages: `feat(package-name): description`
 {{/if}}
 - Pre-commit hooks will run quality checks
 
@@ -188,28 +167,32 @@ This project is configured for BOSS (Business-Orchestrated Software System) work
 
 ### Docker
 
-Build images:
-```bash
-# Web app
-docker build -f docker/Dockerfile.web -t {{config.name}}-web .
+Build and run containers:
 
-# Admin app
-docker build -f docker/Dockerfile.admin -t {{config.name}}-admin .
+```bash
+# Build Docker image
+docker build -t {{config.name}} .
+
+# Or use docker-compose
+docker-compose up
 ```
+
+{{#if templateInfo.isMonorepo}}
+For monorepo projects, check for multiple Dockerfiles in the `docker/` directory.
+{{/if}}
 
 ### Kamal
 
-Deploy to production:
+{{#if templateInfo.isMonorepo}}
+Deploy to production using Kamal. Check `extras/config/kamal/` for configuration files.
+{{else}}
+Deploy to production using Kamal. See Kamal documentation for setup.
+{{/if}}
+
 ```bash
-# Setup environment
-cp extras/config/kamal/_env .env
-# Edit .env with your values
-
-# Deploy
 kamal setup           # First-time setup
-./scripts/deploy.sh   # Deploy all apps
+kamal deploy          # Deploy application
 ```
-
 {{/if}}
 
 ## Environment Variables
@@ -222,12 +205,11 @@ kamal setup           # First-time setup
 
 {{/if}}
 {{#if templateInfo.hasDatabase}}
-### Database (Prisma + PostgreSQL)
+### Database (Prisma)
 
-- `DATABASE_URL` - PostgreSQL connection string
+- `DATABASE_URL` - Database connection string (format depends on your database)
 
 {{/if}}
-
 See `.env.example` for complete list of environment variables.
 
 ## Troubleshooting
@@ -239,19 +221,24 @@ See `.env.example` for complete list of environment variables.
 - **Type errors after updating packages**: Run `pnpm build` from root
 - **Workspace dependency issues**: Delete `node_modules` and run `pnpm install`
 
+{{/if}}
+{{#if templateInfo.hasDatabase}}
 ### Prisma Issues
 
-- **Client not found**: Run `pnpm db:generate` from root
+- **Client not found**: Run `pnpm db:generate`{{#if templateInfo.isMonorepo}} from root{{/if}}
 - **Schema drift**: Run `pnpm db:push` for development or `pnpm db:migrate` for production
 
 {{/if}}
-
 ## Additional Resources
 
+{{#if templateInfo.isMonorepo}}
 - [Turborepo Documentation](https://turbo.build/repo/docs)
+{{/if}}
 {{#if templateInfo.hasShadcn}}
 - [shadcn/ui Documentation](https://ui.shadcn.com)
+{{#if templateInfo.isMonorepo}}
 - [shadcn/ui Monorepo Guide](https://ui.shadcn.com/docs/monorepo)
+{{/if}}
 {{/if}}
 {{#if templateInfo.hasTRPC}}
 - [tRPC Documentation](https://trpc.io)
@@ -262,4 +249,6 @@ See `.env.example` for complete list of environment variables.
 {{#if templateInfo.hasStorybook}}
 - [Storybook Documentation](https://storybook.js.org)
 {{/if}}
+{{#if templateInfo.hasDocker}}
 - [Kamal Documentation](https://kamal-deploy.org)
+{{/if}}

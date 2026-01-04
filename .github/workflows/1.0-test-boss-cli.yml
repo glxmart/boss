@@ -32,17 +32,17 @@ jobs:
           node-version: 20
           cache: 'pnpm'
 
-      - name: Install dependencies
+      - name: Install dependencies (monorepo)
         run: pnpm install --frozen-lockfile
 
-      - name: Build
-        run: cd boss-cli && pnpm build
+      - name: Build (monorepo orchestrated)
+        run: pnpm --filter @glxmart/boss-cli build
 
-      - name: Test
-        run: cd boss-cli && pnpm test
+      - name: Test (monorepo orchestrated)
+        run: pnpm --filter @glxmart/boss-cli test
 
-      - name: Lint
-        run: cd boss-cli && pnpm lint
+      - name: Lint (monorepo orchestrated)
+        run: pnpm --filter @glxmart/boss-cli lint
 
-      - name: Format check
+      - name: Format check (monorepo)
         run: pnpm format:check

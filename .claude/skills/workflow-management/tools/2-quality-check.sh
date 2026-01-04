@@ -5,7 +5,11 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$(cd "$SKILL_DIR/../../.." && pwd)"
+
+# Change to project root
+cd "$PROJECT_ROOT"
 
 # Colors
 GREEN='\033[0;32m'
@@ -62,7 +66,13 @@ echo ""
 
 # 5. Security check
 echo -e "${BLUE}🔒 Running security checks...${NC}"
-if "$SCRIPT_DIR/security-check.sh"; then
+# Reference quality-gates skill (fallback to old location if not yet migrated)
+SECURITY_CHECK_SCRIPT="${PROJECT_ROOT}/.claude/skills/quality-gates/tools/security-check.sh"
+if [[ ! -f "$SECURITY_CHECK_SCRIPT" ]]; then
+  SECURITY_CHECK_SCRIPT="${PROJECT_ROOT}/scripts/security-check.sh"
+fi
+
+if "$SECURITY_CHECK_SCRIPT"; then
   echo -e "${GREEN}✅ Security checks passed${NC}"
 else
   echo -e "${YELLOW}⚠️  Security checks found warnings (not blocking)${NC}"
@@ -74,8 +84,8 @@ if [[ $FAILED -eq 0 ]]; then
   echo -e "${GREEN}✅ All quality checks passed!${NC}"
   echo ""
   echo -e "${BLUE}Next steps:${NC}"
-  echo "  1. Create changeset: scripts/3-create-changeset.sh"
-  echo "  2. Create PR: scripts/4-create-pr.sh"
+  echo "  1. Create changeset: .claude/skills/workflow-management/tools/3-create-changeset.sh"
+  echo "  2. Create PR: .claude/skills/workflow-management/tools/4-create-pr.sh"
   exit 0
 else
   echo -e "${RED}❌ Quality checks failed. Fix the errors above before proceeding.${NC}"

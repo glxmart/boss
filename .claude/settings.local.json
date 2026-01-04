@@ -55,7 +55,17 @@
       "mcp__github__get_pull_request_status",
       "Edit(.github/**)",
       "Skill(2-quality-check)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(node boss-cli/dist/index.js bootstrap:*)",
+      "Bash(pushd:*)",
+      "Bash(popd:*)",
+      "Bash(git -C /Users/joe/code-glx/boss branch:*)",
+      "Bash(git -C /Users/joe/code-glx/boss add:*)",
+      "Bash(git -C /Users/joe/code-glx/boss status --short)",
+      "Bash(git -C /Users/joe/code-glx/boss log --oneline -1)",
+      "Bash(/Users/joe/code-glx/boss/test-bootstrap.sh)",
+      "Bash(bash:*)",
+      "Bash(node /Users/joe/code-glx/boss/boss-cli/dist/index.js:*)"
     ],
     "deny": [
       "Bash(op read:*)",

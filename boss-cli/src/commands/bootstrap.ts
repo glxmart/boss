@@ -212,14 +212,11 @@ export async function bootstrapCommand(options: BootstrapOptions): Promise<void>
     logger.success(`Project "${config.name}" has been bootstrapped successfully!`);
     logger.info(`\nNext steps:`);
     logger.info(`  1. cd ${config.name}`);
+    logger.info(`  2. docker-compose up -d`);
+    logger.info(`  3. Run: ./start-boss.sh`);
+    logger.info(`     (This will install dependencies and launch Claude Code/Cursor)`);
     logger.info(
-      `  2. pnpm install (installs dependencies and initializes Husky via prepare script)`
-    );
-    logger.info(`  3. docker-compose up -d`);
-    logger.info(`  4. Open project in Claude Code/Cursor`);
-    logger.info(`  5. Run: ./start-boss.sh`);
-    logger.info(
-      `  6. BOSS will complete initial setup (GitHub repo, remote, branch protection, etc.)`
+      `  4. BOSS will automatically complete initial setup (GitHub repo, remote, branch protection)`
     );
   } catch (error) {
     logger.error(`Bootstrap failed: ${error instanceof Error ? error.message : String(error)}`);

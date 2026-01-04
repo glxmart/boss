@@ -1,0 +1,1 @@
+../.claude/skills/github-ops/tools/gh-with-1password.sh

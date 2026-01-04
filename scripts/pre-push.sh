@@ -116,6 +116,31 @@ if [ $test_failed -eq 1 ]; then
   exit 1
 fi
 
+# Run integration tests (to catch template/bootstrap issues before CI)
+# Skip for first empty push to main
+if [ "$FIRST_PUSH_TO_MAIN" != "true" ]; then
+  echo "  ✓ Running integration tests..."
+  integration_failed=0
+
+  # Run boss-cli integration tests
+  if ! pnpm --filter @glxmart/boss-cli test:integration > /dev/null 2>&1; then
+    echo "❌ Integration tests failing in boss-cli. Fix them before pushing."
+    pnpm --filter @glxmart/boss-cli test:integration
+    integration_failed=1
+  fi
+
+  # Run conductor-mcp integration tests
+  if ! pnpm --filter @glxmart/conductor-mcp test:integration > /dev/null 2>&1; then
+    echo "❌ Integration tests failing in conductor-mcp. Fix them before pushing."
+    pnpm --filter @glxmart/conductor-mcp test:integration
+    integration_failed=1
+  fi
+
+  if [ $integration_failed -eq 1 ]; then
+    exit 1
+  fi
+fi
+
 # Warn if no tests in staged commits (skip for first empty push to main)
 if [ "$FIRST_PUSH_TO_MAIN" != "true" ]; then
   echo "  ✓ Checking for tests..."

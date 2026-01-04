@@ -69,7 +69,9 @@
       "Bash(for i in 1 2 3 4)",
       "Bash(do ln -s ../.claude/skills/workflow-management/tools/$i-*.sh .)",
       "Bash(done)",
-      "Bash(./.claude/skills/workflow-management/tools/4-create-pr.sh:*)"
+      "Bash(./.claude/skills/workflow-management/tools/4-create-pr.sh:*)",
+      "Bash(./.claude/skills/workflow-management/tools/1-start-feature.sh:*)",
+      "Bash(./.claude/skills/workflow-management/tools/2-quality-check.sh:*)"
     ],
     "deny": [
       "Bash(op read:*)",

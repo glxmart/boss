@@ -227,6 +227,9 @@ async function loadMonorepoTemplate(
     'package.json',
     'apps/web/package.json',
     'apps/admin/package.json',
+    'apps/web/app/layout.tsx',
+    'apps/web/app/page.tsx',
+    'apps/admin/app/layout.tsx',
     'config/kamal/deploy.yml',
     'docker/Dockerfile.web',
   ];

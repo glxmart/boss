@@ -20,12 +20,12 @@
     "db:studio": "prisma studio"
   },
   "dependencies": {
-    "@prisma/client": "^5.24.0"
+    "@prisma/client": "^5.19.1"
   },
   "devDependencies": {
     "@repo/config": "workspace:*",
     "@vitest/coverage-v8": "^4.0.16",
-    "prisma": "^5.24.0",
+    "prisma": "^5.19.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.16"
   }

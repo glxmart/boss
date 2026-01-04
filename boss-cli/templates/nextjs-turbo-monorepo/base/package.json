@@ -56,7 +56,7 @@
       "esbuild"
     ],
     "overrides": {
-      "@prisma/engines": "5.24.0"
+      "@prisma/engines": "5.19.1"
     }
   }
 }

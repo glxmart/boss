@@ -12,6 +12,24 @@ This skill helps diagnose and troubleshoot GitHub Actions workflow failures usin
 
 ## Quick Start
 
+### Option 1: Automated Script (Recommended)
+
+Run the automated troubleshooting script:
+
+```bash
+.claude/skills/workflow-debugging/troubleshoot-workflows.sh
+```
+
+The script will:
+
+- List recent workflow runs with status
+- Identify failed runs automatically
+- Fetch and display detailed failure logs
+- Provide actionable recommendations
+- Suggest local reproduction commands
+
+### Option 2: Ask Claude
+
 Ask Claude to troubleshoot workflows:
 
 - "Troubleshoot workflow failures"
@@ -417,9 +435,9 @@ WebFetch({
 
 ## Common Gotchas
 
-### 1. Missing gh-with-1password.sh Script
+### 1. Correct gh-with-1password.sh Script Path
 
-**Issue**: Trying to use `./scripts/gh-with-1password.sh` which doesn't exist
+**Issue**: Trying to use `./scripts/gh-with-1password.sh` which doesn't exist at that path
 
 **Error**:
 
@@ -428,11 +446,26 @@ WebFetch({
 # Error: no such file or directory: ./scripts/gh-with-1password.sh
 ```
 
-**Solution**: Use `op run --env-file=.env -- gh` directly instead:
+**Solution**: The script exists at `.claude/skills/github-ops/tools/gh-with-1password.sh`
+
+**Option A (Recommended)**: Use the correct script path:
+
+```bash
+.claude/skills/github-ops/tools/gh-with-1password.sh run list --branch feature/my-branch
+.claude/skills/github-ops/tools/gh-with-1password.sh run view <run-id> --log-failed
+```
+
+**Option B**: Use `op run --env-file=.env -- gh` directly:
 
 ```bash
 op run --env-file=.env -- gh run list --branch feature/my-branch
 op run --env-file=.env -- gh run view <run-id> --log-failed
+```
+
+**Option C (Best)**: Use the automated troubleshooting script:
+
+```bash
+.claude/skills/workflow-debugging/troubleshoot-workflows.sh
 ```
 
 ### 2. Run IDs vs Display Numbers

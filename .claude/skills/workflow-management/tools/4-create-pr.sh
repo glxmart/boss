@@ -67,6 +67,32 @@ else
   fi
 fi
 
+# Optional: Run quality checks before pushing
+echo ""
+read -p "Run quality checks before pushing? (recommended) (y/n) " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+  echo ""
+  echo -e "${BLUE}🔍 Running quality checks...${NC}"
+
+  if ! "$PROJECT_ROOT/.claude/skills/workflow-management/tools/2-quality-check.sh"; then
+    echo ""
+    echo -e "${RED}❌ Quality checks failed${NC}"
+    echo ""
+    echo -e "${YELLOW}Fix the issues before creating a PR, or skip checks at your own risk.${NC}"
+    echo ""
+    read -p "Continue anyway? (not recommended) (y/n) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+      echo -e "${RED}❌ Aborted. Fix issues and try again.${NC}"
+      exit 1
+    fi
+  else
+    echo ""
+    echo -e "${GREEN}✅ Quality checks passed${NC}"
+  fi
+fi
+
 # Generate PR title from branch name
 PR_TITLE=$(echo "$CURRENT_BRANCH" | sed -E 's|^([^/]+)/(.+)$|\1: \2|' | sed 's/-/ /g')
 echo ""
@@ -119,7 +145,56 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 # Push branch
 echo ""
 echo -e "${BLUE}📤 Pushing branch to origin...${NC}"
-git push -u origin "$CURRENT_BRANCH"
+
+# Try to push, capture exit code
+if ! git push -u origin "$CURRENT_BRANCH" 2>&1 | tee /tmp/push-output.txt; then
+  PUSH_EXIT_CODE=$?
+  PUSH_OUTPUT=$(cat /tmp/push-output.txt)
+
+  # Check if it was a pre-push hook failure
+  if echo "$PUSH_OUTPUT" | grep -q "pre-push"; then
+    echo ""
+    echo -e "${RED}❌ Pre-push hook failed (quality gates)${NC}"
+    echo ""
+    echo -e "${YELLOW}The pre-push hook runs quality checks (build, lint, tests) before pushing.${NC}"
+    echo ""
+
+    # Check what failed
+    if echo "$PUSH_OUTPUT" | grep -q "Integration tests failing"; then
+      echo -e "${YELLOW}Integration tests are failing. You need to fix them first.${NC}"
+    elif echo "$PUSH_OUTPUT" | grep -q "test:integration"; then
+      echo -e "${YELLOW}Integration tests are failing. You need to fix them first.${NC}"
+    fi
+
+    echo ""
+    echo -e "${BLUE}Options:${NC}"
+    echo "  1. ${GREEN}Fix the issues (recommended)${NC}"
+    echo "     - Run tests locally: pnpm test:integration"
+    echo "     - Fix failing tests"
+    echo "     - Commit fixes"
+    echo "     - Re-run this script"
+    echo ""
+    echo "  2. ${YELLOW}Skip quality gates (emergency only - NOT recommended)${NC}"
+    echo "     - git push -u origin $CURRENT_BRANCH --no-verify"
+    echo "     - Then re-run this script"
+    echo ""
+    echo -e "${RED}⚠️  Skipping quality gates means pushing potentially broken code!${NC}"
+    echo ""
+
+    rm -f /tmp/push-output.txt
+    exit 1
+  else
+    # Some other push error
+    echo ""
+    echo -e "${RED}❌ Push failed${NC}"
+    echo "$PUSH_OUTPUT"
+    rm -f /tmp/push-output.txt
+    exit 1
+  fi
+fi
+
+rm -f /tmp/push-output.txt
+echo -e "${GREEN}✅ Branch pushed successfully${NC}"
 
 # Create PR using 1Password
 echo ""

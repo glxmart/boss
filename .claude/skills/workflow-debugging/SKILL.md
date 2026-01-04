@@ -415,6 +415,123 @@ WebFetch({
 });
 ```
 
+## Common Gotchas
+
+### 1. Missing gh-with-1password.sh Script
+
+**Issue**: Trying to use `./scripts/gh-with-1password.sh` which doesn't exist
+
+**Error**:
+
+```bash
+./scripts/gh-with-1password.sh run view 31 --log-failed
+# Error: no such file or directory: ./scripts/gh-with-1password.sh
+```
+
+**Solution**: Use `op run --env-file=.env -- gh` directly instead:
+
+```bash
+op run --env-file=.env -- gh run list --branch feature/my-branch
+op run --env-file=.env -- gh run view <run-id> --log-failed
+```
+
+### 2. Run IDs vs Display Numbers
+
+**Issue**: Using sequential run numbers (31, 32, 33) instead of actual GitHub Actions run IDs
+
+**Error**:
+
+```bash
+op run --env-file=.env -- gh run view 31 --log-failed
+# Error: HTTP 404: Not Found (https://api.github.com/repos/glxmart/boss/actions/runs/31)
+```
+
+**Why**: The numbers shown in `gh run list` are just sequential display numbers, NOT the actual run IDs
+
+**Solution**: Use `--json` flag to get the actual `databaseId`:
+
+```bash
+# Get actual run IDs
+op run --env-file=.env -- gh run list --branch feature/my-branch --limit 10 --json databaseId,displayTitle,conclusion,workflowName,createdAt,status
+
+# Returns something like:
+# [
+#   {"databaseId": 20687791548, "displayTitle": "feat: ...", "conclusion": "failure", ...},
+#   {"databaseId": 20687791547, "displayTitle": "feat: ...", "conclusion": "success", ...}
+# ]
+
+# Then use the actual databaseId:
+op run --env-file=.env -- gh run view 20687791548 --log-failed
+```
+
+### 3. Getting Detailed Failure Logs
+
+**Issue**: Not knowing which run ID to use or how to get specific failure logs
+
+**Solution**: Follow this workflow:
+
+```bash
+# Step 1: List recent runs with actual IDs
+op run --env-file=.env -- gh run list \
+  --branch feature/my-branch \
+  --limit 10 \
+  --json databaseId,displayTitle,conclusion,workflowName,createdAt,status
+
+# Step 2: Identify failed runs (conclusion: "failure")
+# Look for runs where "conclusion": "failure"
+
+# Step 3: Get detailed logs for failed run
+op run --env-file=.env -- gh run view <databaseId> --log-failed
+
+# Example:
+op run --env-file=.env -- gh run view 20687791548 --log-failed
+```
+
+### 4. Pre-Commit Hook Errors
+
+**Issue**: Getting "PreToolUse:Bash hook error" messages that make output hard to read
+
+**Why**: The `.claude/hooks/pre-tool-use` hook runs before every bash command
+
+**Solution**: This is normal - the hook output appears but doesn't affect the command execution. The actual output follows after the hook messages.
+
+### 5. Common Workflow Failure Patterns
+
+**Changeset Check Failures**:
+
+- **Cause**: Code changes detected but no changeset file added
+- **Fix**: Create a changeset file in `.changeset/` directory:
+
+  ```bash
+  # Manually create changeset (interactive doesn't work in CLI)
+  cat > .changeset/my-changeset.md << 'EOF'
+  ---
+  '@glxmart/boss-cli': minor
+  ---
+
+  Description of changes here
+  EOF
+  ```
+
+**Prettier Format Failures**:
+
+- **Cause**: Files not formatted according to prettier rules
+- **Fix**: Run prettier on the affected files:
+  ```bash
+  pnpm prettier --write "path/to/file.md"
+  # Or format all files:
+  pnpm format
+  ```
+- **Prevention**: Update `lint-staged` pattern to include hidden directories:
+  ```json
+  {
+    "lint-staged": {
+      "**/*.{ts,tsx,js,jsx,json,md,yml,yaml}": ["prettier --write"]
+    }
+  }
+  ```
+  Note: Use `**/*.{...}` not `*.{...}` to match files in `.claude/` and other hidden directories
+
 ## Integration with Workflow
 
 The workflow-debugging skill integrates with:

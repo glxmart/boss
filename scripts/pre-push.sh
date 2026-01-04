@@ -136,6 +136,13 @@ if [ "$FIRST_PUSH_TO_MAIN" != "true" ]; then
     integration_failed=1
   fi
 
+  # Run conductor-mcp E2E tests
+  if ! pnpm --filter @glxmart/conductor-mcp test:e2e > /dev/null 2>&1; then
+    echo "❌ E2E tests failing in conductor-mcp. Fix them before pushing."
+    pnpm --filter @glxmart/conductor-mcp test:e2e
+    integration_failed=1
+  fi
+
   if [ $integration_failed -eq 1 ]; then
     exit 1
   fi

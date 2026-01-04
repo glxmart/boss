@@ -1,6 +1,23 @@
 #!/usr/bin/env bash
 # Create Pull Request
 # Creates a PR using 1Password credentials
+#
+# Usage:
+#   4-create-pr.sh [OPTIONS]
+#
+# Options:
+#   --title "PR Title"         Override auto-generated PR title
+#   --skip-quality-check      Skip quality checks before push
+#   --no-verify               Skip git pre-push hooks (emergency only)
+#   --skip-changeset          Continue without changeset (auto-add label)
+#   --auto-commit "message"   Auto-commit uncommitted changes
+#   --help                    Show this help message
+#
+# Examples:
+#   4-create-pr.sh
+#   4-create-pr.sh --title "fix: critical bug in template loader"
+#   4-create-pr.sh --skip-quality-check --no-verify
+#   4-create-pr.sh --auto-commit "chore: update docs"
 
 set -euo pipefail
 
@@ -18,6 +35,48 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
+# Default options
+CUSTOM_TITLE=""
+SKIP_QUALITY_CHECK=false
+NO_VERIFY=false
+SKIP_CHANGESET=false
+AUTO_COMMIT=""
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --title)
+      CUSTOM_TITLE="$2"
+      shift 2
+      ;;
+    --skip-quality-check)
+      SKIP_QUALITY_CHECK=true
+      shift
+      ;;
+    --no-verify)
+      NO_VERIFY=true
+      shift
+      ;;
+    --skip-changeset)
+      SKIP_CHANGESET=true
+      shift
+      ;;
+    --auto-commit)
+      AUTO_COMMIT="$2"
+      shift 2
+      ;;
+    --help)
+      sed -n '/^# Usage:/,/^$/p' "$0" | sed 's/^# //g'
+      exit 0
+      ;;
+    *)
+      echo -e "${RED}❌ Unknown option: $1${NC}"
+      echo "Use --help for usage information"
+      exit 1
+      ;;
+  esac
+done
+
 echo -e "${BLUE}📝 Creating Pull Request${NC}"
 echo ""
 
@@ -30,23 +89,27 @@ fi
 
 # Check for uncommitted changes
 if [[ -n $(git status --porcelain) ]]; then
-  echo -e "${YELLOW}⚠️  You have uncommitted changes:${NC}"
-  git status --short
-  echo ""
-  read -p "Commit them first? (y/n) " -n 1 -r
-  echo
-  if [[ $REPLY =~ ^[Yy]$ ]]; then
+  if [[ -n "$AUTO_COMMIT" ]]; then
+    echo -e "${BLUE}📝 Auto-committing changes:${NC}"
+    git status --short
     echo ""
-    read -p "Commit message: " COMMIT_MSG
     git add .
-    git commit -m "$COMMIT_MSG"
+    git commit -m "$AUTO_COMMIT"
+    echo -e "${GREEN}✅ Changes committed${NC}"
   else
-    echo -e "${RED}❌ Please commit or stash changes before creating PR${NC}"
+    echo -e "${RED}❌ You have uncommitted changes:${NC}"
+    git status --short
+    echo ""
+    echo -e "${YELLOW}Options:${NC}"
+    echo "  1. Commit them manually: git add . && git commit -m \"message\""
+    echo "  2. Use --auto-commit \"message\" flag"
+    echo "  3. Stash them: git stash"
     exit 1
   fi
 fi
 
 # Get latest git log for context
+echo ""
 echo -e "${BLUE}📋 Recent commits:${NC}"
 git log --oneline -5
 echo ""
@@ -57,52 +120,49 @@ if [[ -n "$CHANGESET_FILES" ]]; then
   echo -e "${GREEN}✅ Found changeset(s):${NC}"
   echo "$CHANGESET_FILES"
   echo ""
+elif [[ "$SKIP_CHANGESET" == true ]]; then
+  echo -e "${YELLOW}⚠️  No changeset found (will add skip-changeset label)${NC}"
+  echo ""
 else
-  echo -e "${YELLOW}⚠️  No changeset found${NC}"
-  read -p "Continue without changeset? You'll need to add 'skip-changeset' label. (y/n) " -n 1 -r
-  echo
-  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo -e "${RED}❌ Aborted. Run .claude/skills/workflow-management/tools/3-create-changeset.sh first${NC}"
-    exit 1
-  fi
+  echo -e "${RED}❌ No changeset found${NC}"
+  echo ""
+  echo -e "${YELLOW}Options:${NC}"
+  echo "  1. Create changeset: .claude/skills/workflow-management/tools/3-create-changeset.sh"
+  echo "  2. Use --skip-changeset flag (docs/tests/config only)"
+  exit 1
 fi
 
-# Optional: Run quality checks before pushing
-echo ""
-read -p "Run quality checks before pushing? (recommended) (y/n) " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
+# Quality checks
+if [[ "$SKIP_QUALITY_CHECK" == true ]]; then
+  echo -e "${YELLOW}⚠️  Skipping quality checks (--skip-quality-check flag)${NC}"
   echo ""
+else
   echo -e "${BLUE}🔍 Running quality checks...${NC}"
 
   if ! "$PROJECT_ROOT/.claude/skills/workflow-management/tools/2-quality-check.sh"; then
     echo ""
     echo -e "${RED}❌ Quality checks failed${NC}"
     echo ""
-    echo -e "${YELLOW}Fix the issues before creating a PR, or skip checks at your own risk.${NC}"
-    echo ""
-    read -p "Continue anyway? (not recommended) (y/n) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-      echo -e "${RED}❌ Aborted. Fix issues and try again.${NC}"
-      exit 1
-    fi
-  else
-    echo ""
-    echo -e "${GREEN}✅ Quality checks passed${NC}"
+    echo -e "${YELLOW}Options:${NC}"
+    echo "  1. Fix the issues and re-run"
+    echo "  2. Use --skip-quality-check flag (not recommended)"
+    exit 1
   fi
+
+  echo ""
+  echo -e "${GREEN}✅ Quality checks passed${NC}"
+  echo ""
 fi
 
-# Generate PR title from branch name
-PR_TITLE=$(echo "$CURRENT_BRANCH" | sed -E 's|^([^/]+)/(.+)$|\1: \2|' | sed 's/-/ /g')
-echo ""
-echo -e "${BLUE}Suggested PR title:${NC} $PR_TITLE"
-read -p "Use this title? (y/n) " -n 1 -r
-echo
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-  echo ""
-  read -p "Enter PR title: " PR_TITLE
+# Generate PR title
+if [[ -n "$CUSTOM_TITLE" ]]; then
+  PR_TITLE="$CUSTOM_TITLE"
+  echo -e "${BLUE}Using custom PR title:${NC} $PR_TITLE"
+else
+  PR_TITLE=$(echo "$CURRENT_BRANCH" | sed -E 's|^([^/]+)/(.+)$|\1: \2|' | sed 's/-/ /g')
+  echo -e "${BLUE}Auto-generated PR title:${NC} $PR_TITLE"
 fi
+echo ""
 
 # Generate PR body
 PR_BODY="## Summary
@@ -143,11 +203,16 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 "
 
 # Push branch
-echo ""
 echo -e "${BLUE}📤 Pushing branch to origin...${NC}"
 
+PUSH_CMD="git push -u origin $CURRENT_BRANCH"
+if [[ "$NO_VERIFY" == true ]]; then
+  echo -e "${YELLOW}⚠️  Skipping pre-push hooks (--no-verify flag)${NC}"
+  PUSH_CMD="$PUSH_CMD --no-verify"
+fi
+
 # Try to push, capture exit code
-if ! git push -u origin "$CURRENT_BRANCH" 2>&1 | tee /tmp/push-output.txt; then
+if ! eval "$PUSH_CMD" 2>&1 | tee /tmp/push-output.txt; then
   PUSH_EXIT_CODE=$?
   PUSH_OUTPUT=$(cat /tmp/push-output.txt)
 
@@ -160,23 +225,14 @@ if ! git push -u origin "$CURRENT_BRANCH" 2>&1 | tee /tmp/push-output.txt; then
     echo ""
 
     # Check what failed
-    if echo "$PUSH_OUTPUT" | grep -q "Integration tests failing"; then
-      echo -e "${YELLOW}Integration tests are failing. You need to fix them first.${NC}"
-    elif echo "$PUSH_OUTPUT" | grep -q "test:integration"; then
-      echo -e "${YELLOW}Integration tests are failing. You need to fix them first.${NC}"
+    if echo "$PUSH_OUTPUT" | grep -q "Integration tests failing\|test:integration"; then
+      echo -e "${YELLOW}Integration tests are failing.${NC}"
     fi
 
     echo ""
-    echo -e "${BLUE}Options:${NC}"
-    echo "  1. ${GREEN}Fix the issues (recommended)${NC}"
-    echo "     - Run tests locally: pnpm test:integration"
-    echo "     - Fix failing tests"
-    echo "     - Commit fixes"
-    echo "     - Re-run this script"
-    echo ""
-    echo "  2. ${YELLOW}Skip quality gates (emergency only - NOT recommended)${NC}"
-    echo "     - git push -u origin $CURRENT_BRANCH --no-verify"
-    echo "     - Then re-run this script"
+    echo -e "${YELLOW}Options:${NC}"
+    echo "  1. Fix the issues and re-run: 4-create-pr.sh"
+    echo "  2. Skip hooks (emergency only): 4-create-pr.sh --no-verify"
     echo ""
     echo -e "${RED}⚠️  Skipping quality gates means pushing potentially broken code!${NC}"
     echo ""
@@ -195,6 +251,7 @@ fi
 
 rm -f /tmp/push-output.txt
 echo -e "${GREEN}✅ Branch pushed successfully${NC}"
+echo ""
 
 # Create PR using 1Password
 echo ""
@@ -218,19 +275,16 @@ if op run --env-file=.env -- gh pr create \
     echo ""
 
     # Add skip-changeset label if needed
-    if [[ -z "$CHANGESET_FILES" ]]; then
-      read -p "Add 'skip-changeset' label? (y/n) " -n 1 -r
-      echo
-      if [[ $REPLY =~ ^[Yy]$ ]]; then
-        op run --env-file=.env -- gh pr edit "$PR_NUMBER" --add-label skip-changeset
-        echo -e "${GREEN}✅ Added skip-changeset label${NC}"
-      fi
+    if [[ -z "$CHANGESET_FILES" ]] || [[ "$SKIP_CHANGESET" == true ]]; then
+      echo -e "${BLUE}Adding skip-changeset label...${NC}"
+      op run --env-file=.env -- gh pr edit "$PR_NUMBER" --add-label skip-changeset
+      echo -e "${GREEN}✅ Added skip-changeset label${NC}"
+      echo ""
     fi
 
-    echo ""
     echo -e "${BLUE}Next steps:${NC}"
-    echo "  1. Monitor workflow runs: op run --env-file=.env -- gh run list --branch $CURRENT_BRANCH"
-    echo "  2. View PR: op run --env-file=.env -- gh pr view $PR_NUMBER"
+    echo "  1. View PR: op run --env-file=.env -- gh pr view $PR_NUMBER --web"
+    echo "  2. Monitor workflow runs: op run --env-file=.env -- gh run list --branch $CURRENT_BRANCH"
     echo "  3. Wait for review and approval"
     echo "  4. Merge when ready: op run --env-file=.env -- gh pr merge $PR_NUMBER --squash --delete-branch"
   fi

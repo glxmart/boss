@@ -36,6 +36,7 @@ pnpm run workflow:3-changeset
 
 # 5. Create pull request
 pnpm run workflow:4-pr
+# → Runs quality checks (skip with --skip-quality-check)
 # → Uses 1Password for GitHub auth
 # → Creates PR with conventional format
 # → Triggers CI workflows
@@ -183,19 +184,56 @@ Add parallel worker spawning support
 
 ### 4️⃣ Create PR (`4-create-pr.sh`)
 
-**Purpose**: Create GitHub PR using 1Password credentials.
+**Purpose**: Create GitHub PR using 1Password credentials (non-interactive, parameter-based).
 
 **What it does**:
 
-1. Checks for uncommitted changes
+1. Checks for uncommitted changes (auto-commit with `--auto-commit`)
 2. Shows recent commits
-3. Detects changeset files
-4. Generates PR title and body
-5. Pushes branch to origin
-6. Creates PR using `op run --env-file=.env -- gh pr create`
-7. Optionally adds `skip-changeset` label
+3. Detects changeset files (or skip with `--skip-changeset`)
+4. Runs quality checks (or skip with `--skip-quality-check`)
+5. Generates PR title (auto or custom with `--title`)
+6. Pushes branch to origin (with optional `--no-verify`)
+7. Creates PR using `op run --env-file=.env -- gh pr create`
+8. Automatically adds `skip-changeset` label if needed
 
-**Example interaction**:
+**Options**:
+
+```bash
+--title "PR Title"         # Override auto-generated PR title
+--skip-quality-check      # Skip quality checks before push
+--no-verify               # Skip git pre-push hooks (emergency only)
+--skip-changeset          # Continue without changeset (auto-add label)
+--auto-commit "message"   # Auto-commit uncommitted changes
+--help                    # Show help message
+```
+
+**Example usage**:
+
+```bash
+# Basic usage (auto-generated title, runs quality checks)
+$ pnpm run workflow:4-pr
+
+# Custom PR title
+$ pnpm run workflow:4-pr --title "fix: critical bug in template loader"
+
+# Skip quality checks (if already run separately)
+$ pnpm run workflow:4-pr --skip-quality-check
+
+# Emergency push with hook bypass (NOT recommended)
+$ pnpm run workflow:4-pr --no-verify
+
+# Documentation change (no changeset needed)
+$ pnpm run workflow:4-pr --skip-changeset
+
+# Auto-commit pending changes
+$ pnpm run workflow:4-pr --auto-commit "docs: update workflow guide"
+
+# Combine multiple options
+$ pnpm run workflow:4-pr --title "docs: update API" --skip-changeset --skip-quality-check
+```
+
+**Example output**:
 
 ```bash
 $ pnpm run workflow:4-pr
@@ -210,8 +248,10 @@ d06f42b fix: resolve ESLint errors and improve type safety
 ✅ Found changeset(s):
 .changeset/pink-tigers-wave.md
 
-Suggested PR title: feature: parallel spawning
-Use this title? (y/n) y
+🔍 Running quality checks...
+✅ Quality checks passed
+
+Auto-generated PR title: feature: parallel spawning
 
 📤 Pushing branch to origin...
 🔐 Creating PR with GitHub credentials from 1Password...
@@ -221,10 +261,26 @@ Use this title? (y/n) y
 PR #6
 
 Next steps:
-  1. Monitor workflows: op run --env-file=.env -- gh run list --branch feature/parallel-spawning
-  2. View PR: op run --env-file=.env -- gh pr view 6
+  1. View PR: op run --env-file=.env -- gh pr view 6 --web
+  2. Monitor workflows: op run --env-file=.env -- gh run list --branch feature/parallel-spawning
   3. Wait for review and approval
   4. Merge when ready: op run --env-file=.env -- gh pr merge 6 --squash --delete-branch
+```
+
+**Error handling**:
+
+If pre-push hook fails (quality gates):
+
+```bash
+❌ Pre-push hook failed (quality gates)
+
+The pre-push hook runs quality checks (build, lint, tests) before pushing.
+
+Options:
+  1. Fix the issues and re-run: 4-create-pr.sh
+  2. Skip hooks (emergency only): 4-create-pr.sh --no-verify
+
+⚠️  Skipping quality gates means pushing potentially broken code!
 ```
 
 **Prerequisites**:
@@ -338,16 +394,20 @@ pnpm run workflow:3-changeset && \
 pnpm run workflow:4-pr
 ```
 
-### Custom PR Body
+### Custom PR Title
 
-The script generates a default PR body, but you can edit it:
+The script auto-generates a PR title from the branch name, but you can override it:
 
 ```bash
-# Edit the script or provide your own:
-./scripts/4-create-pr.sh
+# Custom title
+pnpm run workflow:4-pr --title "fix: critical security vulnerability"
 
-# Then when prompted, say "n" to customize the title
-# The PR will be created, and you can edit body in GitHub UI
+# Auto-generated title (default)
+# Branch: feature/user-auth → Title: "feature: user auth"
+# Branch: fix/memory-leak → Title: "fix: memory leak"
+pnpm run workflow:4-pr
+
+# Edit PR body after creation in GitHub UI
 ```
 
 ### Skip Changeset
@@ -359,9 +419,8 @@ For docs/tests/config changes:
 pnpm run workflow:1-start
 # ... make changes ...
 pnpm run workflow:2-check
-pnpm run workflow:4-pr
-# When prompted about missing changeset, say "y" to continue
-# Then add skip-changeset label when asked
+pnpm run workflow:4-pr --skip-changeset
+# Automatically adds skip-changeset label
 ```
 
 ## Integration with Claude Code Commands

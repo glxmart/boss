@@ -333,10 +333,11 @@ describe('E2E: BOSS Workflow with Conductor MCP', () => {
     const content = await fs.readFile(claudeMdPath, 'utf-8');
 
     // Verify CLAUDE.md has BOSS-related content
-    expect(content).toContain('BOSS');
-    expect(content).toContain('workers');
-    expect(content).toContain('Container-Use MCP');
-    // Note: 'spawn_worker' is a tool in conductor MCP, not explicitly mentioned in project CLAUDE.md
+    expect(content).toContain('BOSS Integration');
+    expect(content).toContain('Constitutional Governance');
+    expect(content).toContain('Spec-Kit Integration');
+    expect(content).toContain('docs/conductor.md');
+    // Note: 'spawn_worker' is a tool in conductor MCP, referenced in conductor.md
   });
 
   it('should have valid worker configuration for spawning', async () => {

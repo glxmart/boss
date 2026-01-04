@@ -7,15 +7,11 @@
       "WebSearch",
       "Skill",
       "mcp__github__*",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(.claude/skills/workflow-management/tools/4-create-pr.sh)"
     ],
     "deny": ["Bash(op read:*)"],
     "defaultMode": "acceptEdits"
-  },
-  "sandbox": {
-    "enabled": true,
-    "autoAllowBashIfSandboxed": true,
-    "excludedCommands": ["git", "gh", "curl", "npm", "pnpm", "npx", "op"]
   },
   "hooks": {
     "PreToolUse": [
@@ -29,5 +25,10 @@
         ]
       }
     ]
+  },
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true,
+    "excludedCommands": ["git", "gh", "curl", "npm", "pnpm", "npx", "op"]
   }
 }

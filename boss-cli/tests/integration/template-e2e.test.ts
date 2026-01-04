@@ -184,7 +184,7 @@ describe('Template E2E Tests', () => {
     });
 
     it(
-      'should bootstrap successfully',
+      'should bootstrap and pass all quality gates',
       async () => {
         // Bootstrap project
         await bootstrapCommand(createTestOptions(projectName, 't3-app', 'startup'));
@@ -193,9 +193,24 @@ describe('Template E2E Tests', () => {
         expect(await fileExists(projectName, 'package.json')).toBe(true);
         expect(await fileExists(projectName, '.husky/pre-commit')).toBe(true);
 
-        // Note: This template has missing dependencies issue documented in TEMPLATE_TEST_RESULTS.md
-        // The template architecture needs to be fixed to merge extra dependencies
-        // Skipping dependency installation and quality gates
+        // Verify .gitignore includes node_modules/
+        const gitignore = await runInProject(projectName, 'cat .gitignore');
+        expect(gitignore.stdout).toContain('node_modules/');
+
+        // Install dependencies
+        await runInProject(projectName, 'pnpm install');
+
+        // Run type check
+        const { stdout: typecheckOutput } = await runInProject(projectName, 'pnpm typecheck');
+        expect(typecheckOutput).not.toContain('error TS');
+
+        // Run lint
+        const { stdout: lintOutput } = await runInProject(projectName, 'pnpm lint');
+        expect(lintOutput).not.toContain('error');
+
+        // Run tests
+        const { stdout: testOutput } = await runInProject(projectName, 'pnpm test:unit');
+        expect(testOutput).toContain('passed');
       },
       E2E_TIMEOUT
     );

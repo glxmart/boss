@@ -1,34 +1,34 @@
-import NextAuth from "next-auth";
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import type { NextAuthConfig } from "next-auth";
-import { db } from "@repo/database";
-import Credentials from "next-auth/providers/credentials";
-import { z } from "zod";
+import NextAuth from 'next-auth';
+import { PrismaAdapter } from '@auth/prisma-adapter';
+import type { NextAuthConfig } from 'next-auth';
+import { db } from '@repo/database';
+import Credentials from 'next-auth/providers/credentials';
+import { z } from 'zod';
 
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
 });
 
-export const authConfig = {
+export const authConfig: NextAuthConfig = {
   adapter: PrismaAdapter(db),
   session: {
-    strategy: "jwt",
+    strategy: 'jwt',
   },
   pages: {
-    signIn: "/login",
-    error: "/error",
+    signIn: '/login',
+    error: '/error',
   },
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
-      const isOnDashboard = nextUrl.pathname.startsWith("/dashboard");
+      const isOnDashboard = nextUrl.pathname.startsWith('/dashboard');
 
       if (isOnDashboard) {
         if (isLoggedIn) return true;
         return false; // Redirect unauthenticated users to login page
       } else if (isLoggedIn) {
-        return Response.redirect(new URL("/dashboard", nextUrl));
+        return Response.redirect(new URL('/dashboard', nextUrl));
       }
       return true;
     },
@@ -48,8 +48,8 @@ export const authConfig = {
   providers: [
     Credentials({
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
         const validatedFields = loginSchema.safeParse(credentials);
@@ -83,6 +83,6 @@ export const authConfig = {
       },
     }),
   ],
-} satisfies NextAuthConfig;
+};
 
 export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);

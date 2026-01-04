@@ -1,0 +1,1 @@
+../.claude/skills/workflow-management/tools/2-quality-check.sh

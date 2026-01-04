@@ -6,7 +6,7 @@ declare module 'next-auth' {
    */
   interface Session {
     user: {
-      id: string;
+      id?: string;
     } & DefaultSession['user'];
   }
 
@@ -14,15 +14,6 @@ declare module 'next-auth' {
    * Extends the built-in user type
    */
   interface User {
-    id: string;
-  }
-}
-
-declare module 'next-auth/jwt' {
-  /**
-   * Extends the built-in JWT type to include user id
-   */
-  interface JWT {
-    id: string;
+    id?: string;
   }
 }

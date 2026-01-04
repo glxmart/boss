@@ -41,6 +41,9 @@ jobs:
       - name: Test (monorepo orchestrated)
         run: pnpm --filter @glxmart/boss-cli test
 
+      - name: Integration Tests
+        run: pnpm --filter @glxmart/boss-cli test:integration
+
       - name: Lint (monorepo orchestrated)
         run: pnpm --filter @glxmart/boss-cli lint
 

@@ -67,7 +67,8 @@ test_output=$(pnpm vitest run $test_files --reporter=dot 2>&1 || true)
 echo "$test_output"
 
 # Check if tests actually passed (look for test summary before potential worker cleanup crash)
-if echo "$test_output" | grep -q "✓.*tests"; then
+# vitest v4 output format: "Test Files  1 passed (1)" or "Tests  1 passed (1)"
+if echo "$test_output" | grep -qE "(passed|✓)"; then
   # Tests passed, check for actual test failures
   if echo "$test_output" | grep -qE "(✗|FAIL|failed)"; then
     echo "❌ Tests for changed files failed"

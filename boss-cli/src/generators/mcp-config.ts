@@ -167,7 +167,7 @@ GITHUB_PERSONAL_ACCESS_TOKEN=op://boss/github/token
 GITHUB_TOKEN=op://boss/github/token
 
 # Claude Code OAuth Token (used by Conductor MCP for workers)
-CLAUDE_CODE_OAUTH_TOKEN=op://glx/claude-code/oauth-token
+CLAUDE_CODE_OAUTH_TOKEN=op://boss/claude-code/oauth-token
 
 # Add other secrets as needed:
 # OPENAI_API_KEY=op://boss/openai/api-key

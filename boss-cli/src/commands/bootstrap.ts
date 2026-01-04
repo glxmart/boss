@@ -30,6 +30,7 @@ import { generateDockerCompose } from '../generators/docker-compose.js';
 import { generateClaudeMD } from '../generators/claude-md.js';
 import { generateClaudeFolder } from '../generators/claude-folder.js';
 import { generateStartBossScript } from '../generators/start-boss-sh.js';
+import { generateSetupScripts } from '../generators/setup-scripts.js';
 import { loadTemplate } from '../generators/template-loader.js';
 import { generateTemplateDocs } from '../generators/template-docs.js';
 import { applyQualityPreset } from '../presets/quality-presets.js';
@@ -140,6 +141,7 @@ export async function bootstrapCommand(options: BootstrapOptions): Promise<void>
     await generateClaudeMD(projectPath, config);
     await generateClaudeFolder(projectPath, config);
     await generateStartBossScript(projectPath);
+    await generateSetupScripts(projectPath);
     logger.stopSpinner(true, 'Critical files generated');
 
     // Load and apply template (includes package.json with husky dependency and prepare script)
@@ -212,11 +214,16 @@ export async function bootstrapCommand(options: BootstrapOptions): Promise<void>
     logger.success(`Project "${config.name}" has been bootstrapped successfully!`);
     logger.info(`\nNext steps:`);
     logger.info(`  1. cd ${config.name}`);
-    logger.info(`  2. docker-compose up -d`);
-    logger.info(`  3. Run: ./start-boss.sh`);
+    logger.info(`  2. Set up 1Password secrets (REQUIRED):`);
+    logger.info(`     ./scripts/setup-1password.sh`);
+    logger.info(`     This script will guide you through creating the required secrets.`);
+    logger.info(`  3. Start local infrastructure:`);
+    logger.info(`     docker-compose up -d`);
+    logger.info(`  4. Launch BOSS:`);
+    logger.info(`     ./start-boss.sh`);
     logger.info(`     (This will install dependencies and launch Claude Code/Cursor)`);
     logger.info(
-      `  4. BOSS will automatically complete initial setup (GitHub repo, remote, branch protection)`
+      `  5. BOSS will automatically complete initial setup (GitHub repo, remote, branch protection)`
     );
   } catch (error) {
     logger.error(`Bootstrap failed: ${error instanceof Error ? error.message : String(error)}`);

@@ -1,45 +1,37 @@
 # Troubleshoot Workflows
 
-Diagnose and troubleshoot GitHub Actions workflow failures.
+Diagnose and troubleshoot GitHub Actions workflow failures using GitHub MCP.
 
 > **💡 Powered by**: [`workflow-debugging`](.claude/skills/workflow-debugging/SKILL.md) skill
 
 ## What This Does
 
-Performs comprehensive 7-step analysis of CI/CD failures:
+Performs comprehensive 7-step analysis of CI/CD failures using GitHub MCP and WebFetch:
 
-1. **Status Check** - Recent workflow runs
-2. **Failure Details** - Failed run logs
-3. **Pattern Detection** - Common failure patterns
+1. **Status Check** - Recent workflow runs via GitHub API
+2. **Failure Details** - Failed job details and logs
+3. **Pattern Detection** - Automatic failure categorization
 4. **Local Reproduction** - Commands to reproduce locally
-5. **Log Download** (optional)
-6. **Re-run** (optional)
+5. **View Logs** - Detailed error messages and stack traces
+6. **Check PRs** - Related pull requests
 7. **Summary** - Recommended next steps
 
 ## Usage
 
 **Invoke with:** "Troubleshoot workflows" or "Debug CI failures"
 
-Executes: `.claude/skills/workflow-debugging/tools/troubleshoot-workflows.sh`
+Uses: GitHub MCP tools (`mcp__github__*`) and `WebFetch` for GitHub Actions API
 
-## Options
+## How It Works
 
-```bash
-# Quick status check
-./tools/troubleshoot-workflows.sh
+When invoked, Claude will:
 
-# Show only failures
-./tools/troubleshoot-workflows.sh --failed-only
-
-# Download logs for analysis
-./tools/troubleshoot-workflows.sh --download-logs
-
-# Re-run failed workflows
-./tools/troubleshoot-workflows.sh --rerun
-
-# Show last N runs
-./tools/troubleshoot-workflows.sh --limit 10
-```
+1. **Fetch recent workflow runs** using WebFetch to GitHub Actions API
+2. **Identify failed runs** and extract failure details
+3. **Analyze patterns** (tests, builds, lint, dependencies)
+4. **Provide reproduction steps** based on failure type
+5. **Show related PRs** using GitHub MCP
+6. **Summarize findings** with actionable recommendations
 
 ## Common Patterns Detected
 
@@ -50,31 +42,47 @@ The tool automatically identifies:
 - **Lint issues** → `pnpm lint --fix`
 - **Dependency problems** → `rm -rf node_modules && pnpm install`
 
-## Example Output
+## Example Analysis
 
 ```
-🔍 GitHub Workflow Troubleshooting
+=== GitHub Workflow Status ===
 
-1. Recent Workflow Runs
-━━━━━━━━━━━━━━━━━━━━━━━━
-CI       main     #123  failure  2m ago
+Recent Runs (glxmart/boss):
+✅ 3.0 - Release          main    #456  success  1h ago
+❌ 2.0 - Integration      feat/x  #455  failure  2h ago
+✅ 1.0 - Test boss-cli    main    #454  success  3h ago
 
-⚠️  Found 1 failed workflow(s)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-2. Failure Details
-━━━━━━━━━━━━━━━━━━━━━━━━
-FAIL conductor-mcp/tests/unit/worker-loader.test.ts
-  Expected: true
-  Received: false
+=== Failed Run #455 ===
 
-3. Analyzing Common Failure Patterns
-━━━━━━━━━━━━━━━━━━━━━━━━
-❌ Pattern: Test failures detected
-  → Run tests locally: pnpm test
+Workflow: 2.0 - Integration Tests
+Branch: feature/new-worker
+Commit: feat: add new worker type
 
-4. Reproduce Failures Locally
-━━━━━━━━━━━━━━━━━━━━━━━━
-pnpm run workflow:2-check
+Failed Jobs:
+  • Integration tests (conductor-mcp)
+    - Run E2E tests ❌
+    - Build ✅
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+=== Pattern Analysis ===
+
+❌ Test failures detected
+  → Run locally: pnpm --filter @glxmart/conductor-mcp test:e2e
+  → Check: conductor-mcp/tests/e2e/
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+=== Recommended Actions ===
+
+1. Reproduce locally:
+   pnpm run workflow:2-check
+
+2. Review failure logs for details
+
+3. Fix issues and push changes
 ```
 
 ## Reproduce Locally

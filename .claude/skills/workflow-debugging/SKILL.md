@@ -1,80 +1,111 @@
 ---
 name: workflow-debugging
 description: Diagnoses and troubleshoots GitHub Actions workflow failures. Use when CI/CD fails, workflows error, or need to analyze build/test failures in GitHub Actions.
-allowed-tools: Bash, Read
+allowed-tools: mcp__github__*, WebFetch, Bash, Read
 ---
 
 # Workflow Debugging
 
 ## Overview
 
-This skill helps diagnose and troubleshoot GitHub Actions workflow failures. It provides automated analysis of failed runs, common pattern detection, and actionable recommendations for fixes.
+This skill helps diagnose and troubleshoot GitHub Actions workflow failures using GitHub MCP. It provides automated analysis of failed runs, common pattern detection, and actionable recommendations for fixes.
 
 ## Quick Start
 
-### Troubleshoot Recent Failures
+### Option 1: Automated Script (Recommended)
+
+Run the automated troubleshooting script:
 
 ```bash
-.claude/skills/workflow-debugging/tools/troubleshoot-workflows.sh
+.claude/skills/workflow-debugging/troubleshoot-workflows.sh
 ```
 
-Or ask Claude:
+The script will:
+
+- List recent workflow runs with status
+- Identify failed runs automatically
+- Fetch and display detailed failure logs
+- Provide actionable recommendations
+- Suggest local reproduction commands
+
+### Option 2: Ask Claude
+
+Ask Claude to troubleshoot workflows:
 
 - "Troubleshoot workflow failures"
 - "Why did CI fail?"
 - "Debug GitHub Actions"
 - "Check workflow status"
+- "Show failed workflow runs"
 
-### Show Only Failed Runs
+## How to Use This Skill
 
-```bash
-.claude/skills/workflow-debugging/tools/troubleshoot-workflows.sh --failed-only
-```
+When this skill is invoked, Claude should perform the following 7-step analysis using **GitHub MCP tools directly** (not bash scripts):
 
-### Download Failed Logs
+### GitHub MCP Tools Available
 
-```bash
-.claude/skills/workflow-debugging/tools/troubleshoot-workflows.sh --download-logs
-```
+Use these MCP tools for workflow troubleshooting:
 
-### Re-run Failed Workflows
+- `mcp__github__list_commits` - Get recent commits
+- `mcp__github__list_pull_requests` - Check PR status
+- `mcp__github__search_issues` - Search for workflow-related issues
+- `WebFetch(url: "https://api.github.com/repos/{owner}/{repo}/actions/runs")` - Get workflow runs
 
-```bash
-.claude/skills/workflow-debugging/tools/troubleshoot-workflows.sh --rerun
-```
+### Important Notes
 
-## How It Works
+- **Use WebFetch** for GitHub Actions API endpoints not covered by MCP tools
+- **Repository**: `glxmart/boss`
+- **API Base**: `https://api.github.com`
+- **Required endpoints**:
+  - `/repos/glxmart/boss/actions/runs` - List workflow runs
+  - `/repos/glxmart/boss/actions/runs/{run_id}` - Get run details
+  - `/repos/glxmart/boss/actions/runs/{run_id}/logs` - Get run logs
 
-The troubleshoot-workflows tool performs 7-step analysis:
+### Step-by-Step Troubleshooting Process
+
+The workflow debugging process performs 7-step analysis:
 
 ### 1. Recent Workflow Runs
 
-Lists recent workflow runs with status:
+**Action**: Use WebFetch to list recent workflow runs
 
-- ✅ Success (green)
-- ❌ Failure (red)
-- 🔄 In progress (yellow)
-- ⏭️ Skipped (gray)
+```typescript
+WebFetch({
+  url: 'https://api.github.com/repos/glxmart/boss/actions/runs?per_page=10',
+  prompt:
+    'Extract workflow runs with: id, name, status, conclusion, head_branch, created_at. Show in table format with status indicators (✅ success, ❌ failure, 🔄 in_progress)',
+});
+```
 
 **Output Example:**
 
 ```
 === 1. Recent Workflow Runs ===
 
-STATUS  NAME                    BRANCH              TITLE
-✓       Test boss-cli          feature/new-feature  feat: add new feature
-✗       Integration Tests      feature/new-feature  feat: add new feature
-✓       Test conductor-mcp     feature/new-feature  feat: add new feature
+STATUS  NAME                    BRANCH              CREATED
+✅      Test boss-cli          main                2026-01-04 08:30
+❌      Integration Tests      feature/new         2026-01-04 08:25
+✅      Test conductor-mcp     main                2026-01-04 08:20
 ```
 
 ### 2. Failure Details
 
-For each failed run, shows:
+**Action**: For each failed run, use WebFetch to get detailed information
 
-- Run ID
-- Workflow name
-- Branch and commit
-- Failed job logs (first 100 lines)
+```typescript
+// Get run details
+WebFetch({
+  url: 'https://api.github.com/repos/glxmart/boss/actions/runs/{run_id}',
+  prompt: 'Extract: workflow name, branch, commit message, status, conclusion, jobs URL',
+});
+
+// Get job details to find failures
+WebFetch({
+  url: 'https://api.github.com/repos/glxmart/boss/actions/runs/{run_id}/jobs',
+  prompt:
+    'List all jobs. For failed jobs, extract: name, conclusion, steps that failed with their conclusions',
+});
+```
 
 **Output Example:**
 
@@ -89,26 +120,31 @@ Workflow: Integration Tests
 Branch: feature/new-feature
 Commit: feat: add new feature
 
-=== Failed Job Logs ===
+=== Failed Jobs ===
 
-Error: Command failed: pnpm test
-  ● Test suite failed to run
-    Cannot find module './missing-file'
+Job: Test boss-cli
+  Step: Run tests - FAILED
+  Step: Build - SUCCESS
+
+Job: Integration tests
+  Step: Run integration tests - FAILED
 ```
 
 ### 3. Common Pattern Detection
 
-Automatically detects and categorizes failures:
+**Action**: Analyze job/step names and failure patterns to categorize issues
 
-**Test Failures**
+Based on the failed jobs and steps, automatically detect patterns:
+
+**Test Failures** (job/step names contain: "test", "jest", "vitest")
 
 ```
 ❌ Pattern: Test failures detected in run 12345678
   → Run tests locally: pnpm test
-  → Check specific failures: gh run view 12345678 --log-failed | grep -A 10 FAIL
+  → Check specific package: pnpm --filter @glxmart/boss-cli test
 ```
 
-**Build Failures**
+**Build Failures** (job/step names contain: "build", "compile", "tsc")
 
 ```
 ❌ Pattern: Build failures detected in run 12345678
@@ -116,7 +152,7 @@ Automatically detects and categorizes failures:
   → Check TypeScript errors: pnpm typecheck
 ```
 
-**Lint Failures**
+**Lint Failures** (job/step names contain: "lint", "eslint", "format")
 
 ```
 ❌ Pattern: Linting errors detected in run 12345678
@@ -124,7 +160,7 @@ Automatically detects and categorizes failures:
   → Auto-fix: pnpm lint --fix
 ```
 
-**Dependency Issues**
+**Dependency Issues** (job/step names contain: "install", "dependencies", "pnpm")
 
 ```
 ❌ Pattern: Dependency issues detected in run 12345678
@@ -134,7 +170,7 @@ Automatically detects and categorizes failures:
 
 ### 4. Local Reproduction
 
-Provides commands to reproduce failures locally:
+**Action**: Provide commands to reproduce failures locally based on failure patterns
 
 ```
 === 4. Reproduce Failures Locally ===
@@ -153,39 +189,43 @@ pnpm --filter @glxmart/conductor-mcp test:integration  # Integration tests
 pnpm --filter @glxmart/conductor-mcp test:e2e          # E2E tests
 ```
 
-### 5. Download Logs (Optional)
+### 5. View Detailed Logs (Optional)
 
-Downloads complete logs for offline analysis:
+**Action**: Use WebFetch to get specific job logs for failed steps
 
+```typescript
+// Get job logs for detailed error messages
+WebFetch({
+  url: 'https://api.github.com/repos/glxmart/boss/actions/jobs/{job_id}/logs',
+  prompt:
+    'Extract error messages, stack traces, and failure context from the logs. Show the last 50 lines before the failure.',
+});
 ```
-=== 5. Downloading Failed Run Logs ===
 
-Downloading logs for run 12345678...
-✅ Logs downloaded to: workflow-logs-20260104-143022
-```
+### 6. Check Related PRs (Optional)
 
-### 6. Re-run Workflows (Optional)
+**Action**: Use mcp**github**list_pull_requests to check if there's an open PR related to this branch
 
-Re-triggers failed workflow runs:
-
-```
-=== 6. Re-running Failed Workflows ===
-
-Re-running workflow 12345678...
-✅ Failed workflows re-triggered
-Monitor progress with: gh run list --limit 5
+```typescript
+mcp__github__list_pull_requests({
+  owner: 'glxmart',
+  repo: 'boss',
+  state: 'open',
+  per_page: 10,
+});
 ```
 
 ### 7. Summary & Next Steps
 
-Provides summary and actionable next steps:
+**Action**: Provide summary and actionable next steps
 
 ```
 === 7. Summary & Next Steps ===
 
 Workflow Status:
-  - Total runs checked: 5
-  - Failed runs: 1
+  - Total runs checked: 10
+  - Failed runs: 2
+  - Success rate: 80%
 
 Recommended Actions:
   1. Review failure details above
@@ -193,45 +233,32 @@ Recommended Actions:
   3. Fix issues and commit changes
   4. Push to trigger new workflow run
 
-Manual Investigation:
-  - View specific run: gh run view <run-id>
-  - Download logs: ./tools/troubleshoot-workflows.sh --download-logs
-  - Re-run failed: ./tools/troubleshoot-workflows.sh --rerun
-
-Get Help:
+For More Details:
   - Workflow docs: .github/workflows/README.md
   - Debugging guide: CLAUDE.md (search 'Debugging GitHub Workflows')
+  - Use WebFetch to view specific run: https://api.github.com/repos/glxmart/boss/actions/runs/{run_id}
 ```
 
-## Command Options
+## GitHub API Endpoints Reference
 
-### Basic Usage
+### Workflow Runs
 
-```bash
-# Default: Show last 5 runs with quick analysis
-./tools/troubleshoot-workflows.sh
-```
+- **List runs**: `GET /repos/glxmart/boss/actions/runs`
+  - Query params: `per_page`, `status`, `conclusion`, `branch`
+- **Get run**: `GET /repos/glxmart/boss/actions/runs/{run_id}`
+- **List jobs**: `GET /repos/glxmart/boss/actions/runs/{run_id}/jobs`
+- **Get job**: `GET /repos/glxmart/boss/actions/jobs/{job_id}`
+- **Get logs**: `GET /repos/glxmart/boss/actions/jobs/{job_id}/logs`
 
-### Advanced Options
+### Using WebFetch
 
-```bash
-# Show only failed runs
-./tools/troubleshoot-workflows.sh --failed-only
+Always use WebFetch for GitHub Actions API calls:
 
-# Download logs from failed runs
-./tools/troubleshoot-workflows.sh --download-logs
-
-# Re-run failed workflows
-./tools/troubleshoot-workflows.sh --rerun
-
-# Show more runs (default: 5)
-./tools/troubleshoot-workflows.sh --limit 10
-
-# Combine options
-./tools/troubleshoot-workflows.sh --failed-only --download-logs --limit 20
-
-# Show help
-./tools/troubleshoot-workflows.sh --help
+```typescript
+WebFetch({
+  url: 'https://api.github.com/repos/glxmart/boss/actions/runs',
+  prompt: 'Your extraction prompt here',
+});
 ```
 
 ## Common Failure Patterns
@@ -365,79 +392,178 @@ git push
 
 ## Troubleshooting
 
-### "GitHub CLI (gh) is not installed"
+### "Cannot access GitHub API"
 
-**Cause**: GitHub CLI not available
-
-**Solution**:
-
-```bash
-# Install GitHub CLI
-brew install gh
-
-# Verify installation
-gh --version
-
-# Authenticate
-gh auth login
-```
-
-### "1Password CLI not found, using system GitHub auth"
-
-**Cause**: 1Password CLI not installed or configured
+**Cause**: Rate limiting or authentication issues
 
 **Solution**:
 
-```bash
-# Install 1Password CLI
-brew install --cask 1password-cli
+- GitHub API allows 60 requests/hour for unauthenticated requests
+- MCP tools should handle authentication automatically
+- If rate limited, wait an hour or use a different approach
 
-# Verify installation
-op --version
+### "Logs not available"
 
-# Or continue with system auth (gh auth login)
-```
-
-### ".env file not found, using system GitHub auth"
-
-**Cause**: Running from wrong directory or .env missing
-
-**Solution**:
-
-```bash
-# Ensure you're in project root
-cd /path/to/boss
-
-# Verify .env exists
-ls -la .env
-
-# Run from project root
-./.claude/skills/workflow-debugging/tools/troubleshoot-workflows.sh
-```
-
-### "Could not download logs"
-
-**Cause**: Logs may not be available or already expired
+**Cause**: Logs may have expired or not been generated
 
 **Solution**:
 
 - Logs expire after 90 days on GitHub
-- Some failed runs may not generate downloadable logs
-- Use `gh run view <run-id> --log-failed` to view instead
+- Some failed runs may not generate logs
+- Check run status - logs only available for completed runs
+- Use WebFetch to check run status first
 
-### "Could not re-run workflow"
+### "Cannot find failed runs"
 
-**Cause**: Workflow may already be re-running or run is too old
+**Cause**: No recent failures or checking wrong branch
 
 **Solution**:
 
-```bash
-# Check workflow status
-gh run list --limit 5
+```typescript
+// Filter by branch
+WebFetch({
+  url: 'https://api.github.com/repos/glxmart/boss/actions/runs?branch=your-branch',
+  prompt: 'List runs for this branch',
+});
 
-# Re-run manually via GitHub UI
-# Or trigger new workflow by pushing new commit
+// Filter by conclusion
+WebFetch({
+  url: 'https://api.github.com/repos/glxmart/boss/actions/runs?conclusion=failure',
+  prompt: 'List only failed runs',
+});
 ```
+
+## Common Gotchas
+
+### 1. Correct gh-with-1password.sh Script Path
+
+**Issue**: Trying to use `./scripts/gh-with-1password.sh` which doesn't exist at that path
+
+**Error**:
+
+```bash
+./scripts/gh-with-1password.sh run view 31 --log-failed
+# Error: no such file or directory: ./scripts/gh-with-1password.sh
+```
+
+**Solution**: The script exists at `.claude/skills/github-ops/tools/gh-with-1password.sh`
+
+**Option A (Recommended)**: Use the correct script path:
+
+```bash
+.claude/skills/github-ops/tools/gh-with-1password.sh run list --branch feature/my-branch
+.claude/skills/github-ops/tools/gh-with-1password.sh run view <run-id> --log-failed
+```
+
+**Option B**: Use `op run --env-file=.env -- gh` directly:
+
+```bash
+op run --env-file=.env -- gh run list --branch feature/my-branch
+op run --env-file=.env -- gh run view <run-id> --log-failed
+```
+
+**Option C (Best)**: Use the automated troubleshooting script:
+
+```bash
+.claude/skills/workflow-debugging/troubleshoot-workflows.sh
+```
+
+### 2. Run IDs vs Display Numbers
+
+**Issue**: Using sequential run numbers (31, 32, 33) instead of actual GitHub Actions run IDs
+
+**Error**:
+
+```bash
+op run --env-file=.env -- gh run view 31 --log-failed
+# Error: HTTP 404: Not Found (https://api.github.com/repos/glxmart/boss/actions/runs/31)
+```
+
+**Why**: The numbers shown in `gh run list` are just sequential display numbers, NOT the actual run IDs
+
+**Solution**: Use `--json` flag to get the actual `databaseId`:
+
+```bash
+# Get actual run IDs
+op run --env-file=.env -- gh run list --branch feature/my-branch --limit 10 --json databaseId,displayTitle,conclusion,workflowName,createdAt,status
+
+# Returns something like:
+# [
+#   {"databaseId": 20687791548, "displayTitle": "feat: ...", "conclusion": "failure", ...},
+#   {"databaseId": 20687791547, "displayTitle": "feat: ...", "conclusion": "success", ...}
+# ]
+
+# Then use the actual databaseId:
+op run --env-file=.env -- gh run view 20687791548 --log-failed
+```
+
+### 3. Getting Detailed Failure Logs
+
+**Issue**: Not knowing which run ID to use or how to get specific failure logs
+
+**Solution**: Follow this workflow:
+
+```bash
+# Step 1: List recent runs with actual IDs
+op run --env-file=.env -- gh run list \
+  --branch feature/my-branch \
+  --limit 10 \
+  --json databaseId,displayTitle,conclusion,workflowName,createdAt,status
+
+# Step 2: Identify failed runs (conclusion: "failure")
+# Look for runs where "conclusion": "failure"
+
+# Step 3: Get detailed logs for failed run
+op run --env-file=.env -- gh run view <databaseId> --log-failed
+
+# Example:
+op run --env-file=.env -- gh run view 20687791548 --log-failed
+```
+
+### 4. Pre-Commit Hook Errors
+
+**Issue**: Getting "PreToolUse:Bash hook error" messages that make output hard to read
+
+**Why**: The `.claude/hooks/pre-tool-use` hook runs before every bash command
+
+**Solution**: This is normal - the hook output appears but doesn't affect the command execution. The actual output follows after the hook messages.
+
+### 5. Common Workflow Failure Patterns
+
+**Changeset Check Failures**:
+
+- **Cause**: Code changes detected but no changeset file added
+- **Fix**: Create a changeset file in `.changeset/` directory:
+
+  ```bash
+  # Manually create changeset (interactive doesn't work in CLI)
+  cat > .changeset/my-changeset.md << 'EOF'
+  ---
+  '@glxmart/boss-cli': minor
+  ---
+
+  Description of changes here
+  EOF
+  ```
+
+**Prettier Format Failures**:
+
+- **Cause**: Files not formatted according to prettier rules
+- **Fix**: Run prettier on the affected files:
+  ```bash
+  pnpm prettier --write "path/to/file.md"
+  # Or format all files:
+  pnpm format
+  ```
+- **Prevention**: Update `lint-staged` pattern to include hidden directories:
+  ```json
+  {
+    "lint-staged": {
+      "**/*.{ts,tsx,js,jsx,json,md,yml,yaml}": ["prettier --write"]
+    }
+  }
+  ```
+  Note: Use `**/*.{...}` not `*.{...}` to match files in `.claude/` and other hidden directories
 
 ## Integration with Workflow
 
@@ -467,60 +593,54 @@ The tool uses:
 
 ### Filter by Workflow Name
 
-```bash
-# View specific workflow runs
-gh run list --workflow="Test boss-cli" --limit 10
+```typescript
+// List runs for specific workflow
+WebFetch({
+  url: 'https://api.github.com/repos/glxmart/boss/actions/workflows',
+  prompt: 'List all workflows with their IDs and names',
+});
 
-# Or use the troubleshoot tool on specific run
-gh run view <run-id> --log-failed
+// Then get runs for that workflow
+WebFetch({
+  url: 'https://api.github.com/repos/glxmart/boss/actions/workflows/{workflow_id}/runs',
+  prompt: 'List recent runs for this specific workflow',
+});
 ```
 
-### Check Specific Job
+### Check Specific Job Details
 
-```bash
-# List jobs for a run
-gh run view <run-id>
+```typescript
+// Get detailed job information
+WebFetch({
+  url: 'https://api.github.com/repos/glxmart/boss/actions/jobs/{job_id}',
+  prompt: 'Get job status, steps, and detailed timing information',
+});
 
-# View specific job logs
-gh run view <run-id> --job <job-id>
-
-# Re-run specific job
-gh run rerun <run-id> --job <job-id>
+// Get job logs
+WebFetch({
+  url: 'https://api.github.com/repos/glxmart/boss/actions/jobs/{job_id}/logs',
+  prompt: 'Extract complete job logs with error messages and stack traces',
+});
 ```
 
-### Get JSON Output
+### Monitor Multiple Workflows
 
-```bash
-# Get structured data for parsing
-gh run list --json conclusion,name,status,headBranch
-
-# Check if latest run passed
-gh run list --limit 1 --json conclusion --jq '.[0].conclusion'
-```
-
-### Watch Workflow Progress
-
-```bash
-# Watch a running workflow
-gh run watch <run-id>
-
-# Or poll status
-watch -n 5 'gh run list --limit 5'
+```typescript
+// Check status across all workflows
+WebFetch({
+  url: 'https://api.github.com/repos/glxmart/boss/actions/runs?per_page=20',
+  prompt:
+    'Group runs by workflow name, show success/failure counts and latest status for each workflow',
+});
 ```
 
 ## Tool Reference
 
-| Tool                        | Purpose                    | Usage                                         |
-| --------------------------- | -------------------------- | --------------------------------------------- |
-| `troubleshoot-workflows.sh` | Diagnose workflow failures | `./tools/troubleshoot-workflows.sh [options]` |
-
-**Options**:
-
-- `--failed-only` - Show only failed runs
-- `--download-logs` - Download failed run logs
-- `--rerun` - Re-run failed workflows
-- `--limit N` - Show last N runs (default: 5)
-- `--help` - Show help message
+| Tool             | Purpose                            | Usage                               |
+| ---------------- | ---------------------------------- | ----------------------------------- |
+| `WebFetch`       | Access GitHub Actions API          | Query workflow runs, jobs, and logs |
+| `mcp__github__*` | GitHub repository operations       | List PRs, commits, issues           |
+| Skill invocation | Automated workflow troubleshooting | "Troubleshoot workflows" to Claude  |
 
 ## Related Skills
 

@@ -1,5 +1,4 @@
 import path from 'path';
-import fs from 'fs-extra';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
@@ -7,6 +6,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export async function generateSetupScripts(projectPath: string): Promise<void> {
+  const fs = await import('fs-extra');
+
   const scriptsDir = path.join(projectPath, 'scripts');
   await fs.ensureDir(scriptsDir);
 

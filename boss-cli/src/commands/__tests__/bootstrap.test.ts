@@ -113,6 +113,10 @@ vi.mock('../../generators/template-docs.js', () => ({
   generateTemplateDocs: vi.fn(async () => {}),
 }));
 
+vi.mock('../../generators/setup-scripts.js', () => ({
+  generateSetupScripts: vi.fn(async () => {}),
+}));
+
 vi.mock('../../presets/quality-presets.js', () => ({
   applyQualityPreset: vi.fn(async () => {}),
 }));
@@ -144,6 +148,8 @@ vi.mock('fs-extra', () => ({
     ensureDir: vi.fn(async () => {}),
     readdir: vi.fn(async () => []),
     writeFile: vi.fn(async () => {}),
+    copy: vi.fn(async () => {}),
+    chmod: vi.fn(async () => {}),
   },
 }));
 

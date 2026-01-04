@@ -8,7 +8,8 @@
       "Skill",
       "mcp__github__*",
       "WebFetch(domain:github.com)",
-      "Bash(.claude/skills/**)"
+      "Bash(.claude/skills/**)",
+      "Bash(pnpm build:*)"
     ],
     "deny": ["Bash(op read:*)"],
     "defaultMode": "acceptEdits"

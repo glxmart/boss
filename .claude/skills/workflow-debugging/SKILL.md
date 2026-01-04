@@ -53,9 +53,10 @@ The workflow debugging process performs 7-step analysis:
 
 ```typescript
 WebFetch({
-  url: "https://api.github.com/repos/glxmart/boss/actions/runs?per_page=10",
-  prompt: "Extract workflow runs with: id, name, status, conclusion, head_branch, created_at. Show in table format with status indicators (✅ success, ❌ failure, 🔄 in_progress)"
-})
+  url: 'https://api.github.com/repos/glxmart/boss/actions/runs?per_page=10',
+  prompt:
+    'Extract workflow runs with: id, name, status, conclusion, head_branch, created_at. Show in table format with status indicators (✅ success, ❌ failure, 🔄 in_progress)',
+});
 ```
 
 **Output Example:**
@@ -76,15 +77,16 @@ STATUS  NAME                    BRANCH              CREATED
 ```typescript
 // Get run details
 WebFetch({
-  url: "https://api.github.com/repos/glxmart/boss/actions/runs/{run_id}",
-  prompt: "Extract: workflow name, branch, commit message, status, conclusion, jobs URL"
-})
+  url: 'https://api.github.com/repos/glxmart/boss/actions/runs/{run_id}',
+  prompt: 'Extract: workflow name, branch, commit message, status, conclusion, jobs URL',
+});
 
 // Get job details to find failures
 WebFetch({
-  url: "https://api.github.com/repos/glxmart/boss/actions/runs/{run_id}/jobs",
-  prompt: "List all jobs. For failed jobs, extract: name, conclusion, steps that failed with their conclusions"
-})
+  url: 'https://api.github.com/repos/glxmart/boss/actions/runs/{run_id}/jobs',
+  prompt:
+    'List all jobs. For failed jobs, extract: name, conclusion, steps that failed with their conclusions',
+});
 ```
 
 **Output Example:**
@@ -176,22 +178,23 @@ pnpm --filter @glxmart/conductor-mcp test:e2e          # E2E tests
 ```typescript
 // Get job logs for detailed error messages
 WebFetch({
-  url: "https://api.github.com/repos/glxmart/boss/actions/jobs/{job_id}/logs",
-  prompt: "Extract error messages, stack traces, and failure context from the logs. Show the last 50 lines before the failure."
-})
+  url: 'https://api.github.com/repos/glxmart/boss/actions/jobs/{job_id}/logs',
+  prompt:
+    'Extract error messages, stack traces, and failure context from the logs. Show the last 50 lines before the failure.',
+});
 ```
 
 ### 6. Check Related PRs (Optional)
 
-**Action**: Use mcp__github__list_pull_requests to check if there's an open PR related to this branch
+**Action**: Use mcp**github**list_pull_requests to check if there's an open PR related to this branch
 
 ```typescript
 mcp__github__list_pull_requests({
-  owner: "glxmart",
-  repo: "boss",
-  state: "open",
-  per_page: 10
-})
+  owner: 'glxmart',
+  repo: 'boss',
+  state: 'open',
+  per_page: 10,
+});
 ```
 
 ### 7. Summary & Next Steps
@@ -235,9 +238,9 @@ Always use WebFetch for GitHub Actions API calls:
 
 ```typescript
 WebFetch({
-  url: "https://api.github.com/repos/glxmart/boss/actions/runs",
-  prompt: "Your extraction prompt here"
-})
+  url: 'https://api.github.com/repos/glxmart/boss/actions/runs',
+  prompt: 'Your extraction prompt here',
+});
 ```
 
 ## Common Failure Patterns
@@ -401,15 +404,15 @@ git push
 ```typescript
 // Filter by branch
 WebFetch({
-  url: "https://api.github.com/repos/glxmart/boss/actions/runs?branch=your-branch",
-  prompt: "List runs for this branch"
-})
+  url: 'https://api.github.com/repos/glxmart/boss/actions/runs?branch=your-branch',
+  prompt: 'List runs for this branch',
+});
 
 // Filter by conclusion
 WebFetch({
-  url: "https://api.github.com/repos/glxmart/boss/actions/runs?conclusion=failure",
-  prompt: "List only failed runs"
-})
+  url: 'https://api.github.com/repos/glxmart/boss/actions/runs?conclusion=failure',
+  prompt: 'List only failed runs',
+});
 ```
 
 ## Integration with Workflow
@@ -443,15 +446,15 @@ The tool uses:
 ```typescript
 // List runs for specific workflow
 WebFetch({
-  url: "https://api.github.com/repos/glxmart/boss/actions/workflows",
-  prompt: "List all workflows with their IDs and names"
-})
+  url: 'https://api.github.com/repos/glxmart/boss/actions/workflows',
+  prompt: 'List all workflows with their IDs and names',
+});
 
 // Then get runs for that workflow
 WebFetch({
-  url: "https://api.github.com/repos/glxmart/boss/actions/workflows/{workflow_id}/runs",
-  prompt: "List recent runs for this specific workflow"
-})
+  url: 'https://api.github.com/repos/glxmart/boss/actions/workflows/{workflow_id}/runs',
+  prompt: 'List recent runs for this specific workflow',
+});
 ```
 
 ### Check Specific Job Details
@@ -459,15 +462,15 @@ WebFetch({
 ```typescript
 // Get detailed job information
 WebFetch({
-  url: "https://api.github.com/repos/glxmart/boss/actions/jobs/{job_id}",
-  prompt: "Get job status, steps, and detailed timing information"
-})
+  url: 'https://api.github.com/repos/glxmart/boss/actions/jobs/{job_id}',
+  prompt: 'Get job status, steps, and detailed timing information',
+});
 
 // Get job logs
 WebFetch({
-  url: "https://api.github.com/repos/glxmart/boss/actions/jobs/{job_id}/logs",
-  prompt: "Extract complete job logs with error messages and stack traces"
-})
+  url: 'https://api.github.com/repos/glxmart/boss/actions/jobs/{job_id}/logs',
+  prompt: 'Extract complete job logs with error messages and stack traces',
+});
 ```
 
 ### Monitor Multiple Workflows
@@ -475,18 +478,19 @@ WebFetch({
 ```typescript
 // Check status across all workflows
 WebFetch({
-  url: "https://api.github.com/repos/glxmart/boss/actions/runs?per_page=20",
-  prompt: "Group runs by workflow name, show success/failure counts and latest status for each workflow"
-})
+  url: 'https://api.github.com/repos/glxmart/boss/actions/runs?per_page=20',
+  prompt:
+    'Group runs by workflow name, show success/failure counts and latest status for each workflow',
+});
 ```
 
 ## Tool Reference
 
-| Tool                    | Purpose                            | Usage                                  |
-| ----------------------- | ---------------------------------- | -------------------------------------- |
-| `WebFetch`              | Access GitHub Actions API          | Query workflow runs, jobs, and logs    |
-| `mcp__github__*`        | GitHub repository operations       | List PRs, commits, issues              |
-| Skill invocation        | Automated workflow troubleshooting | "Troubleshoot workflows" to Claude     |
+| Tool             | Purpose                            | Usage                               |
+| ---------------- | ---------------------------------- | ----------------------------------- |
+| `WebFetch`       | Access GitHub Actions API          | Query workflow runs, jobs, and logs |
+| `mcp__github__*` | GitHub repository operations       | List PRs, commits, issues           |
+| Skill invocation | Automated workflow troubleshooting | "Troubleshoot workflows" to Claude  |
 
 ## Related Skills
 

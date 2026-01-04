@@ -6,7 +6,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export async function generateSetupScripts(projectPath: string): Promise<void> {
-  const fs = await import('fs-extra');
+  const fsModule = await import('fs-extra');
+  const fs = fsModule.default;
 
   const scriptsDir = path.join(projectPath, 'scripts');
   await fs.ensureDir(scriptsDir);

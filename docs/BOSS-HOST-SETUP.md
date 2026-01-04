@@ -67,6 +67,73 @@ Complete guide to setting up your local machine to run BOSS (Business-Orchestrat
 
 ---
 
+## Quick Start for New Users
+
+**⚠️ IMPORTANT: Complete these steps BEFORE running `npx @glxmart/boss-cli bootstrap`**
+
+### Step 1: Install Prerequisites
+
+Install 1Password CLI and sign in:
+
+```bash
+# macOS
+brew install --cask 1password-cli
+
+# Linux
+curl -sSfO https://downloads.1password.com/linux/tar/stable/x86_64/1password-cli-latest.tar.gz
+tar -xf 1password-cli-latest.tar.gz
+sudo mv op /usr/local/bin/
+
+# Windows
+winget install 1Password.CLI
+
+# Sign in to 1Password
+op signin
+
+# Enable biometric unlock (recommended)
+op signin --biometric
+```
+
+### Step 2: Run 1Password Setup Script (AFTER Bootstrap)
+
+After you bootstrap your project with `npx @glxmart/boss-cli bootstrap`, you'll need to set up 1Password secrets:
+
+```bash
+cd your-project-name
+./scripts/setup-1password.sh
+```
+
+This interactive script will:
+
+1. Create the "boss" vault in 1Password
+2. Guide you through creating required secrets:
+   - GitHub Personal Access Token
+   - Claude Code OAuth Token
+   - NPM Token (optional)
+3. Verify all secrets are configured correctly
+4. Test secret resolution
+
+**Required Secrets:**
+
+| Secret               | 1Password Reference                 | How to Generate                                                                   |
+| -------------------- | ----------------------------------- | --------------------------------------------------------------------------------- |
+| GitHub Token         | `op://boss/github/token`            | https://github.com/settings/tokens/new<br/>Scopes: repo, workflow, write:packages |
+| Claude Code Token    | `op://boss/claude-code/oauth-token` | Run `claude auth login`<br/>Extract from `~/.config/claude-code/auth.json`        |
+| NPM Token (optional) | `op://boss/npm/token`               | https://www.npmjs.com/settings/~/tokens                                           |
+
+### Step 3: Continue with Bootstrap
+
+After secrets are set up, you can proceed with the normal workflow:
+
+```bash
+docker-compose up -d        # Start local infrastructure
+./start-boss.sh            # Launch BOSS
+```
+
+---
+
+## Detailed Setup Guide
+
 ## Prerequisites
 
 ### Required Software
@@ -296,14 +363,29 @@ docker-compose exec postgres psql -U boss -d boss_knowledge -f /docker-entrypoin
 
 ## 1Password Vault Setup
 
-### Create BOSS Vault
+### Automated Setup (Recommended)
+
+**Use the automated setup script included with every bootstrapped project:**
+
+```bash
+cd your-project-name
+./scripts/setup-1password.sh
+```
+
+This script automates the entire process below and validates everything is configured correctly.
+
+### Manual Setup (Advanced Users)
+
+If you prefer manual setup, follow these steps:
+
+#### Create BOSS Vault
 
 ```bash
 # Create a dedicated vault for BOSS secrets
-op vault create glx
+op vault create boss
 
 # Verify
-op vault list | grep glx
+op vault list | grep boss
 ```
 
 ### Required Secrets Structure
@@ -311,7 +393,7 @@ op vault list | grep glx
 Create the following structure in 1Password:
 
 ```
-Vault: glx
+Vault: boss
 ├── claude-code
 │   └── oauth-token
 │
@@ -373,16 +455,16 @@ cat ~/.config/claude-code/auth.json | jq -r '.oauth_token'
 # Create item in 1Password
 op item create \
   --category=Login \
-  --vault=glx \
+  --vault=boss \
   --title="claude-code" \
   --username="oauth-token" \
   password="oauth_1234567890abcdef..."
 
 # Verify
-op item get claude-code --vault glx --fields password
+op item get claude-code --vault boss --fields password
 ```
 
-**Reference:** `op://glx/claude-code/oauth-token`
+**Reference:** `op://boss/claude-code/oauth-token`
 
 ### 2. GitHub Personal Access Token
 
@@ -408,13 +490,13 @@ op item get claude-code --vault glx --fields password
 ```bash
 op item create \
   --category=Login \
-  --vault=glx \
+  --vault=boss \
   --title="github" \
   --username="token" \
   password="ghp_xxxxxxxxxxxxxxxxxxxx"
 ```
 
-**Reference:** `op://glx/github/token`
+**Reference:** `op://boss/github/token`
 
 ### 3. Anthropic API Key (Optional)
 
@@ -432,13 +514,13 @@ op item create \
 ```bash
 op item create \
   --category=API \
-  --vault=glx \
+  --vault=boss \
   --title="anthropic" \
   --username="api-key" \
   password="sk-ant-xxxxxxxxxxxxxxxxxxxx"
 ```
 
-**Reference:** `op://glx/anthropic/api-key`
+**Reference:** `op://boss/anthropic/api-key`
 
 ### 4. Database Connection URL
 
@@ -471,21 +553,21 @@ postgresql://boss:bosssecret@localhost:5432/boss_dev
 ```bash
 op item create \
   --category=Database \
-  --vault=glx \
+  --vault=boss \
   --title="database" \
   --username="connection-url" \
   password="postgresql://boss:bosssecret@localhost:5432/boss_dev"
 
 # Also create test database URL
 op item edit database \
-  --vault=glx \
+  --vault=boss \
   test-url="postgresql://boss:bosssecret@localhost:5432/boss_test"
 ```
 
 **References:**
 
-- `op://glx/database/connection-url`
-- `op://glx/database/test-url`
+- `op://boss/database/connection-url`
+- `op://boss/database/test-url`
 
 ### 5. Integration Secrets (Examples)
 
@@ -496,7 +578,7 @@ op item edit database \
 
 op item create \
   --category=API \
-  --vault=glx \
+  --vault=boss \
   --title="stripe" \
   test-secret-key="sk_test_xxxxxxxxxxxxxxxxxxxx" \
   webhook-secret="whsec_xxxxxxxxxxxxxxxxxxxx" \
@@ -505,9 +587,9 @@ op item create \
 
 **References:**
 
-- `op://glx/stripe/test-secret-key`
-- `op://glx/stripe/webhook-secret`
-- `op://glx/stripe/publishable-key`
+- `op://boss/stripe/test-secret-key`
+- `op://boss/stripe/webhook-secret`
+- `op://boss/stripe/publishable-key`
 
 #### SendGrid (for email)
 
@@ -516,12 +598,12 @@ op item create \
 
 op item create \
   --category=API \
-  --vault=glx \
+  --vault=boss \
   --title="sendgrid" \
   api-key="SG.xxxxxxxxxxxxxxxxxxxx"
 ```
 
-**Reference:** `op://glx/sendgrid/api-key`
+**Reference:** `op://boss/sendgrid/api-key`
 
 #### AWS (for S3, etc.)
 
@@ -530,7 +612,7 @@ op item create \
 
 op item create \
   --category=API \
-  --vault=glx \
+  --vault=boss \
   --title="aws" \
   access-key="AKIA..." \
   secret-key="..."
@@ -538,8 +620,8 @@ op item create \
 
 **References:**
 
-- `op://glx/aws/access-key`
-- `op://glx/aws/secret-key`
+- `op://boss/aws/access-key`
+- `op://boss/aws/secret-key`
 
 #### Vercel (for deployments)
 
@@ -548,12 +630,12 @@ op item create \
 
 op item create \
   --category=API \
-  --vault=glx \
+  --vault=boss \
   --title="vercel" \
   token="xxxxxxxxxxxxxxxxxx"
 ```
 
-**Reference:** `op://glx/vercel/token`
+**Reference:** `op://boss/vercel/token`
 
 ---
 
@@ -589,8 +671,8 @@ Create `.container-use/environment.json` in your project:
   },
 
   "secrets": [
-    "CLAUDE_CODE_OAUTH_TOKEN=op://glx/claude-code/oauth-token",
-    "GITHUB_TOKEN=op://glx/github/token"
+    "CLAUDE_CODE_OAUTH_TOKEN=op://boss/claude-code/oauth-token",
+    "GITHUB_TOKEN=op://boss/github/token"
   ],
 
   "network": {
@@ -647,7 +729,7 @@ Create `.container-use/environment.json` in your project:
     "NODE_ENV": "development"
   },
 
-  "secrets": ["CLAUDE_CODE_OAUTH_TOKEN=op://glx/claude-code/oauth-token"],
+  "secrets": ["CLAUDE_CODE_OAUTH_TOKEN=op://boss/claude-code/oauth-token"],
 
   "network": {
     "allowed_hosts": ["api.anthropic.com", "claude.ai"]
@@ -692,14 +774,14 @@ Create `.container-use/environment.json` in your project:
   },
 
   "secrets": [
-    "CLAUDE_CODE_OAUTH_TOKEN=op://glx/claude-code/oauth-token",
-    "GITHUB_TOKEN=op://glx/github/token",
-    "DATABASE_URL=op://glx/database/test-url",
-    "STRIPE_SECRET_KEY=op://glx/stripe/test-secret-key",
-    "STRIPE_WEBHOOK_SECRET=op://glx/stripe/webhook-secret",
-    "SENDGRID_API_KEY=op://glx/sendgrid/api-key",
-    "AWS_ACCESS_KEY_ID=op://glx/aws/access-key",
-    "AWS_SECRET_ACCESS_KEY=op://glx/aws/secret-key"
+    "CLAUDE_CODE_OAUTH_TOKEN=op://boss/claude-code/oauth-token",
+    "GITHUB_TOKEN=op://boss/github/token",
+    "DATABASE_URL=op://boss/database/test-url",
+    "STRIPE_SECRET_KEY=op://boss/stripe/test-secret-key",
+    "STRIPE_WEBHOOK_SECRET=op://boss/stripe/webhook-secret",
+    "SENDGRID_API_KEY=op://boss/sendgrid/api-key",
+    "AWS_ACCESS_KEY_ID=op://boss/aws/access-key",
+    "AWS_SECRET_ACCESS_KEY=op://boss/aws/secret-key"
   ],
 
   "network": {
@@ -759,9 +841,9 @@ Create `.container-use/environment.json` in your project:
   },
 
   "secrets": [
-    "CLAUDE_CODE_OAUTH_TOKEN=op://glx/claude-code/oauth-token",
-    "GITHUB_TOKEN=op://glx/github/token",
-    "VERCEL_TOKEN=op://glx/vercel/token"
+    "CLAUDE_CODE_OAUTH_TOKEN=op://boss/claude-code/oauth-token",
+    "GITHUB_TOKEN=op://boss/github/token",
+    "VERCEL_TOKEN=op://boss/vercel/token"
   ],
 
   "network": {
@@ -845,7 +927,7 @@ Create/edit `~/.config/claude-code/mcp-servers.json`:
       "command": "npx",
       "args": ["@modelcontextprotocol/server-github"],
       "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "op://glx/github/token"
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "op://boss/github/token"
       }
     }
   }
@@ -887,9 +969,9 @@ Create/edit `~/.cursor/mcp-servers.json` (same structure as above).
 - Container-use configs reference secrets via `op://` format
 - Workers resolve secrets at runtime via `op` CLI
 - Example `op://` references:
-  - `GITHUB_PERSONAL_ACCESS_TOKEN`: op://glx/github/token
-  - `STRIPE_SECRET_KEY`: op://glx/stripe/test-secret-key
-  - `DATABASE_URL`: op://glx/database/test-url
+  - `GITHUB_PERSONAL_ACCESS_TOKEN`: op://boss/github/token
+  - `STRIPE_SECRET_KEY`: op://boss/stripe/test-secret-key
+  - `DATABASE_URL`: op://boss/database/test-url
 
 ---
 
@@ -909,7 +991,7 @@ docker ps
 op signin
 
 # Test secret retrieval
-op item get claude-code --vault glx --fields password
+op item get claude-code --vault boss --fields password
 
 # Should output: oauth_1234567890abcdef...
 ```
@@ -944,13 +1026,13 @@ claude "What is 2 + 2?"
 
 ```bash
 # Set a test secret
-container-use config secret set TEST_SECRET op://glx/github/token
+container-use config secret set TEST_SECRET op://boss/github/token
 
 # List secrets (values masked)
 container-use config secret list
 
 # Should show:
-# TEST_SECRET: op://glx/github/token
+# TEST_SECRET: op://boss/github/token
 
 # Create test environment
 container-use environment create --title "secret-test"
@@ -983,8 +1065,8 @@ cp /path/to/default/environment.json .container-use/environment.json
 # ... (see configurations above)
 
 # Configure secrets
-container-use config secret set CLAUDE_CODE_OAUTH_TOKEN op://glx/claude-code/oauth-token
-container-use config secret set GITHUB_TOKEN op://glx/github/token
+container-use config secret set CLAUDE_CODE_OAUTH_TOKEN op://boss/claude-code/oauth-token
+container-use config secret set GITHUB_TOKEN op://boss/github/token
 
 # Create worker environment
 container-use environment create --title "test-worker"
@@ -1032,10 +1114,10 @@ container-use environment run --command "echo $STRIPE_SECRET_KEY"
 container-use config secret list
 
 # Verify secret exists in 1Password
-op item get stripe --vault glx
+op item get stripe --vault boss
 
 # Re-configure secret
-container-use config secret set STRIPE_SECRET_KEY op://glx/stripe/test-secret-key
+container-use config secret set STRIPE_SECRET_KEY op://boss/stripe/test-secret-key
 ```
 
 ### Issue: Docker not running
@@ -1089,7 +1171,7 @@ claude auth login
 cat ~/.config/claude-code/auth.json | jq -r '.oauth_token'
 
 # Update in 1Password
-op item edit claude-code --vault glx oauth-token="new_token_here"
+op item edit claude-code --vault boss oauth-token="new_token_here"
 ```
 
 ### Issue: Worker out of memory
@@ -1129,7 +1211,7 @@ op item edit claude-code --vault glx oauth-token="new_token_here"
 # ✅ GOOD - Always use op:// references
 {
   "secrets": {
-    "STRIPE_SECRET_KEY": "op://glx/stripe/test-secret-key"
+    "STRIPE_SECRET_KEY": "op://boss/stripe/test-secret-key"
   }
 }
 ```
@@ -1138,12 +1220,12 @@ op item edit claude-code --vault glx oauth-token="new_token_here"
 
 ```bash
 # Test secrets
-op://glx/stripe/test-secret-key     # sk_test_*
-op://glx/database/test-url          # localhost
+op://boss/stripe/test-secret-key     # sk_test_*
+op://boss/database/test-url          # localhost
 
 # Production secrets
-op://glx/stripe/live-secret-key     # sk_live_*
-op://glx/database/production-url    # production DB
+op://boss/stripe/live-secret-key     # sk_live_*
+op://boss/database/production-url    # production DB
 ```
 
 ### 3. Rotate Secrets Regularly
@@ -1151,7 +1233,7 @@ op://glx/database/production-url    # production DB
 ```bash
 # Generate new GitHub token every 90 days
 # Update in 1Password
-op item edit github --vault glx token="ghp_new_token"
+op item edit github --vault boss token="ghp_new_token"
 
 # Workers automatically get new value on next run
 ```
@@ -1173,10 +1255,10 @@ op item edit github --vault glx token="ghp_new_token"
 
 ```bash
 # View 1Password audit log
-op events list --vault glx
+op events list --vault boss
 
 # Check which items were accessed
-op events list --vault glx --item stripe
+op events list --vault boss --item stripe
 
 # Monitor container-use logs for secret usage
 container-use log <env-id> | grep -i secret
@@ -1192,8 +1274,8 @@ container-use log <env-id> | grep -i secret
 ```bash
 # 1Password
 op signin                           # Authenticate
-op item get <item> --vault glx     # Get secret
-op item list --vault glx            # List all secrets
+op item get <item> --vault boss     # Get secret
+op item list --vault boss            # List all secrets
 
 # Container-Use
 container-use config show                          # Show config
@@ -1225,14 +1307,14 @@ gh pr create                        # Create PR
 - [ ] `.container-use/environment.json` - Default worker config
 - [ ] `.boss/workers/*/container-config.json` - Worker-specific configs
 - [ ] `~/.config/claude-code/mcp-servers.json` - MCP server config
-- [ ] 1Password vault `glx` - All secrets stored
+- [ ] 1Password vault `boss` - All secrets stored
 
 ### Secrets Checklist
 
-- [ ] `op://glx/claude-code/oauth-token` - Claude Code authentication
-- [ ] `op://glx/github/token` - GitHub access
-- [ ] `op://glx/database/test-url` - Test database
-- [ ] `op://glx/anthropic/api-key` - Anthropic API (optional)
+- [ ] `op://boss/claude-code/oauth-token` - Claude Code authentication
+- [ ] `op://boss/github/token` - GitHub access
+- [ ] `op://boss/database/test-url` - Test database
+- [ ] `op://boss/anthropic/api-key` - Anthropic API (optional)
 - [ ] Integration secrets (Stripe, SendGrid, etc.) - As needed
 
 ---

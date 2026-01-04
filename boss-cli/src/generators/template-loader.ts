@@ -39,7 +39,7 @@ async function copyBaseFiles(srcDir: string, destDir: string): Promise<void> {
 
   for (const file of files) {
     const srcPath = path.join(srcDir, file);
-    const destFile = file.startsWith('_') ? file.slice(1) : file;
+    const destFile = file.startsWith('_') ? '.' + file.slice(1) : file;
     const destPath = path.join(destDir, destFile);
 
     const stat = await fs.stat(srcPath);

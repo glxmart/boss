@@ -8,7 +8,7 @@
       "Skill",
       "mcp__github__*",
       "WebFetch(domain:github.com)",
-      "Bash(.claude/skills/workflow-management/tools/4-create-pr.sh)"
+      "Bash(.claude/skills/**)"
     ],
     "deny": ["Bash(op read:*)"],
     "defaultMode": "acceptEdits"

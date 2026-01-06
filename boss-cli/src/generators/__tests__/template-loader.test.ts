@@ -45,7 +45,7 @@ describe('template-loader', () => {
   const testProjectPath = '/test/project';
   const testConfig: ProjectConfig = {
     name: 'test-project',
-    template: 'nextjs-app-turbo',
+    template: 't3-prisma',
     quality: 'production',
   };
 
@@ -54,38 +54,30 @@ describe('template-loader', () => {
   });
 
   describe('loadTemplate', () => {
-    it('should copy template directory when it exists', async () => {
-      const { copyDirectory } = await import('../../utils/file-system.js');
+    it('should generate minimal template files', async () => {
+      const { writeFile } = await import('../../utils/file-system.js');
       mockPathExists.mockResolvedValueOnce(true);
 
-      await loadTemplate(testProjectPath, 'nextjs-app-turbo', testConfig);
+      await loadTemplate(testProjectPath, 't3-prisma', testConfig);
 
-      expect(copyDirectory).toHaveBeenCalled();
+      // New template system generates files via createMinimalTemplate
+      expect(writeFile).toHaveBeenCalledWith(
+        expect.stringContaining('package.json'),
+        expect.any(String)
+      );
     });
 
-    it('should handle t3-app template specially', async () => {
-      const { copyDirectory } = await import('../../utils/file-system.js');
-      mockPathExists
-        .mockResolvedValueOnce(true) // template exists
-        .mockResolvedValueOnce(true) // base path exists
-        .mockResolvedValueOnce(true) // extras path exists
-        .mockResolvedValueOnce(true) // config path exists
-        .mockResolvedValueOnce(true) // extras src exists
-        .mockResolvedValueOnce(true) // prisma path exists
-        .mockResolvedValueOnce(true) // package.json exists
-        .mockResolvedValueOnce(true); // .gitignore path exists
+    it('should generate template files for all template types', async () => {
+      const { writeFile } = await import('../../utils/file-system.js');
+      mockPathExists.mockResolvedValue(true);
 
-      mockReaddir
-        .mockResolvedValueOnce(['file1.ts']) // base files
-        .mockResolvedValueOnce(['config.ts']) // config files
-        .mockResolvedValueOnce([]); // for readdir in ensureEnvInGitignore
+      await loadTemplate(testProjectPath, 't3-drizzle', testConfig);
 
-      mockStat.mockResolvedValue({ isDirectory: () => false });
-
-      await loadTemplate(testProjectPath, 't3-app', testConfig);
-
-      expect(copyDirectory).toHaveBeenCalled();
-      expect(mockCopy).toHaveBeenCalled();
+      // New template system generates package.json and other files
+      expect(writeFile).toHaveBeenCalledWith(
+        expect.stringContaining('package.json'),
+        expect.any(String)
+      );
     });
 
     it.skip('should create minimal template when template directory does not exist', async () => {
@@ -95,7 +87,7 @@ describe('template-loader', () => {
         .mockResolvedValueOnce(false) // template doesn't exist
         .mockResolvedValueOnce(true); // .gitignore exists
 
-      await loadTemplate(testProjectPath, 'nextjs-app-turbo', testConfig);
+      await loadTemplate(testProjectPath, 't3-prisma', testConfig);
 
       expect(writeFile).toHaveBeenCalledWith(
         expect.stringContaining('package.json'),
@@ -115,7 +107,7 @@ describe('template-loader', () => {
 
       vi.mocked(readFile).mockResolvedValueOnce('# existing content\nnode_modules');
 
-      await loadTemplate(testProjectPath, 'nextjs-app-turbo', testConfig);
+      await loadTemplate(testProjectPath, 't3-prisma', testConfig);
 
       expect(readFile).toHaveBeenCalledWith(expect.stringContaining('.gitignore'));
       expect(writeFile).toHaveBeenCalled();
@@ -127,7 +119,7 @@ describe('template-loader', () => {
         .mockResolvedValueOnce(true) // template exists
         .mockResolvedValueOnce(false); // .gitignore doesn't exist
 
-      await loadTemplate(testProjectPath, 'nextjs-app-turbo', testConfig);
+      await loadTemplate(testProjectPath, 't3-prisma', testConfig);
 
       expect(writeFile).toHaveBeenCalledWith(
         expect.stringContaining('.gitignore'),
@@ -135,117 +127,92 @@ describe('template-loader', () => {
       );
     });
 
-    it('should handle api-service-fastify template', async () => {
-      const { copyDirectory } = await import('../../utils/file-system.js');
-      mockPathExists.mockResolvedValue(true);
-
-      await loadTemplate(testProjectPath, 'api-service-fastify', testConfig);
-
-      expect(copyDirectory).toHaveBeenCalled();
-    });
-
-    it('should handle blank template', async () => {
+    it('should handle fastify-native template', async () => {
       const { writeFile } = await import('../../utils/file-system.js');
-      mockPathExists
-        .mockResolvedValueOnce(false) // template doesn't exist
-        .mockResolvedValueOnce(true); // .gitignore exists
-
-      const blankConfig: ProjectConfig = {
-        name: 'blank-project',
-        template: 'blank',
-        quality: 'startup',
-      };
-
-      await loadTemplate(testProjectPath, 'blank', blankConfig);
-
-      expect(writeFile).toHaveBeenCalledWith(
-        expect.stringContaining('package.json'),
-        expect.stringContaining('blank-project')
-      );
-    });
-
-    it('should update package.json name for t3-app', async () => {
+      // New template system creates minimal templates for all templates
       mockPathExists.mockResolvedValue(true);
-      mockReaddir.mockResolvedValue([]);
-      mockReadFile.mockResolvedValue(JSON.stringify({ name: 'old-name', version: '1.0.0' }));
 
-      const t3Config: ProjectConfig = {
-        name: 'my-t3-app',
-        template: 't3-app',
+      const fastifyConfig: ProjectConfig = {
+        name: 'fastify-project',
+        template: 'fastify-native',
         quality: 'production',
       };
 
-      await loadTemplate(testProjectPath, 't3-app', t3Config);
+      await loadTemplate(testProjectPath, 'fastify-native', fastifyConfig);
 
-      expect(mockWriteFile).toHaveBeenCalledWith(
+      // New template system generates package.json via createMinimalTemplate
+      expect(writeFile).toHaveBeenCalledWith(
         expect.stringContaining('package.json'),
-        expect.stringContaining('my-t3-app')
+        expect.any(String)
       );
     });
 
-    it('should add pnpm configuration for esbuild in t3-app', async () => {
+    it('should handle t3-prisma template', async () => {
+      const { writeFile } = await import('../../utils/file-system.js');
+      // New template system creates minimal templates for all templates
       mockPathExists.mockResolvedValue(true);
-      mockReaddir.mockResolvedValue([]);
-      mockReadFile.mockResolvedValue(JSON.stringify({ name: 'test', version: '1.0.0' }));
 
-      await loadTemplate(testProjectPath, 't3-app', testConfig);
+      const t3Config: ProjectConfig = {
+        name: 't3-project',
+        template: 't3-prisma',
+        quality: 'startup',
+      };
 
-      const writeCall = mockWriteFile.mock.calls.find((call) => call[0]?.includes('package.json'));
-      if (writeCall) {
-        const packageContent = JSON.parse(writeCall[1]);
+      await loadTemplate(testProjectPath, 't3-prisma', t3Config);
+
+      // New template system generates package.json via createMinimalTemplate
+      expect(writeFile).toHaveBeenCalledWith(
+        expect.stringContaining('package.json'),
+        expect.any(String)
+      );
+    });
+
+    it('should handle t3-drizzle template', async () => {
+      const { writeFile } = await import('../../utils/file-system.js');
+      // New template system creates minimal templates for all templates
+      mockPathExists.mockResolvedValue(true);
+
+      const t3Config: ProjectConfig = {
+        name: 'my-t3-app',
+        template: 't3-drizzle',
+        quality: 'production',
+      };
+
+      await loadTemplate(testProjectPath, 't3-drizzle', t3Config);
+
+      // New template system generates package.json via createMinimalTemplate
+      expect(writeFile).toHaveBeenCalledWith(
+        expect.stringContaining('package.json'),
+        expect.any(String)
+      );
+    });
+
+    it('should add pnpm configuration for esbuild', async () => {
+      const { writeFile } = await import('../../utils/file-system.js');
+      mockPathExists.mockResolvedValue(true);
+
+      await loadTemplate(testProjectPath, 't3-drizzle', testConfig);
+
+      // Check that package.json was written with pnpm config
+      const writeFileMock = vi.mocked(writeFile);
+      const packageJsonCall = writeFileMock.mock.calls.find(
+        (call) => typeof call[0] === 'string' && call[0].includes('package.json')
+      );
+      expect(packageJsonCall).toBeDefined();
+      if (packageJsonCall) {
+        const packageContent = JSON.parse(packageJsonCall[1] as string);
         expect(packageContent.pnpm).toBeDefined();
         expect(packageContent.pnpm.onlyBuiltDependencies).toContain('esbuild');
       }
     });
 
-    it('should handle underscore-prefixed files in t3 template', async () => {
-      mockPathExists
-        .mockResolvedValueOnce(true) // template exists
-        .mockResolvedValueOnce(true) // base path exists
-        .mockResolvedValueOnce(true) // extras path exists
-        .mockResolvedValueOnce(true) // config path exists
-        .mockResolvedValueOnce(false) // extras src doesn't exist
-        .mockResolvedValueOnce(false) // prisma path doesn't exist
-        .mockResolvedValueOnce(true) // package.json exists
-        .mockResolvedValueOnce(true); // .gitignore exists
-
-      mockReaddir
-        .mockResolvedValueOnce(['_file.ts', 'normal.ts']) // base files with underscore
-        .mockResolvedValueOnce(['_optional.config.ts', 'required.ts']) // config files
-        .mockResolvedValueOnce([]); // gitignore readdir
-
-      mockStat.mockResolvedValue({ isDirectory: () => false });
-
-      await loadTemplate(testProjectPath, 't3-app', testConfig);
-
-      // Verify underscore files are copied without the underscore prefix
-      expect(mockCopy).toHaveBeenCalled();
-    });
-
-    it.skip('should handle directory files in t3 base template', async () => {
-      // Skipped - complex mock setup for directory handling
-      const { copyDirectory } = await import('../../utils/file-system.js');
-      mockPathExists
-        .mockResolvedValueOnce(true) // template exists
-        .mockResolvedValueOnce(true) // base path exists
-        .mockResolvedValueOnce(false) // extras path doesn't exist
-        .mockResolvedValueOnce(true) // package.json exists
-        .mockResolvedValueOnce(true) // .gitignore exists
-        .mockResolvedValueOnce(true); // .gitignore readdir
-
-      mockReaddir
-        .mockResolvedValueOnce(['src']) // directory in base
-        .mockResolvedValueOnce([]); // gitignore readdir
-
-      mockStat.mockResolvedValue({ isDirectory: () => true });
-
-      await loadTemplate(testProjectPath, 't3-app', testConfig);
-
-      expect(copyDirectory).toHaveBeenCalled();
-    });
+    // Note: Tests for underscore-prefixed files, T3-specific loading, and
+    // monorepo template loading have been removed as they tested the old
+    // embedded template system. The new system uses external templates
+    // executed via CLI commands (Phase 2).
 
     it.skip('should skip missing package.json in t3 template', async () => {
-      // Skipped - mock state interference with other tests
+      // Skipped - not applicable to new template system
       mockPathExists
         .mockResolvedValueOnce(true) // template exists
         .mockResolvedValueOnce(true) // base path exists
@@ -255,7 +222,7 @@ describe('template-loader', () => {
 
       mockReaddir.mockResolvedValue([]);
 
-      await loadTemplate(testProjectPath, 't3-app', testConfig);
+      await loadTemplate(testProjectPath, 't3-drizzle', testConfig);
 
       // Should not throw error
       expect(mockWriteFile).not.toHaveBeenCalledWith(
@@ -271,10 +238,10 @@ describe('template-loader', () => {
         .mockResolvedValueOnce(false) // template doesn't exist
         .mockResolvedValueOnce(true); // .gitignore exists
 
-      const templates: Array<'nextjs-app-turbo' | 'api-service-fastify' | 'blank' | 't3-app'> = [
-        'nextjs-app-turbo',
-        'api-service-fastify',
-        'blank',
+      const templates: Array<'t3-prisma' | 'fastify-native' | 't3-prisma' | 't3-drizzle'> = [
+        't3-prisma',
+        'fastify-native',
+        't3-prisma',
       ];
 
       for (const template of templates) {
@@ -301,192 +268,8 @@ describe('template-loader', () => {
     });
   });
 
-  describe('loadMonorepoTemplate', () => {
-    it('should copy base monorepo structure when base path exists', async () => {
-      const { copyDirectory } = await import('../../utils/file-system.js');
-      mockPathExists
-        .mockResolvedValueOnce(true) // template exists
-        .mockResolvedValueOnce(true) // base path exists
-        .mockResolvedValueOnce(false) // extras path doesn't exist
-        .mockResolvedValueOnce(true); // .gitignore exists
-
-      mockReaddir.mockResolvedValue(['package.json', 'turbo.json']);
-      mockStat.mockResolvedValue({ isDirectory: () => false });
-
-      await loadTemplate(testProjectPath, 'nextjs-app-turbo', testConfig);
-
-      expect(copyDirectory).toHaveBeenCalled();
-    });
-
-    it('should copy Kamal configs from extras when present', async () => {
-      const { copyDirectory } = await import('../../utils/file-system.js');
-      mockPathExists
-        .mockResolvedValueOnce(true) // template exists
-        .mockResolvedValueOnce(true) // base path exists
-        .mockResolvedValueOnce(true) // extras path exists
-        .mockResolvedValueOnce(true) // kamal config exists
-        .mockResolvedValueOnce(false) // dockerignore doesn't exist
-        .mockResolvedValueOnce(false) // scripts don't exist
-        .mockResolvedValueOnce(false) // template workflows don't exist
-        .mockResolvedValueOnce(true) // .gitignore exists
-        .mockResolvedValueOnce(true); // package.json exists for variable processing
-
-      mockReaddir
-        .mockResolvedValueOnce(['package.json']) // base files
-        .mockResolvedValueOnce([]); // gitignore readdir
-
-      mockStat.mockResolvedValue({ isDirectory: () => false });
-      mockReadFile.mockResolvedValue('{"name": "{{PROJECT_NAME}}"}');
-
-      await loadTemplate(testProjectPath, 'nextjs-app-turbo', testConfig);
-
-      expect(copyDirectory).toHaveBeenCalled();
-    });
-
-    it('should make scripts executable when copying from extras', async () => {
-      mockPathExists
-        .mockResolvedValueOnce(true) // template exists
-        .mockResolvedValueOnce(true) // base path exists
-        .mockResolvedValueOnce(true) // extras path exists
-        .mockResolvedValueOnce(false) // kamal doesn't exist
-        .mockResolvedValueOnce(false) // dockerignore doesn't exist
-        .mockResolvedValueOnce(true) // scripts exist
-        .mockResolvedValueOnce(false) // template workflows don't exist
-        .mockResolvedValueOnce(true); // .gitignore exists
-
-      // Mock pathExists for template variable processing (all files don't exist to skip)
-      mockPathExists.mockResolvedValue(false);
-
-      mockReaddir
-        .mockResolvedValueOnce(['_gitignore']) // base files
-        .mockResolvedValueOnce(['deploy.sh']); // Single script to simplify test
-
-      mockStat.mockResolvedValue({ isDirectory: () => false });
-      mockReadFile.mockResolvedValue('{"name": "test"}');
-
-      // Reset and setup chmod mock
-      mockChmod.mockClear();
-      mockChmod.mockImplementation(async () => undefined);
-
-      await loadTemplate(testProjectPath, 'nextjs-app-turbo', testConfig);
-
-      // Verify chmod was called with correct permissions (0o755)
-      // Note: We can't reliably test the exact path due to complex mocking,
-      // but we verify the permission mode is correct
-      expect(mockChmod).toHaveBeenCalled();
-      const calls = mockChmod.mock.calls;
-      if (calls.length > 0) {
-        const firstCall = calls[0] as unknown[];
-        expect(firstCall[1]).toBe(0o755);
-      }
-    });
-
-    it('should replace template variables in all specified files', async () => {
-      mockPathExists
-        .mockResolvedValueOnce(true) // template exists
-        .mockResolvedValueOnce(true) // base path exists
-        .mockResolvedValueOnce(true) // extras path exists
-        .mockResolvedValueOnce(false) // kamal doesn't exist
-        .mockResolvedValueOnce(false) // dockerignore doesn't exist
-        .mockResolvedValueOnce(false) // scripts don't exist
-        .mockResolvedValueOnce(false) // template workflows don't exist
-        .mockResolvedValueOnce(true); // .gitignore exists
-
-      mockReaddir.mockResolvedValue(['package.json']);
-      mockStat.mockResolvedValue({ isDirectory: () => false });
-
-      // Mock all files that should have variables replaced
-      const fileContent = '{"name": "{{PROJECT_NAME}}", "author": "{{GITHUB_USERNAME}}"}';
-      mockReadFile.mockResolvedValue(fileContent);
-      mockPathExists.mockResolvedValue(true);
-
-      await loadTemplate(testProjectPath, 'nextjs-app-turbo', testConfig);
-
-      // Should write to all specified files with replaced variables
-      const writeFileCalls = mockWriteFile.mock.calls;
-      const processedFiles = writeFileCalls.map((call) => call[0]);
-
-      // Verify template variables were replaced
-      const contentWritten = writeFileCalls.find(
-        (call) => typeof call[1] === 'string' && call[1].includes('test-project')
-      );
-      expect(contentWritten).toBeDefined();
-    });
-
-    it('should throw error if template variables cannot be replaced', async () => {
-      mockPathExists
-        .mockResolvedValueOnce(true) // template exists
-        .mockResolvedValueOnce(true) // base path exists
-        .mockResolvedValueOnce(true) // extras path exists
-        .mockResolvedValueOnce(false) // kamal doesn't exist
-        .mockResolvedValueOnce(false) // dockerignore doesn't exist
-        .mockResolvedValueOnce(false) // scripts don't exist
-        .mockResolvedValueOnce(false) // template workflows don't exist
-        .mockResolvedValueOnce(true); // .gitignore exists
-
-      mockReaddir.mockResolvedValue(['package.json']);
-      mockStat.mockResolvedValue({ isDirectory: () => false });
-
-      // File with unknown template variable that can't be replaced
-      mockReadFile.mockResolvedValue('{"name": "{{UNKNOWN_VARIABLE}}"}');
-      mockPathExists.mockResolvedValue(true);
-
-      // Should throw error about unreplaced placeholders
-      await expect(loadTemplate(testProjectPath, 'nextjs-app-turbo', testConfig)).rejects.toThrow(
-        /unreplaced/i
-      );
-    });
-
-    it('should copy template-specific GitHub workflows when present', async () => {
-      const { copyDirectory } = await import('../../utils/file-system.js');
-      mockPathExists
-        .mockResolvedValueOnce(true) // template exists
-        .mockResolvedValueOnce(true) // base path exists
-        .mockResolvedValueOnce(true) // extras path exists
-        .mockResolvedValueOnce(false) // kamal doesn't exist
-        .mockResolvedValueOnce(false) // dockerignore doesn't exist
-        .mockResolvedValueOnce(false) // scripts don't exist
-        .mockResolvedValueOnce(true) // template workflows exist
-        .mockResolvedValueOnce(true); // .gitignore exists
-
-      mockReaddir.mockResolvedValue(['package.json']);
-      mockStat.mockResolvedValue({ isDirectory: () => false });
-      mockReadFile.mockResolvedValue('{"name": "test"}');
-
-      await loadTemplate(testProjectPath, 'nextjs-app-turbo', testConfig);
-
-      // Should copy template workflows to .github/workflows
-      expect(copyDirectory).toHaveBeenCalledWith(
-        expect.stringContaining('github-workflows'),
-        expect.stringContaining('.github/workflows')
-      );
-    });
-
-    it('should handle chmod failures with descriptive error', async () => {
-      mockPathExists
-        .mockResolvedValueOnce(true) // template exists
-        .mockResolvedValueOnce(true) // base path exists
-        .mockResolvedValueOnce(true) // extras path exists
-        .mockResolvedValueOnce(false) // kamal doesn't exist
-        .mockResolvedValueOnce(false) // dockerignore doesn't exist
-        .mockResolvedValueOnce(true) // scripts exist
-        .mockResolvedValueOnce(false) // template workflows don't exist
-        .mockResolvedValueOnce(true); // .gitignore exists
-
-      mockReaddir
-        .mockResolvedValueOnce(['package.json']) // base files
-        .mockResolvedValueOnce(['deploy.sh']) // scripts
-        .mockResolvedValueOnce([]); // gitignore readdir
-
-      mockStat.mockResolvedValue({ isDirectory: () => false });
-      mockReadFile.mockResolvedValue('{"name": "test"}');
-
-      // Make chmod fail
-      mockChmod.mockRejectedValueOnce(new Error('Permission denied'));
-
-      await expect(loadTemplate(testProjectPath, 'nextjs-app-turbo', testConfig)).rejects.toThrow(
-        /Failed to make script executable/
-      );
-    });
-  });
+  // Note: loadMonorepoTemplate tests removed as they tested functionality
+  // for the old embedded templates. The new template system uses external
+  // templates executed via CLI commands (Phase 2), with minimal templates
+  // as placeholders (Phase 1).
 });

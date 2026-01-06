@@ -2,49 +2,67 @@
 
 Create a new feature branch from main with the latest changes.
 
-> **💡 TIP**: This command uses the [`workflow-management`](.claude/skills/workflow-management/SKILL.md) skill for execution.
+> **TIP**: This command uses the [`workflow-management`](.claude/skills/workflow-management/SKILL.md) skill for execution.
 
 ## What This Does
 
-1. Switches to main branch
-2. Pulls latest changes
-3. Creates a new feature branch
-4. Verifies clean starting point
+1. Stashes any local changes (auto-restores after)
+2. Switches to main branch
+3. Pulls latest changes
+4. Creates a new feature branch (or switches to existing)
+5. Restores stashed changes
 
 ## Usage
 
-**Invoke with:** "Start a new feature" or "Create feature branch"
+**Invoke with:** `/1-start-feature` or "Start a new feature"
 
-When invoked, I will execute:
+When invoked, ask the user for:
+
+1. **Branch type**: feature, fix, chore, or docs
+2. **Branch name**: kebab-case name (e.g., worker-resume)
+
+Then execute:
 
 ```bash
-.claude/skills/workflow-management/tools/1-start-feature.sh
+.claude/skills/workflow-management/tools/1-start-feature.sh <type> <name>
 ```
 
-This tool will:
+### Arguments
 
-1. **Ask for branch type** (feature/fix/chore/docs)
-2. **Ask for feature name** (kebab-case)
-3. **Create branch** `{type}/{name}`
-4. **Show next steps**
+| Argument | Required | Values                            | Description                         |
+| -------- | -------- | --------------------------------- | ----------------------------------- |
+| `type`   | Yes      | `feature`, `fix`, `chore`, `docs` | Branch type prefix                  |
+| `name`   | Yes      | kebab-case string                 | Branch name (e.g., `worker-resume`) |
 
 ## Examples
 
 **New Feature:**
 
-```
-→ Feature type: feature
-→ Feature name: worker-resume
-✅ Created: feature/worker-resume
+```bash
+.claude/skills/workflow-management/tools/1-start-feature.sh feature worker-resume
+# Creates: feature/worker-resume
 ```
 
 **Bug Fix:**
 
+```bash
+.claude/skills/workflow-management/tools/1-start-feature.sh fix validation-error
+# Creates: fix/validation-error
 ```
-→ Feature type: fix
-→ Feature name: validation-error
-✅ Created: fix/validation-error
+
+**Documentation:**
+
+```bash
+.claude/skills/workflow-management/tools/1-start-feature.sh docs api-reference
+# Creates: docs/api-reference
 ```
+
+## Behavior
+
+- **Local changes**: Automatically stashed and restored after branch creation
+- **Existing local branch**: Switches to it instead of failing
+- **Existing remote branch**: Checks out tracking branch
+- **Already on target branch**: No-op, reports success
 
 ## Next Steps
 

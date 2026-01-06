@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { bootstrapCommand } from './commands/bootstrap.js';
+import { initCommand } from './commands/init.js';
 import { doctorCommand } from './commands/doctor.js';
 import { templatesCommand } from './commands/templates.js';
 import { logger } from './utils/logger.js';
@@ -9,36 +9,50 @@ import type { BootstrapOptions } from './types/index.js';
 
 const program = new Command();
 
-program
-  .name('boss')
-  .description('BOSS Bootstrap CLI - Scaffold new BOSS projects')
-  .version('1.0.0');
+program.name('boss').description('BOSS CLI - Initialize new BOSS projects').version('1.0.0');
 
-program
-  .command('bootstrap')
-  .description('Bootstrap a new BOSS project')
-  .option(
-    '-t, --template <template>',
-    'Template to use (nextjs-app-turbo, api-service-fastify, blank)'
-  )
-  .option('-q, --quality <preset>', 'Quality preset (startup, production, enterprise)')
-  .option('-n, --name <name>', 'Project name')
-  .option('--org <org>', 'Organization name')
-  .option('--github-repo <repo>', 'GitHub repository name')
-  .option('--github-org <org>', 'GitHub organization')
-  .option(
-    '--mcp-scope <scope>',
-    'MCP config scope: user (global IDE), project (project directory), or both (default: both)'
-  )
-  .option('--non-interactive', 'Skip confirmation prompts (useful for scripts)')
-  .action(async (options: unknown) => {
+// Helper function to create init command options
+function addInitOptions(cmd: Command): Command {
+  return cmd
+    .option(
+      '-t, --template <template>',
+      'Template to use (t3-prisma, t3-drizzle, nestjs-typeorm, fastify-native, astro-portfolio)'
+    )
+    .option('-q, --quality <preset>', 'Quality preset (startup, production, enterprise)')
+    .option('-n, --name <name>', 'Project name')
+    .option('--org <org>', 'Organization name')
+    .option('--github-repo <repo>', 'GitHub repository name')
+    .option('--github-org <org>', 'GitHub organization')
+    .option(
+      '--mcp-scope <scope>',
+      'MCP config scope: user (global IDE), project (project directory), or both (default: both)'
+    )
+    .option('--non-interactive', 'Skip confirmation prompts (useful for scripts)');
+}
+
+// Primary command: init
+addInitOptions(program.command('init').description('Initialize a new BOSS project')).action(
+  async (options: unknown) => {
     try {
-      await bootstrapCommand(options as BootstrapOptions);
+      await initCommand(options as BootstrapOptions);
     } catch (error) {
-      logger.error(`Bootstrap failed: ${error instanceof Error ? error.message : String(error)}`);
+      logger.error(`Init failed: ${error instanceof Error ? error.message : String(error)}`);
       process.exit(1);
     }
-  });
+  }
+);
+
+// Alias: bootstrap (for backwards compatibility)
+addInitOptions(
+  program.command('bootstrap').description('Initialize a new BOSS project (alias for init)')
+).action(async (options: unknown) => {
+  try {
+    await initCommand(options as BootstrapOptions);
+  } catch (error) {
+    logger.error(`Init failed: ${error instanceof Error ? error.message : String(error)}`);
+    process.exit(1);
+  }
+});
 
 program
   .command('doctor')

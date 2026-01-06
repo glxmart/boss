@@ -2,29 +2,59 @@
 
 Create a pull request with GitHub CLI and 1Password authentication.
 
-> **💡 Powered by**: [`workflow-management`](.claude/skills/workflow-management/SKILL.md) + [`github-ops`](.claude/skills/github-ops/SKILL.md) skills
+> **TIP**: This command uses the [`workflow-management`](.claude/skills/workflow-management/SKILL.md) + [`github-ops`](.claude/skills/github-ops/SKILL.md) skills.
 
 ## What This Does
 
 1. Validates branch state (not on main, no uncommitted changes)
-2. Checks for changeset (warns if missing)
-3. Generates PR title from branch name
-4. Creates PR body with checklist template
+2. Checks for changeset (fails if missing unless `--skip-changeset`)
+3. Generates PR title from branch name (or uses provided title)
+4. Creates PR body with commit log and checklist
 5. Pushes branch to origin
 6. Creates PR using GitHub CLI (via 1Password)
-7. Optionally adds `skip-changeset` label
+7. Adds `skip-changeset` label if flag provided
 
 ## Usage
 
-**Invoke with:** "Create a pull request" or "Submit changes"
+**Invoke with:** `/4-create-pr` or "Create a pull request"
 
-Executes: `.claude/skills/workflow-management/tools/4-create-pr.sh`
+Execute (all arguments optional):
+
+```bash
+.claude/skills/workflow-management/tools/4-create-pr.sh [options]
+```
+
+### Options
+
+| Option             | Description                                           |
+| ------------------ | ----------------------------------------------------- |
+| `--title <title>`  | PR title (default: generated from branch name)        |
+| `--body <body>`    | PR body (default: auto-generated template)            |
+| `--skip-changeset` | Add skip-changeset label (for docs/tests/config only) |
+| `--draft`          | Create as draft PR                                    |
+
+## Examples
+
+```bash
+# Auto-generate everything from branch name
+.claude/skills/workflow-management/tools/4-create-pr.sh
+
+# Custom title
+.claude/skills/workflow-management/tools/4-create-pr.sh --title "fix: resolve validation error"
+
+# Skip changeset for docs-only changes
+.claude/skills/workflow-management/tools/4-create-pr.sh --skip-changeset
+
+# Draft PR with custom title
+.claude/skills/workflow-management/tools/4-create-pr.sh --title "feat: new worker type" --draft
+```
 
 ## Prerequisites
 
-✅ Quality checks passed (`/2-quality-check`)
-✅ Changeset created (`/3-create-changeset`) OR ready to skip
-✅ 1Password CLI configured for GitHub auth
+- Quality checks passed (`/2-quality-check`)
+- Changeset created (`/3-create-changeset`) OR use `--skip-changeset`
+- All changes committed
+- 1Password CLI configured for GitHub auth
 
 ## PR Title Generation
 
@@ -34,47 +64,21 @@ Executes: `.claude/skills/workflow-management/tools/4-create-pr.sh`
 | `fix/validation-error`  | `fix: validation error`  |
 | `docs/update-guide`     | `docs: update guide`     |
 
-## PR Template
-
-```markdown
-## Summary
-
-Brief description of changes.
-
-## Changes
-
-- Change 1
-- Change 2
-
-## Testing
-
-- [ ] Unit tests added/updated
-- [ ] Integration tests pass
-- [ ] Tested locally
-- [ ] Documentation updated
-
-## Changeset
-
-- [x] Changeset created
-
----
-
-🤖 Generated with Claude Code
-```
-
 ## Troubleshooting
 
 **"Cannot create PR from main"**: Create feature branch first (`/1-start-feature`)
 
-**"No changeset found"**: Create changeset (`/3-create-changeset`) or add `skip-changeset` label
+**"No changeset found"**: Create changeset (`/3-create-changeset`) or use `--skip-changeset`
 
-**"GitHub auth failed"**: See [github-ops TROUBLESHOOTING.md](.claude/skills/github-ops/TROUBLESHOOTING.md)
+**"You have uncommitted changes"**: Commit your changes first
+
+**"GitHub auth failed"**: Check 1Password CLI setup
 
 ## Next Steps
 
 After PR created:
 
-1. Monitor workflows: `gh run list --branch <branch>`
+1. Monitor workflows: `op run --env-file=.env -- gh run list --branch <branch>`
 2. Address review feedback
 3. Merge when approved
 

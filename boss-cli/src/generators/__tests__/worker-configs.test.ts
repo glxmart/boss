@@ -26,7 +26,7 @@ describe('worker-configs generator', () => {
   it('should generate all 9 worker configurations', async () => {
     const config: ProjectConfig = {
       name: 'test-project',
-      template: 'blank',
+      template: 't3-prisma',
       quality: 'startup',
     };
 
@@ -56,7 +56,7 @@ describe('worker-configs generator', () => {
   it('should generate CLAUDE.md with worker-specific instructions', async () => {
     const config: ProjectConfig = {
       name: 'test',
-      template: 'blank',
+      template: 't3-prisma',
       quality: 'startup',
     };
 
@@ -75,7 +75,7 @@ describe('worker-configs generator', () => {
   it('should generate .claude folder structure for workers', async () => {
     const config: ProjectConfig = {
       name: 'test',
-      template: 'blank',
+      template: 't3-prisma',
       quality: 'startup',
     };
 
@@ -97,7 +97,7 @@ describe('worker-configs generator', () => {
 
     const config: ProjectConfig = {
       name: 'test',
-      template: 'blank',
+      template: 't3-prisma',
       quality: 'startup',
     };
 
@@ -115,7 +115,7 @@ describe('worker-configs generator', () => {
 
     const config: ProjectConfig = {
       name: 'test',
-      template: 'blank',
+      template: 't3-prisma',
       quality: 'startup',
     };
 
@@ -139,7 +139,7 @@ describe('worker-configs generator', () => {
 
     const config: ProjectConfig = {
       name: 'test',
-      template: 'blank',
+      template: 't3-prisma',
       quality: 'startup',
     };
 

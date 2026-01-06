@@ -245,9 +245,12 @@ async function generateProjectConfig(projectPath: string, config: ProjectConfig)
 
 // Project type mapping based on template characteristics
 const PROJECT_TYPE_MAP: Record<string, string> = {
-  'nextjs-app-turbo': 'monorepo',
-  't3-app': 'web-app',
-  'api-service-fastify': 'api-service',
+  // New template system
+  't3-prisma': 'web-app',
+  't3-drizzle': 'web-app',
+  'nestjs-typeorm': 'api-service',
+  'fastify-native': 'api-service',
+  'astro-portfolio': 'static-site',
 };
 
 function getProjectType(template: string): string {

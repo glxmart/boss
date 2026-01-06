@@ -16,10 +16,10 @@ describe('template-docs generator', () => {
     await fs.remove(testDir);
   });
 
-  it('should generate TEMPLATE.md for blank template', async () => {
+  it('should generate TEMPLATE.md for t3-prisma template', async () => {
     const config = {
       name: 'test-project',
-      template: 'blank' as const,
+      template: 't3-prisma' as const,
       quality: 'startup' as const,
     };
 
@@ -29,17 +29,17 @@ describe('template-docs generator', () => {
     expect(await fs.pathExists(docPath)).toBe(true);
 
     const content = await fs.readFile(docPath, 'utf8');
-    expect(content).toContain('Template Documentation: Blank');
+    expect(content).toContain('Template Documentation: T3 Stack');
     expect(content).toContain('test-project');
     expect(content).toContain('startup');
-    expect(content).toContain('TypeScript');
-    expect(content).toContain('Vitest');
+    expect(content).toContain('tRPC');
+    expect(content).toContain('Prisma');
   });
 
-  it('should generate TEMPLATE.md for nextjs-app-turbo template', async () => {
+  it('should generate TEMPLATE.md for t3-drizzle template', async () => {
     const config = {
-      name: 'test-nextjs',
-      template: 'nextjs-app-turbo' as const,
+      name: 'test-drizzle',
+      template: 't3-drizzle' as const,
       quality: 'production' as const,
     };
 
@@ -49,17 +49,15 @@ describe('template-docs generator', () => {
     expect(await fs.pathExists(docPath)).toBe(true);
 
     const content = await fs.readFile(docPath, 'utf8');
-    expect(content).toContain('Template Documentation: Next.js Turbo Monorepo');
-    expect(content).toContain('test-nextjs');
+    expect(content).toContain('Template Documentation: T3 Stack');
+    expect(content).toContain('test-drizzle');
     expect(content).toContain('production');
-    expect(content).toContain('Next.js');
-    expect(content).toContain('React');
   });
 
-  it('should generate TEMPLATE.md for api-service-fastify template', async () => {
+  it('should generate TEMPLATE.md for fastify-native template', async () => {
     const config = {
       name: 'test-api',
-      template: 'api-service-fastify' as const,
+      template: 'fastify-native' as const,
       quality: 'enterprise' as const,
     };
 
@@ -75,10 +73,10 @@ describe('template-docs generator', () => {
     expect(content).toContain('Fastify');
   });
 
-  it('should generate TEMPLATE.md for t3-app template', async () => {
+  it('should generate TEMPLATE.md for nestjs-typeorm template', async () => {
     const config = {
-      name: 'test-t3',
-      template: 't3-app' as const,
+      name: 'test-nestjs',
+      template: 'nestjs-typeorm' as const,
       quality: 'startup' as const,
     };
 
@@ -88,16 +86,15 @@ describe('template-docs generator', () => {
     expect(await fs.pathExists(docPath)).toBe(true);
 
     const content = await fs.readFile(docPath, 'utf8');
-    expect(content).toContain('Template Documentation: T3 Stack');
-    expect(content).toContain('test-t3');
-    expect(content).toContain('tRPC');
-    expect(content).toContain('Prisma');
+    // NestJS uses the Fastify API Service template for now
+    expect(content).toContain('Template Documentation: Fastify API Service');
+    expect(content).toContain('test-nestjs');
   });
 
   it('should include project-specific information', async () => {
     const config = {
       name: 'my-awesome-project',
-      template: 'blank' as const,
+      template: 't3-prisma' as const,
       quality: 'production' as const,
     };
 

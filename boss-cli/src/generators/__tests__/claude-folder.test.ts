@@ -25,7 +25,7 @@ describe('claude-folder generator', () => {
   it('should generate .claude/ directory structure', async () => {
     const config: ProjectConfig = {
       name: 'test',
-      template: 'blank',
+      template: 't3-prisma',
       quality: 'startup',
     };
 
@@ -39,7 +39,7 @@ describe('claude-folder generator', () => {
   it('should generate all rule files', async () => {
     const config: ProjectConfig = {
       name: 'test',
-      template: 'blank',
+      template: 't3-prisma',
       quality: 'startup',
     };
 
@@ -56,7 +56,7 @@ describe('claude-folder generator', () => {
   it('should generate commands file', async () => {
     const config: ProjectConfig = {
       name: 'test',
-      template: 'blank',
+      template: 't3-prisma',
       quality: 'startup',
     };
 
@@ -73,7 +73,7 @@ describe('claude-folder generator', () => {
   it('should generate settings.json', async () => {
     const config: ProjectConfig = {
       name: 'test',
-      template: 'blank',
+      template: 't3-prisma',
       quality: 'startup',
     };
 
@@ -95,7 +95,7 @@ describe('claude-folder generator', () => {
 
     const config: ProjectConfig = {
       name: 'test',
-      template: 'blank',
+      template: 't3-prisma',
       quality: 'startup',
     };
 
@@ -112,7 +112,7 @@ describe('claude-folder generator', () => {
 
     const config: ProjectConfig = {
       name: 'test',
-      template: 'blank',
+      template: 't3-prisma',
       quality: 'startup',
     };
 
@@ -135,7 +135,7 @@ describe('claude-folder generator', () => {
 
     const config: ProjectConfig = {
       name: 'test',
-      template: 'blank',
+      template: 't3-prisma',
       quality: 'startup',
     };
 
@@ -151,7 +151,7 @@ describe('claude-folder generator', () => {
 
     const config: ProjectConfig = {
       name: 'test',
-      template: 'blank',
+      template: 't3-prisma',
       quality: 'startup',
     };
 

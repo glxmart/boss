@@ -4,18 +4,21 @@ import { loadTemplate as loadAssetTemplate } from '../utils/template-loader.js';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import type { Template, ProjectConfig, PackageJson } from '../types/index.js';
+import { TEMPLATES } from '../utils/prompts.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Template directory mapping - maps user-facing names to actual directory names
-const TEMPLATE_DIR_MAP: Record<string, string> = {
-  'nextjs-app-turbo': 'nextjs-turbo-monorepo',
-  'nextjs-turbo-monorepo': 'nextjs-turbo-monorepo',
-  't3-app': 't3-app',
-  'api-service-fastify': 'api-service-fastify',
-  blank: 'blank',
-};
+// New template system - external templates
+// Phase 1: Minimal template generation (placeholder until Phase 2 external template execution)
+// Phase 2 will implement actual external template execution via `externalCommand`
+const EXTERNAL_TEMPLATES: Template[] = [
+  't3-prisma',
+  't3-drizzle',
+  'nestjs-typeorm',
+  'fastify-native',
+  'astro-portfolio',
+];
 
 // Lazy-loaded fs-extra module
 type FsExtra = typeof import('fs-extra');
@@ -93,22 +96,17 @@ export async function loadTemplate(
   template: Template,
   config: ProjectConfig
 ): Promise<void> {
-  const fs = await getFs();
-  const templateDir = TEMPLATE_DIR_MAP[template] || template;
-  const templatePath = path.join(__dirname, '../../templates', templateDir);
+  // New template system: All templates use external generators (Phase 2)
+  // For Phase 1, we create minimal templates as placeholders
+  // The external template execution (create-t3-app, create-fastify, etc.) will be
+  // implemented in Phase 2 via the external-templates.ts generator
 
-  if (await fs.pathExists(templatePath)) {
-    switch (templateDir) {
-      case 'nextjs-turbo-monorepo':
-        await loadMonorepoTemplate(projectPath, templatePath, config);
-        break;
-      case 't3-app':
-        await loadT3Template(projectPath, templatePath, config);
-        break;
-      default:
-        await copyDirectory(templatePath, projectPath);
-    }
+  if (EXTERNAL_TEMPLATES.includes(template)) {
+    // Phase 1: Create minimal template as placeholder
+    // Phase 2 will replace this with actual external template execution
+    await createMinimalTemplate(projectPath, template, config);
   } else {
+    // Fallback for any unknown templates
     await createMinimalTemplate(projectPath, template, config);
   }
 
@@ -325,10 +323,12 @@ async function createMinimalTemplate(
   await writeFile(path.join(projectPath, 'vitest.config.ts'), vitestConfig);
 
   // Create ESLint configuration (ESLint 9 flat config format)
-  const eslintTemplate =
-    template === 'nextjs-app-turbo'
-      ? 'template-loader/eslint.config.react.js'
-      : 'template-loader/eslint.config.node.js';
+  // Use React config for fullstack/frontend templates, Node config for backend
+  const isReactTemplate =
+    template === 't3-prisma' || template === 't3-drizzle' || template === 'astro-portfolio';
+  const eslintTemplate = isReactTemplate
+    ? 'template-loader/eslint.config.react.js'
+    : 'template-loader/eslint.config.node.js';
   const eslintConfigContent = await loadAssetTemplate(eslintTemplate);
   await writeFile(path.join(projectPath, 'eslint.config.js'), eslintConfigContent);
 
@@ -431,14 +431,14 @@ function getPackageJsonForTemplate(template: Template, config: ProjectConfig): P
     },
   };
 
-  if (template === 't3-app') {
-    // T3 template has its own package.json, so we'll use that
-    return null; // Signal to use template's package.json as-is
-  }
+  // Get template info for description
+  const templateInfo = TEMPLATES[template];
 
-  if (template === 'nextjs-app-turbo') {
+  // T3 Stack templates (Prisma and Drizzle)
+  if (template === 't3-prisma' || template === 't3-drizzle') {
     return {
       ...base,
+      description: templateInfo?.description || 'T3 Stack application',
       scripts: {
         ...base.scripts,
         dev: 'next dev',
@@ -473,9 +473,47 @@ function getPackageJsonForTemplate(template: Template, config: ProjectConfig): P
     };
   }
 
-  if (template === 'api-service-fastify') {
+  // NestJS TypeORM template
+  if (template === 'nestjs-typeorm') {
     return {
       ...base,
+      description: templateInfo?.description || 'NestJS API with TypeORM',
+      scripts: {
+        ...base.scripts,
+        dev: 'nest start --watch',
+        build: 'nest build',
+        start: 'node dist/main.js',
+        'start:prod': 'node dist/main.js',
+      },
+      dependencies: {
+        '@nestjs/common': '^10.0.0',
+        '@nestjs/core': '^10.0.0',
+        '@nestjs/platform-express': '^10.0.0',
+      },
+      devDependencies: {
+        '@eslint/js': '^9.39.2',
+        '@nestjs/cli': '^10.0.0',
+        '@types/node': '^20.0.0',
+        '@typescript-eslint/eslint-plugin': '^8.51.0',
+        '@typescript-eslint/parser': '^8.51.0',
+        '@vitest/coverage-v8': '^4.0.16',
+        eslint: '^9.39.2',
+        globals: '^15.14.0',
+        husky: '^9.0.0',
+        'lint-staged': '^16.2.7',
+        prettier: '^3.7.4',
+        typescript: '^5.9.3',
+        'typescript-eslint': '^8.51.0',
+        vitest: '^4.0.16',
+      },
+    };
+  }
+
+  // Fastify Native template
+  if (template === 'fastify-native') {
+    return {
+      ...base,
+      description: templateInfo?.description || 'Fastify API service',
       scripts: {
         ...base.scripts,
         dev: 'tsx watch src/index.ts',
@@ -504,7 +542,39 @@ function getPackageJsonForTemplate(template: Template, config: ProjectConfig): P
     };
   }
 
-  // blank template
+  // Astro Portfolio template
+  if (template === 'astro-portfolio') {
+    return {
+      ...base,
+      description: templateInfo?.description || 'Astro portfolio site',
+      scripts: {
+        ...base.scripts,
+        dev: 'astro dev',
+        build: 'astro build',
+        start: 'astro preview',
+      },
+      dependencies: {
+        astro: '^4.0.0',
+      },
+      devDependencies: {
+        '@eslint/js': '^9.39.2',
+        '@types/node': '^20.0.0',
+        '@typescript-eslint/eslint-plugin': '^8.51.0',
+        '@typescript-eslint/parser': '^8.51.0',
+        '@vitest/coverage-v8': '^4.0.16',
+        eslint: '^9.39.2',
+        globals: '^15.14.0',
+        husky: '^9.0.0',
+        'lint-staged': '^16.2.7',
+        prettier: '^3.7.4',
+        typescript: '^5.9.3',
+        'typescript-eslint': '^8.51.0',
+        vitest: '^4.0.16',
+      },
+    };
+  }
+
+  // Fallback: minimal template
   return {
     ...base,
     devDependencies: {

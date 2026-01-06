@@ -19,7 +19,7 @@ describe('project-structure generator', () => {
   it('should generate basic project structure', async () => {
     const config: ProjectConfig = {
       name: 'test-project',
-      template: 'blank',
+      template: 't3-prisma',
       quality: 'startup',
     };
 
@@ -32,9 +32,9 @@ describe('project-structure generator', () => {
 
   it('should generate structure for different templates', async () => {
     const configs: ProjectConfig[] = [
-      { name: 'test', template: 'blank', quality: 'startup' },
-      { name: 'test', template: 'nextjs-app-turbo', quality: 'startup' },
-      { name: 'test', template: 'api-service-fastify', quality: 'startup' },
+      { name: 'test', template: 't3-prisma', quality: 'startup' },
+      { name: 'test', template: 't3-prisma', quality: 'startup' },
+      { name: 'test', template: 'fastify-native', quality: 'startup' },
     ];
 
     for (const config of configs) {

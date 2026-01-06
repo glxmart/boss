@@ -40,12 +40,32 @@ export async function validateProjectDirectory(
   return { valid: true };
 }
 
+// New template system - external templates
+const VALID_TEMPLATES = [
+  't3-prisma',
+  't3-drizzle',
+  'nestjs-typeorm',
+  'fastify-native',
+  'astro-portfolio',
+  // 'spring-boot-jpa', // Deferred to Phase B (Java support)
+];
+
 export function validateTemplate(template: string): { valid: boolean; error?: string } {
-  const validTemplates = ['nextjs-app-turbo', 'api-service-fastify', 'blank', 't3-app'];
-  if (!validTemplates.includes(template)) {
+  if (!VALID_TEMPLATES.includes(template)) {
     return {
       valid: false,
-      error: `Invalid template: ${template}. Must be one of: ${validTemplates.join(', ')}`,
+      error: `Invalid template: ${template}. Must be one of: ${VALID_TEMPLATES.join(', ')}`,
+    };
+  }
+  return { valid: true };
+}
+
+export function validateTemplateCategory(category: string): { valid: boolean; error?: string } {
+  const validCategories = ['fullstack', 'backend', 'frontend'];
+  if (!validCategories.includes(category)) {
+    return {
+      valid: false,
+      error: `Invalid category: ${category}. Must be one of: ${validCategories.join(', ')}`,
     };
   }
   return { valid: true };

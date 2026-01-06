@@ -2,23 +2,32 @@
 
 Run comprehensive quality validation on your code.
 
-> **💡 Powered by**: [`workflow-management`](.claude/skills/workflow-management/SKILL.md) + [`quality-gates`](.claude/skills/quality-gates/SKILL.md) skills
+> **TIP**: This command uses the [`workflow-management`](.claude/skills/workflow-management/SKILL.md) + [`quality-gates`](.claude/skills/quality-gates/SKILL.md) skills.
 
 ## What This Does
 
-Validates your changes meet quality standards:
-
-1. **Build** - TypeScript compilation
-2. **Lint** - ESLint validation
-3. **Type Check** - TypeScript types
-4. **Tests** - Unit and integration tests
-5. **Security** - Secret detection and vulnerabilities
+1. **Build** - TypeScript compilation (`pnpm build`)
+2. **Lint** - ESLint validation (`pnpm lint`)
+3. **Type Check** - TypeScript strict mode (`tsc --noEmit`)
+4. **Tests** - Unit and integration tests (`pnpm test`)
+5. **Security** - Secret detection and vulnerability scan
 
 ## Usage
 
-**Invoke with:** "Run quality check" or "Validate code"
+**Invoke with:** `/2-quality-check` or "Run quality check"
 
-Executes: `.claude/skills/workflow-management/tools/2-quality-check.sh`
+Execute directly (no arguments needed):
+
+```bash
+.claude/skills/workflow-management/tools/2-quality-check.sh
+```
+
+### Exit Codes
+
+| Code | Meaning                   |
+| ---- | ------------------------- |
+| `0`  | All checks passed         |
+| `1`  | One or more checks failed |
 
 ## Expected Result
 

@@ -20,7 +20,7 @@ describe('github-workflows generator', () => {
     it('should generate boss-ci.yml workflow', async () => {
       const config: ProjectConfig = {
         name: 'test-project',
-        template: 'nextjs-app-turbo',
+        template: 't3-prisma',
         quality: 'production',
       };
 
@@ -37,7 +37,7 @@ describe('github-workflows generator', () => {
     it('should generate boss-gates.yml workflow', async () => {
       const config: ProjectConfig = {
         name: 'test-project',
-        template: 'nextjs-app-turbo',
+        template: 't3-prisma',
         quality: 'production',
       };
 
@@ -54,7 +54,7 @@ describe('github-workflows generator', () => {
     it('should generate CODEOWNERS file', async () => {
       const config: ProjectConfig = {
         name: 'test-project',
-        template: 'api-service-fastify',
+        template: 'fastify-native',
         quality: 'startup',
       };
 
@@ -70,7 +70,7 @@ describe('github-workflows generator', () => {
     it('should create .github/workflows directory if it does not exist', async () => {
       const config: ProjectConfig = {
         name: 'test-project',
-        template: 'blank',
+        template: 't3-prisma',
         quality: 'enterprise',
       };
 
@@ -95,7 +95,7 @@ describe('github-workflows generator', () => {
 
         const config: ProjectConfig = {
           name: 'test-project',
-          template: 'nextjs-app-turbo',
+          template: 't3-prisma',
           quality,
         };
 

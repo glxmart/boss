@@ -25,13 +25,13 @@ vi.mock('../../utils/validators.js', () => ({
 
 vi.mock('../../utils/prompts.js', () => ({
   promptProjectName: vi.fn(async () => 'test-project'),
-  promptTemplate: vi.fn(async () => 'nextjs-app-turbo'),
+  promptTemplate: vi.fn(async () => 't3-prisma'),
   promptQualityPreset: vi.fn(async () => 'production'),
   promptGitHubConfig: vi.fn(async () => ({ repo: 'test-repo', org: 'test-org' })),
   promptMCPScope: vi.fn(async () => 'both'),
   confirmBootstrap: vi.fn(async () => true),
   TEMPLATES: {
-    'nextjs-app-turbo': { name: 'Next.js App', description: 'Test', stack: [] },
+    't3-prisma': { name: 'Next.js App', description: 'Test', stack: [] },
   },
   QUALITY_PRESETS: {
     production: { name: 'Production', description: 'Test', gates: {} },
@@ -169,7 +169,7 @@ describe('bootstrap command', () => {
     it('should bootstrap project with all options provided (non-interactive)', async () => {
       const options: BootstrapOptions = {
         name: 'test-project',
-        template: 'nextjs-app-turbo',
+        template: 't3-prisma',
         quality: 'production',
         githubRepo: 'test-repo',
         githubOrg: 'test-org',
@@ -195,7 +195,7 @@ describe('bootstrap command', () => {
 
       const options: BootstrapOptions = {
         name: 'test-project',
-        template: 'nextjs-app-turbo',
+        template: 't3-prisma',
         quality: 'production',
         nonInteractive: false,
       };
@@ -203,7 +203,7 @@ describe('bootstrap command', () => {
       await bootstrapCommand(options);
 
       const { logger } = await import('../../utils/logger.js');
-      expect(logger.info).toHaveBeenCalledWith('Bootstrap cancelled');
+      expect(logger.info).toHaveBeenCalledWith('Init cancelled');
     });
 
     it('should exit on invalid project directory', async () => {
@@ -215,7 +215,7 @@ describe('bootstrap command', () => {
 
       const options: BootstrapOptions = {
         name: 'test-project',
-        template: 'nextjs-app-turbo',
+        template: 't3-prisma',
         quality: 'production',
         nonInteractive: true,
       };
@@ -234,7 +234,7 @@ describe('bootstrap command', () => {
 
       const options: BootstrapOptions = {
         name: 'Invalid Name',
-        template: 'nextjs-app-turbo',
+        template: 't3-prisma',
         quality: 'production',
         nonInteractive: true,
       };
@@ -272,7 +272,7 @@ describe('bootstrap command', () => {
 
       const options: BootstrapOptions = {
         name: 'test-project',
-        template: 'nextjs-app-turbo',
+        template: 't3-prisma',
         quality: 'invalid-quality' as any,
         nonInteractive: true,
       };
@@ -291,7 +291,7 @@ describe('bootstrap command', () => {
 
       const options: BootstrapOptions = {
         name: 'test-project',
-        template: 'nextjs-app-turbo',
+        template: 't3-prisma',
         quality: 'production',
         mcpScope: 'invalid-scope' as any,
         nonInteractive: true,
@@ -323,7 +323,7 @@ describe('bootstrap command', () => {
 
       const options: BootstrapOptions = {
         name: 'test-project',
-        template: 'nextjs-app-turbo',
+        template: 't3-prisma',
         quality: 'production',
         nonInteractive: true,
       };
@@ -341,7 +341,7 @@ describe('bootstrap command', () => {
 
       const options: BootstrapOptions = {
         name: 'test-project',
-        template: 'nextjs-app-turbo',
+        template: 't3-prisma',
         quality: 'production',
         nonInteractive: true,
       };
@@ -359,7 +359,7 @@ describe('bootstrap command', () => {
 
       const options: BootstrapOptions = {
         name: 'test-project',
-        template: 'nextjs-app-turbo',
+        template: 't3-prisma',
         quality: 'production',
         nonInteractive: true,
       };
@@ -374,7 +374,7 @@ describe('bootstrap command', () => {
 
       const options: BootstrapOptions = {
         name: 'test-project',
-        template: 'nextjs-app-turbo',
+        template: 't3-prisma',
         quality: 'production',
         nonInteractive: true,
       };
@@ -394,7 +394,7 @@ describe('bootstrap command', () => {
 
       const options: BootstrapOptions = {
         name: 'test-project',
-        template: 'nextjs-app-turbo',
+        template: 't3-prisma',
         quality: 'production',
         nonInteractive: true,
       };
@@ -407,7 +407,7 @@ describe('bootstrap command', () => {
 
       const options: BootstrapOptions = {
         name: 'test-project',
-        template: 'nextjs-app-turbo',
+        template: 't3-prisma',
         quality: 'production',
         nonInteractive: true,
       };
@@ -422,7 +422,7 @@ describe('bootstrap command', () => {
 
       const options: BootstrapOptions = {
         name: 'test-project',
-        template: 'nextjs-app-turbo',
+        template: 't3-prisma',
         quality: 'production',
         nonInteractive: true,
       };
@@ -431,10 +431,10 @@ describe('bootstrap command', () => {
 
       expect(loadTemplate).toHaveBeenCalledWith(
         expect.any(String),
-        'nextjs-app-turbo',
+        't3-prisma',
         expect.objectContaining({
           name: 'test-project',
-          template: 'nextjs-app-turbo',
+          template: 't3-prisma',
           quality: 'production',
         })
       );
@@ -445,7 +445,7 @@ describe('bootstrap command', () => {
 
       const options: BootstrapOptions = {
         name: 'test-project',
-        template: 'nextjs-app-turbo',
+        template: 't3-prisma',
         quality: 'production',
         mcpScope: 'project',
         nonInteractive: true,
@@ -461,7 +461,7 @@ describe('bootstrap command', () => {
 
       const options: BootstrapOptions = {
         name: 'test-project',
-        template: 'nextjs-app-turbo',
+        template: 't3-prisma',
         quality: 'production',
         mcpScope: 'user',
         nonInteractive: true,
@@ -477,7 +477,7 @@ describe('bootstrap command', () => {
 
       const options: BootstrapOptions = {
         name: 'test-project',
-        template: 'nextjs-app-turbo',
+        template: 't3-prisma',
         quality: 'production',
         nonInteractive: false,
       };

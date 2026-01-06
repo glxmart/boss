@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 # Start Feature Branch
 # Creates a new feature branch from latest main
+#
+# Usage: 1-start-feature.sh <type> <name>
+#   type: feature|fix|chore|docs
+#   name: branch name in kebab-case (e.g., worker-resume)
+#
+# Examples:
+#   1-start-feature.sh feature worker-resume
+#   1-start-feature.sh fix validation-error
 
 set -euo pipefail
 
@@ -18,79 +26,108 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}🚀 Starting new feature branch${NC}"
-echo ""
+# Parse arguments
+FEATURE_TYPE="${1:-}"
+FEATURE_NAME="${2:-}"
 
-# Check if we're on main
-CURRENT_BRANCH=$(git branch --show-current)
-if [[ "$CURRENT_BRANCH" != "main" ]]; then
-  echo -e "${YELLOW}⚠️  Currently on branch: $CURRENT_BRANCH${NC}"
-  read -p "Switch to main first? (y/n) " -n 1 -r
-  echo
-  if [[ $REPLY =~ ^[Yy]$ ]]; then
-    git checkout main
-  else
-    echo -e "${RED}❌ Aborted${NC}"
-    exit 1
-  fi
-fi
-
-# Fetch latest changes
-echo -e "${BLUE}📥 Fetching latest changes...${NC}"
-git fetch origin main
-
-# Check if local main is behind
-LOCAL=$(git rev-parse main)
-REMOTE=$(git rev-parse origin/main)
-
-if [[ "$LOCAL" != "$REMOTE" ]]; then
-  echo -e "${YELLOW}⚠️  Local main is behind origin/main${NC}"
-  read -p "Pull latest changes? (y/n) " -n 1 -r
-  echo
-  if [[ $REPLY =~ ^[Yy]$ ]]; then
-    git pull origin main
-  fi
-fi
-
-# Get feature name
-echo ""
-echo -e "${BLUE}Enter feature details:${NC}"
-read -p "Feature type (feature/fix/chore/docs): " FEATURE_TYPE
-read -p "Feature name (e.g., worker-resume): " FEATURE_NAME
-
+# Show usage if no arguments
 if [[ -z "$FEATURE_TYPE" ]] || [[ -z "$FEATURE_NAME" ]]; then
-  echo -e "${RED}❌ Feature type and name are required${NC}"
+  echo -e "${RED}Usage: $0 <type> <name>${NC}"
+  echo ""
+  echo "Types: feature, fix, chore, docs"
+  echo "Name:  kebab-case branch name (e.g., worker-resume)"
+  echo ""
+  echo "Examples:"
+  echo "  $0 feature worker-resume"
+  echo "  $0 fix validation-error"
   exit 1
 fi
 
+# Validate feature type
+case "$FEATURE_TYPE" in
+  feature|fix|chore|docs) ;;
+  *)
+    echo -e "${RED}❌ Invalid type: $FEATURE_TYPE${NC}"
+    echo "Valid types: feature, fix, chore, docs"
+    exit 1
+    ;;
+esac
+
 BRANCH_NAME="${FEATURE_TYPE}/${FEATURE_NAME}"
 
-# Check if branch already exists
+echo -e "${BLUE}🚀 Starting new feature branch: $BRANCH_NAME${NC}"
+echo ""
+
+# Stash any local changes
+STASHED=false
+if ! git diff --quiet 2>/dev/null || ! git diff --cached --quiet 2>/dev/null; then
+  echo -e "${YELLOW}📦 Stashing local changes...${NC}"
+  git stash push -m "auto-stash before branch creation"
+  STASHED=true
+fi
+
+# Switch to main if not already there
+CURRENT_BRANCH=$(git branch --show-current)
+if [[ "$CURRENT_BRANCH" != "main" ]]; then
+  echo -e "${BLUE}🔄 Switching to main...${NC}"
+  git checkout main
+fi
+
+# Fetch and pull latest changes
+echo -e "${BLUE}📥 Fetching latest changes...${NC}"
+git fetch origin main
+git pull origin main --ff-only 2>/dev/null || git pull origin main --rebase
+
+# Check if branch already exists locally
 if git show-ref --verify --quiet "refs/heads/$BRANCH_NAME"; then
-  echo -e "${YELLOW}⚠️  Branch $BRANCH_NAME already exists${NC}"
-  read -p "Switch to existing branch? (y/n) " -n 1 -r
-  echo
-  if [[ $REPLY =~ ^[Yy]$ ]]; then
-    git checkout "$BRANCH_NAME"
-    echo -e "${GREEN}✅ Switched to $BRANCH_NAME${NC}"
-    exit 0
-  else
-    echo -e "${RED}❌ Aborted${NC}"
-    exit 1
+  echo -e "${YELLOW}⚠️  Branch $BRANCH_NAME already exists locally${NC}"
+  echo -e "${BLUE}🔄 Switching to existing branch...${NC}"
+  git checkout "$BRANCH_NAME"
+
+  # Restore stashed changes if any
+  if [[ "$STASHED" == "true" ]]; then
+    echo -e "${BLUE}📦 Restoring stashed changes...${NC}"
+    git stash pop || true
   fi
+
+  echo ""
+  echo -e "${GREEN}✅ Switched to existing branch: $BRANCH_NAME${NC}"
+  exit 0
+fi
+
+# Check if branch exists on remote
+if git show-ref --verify --quiet "refs/remotes/origin/$BRANCH_NAME"; then
+  echo -e "${YELLOW}⚠️  Branch $BRANCH_NAME exists on remote${NC}"
+  echo -e "${BLUE}🔄 Checking out remote branch...${NC}"
+  git checkout -b "$BRANCH_NAME" "origin/$BRANCH_NAME"
+
+  # Restore stashed changes if any
+  if [[ "$STASHED" == "true" ]]; then
+    echo -e "${BLUE}📦 Restoring stashed changes...${NC}"
+    git stash pop || true
+  fi
+
+  echo ""
+  echo -e "${GREEN}✅ Checked out remote branch: $BRANCH_NAME${NC}"
+  exit 0
 fi
 
 # Create and checkout new branch
-echo ""
 echo -e "${BLUE}📝 Creating branch: $BRANCH_NAME${NC}"
 git checkout -b "$BRANCH_NAME"
 
+# Restore stashed changes if any
+if [[ "$STASHED" == "true" ]]; then
+  echo -e "${BLUE}📦 Restoring stashed changes...${NC}"
+  git stash pop || true
+fi
+
 echo ""
-echo -e "${GREEN}✅ Feature branch created successfully!${NC}"
+echo -e "${GREEN}✅ Feature branch created: $BRANCH_NAME${NC}"
 echo ""
 echo -e "${BLUE}Next steps:${NC}"
 echo "  1. Make your changes"
-echo "  2. Run: .claude/skills/workflow-management/tools/2-quality-check.sh"
-echo "  3. Run: .claude/skills/workflow-management/tools/3-create-changeset.sh"
-echo "  4. Run: .claude/skills/workflow-management/tools/4-create-pr.sh"
+echo "  2. Run: /2-quality-check"
+echo "  3. Run: /3-create-changeset"
+echo "  4. Run: /4-create-pr"
 echo ""

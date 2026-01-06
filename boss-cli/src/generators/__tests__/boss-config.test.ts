@@ -18,10 +18,10 @@ describe('boss-config generator', () => {
     await fs.remove(testDir);
   });
 
-  it('should generate config.yaml for nextjs-app-turbo template', async () => {
+  it('should generate config.yaml for t3-prisma template', async () => {
     const config: ProjectConfig = {
       name: 'test-project',
-      template: 'nextjs-app-turbo',
+      template: 't3-prisma',
       quality: 'production',
     };
 
@@ -33,18 +33,18 @@ describe('boss-config generator', () => {
     const content = await fs.readFile(configPath, 'utf8');
     const parsed = yaml.load(content) as any;
 
-    expect(parsed.boss.template).toBe('nextjs-app-turbo');
+    expect(parsed.boss.template).toBe('t3-prisma');
     expect(parsed.boss.quality).toBe('production');
     expect(parsed.project.name).toBe('test-project');
-    expect(parsed.project.type).toBe('monorepo');
+    expect(parsed.project.type).toBe('web-app');
     expect(parsed.project.stack).toContain('nextjs');
     expect(parsed.project.stack).toContain('shadcn-ui');
   });
 
-  it('should generate config.yaml for api-service-fastify template', async () => {
+  it('should generate config.yaml for fastify-native template', async () => {
     const config: ProjectConfig = {
       name: 'api-project',
-      template: 'api-service-fastify',
+      template: 'fastify-native',
       quality: 'enterprise',
     };
 
@@ -53,15 +53,15 @@ describe('boss-config generator', () => {
     const content = await fs.readFile(path.join(testDir, '.boss', 'config.yaml'), 'utf8');
     const parsed = yaml.load(content) as any;
 
-    expect(parsed.boss.template).toBe('api-service-fastify');
+    expect(parsed.boss.template).toBe('fastify-native');
     expect(parsed.project.type).toBe('api-service');
     expect(parsed.project.stack).toContain('fastify');
   });
 
-  it('should generate config.yaml for blank template', async () => {
+  it('should generate config.yaml for t3-drizzle template', async () => {
     const config: ProjectConfig = {
-      name: 'blank-project',
-      template: 'blank',
+      name: 'drizzle-project',
+      template: 't3-drizzle',
       quality: 'startup',
     };
 
@@ -70,8 +70,8 @@ describe('boss-config generator', () => {
     const content = await fs.readFile(path.join(testDir, '.boss', 'config.yaml'), 'utf8');
     const parsed = yaml.load(content) as any;
 
-    expect(parsed.boss.template).toBe('blank');
-    expect(parsed.project.type).toBe('library');
-    expect(parsed.project.stack).toContain('typescript');
+    expect(parsed.boss.template).toBe('t3-drizzle');
+    expect(parsed.project.type).toBe('web-app');
+    expect(parsed.project.stack).toContain('drizzle');
   });
 });

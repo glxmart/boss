@@ -19,7 +19,7 @@ describe('claude-md generator', () => {
   it('should generate CLAUDE.md with BOSS integration section', async () => {
     const config: ProjectConfig = {
       name: 'test-project',
-      template: 'nextjs-app-turbo',
+      template: 't3-prisma',
       quality: 'production',
     };
 
@@ -45,7 +45,7 @@ describe('claude-md generator', () => {
   it('should include project name and template info placeholders', async () => {
     const config: ProjectConfig = {
       name: 'my-awesome-project',
-      template: 'api-service-fastify',
+      template: 'fastify-native',
       quality: 'enterprise',
     };
 
@@ -62,7 +62,7 @@ describe('claude-md generator', () => {
   it('should include quality standards', async () => {
     const config: ProjectConfig = {
       name: 'test',
-      template: 'blank',
+      template: 't3-prisma',
       quality: 'startup',
     };
 

@@ -1,6 +1,18 @@
 #!/usr/bin/env bash
 # Create Pull Request
 # Creates a PR using 1Password credentials
+#
+# Usage: 4-create-pr.sh [options]
+#   --title <title>       PR title (default: generated from branch name)
+#   --body <body>         PR body/description (default: auto-generated template)
+#   --skip-changeset      Add skip-changeset label (for docs/tests/config only)
+#   --draft               Create as draft PR
+#
+# Examples:
+#   4-create-pr.sh
+#   4-create-pr.sh --title "fix: resolve validation error"
+#   4-create-pr.sh --skip-changeset
+#   4-create-pr.sh --title "docs: update API reference" --skip-changeset
 
 set -euo pipefail
 
@@ -18,6 +30,37 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
+# Parse arguments
+PR_TITLE=""
+PR_BODY=""
+SKIP_CHANGESET=false
+DRAFT=false
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --title)
+      PR_TITLE="$2"
+      shift 2
+      ;;
+    --body)
+      PR_BODY="$2"
+      shift 2
+      ;;
+    --skip-changeset)
+      SKIP_CHANGESET=true
+      shift
+      ;;
+    --draft)
+      DRAFT=true
+      shift
+      ;;
+    *)
+      echo -e "${RED}Unknown option: $1${NC}"
+      exit 1
+      ;;
+  esac
+done
+
 echo -e "${BLUE}📝 Creating Pull Request${NC}"
 echo ""
 
@@ -25,140 +68,131 @@ echo ""
 CURRENT_BRANCH=$(git branch --show-current)
 if [[ "$CURRENT_BRANCH" == "main" ]]; then
   echo -e "${RED}❌ Cannot create PR from main branch${NC}"
+  echo "Create a feature branch first with: .claude/skills/workflow-management/tools/1-start-feature.sh <type> <name>"
   exit 1
 fi
 
-# Check for uncommitted changes
-if [[ -n $(git status --porcelain) ]]; then
-  echo -e "${YELLOW}⚠️  You have uncommitted changes:${NC}"
+# Check for uncommitted changes (excluding .claude/settings.local.json)
+UNCOMMITTED=$(git status --porcelain | grep -v '.claude/settings.local.json' || true)
+if [[ -n "$UNCOMMITTED" ]]; then
+  echo -e "${RED}❌ You have uncommitted changes:${NC}"
   git status --short
   echo ""
-  read -p "Commit them first? (y/n) " -n 1 -r
-  echo
-  if [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo ""
-    read -p "Commit message: " COMMIT_MSG
-    git add .
-    git commit -m "$COMMIT_MSG"
-  else
-    echo -e "${RED}❌ Please commit or stash changes before creating PR${NC}"
-    exit 1
-  fi
+  echo "Please commit changes first before creating a PR."
+  exit 1
 fi
 
-# Get latest git log for context
-echo -e "${BLUE}📋 Recent commits:${NC}"
-git log --oneline -5
-echo ""
-
-# Get changeset info if exists
+# Check for changeset
 CHANGESET_FILES=$(find .changeset -name "*.md" -not -name "README.md" 2>/dev/null || echo "")
+if [[ -z "$CHANGESET_FILES" ]] && [[ "$SKIP_CHANGESET" == "false" ]]; then
+  echo -e "${YELLOW}⚠️  No changeset found${NC}"
+  echo ""
+  echo "Either:"
+  echo "  1. Create a changeset: .claude/skills/workflow-management/tools/3-create-changeset.sh <type> <packages> <message>"
+  echo "  2. Re-run with --skip-changeset flag (for docs/tests/config only)"
+  exit 1
+fi
+
 if [[ -n "$CHANGESET_FILES" ]]; then
   echo -e "${GREEN}✅ Found changeset(s):${NC}"
   echo "$CHANGESET_FILES"
   echo ""
-else
-  echo -e "${YELLOW}⚠️  No changeset found${NC}"
-  read -p "Continue without changeset? You'll need to add 'skip-changeset' label. (y/n) " -n 1 -r
-  echo
-  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo -e "${RED}❌ Aborted. Run .claude/skills/workflow-management/tools/3-create-changeset.sh first${NC}"
-    exit 1
-  fi
 fi
 
-# Generate PR title from branch name
-PR_TITLE=$(echo "$CURRENT_BRANCH" | sed -E 's|^([^/]+)/(.+)$|\1: \2|' | sed 's/-/ /g')
-echo ""
-echo -e "${BLUE}Suggested PR title:${NC} $PR_TITLE"
-read -p "Use this title? (y/n) " -n 1 -r
-echo
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-  echo ""
-  read -p "Enter PR title: " PR_TITLE
+# Generate PR title from branch name if not provided
+if [[ -z "$PR_TITLE" ]]; then
+  # Convert "fix/my-feature-name" to "fix: my feature name"
+  PR_TITLE=$(echo "$CURRENT_BRANCH" | sed -E 's|^([^/]+)/(.+)$|\1: \2|' | sed 's/-/ /g')
 fi
 
-# Generate PR body
-PR_BODY="## Summary
+echo -e "${BLUE}PR Title:${NC} $PR_TITLE"
 
-Brief description of the changes.
+# Get commit summary for body
+COMMIT_LOG=$(git log main..HEAD --oneline 2>/dev/null || git log -5 --oneline)
+
+# Generate PR body if not provided
+if [[ -z "$PR_BODY" ]]; then
+  PR_BODY="## Summary
+
+<!-- Brief description of the changes -->
 
 ## Changes
 
-- Change 1
-- Change 2
-- Change 3
+$COMMIT_LOG
 
 ## Testing
 
-- [ ] Unit tests added/updated
-- [ ] Integration tests pass
+- [ ] Quality checks pass (\`/2-quality-check\`)
 - [ ] Tested locally
-- [ ] Documentation updated
 
 ## Changeset
-
 "
 
-if [[ -n "$CHANGESET_FILES" ]]; then
-  PR_BODY+="- [x] Changeset created
-"
-else
-  PR_BODY+="- [ ] Will add \`skip-changeset\` label (docs/tests/config only)
-"
-fi
+  if [[ -n "$CHANGESET_FILES" ]]; then
+    PR_BODY+="
+- [x] Changeset included"
+  else
+    PR_BODY+="
+- [x] Skip changeset (docs/tests/config only)"
+  fi
 
-PR_BODY+="
+  PR_BODY+="
+
 ---
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
-Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
-"
+Co-Authored-By: Claude <noreply@anthropic.com>"
+fi
 
 # Push branch
 echo ""
 echo -e "${BLUE}📤 Pushing branch to origin...${NC}"
 git push -u origin "$CURRENT_BRANCH"
 
+# Build gh command
+GH_CMD="gh pr create --title \"$PR_TITLE\" --base main"
+
+if [[ "$DRAFT" == "true" ]]; then
+  GH_CMD+=" --draft"
+fi
+
 # Create PR using 1Password
 echo ""
 echo -e "${BLUE}🔐 Creating PR with GitHub credentials from 1Password...${NC}"
 
-cd "$PROJECT_ROOT"
+# Use heredoc for body to handle multiline
 if op run --env-file=.env -- gh pr create \
   --title "$PR_TITLE" \
   --body "$PR_BODY" \
-  --base main; then
+  --base main \
+  ${DRAFT:+--draft}; then
 
   echo ""
   echo -e "${GREEN}✅ Pull request created successfully!${NC}"
   echo ""
 
-  # Get PR number
-  PR_NUMBER=$(op run --env-file=.env -- gh pr list --head "$CURRENT_BRANCH" --json number --jq '.[0].number')
+  # Get PR URL
+  PR_URL=$(op run --env-file=.env -- gh pr view --json url --jq '.url' 2>/dev/null || echo "")
+  PR_NUMBER=$(op run --env-file=.env -- gh pr view --json number --jq '.number' 2>/dev/null || echo "")
 
-  if [[ -n "$PR_NUMBER" ]]; then
-    echo -e "${BLUE}PR #${PR_NUMBER}${NC}"
-    echo ""
-
-    # Add skip-changeset label if needed
-    if [[ -z "$CHANGESET_FILES" ]]; then
-      read -p "Add 'skip-changeset' label? (y/n) " -n 1 -r
-      echo
-      if [[ $REPLY =~ ^[Yy]$ ]]; then
-        op run --env-file=.env -- gh pr edit "$PR_NUMBER" --add-label skip-changeset
-        echo -e "${GREEN}✅ Added skip-changeset label${NC}"
-      fi
-    fi
-
-    echo ""
-    echo -e "${BLUE}Next steps:${NC}"
-    echo "  1. Monitor workflow runs: op run --env-file=.env -- gh run list --branch $CURRENT_BRANCH"
-    echo "  2. View PR: op run --env-file=.env -- gh pr view $PR_NUMBER"
-    echo "  3. Wait for review and approval"
-    echo "  4. Merge when ready: op run --env-file=.env -- gh pr merge $PR_NUMBER --squash --delete-branch"
+  if [[ -n "$PR_URL" ]]; then
+    echo -e "${BLUE}PR:${NC} $PR_URL"
   fi
+
+  # Add skip-changeset label if requested
+  if [[ "$SKIP_CHANGESET" == "true" ]] && [[ -n "$PR_NUMBER" ]]; then
+    echo ""
+    echo -e "${BLUE}Adding skip-changeset label...${NC}"
+    op run --env-file=.env -- gh pr edit "$PR_NUMBER" --add-label skip-changeset
+    echo -e "${GREEN}✅ Added skip-changeset label${NC}"
+  fi
+
+  echo ""
+  echo -e "${BLUE}Next steps:${NC}"
+  echo "  1. Monitor CI: op run --env-file=.env -- gh run list --branch $CURRENT_BRANCH"
+  echo "  2. Wait for review and approval"
+  echo "  3. Merge when ready"
 
   exit 0
 else

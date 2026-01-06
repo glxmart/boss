@@ -61,10 +61,10 @@ describe('validators', () => {
 
   describe('validateTemplate', () => {
     it('should accept valid templates', () => {
-      expect(validateTemplate('nextjs-app-turbo')).toEqual({ valid: true });
-      expect(validateTemplate('api-service-fastify')).toEqual({ valid: true });
-      expect(validateTemplate('blank')).toEqual({ valid: true });
-      expect(validateTemplate('t3-app')).toEqual({ valid: true });
+      expect(validateTemplate('t3-prisma')).toEqual({ valid: true });
+      expect(validateTemplate('fastify-native')).toEqual({ valid: true });
+      expect(validateTemplate('t3-prisma')).toEqual({ valid: true });
+      expect(validateTemplate('t3-drizzle')).toEqual({ valid: true });
     });
 
     it('should reject invalid templates', () => {

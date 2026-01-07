@@ -1,8 +1,7 @@
 import path from 'path';
 import type { Template, ProjectConfig, PackageJson } from '../types/index.js';
 import { writeFile, readFile, pathExists } from '../utils/file-system.js';
-import { loadTemplate as loadAssetTemplate, getAssetPath } from '../utils/template-loader.js';
-import { copyFile } from '../utils/file-system.js';
+import { loadTemplate as loadAssetTemplate } from '../utils/template-loader.js';
 
 // Lazy-loaded fs-extra module
 type FsExtra = typeof import('fs-extra');

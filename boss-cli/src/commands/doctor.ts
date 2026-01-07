@@ -637,7 +637,7 @@ export async function validateGitRepository(projectPath: string): Promise<CheckR
       status: 'pass',
       message: statusParts.join(', '),
     };
-  } catch (err) {
+  } catch {
     return {
       name: 'Git Repository',
       status: 'warning',
@@ -683,7 +683,7 @@ export async function validateQualityGates(projectPath: string): Promise<CheckRe
     const packageJsonPath = path.join(projectPath, 'package.json');
     if (await fs.pathExists(packageJsonPath)) {
       try {
-        const pkg = await fs.readJson(packageJsonPath);
+        const pkg = (await fs.readJson(packageJsonPath)) as { eslintConfig?: unknown };
         if (pkg.eslintConfig) {
           hasEslint = true;
         }
@@ -717,7 +717,7 @@ export async function validateQualityGates(projectPath: string): Promise<CheckRe
     const packageJsonPath = path.join(projectPath, 'package.json');
     if (await fs.pathExists(packageJsonPath)) {
       try {
-        const pkg = await fs.readJson(packageJsonPath);
+        const pkg = (await fs.readJson(packageJsonPath)) as { prettier?: unknown };
         if (pkg.prettier) {
           hasPrettier = true;
         }

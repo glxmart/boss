@@ -155,10 +155,15 @@ export async function generateTypeScriptConfig(
 /**
  * Merge BOSS strict TypeScript settings into existing tsconfig.json
  */
+interface TsConfig {
+  compilerOptions?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
 async function mergeTypeScriptStrictSettings(tsconfigPath: string): Promise<void> {
   try {
     const content = await fs.readFile(tsconfigPath, 'utf8');
-    const tsconfig = JSON.parse(content);
+    const tsconfig = JSON.parse(content) as TsConfig;
 
     // Ensure compilerOptions exists
     if (!tsconfig.compilerOptions) {
@@ -293,7 +298,7 @@ export async function generateLintStagedConfig(projectPath: string): Promise<voi
   const packageJsonPath = path.join(projectPath, 'package.json');
   if (await fs.pathExists(packageJsonPath)) {
     try {
-      const pkg = await fs.readJson(packageJsonPath);
+      const pkg = (await fs.readJson(packageJsonPath)) as { 'lint-staged'?: unknown };
       if (pkg['lint-staged']) {
         return;
       }

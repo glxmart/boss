@@ -1,17 +1,15 @@
 import path from 'path';
-import { copyDirectory, writeFile, readFile } from '../utils/file-system.js';
+import { writeFile, readFile } from '../utils/file-system.js';
 import { loadTemplate as loadAssetTemplate } from '../utils/template-loader.js';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 import type { Template, ProjectConfig, PackageJson } from '../types/index.js';
 import { TEMPLATES } from '../utils/prompts.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { executeExternalTemplate } from './external-templates.js';
+import { applyTemplateEnhancements } from './enhancements.js';
+import { logger } from '../utils/logger.js';
 
 // New template system - external templates
-// Phase 1: Minimal template generation (placeholder until Phase 2 external template execution)
-// Phase 2 will implement actual external template execution via `externalCommand`
+// Phase 2: Actual external template execution via CLI commands
+// Set BOSS_USE_EXTERNAL_TEMPLATES=false to use minimal templates (for testing)
 const EXTERNAL_TEMPLATES: Template[] = [
   't3-prisma',
   't3-drizzle',
@@ -19,6 +17,20 @@ const EXTERNAL_TEMPLATES: Template[] = [
   'fastify-native',
   'astro-portfolio',
 ];
+
+/**
+ * Check if external templates should be used
+ * External templates are used by default in production
+ * Set BOSS_USE_EXTERNAL_TEMPLATES=false to use minimal templates (for testing)
+ */
+function shouldUseExternalTemplates(): boolean {
+  // Disable external templates in test environment by default
+  if (process.env.VITEST || process.env.NODE_ENV === 'test') {
+    return process.env.BOSS_USE_EXTERNAL_TEMPLATES === 'true';
+  }
+  // Enable external templates by default in production
+  return process.env.BOSS_USE_EXTERNAL_TEMPLATES !== 'false';
+}
 
 // Lazy-loaded fs-extra module
 type FsExtra = typeof import('fs-extra');
@@ -32,255 +44,193 @@ async function getFs(): Promise<FsExtra> {
   return fsExtra;
 }
 
-/**
- * Copies files from a source directory, handling underscore-prefixed dotfiles.
- * Files starting with '_' are copied with the underscore removed (e.g., _gitignore -> .gitignore).
- */
-async function copyBaseFiles(srcDir: string, destDir: string): Promise<void> {
-  const fs = await getFs();
-  const files = await fs.readdir(srcDir);
-
-  for (const file of files) {
-    const srcPath = path.join(srcDir, file);
-    const destFile = file.startsWith('_') ? file.slice(1) : file;
-    const destPath = path.join(destDir, destFile);
-
-    const stat = await fs.stat(srcPath);
-    if (stat.isDirectory()) {
-      await copyDirectory(srcPath, destPath);
-    } else {
-      await fs.copy(srcPath, destPath);
-    }
-  }
-}
-
-/**
- * Replaces template variables in a file (e.g., {{PROJECT_NAME}}).
- * Throws an error if any unreplaced placeholders remain after processing.
- */
-async function processTemplateVariables(
-  filePath: string,
-  replacements: Record<string, string>
-): Promise<void> {
-  const fs = await getFs();
-  if (!(await fs.pathExists(filePath))) {
-    return;
-  }
-
-  let content = await fs.readFile(filePath, 'utf8');
-  const originalContent = content;
-
-  // Replace all known variables
-  for (const [variable, value] of Object.entries(replacements)) {
-    content = content.replace(new RegExp(`\\{\\{${variable}\\}\\}`, 'g'), value);
-  }
-
-  // Check for any remaining unreplaced placeholders
-  const unreplacedPlaceholders = content.match(/\{\{[A-Z_]+\}\}/g);
-  if (unreplacedPlaceholders && unreplacedPlaceholders.length > 0) {
-    throw new Error(
-      `Failed to replace all template variables in ${filePath}. ` +
-        `Unreplaced placeholders: ${unreplacedPlaceholders.join(', ')}. ` +
-        `Available replacements: ${Object.keys(replacements).join(', ')}`
-    );
-  }
-
-  // Only write if content changed (optimization)
-  if (content !== originalContent) {
-    await fs.writeFile(filePath, content);
-  }
-}
+// NOTE: Legacy functions copyBaseFiles and processTemplateVariables have been removed
+// as they were part of the old embedded template system.
 
 export async function loadTemplate(
   projectPath: string,
   template: Template,
   config: ProjectConfig
 ): Promise<void> {
-  // New template system: All templates use external generators (Phase 2)
-  // For Phase 1, we create minimal templates as placeholders
-  // The external template execution (create-t3-app, create-fastify, etc.) will be
-  // implemented in Phase 2 via the external-templates.ts generator
+  const useExternalTemplates = shouldUseExternalTemplates();
 
-  if (EXTERNAL_TEMPLATES.includes(template)) {
-    // Phase 1: Create minimal template as placeholder
-    // Phase 2 will replace this with actual external template execution
-    await createMinimalTemplate(projectPath, template, config);
+  if (EXTERNAL_TEMPLATES.includes(template) && useExternalTemplates) {
+    // Phase 2: Execute external template via CLI commands
+    const result = await executeExternalTemplate(projectPath, template, config);
+
+    if (!result.success) {
+      // If external template fails, fall back to minimal template
+      logger.warning(
+        `External template execution failed: ${result.error}. Falling back to minimal template.`
+      );
+      await createMinimalTemplate(projectPath, template, config);
+    } else {
+      // Phase 5: Apply template-specific enhancements
+      const enhancementResult = await applyTemplateEnhancements(projectPath, template, config);
+      if (enhancementResult.enhancementsApplied.length > 0) {
+        logger.info(`Applied enhancements: ${enhancementResult.enhancementsApplied.join(', ')}`);
+      }
+
+      // Apply BOSS overlay on top of external template
+      await applyBossOverlay(projectPath, template, config);
+    }
   } else {
-    // Fallback for any unknown templates
+    // Use minimal template (for testing or when external templates are disabled)
     await createMinimalTemplate(projectPath, template, config);
   }
 
   await ensureEnvInGitignore(projectPath);
 }
 
-async function loadT3Template(
+/**
+ * Apply BOSS overlay on top of externally generated template
+ * This adds BOSS-specific configuration and quality gates to the project
+ */
+async function applyBossOverlay(
   projectPath: string,
-  templatePath: string,
+  template: Template,
   config: ProjectConfig
 ): Promise<void> {
   const fs = await getFs();
-  const basePath = path.join(templatePath, 'base');
-  const extrasPath = path.join(templatePath, 'extras');
 
-  // Copy base template files
-  if (await fs.pathExists(basePath)) {
-    await copyBaseFiles(basePath, projectPath);
+  // 1. Ensure package.json has BOSS-required scripts and dependencies
+  await ensureBossPackageJson(projectPath, template, config);
+
+  // 2. Add ESLint configuration if not present
+  const eslintConfigPath = path.join(projectPath, 'eslint.config.js');
+  if (!(await fs.pathExists(eslintConfigPath))) {
+    const isReactTemplate =
+      template === 't3-prisma' || template === 't3-drizzle' || template === 'astro-portfolio';
+    const eslintTemplate = isReactTemplate
+      ? 'template-loader/eslint.config.react.js'
+      : 'template-loader/eslint.config.node.js';
+    const eslintConfigContent = await loadAssetTemplate(eslintTemplate);
+    await writeFile(eslintConfigPath, eslintConfigContent);
   }
 
-  // Copy extras (T3 optional features)
-  if (await fs.pathExists(extrasPath)) {
-    await copyBaseFiles(path.join(extrasPath, 'config'), projectPath);
-    await copyDirectoryIfExists(path.join(extrasPath, 'src'), path.join(projectPath, 'src'));
-    await copyDirectoryIfExists(path.join(extrasPath, 'prisma'), path.join(projectPath, 'prisma'));
+  // 3. Add Prettier configuration if not present
+  const prettierConfigPath = path.join(projectPath, '.prettierrc.json');
+  if (!(await fs.pathExists(prettierConfigPath))) {
+    const prettierConfig = {
+      semi: true,
+      singleQuote: true,
+      tabWidth: 2,
+      trailingComma: 'es5',
+      printWidth: 100,
+      arrowParens: 'always',
+      endOfLine: 'lf',
+    };
+    await writeFile(prettierConfigPath, JSON.stringify(prettierConfig, null, 2));
   }
 
-  // Update package.json with project name and pnpm configuration
-  await updatePackageJson(path.join(projectPath, 'package.json'), config.name);
+  // 4. Add .prettierignore if not present
+  const prettierIgnorePath = path.join(projectPath, '.prettierignore');
+  if (!(await fs.pathExists(prettierIgnorePath))) {
+    const prettierIgnore = await loadAssetTemplate('template-loader/prettierignore');
+    await writeFile(prettierIgnorePath, prettierIgnore);
+  }
+
+  // 5. Ensure vitest.config.ts exists (for templates that don't have it)
+  const vitestConfigPath = path.join(projectPath, 'vitest.config.ts');
+  if (!(await fs.pathExists(vitestConfigPath))) {
+    const coverageThreshold = getCoverageThreshold(config.quality);
+    const vitestConfig = await loadAssetTemplate('template-loader/vitest.config.ts', {
+      coverageThreshold,
+    });
+    await writeFile(vitestConfigPath, vitestConfig);
+  }
+
+  // 6. Ensure tests directory exists with at least one test
+  const testsDir = path.join(projectPath, 'tests');
+  if (!(await fs.pathExists(testsDir))) {
+    await fs.ensureDir(testsDir);
+    const testFile = await loadAssetTemplate('template-loader/index.test.ts', { config });
+    await writeFile(path.join(testsDir, 'index.test.ts'), testFile);
+  }
 }
 
 /**
- * Copies a directory if it exists, creating the destination if needed.
+ * Ensure package.json has BOSS-required scripts and devDependencies
  */
-async function copyDirectoryIfExists(src: string, dest: string): Promise<void> {
+async function ensureBossPackageJson(
+  projectPath: string,
+  template: Template,
+  config: ProjectConfig
+): Promise<void> {
   const fs = await getFs();
-  if (await fs.pathExists(src)) {
-    await fs.ensureDir(dest);
-    await copyDirectory(src, dest);
-  }
-}
+  const packageJsonPath = path.join(projectPath, 'package.json');
 
-/**
- * Updates package.json with the project name and ensures pnpm esbuild configuration.
- */
-async function updatePackageJson(packageJsonPath: string, projectName: string): Promise<void> {
-  const fs = await getFs();
   if (!(await fs.pathExists(packageJsonPath))) {
+    // If package.json doesn't exist, create it from scratch
+    const packageJson = getPackageJsonForTemplate(template, config);
+    if (packageJson) {
+      await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));
+    }
     return;
   }
 
+  // Read existing package.json
   let packageJson: PackageJson;
   try {
     const content = await fs.readFile(packageJsonPath, 'utf8');
     packageJson = JSON.parse(content) as PackageJson;
-  } catch (error) {
-    throw new Error(
-      `Failed to parse package.json at ${packageJsonPath}: ${error instanceof Error ? error.message : String(error)}`
-    );
+  } catch {
+    // If we can't parse, skip modification
+    return;
   }
 
-  packageJson.name = projectName;
+  // Ensure BOSS-required scripts
+  packageJson.scripts = packageJson.scripts || {};
+  const bossScripts: Record<string, string> = {
+    prepare: 'husky',
+    'lint-staged': 'lint-staged',
+    'test:gates': 'vitest --coverage && npm run typecheck && npm run lint',
+  };
 
-  // Ensure pnpm configuration for esbuild
+  // Only add scripts that don't exist
+  for (const [key, value] of Object.entries(bossScripts)) {
+    if (!packageJson.scripts[key]) {
+      packageJson.scripts[key] = value;
+    }
+  }
+
+  // Ensure lint-staged configuration
+  packageJson['lint-staged'] = packageJson['lint-staged'] || {
+    '*.{ts,tsx,js,jsx}': ['eslint --fix', 'prettier --write'],
+    '*.{json,md,yml,yaml}': ['prettier --write'],
+  };
+
+  // Ensure pnpm configuration
   packageJson.pnpm = packageJson.pnpm || {};
   packageJson.pnpm.onlyBuiltDependencies = packageJson.pnpm.onlyBuiltDependencies || [];
   if (!packageJson.pnpm.onlyBuiltDependencies.includes('esbuild')) {
     packageJson.pnpm.onlyBuiltDependencies.push('esbuild');
   }
 
-  await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));
-}
-
-async function loadMonorepoTemplate(
-  projectPath: string,
-  templatePath: string,
-  config: ProjectConfig
-): Promise<void> {
-  const fs = await getFs();
-  const basePath = path.join(templatePath, 'base');
-  const extrasPath = path.join(templatePath, 'extras');
-
-  // Copy base monorepo structure
-  if (await fs.pathExists(basePath)) {
-    await copyBaseFiles(basePath, projectPath);
-  }
-
-  // Copy extras (Kamal configs, scripts, etc.)
-  if (await fs.pathExists(extrasPath)) {
-    await copyDirectoryIfExists(
-      path.join(extrasPath, 'config', 'kamal'),
-      path.join(projectPath, 'config', 'kamal')
-    );
-    await copyDockerignoreIfExists(extrasPath, projectPath);
-    await copyScriptsWithExecutablePermissions(extrasPath, projectPath);
-
-    // Copy template-specific GitHub workflows (override defaults)
-    const templateWorkflowsPath = path.join(extrasPath, 'boss-cli', 'assets', 'github-workflows');
-    if (await fs.pathExists(templateWorkflowsPath)) {
-      await copyDirectoryIfExists(
-        templateWorkflowsPath,
-        path.join(projectPath, '.github', 'workflows')
-      );
-    }
-  }
-
-  // Process all template variables
-  const templateVariables = {
-    PROJECT_NAME: config.name,
-    GITHUB_USERNAME: config.githubOrg || 'your-github-username',
-    DOMAIN: `${config.name}.com`,
-    PRODUCTION_IP: 'your-production-server-ip',
+  // Ensure BOSS-required devDependencies
+  packageJson.devDependencies = packageJson.devDependencies || {};
+  const bossDevDeps: Record<string, string> = {
+    husky: '^9.0.0',
+    'lint-staged': '^16.2.7',
+    prettier: '^3.7.4',
+    vitest: '^4.0.16',
+    '@vitest/coverage-v8': '^4.0.16',
   };
 
-  const filesToProcess = [
-    'package.json',
-    'apps/web/package.json',
-    'apps/admin/package.json',
-    'apps/web/app/layout.tsx',
-    'apps/web/app/page.tsx',
-    'apps/admin/app/layout.tsx',
-    'config/kamal/deploy.yml',
-    'docker/Dockerfile.web',
-  ];
-
-  for (const file of filesToProcess) {
-    try {
-      await processTemplateVariables(path.join(projectPath, file), templateVariables);
-    } catch (error) {
-      throw new Error(
-        `Failed to process template variables in ${file}: ${error instanceof Error ? error.message : String(error)}`
-      );
+  // Only add devDependencies that don't exist
+  for (const [key, value] of Object.entries(bossDevDeps)) {
+    if (!packageJson.devDependencies[key]) {
+      packageJson.devDependencies[key] = value;
     }
   }
+
+  await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));
 }
 
-async function copyDockerignoreIfExists(extrasPath: string, projectPath: string): Promise<void> {
-  const fs = await getFs();
-  const dockerignore = path.join(extrasPath, 'config', 'docker', '.dockerignore');
-  if (await fs.pathExists(dockerignore)) {
-    await fs.copy(dockerignore, path.join(projectPath, '.dockerignore'));
-  }
-}
-
-async function copyScriptsWithExecutablePermissions(
-  extrasPath: string,
-  projectPath: string
-): Promise<void> {
-  const fs = await getFs();
-  const scriptsPath = path.join(extrasPath, 'scripts');
-
-  if (!(await fs.pathExists(scriptsPath))) {
-    return;
-  }
-
-  const destScriptsPath = path.join(projectPath, 'scripts');
-  await fs.ensureDir(destScriptsPath);
-  await copyDirectory(scriptsPath, destScriptsPath);
-
-  // Make scripts executable
-  const scripts = await fs.readdir(destScriptsPath);
-  await Promise.all(
-    scripts.map(async (script: string) => {
-      const scriptPath = path.join(destScriptsPath, script);
-      try {
-        await fs.chmod(scriptPath, 0o755);
-      } catch (error) {
-        throw new Error(
-          `Failed to make script executable: ${scriptPath}: ${error instanceof Error ? error.message : String(error)}`
-        );
-      }
-    })
-  );
-}
+// NOTE: Legacy functions loadT3Template, loadMonorepoTemplate, and their helpers
+// have been removed as they were part of the old embedded template system.
+// The new system uses external templates executed via CLI commands (Phase 2).
+// See: external-templates.ts for the new implementation.
 
 async function createMinimalTemplate(
   projectPath: string,

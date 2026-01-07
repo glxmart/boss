@@ -10,63 +10,15 @@ import Handlebars from 'handlebars';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Template feature flags derived from stack
-type TemplateFeature =
-  | 'monorepo'
-  | 'database'
-  | 'docker'
-  | 'nextauth'
-  | 'shadcn'
-  | 'trpc'
-  | 'storybook';
-
-const FEATURE_STACK_MAPPING: Record<TemplateFeature, string[]> = {
-  monorepo: ['turborepo'],
-  database: ['prisma'],
-  docker: ['kamal'],
-  nextauth: ['nextauth'],
-  shadcn: ['shadcn-ui'],
-  trpc: ['trpc'],
-  storybook: ['storybook'],
-};
-
-function getTemplateFeatures(template: string): Set<TemplateFeature> {
-  const templateInfo = TEMPLATES[template as keyof typeof TEMPLATES];
-  if (!templateInfo) {
-    return new Set();
-  }
-
-  const features = new Set<TemplateFeature>();
-  for (const [feature, stackItems] of Object.entries(FEATURE_STACK_MAPPING)) {
-    if (stackItems.some((item) => templateInfo.stack.includes(item))) {
-      features.add(feature as TemplateFeature);
-    }
-  }
-  return features;
-}
-
-function getMonorepoType(template: string): string | null {
-  const templateInfo = TEMPLATES[template as keyof typeof TEMPLATES];
-  if (!templateInfo) {
-    return null;
-  }
-
-  if (templateInfo.stack.includes('turborepo')) {
-    return 'Turborepo';
-  }
-  // Future: add other monorepo types here
-  // if (templateInfo.stack.includes('nx')) {
-  //   return 'Nx';
-  // }
-
-  return null;
-}
-
+/**
+ * Generate CLAUDE.md file for a project
+ *
+ * Creates a generic CLAUDE.md that works across all templates,
+ * focusing on BOSS integration and common development workflows.
+ */
 export async function generateClaudeMD(projectPath: string, config: ProjectConfig): Promise<void> {
   const templateInfo = TEMPLATES[config.template];
   const qualityInfo = QUALITY_PRESETS[config.quality];
-  const features = getTemplateFeatures(config.template);
-  const monorepoType = getMonorepoType(config.template);
 
   // Load template file
   const templatePath = getAssetPath('claude-md/template.md');
@@ -79,14 +31,6 @@ export async function generateClaudeMD(projectPath: string, config: ProjectConfi
     templateInfo: {
       name: templateInfo?.name || config.template,
       stack: formatStackForDisplay(templateInfo?.stack || []),
-      isMonorepo: features.has('monorepo'),
-      monorepoType: monorepoType,
-      hasDatabase: features.has('database'),
-      hasDocker: features.has('docker'),
-      hasNextAuth: features.has('nextauth'),
-      hasShadcn: features.has('shadcn'),
-      hasTRPC: features.has('trpc'),
-      hasStorybook: features.has('storybook'),
     },
     qualityInfo: {
       name: qualityInfo?.name || config.quality,
@@ -116,12 +60,17 @@ const STACK_DISPLAY_NAMES: Record<string, string> = {
   tailwind: 'Tailwind CSS',
   'shadcn-ui': 'shadcn/ui',
   prisma: 'Prisma',
+  drizzle: 'Drizzle',
   trpc: 'tRPC',
   nextauth: 'NextAuth.js',
   vitest: 'Vitest',
   storybook: 'Storybook',
   kamal: 'Kamal',
   fastify: 'Fastify',
+  nestjs: 'NestJS',
+  typeorm: 'TypeORM',
+  astro: 'Astro',
+  react: 'React',
 };
 
 function formatStackForDisplay(stack: string[]): string {

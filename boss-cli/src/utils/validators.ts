@@ -92,3 +92,27 @@ export function validateMCPScope(scope: string): { valid: boolean; error?: strin
   }
   return { valid: true };
 }
+
+/**
+ * Validate template availability (checks if external template source is reachable)
+ * This is an async validation that should be called before starting bootstrap
+ */
+export async function validateTemplateAvailability(
+  template: string
+): Promise<{ valid: boolean; error?: string; remediation?: string }> {
+  // Dynamically import to avoid circular dependency
+  const { checkTemplateAvailability, formatAvailabilityError } =
+    await import('../generators/external-templates.js');
+
+  const result = await checkTemplateAvailability(template as import('../types/index.js').Template);
+
+  if (!result.available) {
+    return {
+      valid: false,
+      error: formatAvailabilityError(template as import('../types/index.js').Template, result),
+      remediation: result.remediation,
+    };
+  }
+
+  return { valid: true };
+}

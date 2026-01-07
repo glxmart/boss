@@ -13,26 +13,36 @@ pnpm add -g @glxmart/boss-cli
 ### Interactive Mode
 
 ```bash
-boss bootstrap
+boss init
 ```
 
 ### Command Line Options
 
 ```bash
-boss bootstrap --template nextjs-app-turbo --quality production --name my-project
+boss init --template t3-prisma --quality production --name my-project
 ```
 
 ### Available Commands
 
-- `boss bootstrap` - Bootstrap a new BOSS project
+- `boss init` - Initialize a new BOSS project (alias: `boss bootstrap`)
 - `boss doctor` - Check prerequisites and system health
 - `boss templates` - List available templates
 
 ## Templates
 
-- `nextjs-app-turbo` - Next.js 15 + Turbo + Tailwind + Prisma + Vitest + shadcn/ui
-- `api-service-fastify` - Fastify + TypeScript + Prisma + Vitest
-- `blank` - Minimal TypeScript + Vitest setup
+### Full Stack
+
+- `t3-prisma` - T3 Stack with Next.js + tRPC + Tailwind + Prisma + NextAuth.js
+- `t3-drizzle` - T3 Stack with Next.js + tRPC + Tailwind + Drizzle ORM + NextAuth.js
+
+### Backend
+
+- `nestjs-typeorm` - NestJS boilerplate with TypeORM, JWT auth, and Swagger
+- `fastify-native` - High-performance Fastify API with TypeBox validation
+
+### Frontend
+
+- `astro-portfolio` - Static portfolio site with Astro and React islands
 
 ## Quality Presets
 
@@ -117,21 +127,6 @@ pnpm test:integration
 # - Clean up afterwards
 ```
 
-#### Manual Test Scripts
-
-For detailed manual testing, use the scripts in `../scripts/manual-tests/`:
-
-```bash
-# Test specific templates
-bash ../scripts/manual-tests/test-bootstrap.sh    # blank template
-bash ../scripts/manual-tests/test-api-service.sh  # API service
-bash ../scripts/manual-tests/test-nextjs.sh       # Next.js monorepo
-bash ../scripts/manual-tests/test-t3.sh           # T3 stack
-
-# Test git hooks
-bash ../scripts/manual-tests/test-git-hooks.sh
-```
-
 #### Automated Testing Script
 
 For manual testing with more control, use the `test-local.sh` script. Test projects are created in your home directory by default:
@@ -143,7 +138,7 @@ pnpm test:local
 ./test-local.sh
 
 # Test with specific template and quality
-pnpm test:local -- --template nextjs-app-turbo --quality production
+pnpm test:local -- --template t3-prisma --quality production
 
 # Create test project in a different directory
 pnpm test:local -- --dir ~/test-projects
@@ -172,8 +167,8 @@ pnpm install && pnpm build
 pnpm link --global
 
 # Create a test project
-boss bootstrap --template blank --quality startup --name test-project --non-interactive
+boss init --template t3-prisma --quality startup --name test-project --non-interactive
 
 # Or use tsx directly (no build needed)
-pnpm exec tsx src/index.ts bootstrap --template blank --quality startup --name test-project --non-interactive
+pnpm exec tsx src/index.ts init --template t3-prisma --quality startup --name test-project --non-interactive
 ```

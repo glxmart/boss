@@ -9,6 +9,7 @@ export async function generateProjectStructure(
   const directories = [
     '.boss',
     '.boss/workers',
+    '.boss/worker-manifests',
     '.boss/quality-gates',
     '.boss/templates',
     '.specify',

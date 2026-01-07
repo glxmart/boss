@@ -67,7 +67,7 @@ describe('template-docs generator', () => {
     expect(await fs.pathExists(docPath)).toBe(true);
 
     const content = await fs.readFile(docPath, 'utf8');
-    expect(content).toContain('Template Documentation: Fastify API Service');
+    expect(content).toContain('Template Documentation: Fastify Native');
     expect(content).toContain('test-api');
     expect(content).toContain('enterprise');
     expect(content).toContain('Fastify');
@@ -86,9 +86,10 @@ describe('template-docs generator', () => {
     expect(await fs.pathExists(docPath)).toBe(true);
 
     const content = await fs.readFile(docPath, 'utf8');
-    // NestJS uses the Fastify API Service template for now
-    expect(content).toContain('Template Documentation: Fastify API Service');
+    expect(content).toContain('Template Documentation: NestJS (TypeORM)');
     expect(content).toContain('test-nestjs');
+    expect(content).toContain('NestJS');
+    expect(content).toContain('TypeORM');
   });
 
   it('should include project-specific information', async () => {

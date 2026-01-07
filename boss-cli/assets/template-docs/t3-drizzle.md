@@ -1,6 +1,6 @@
-# Template Documentation: T3 Stack
+# Template Documentation: T3 Stack (Drizzle)
 
-This project was bootstrapped using the **T3 Stack** template, which provides a full-stack TypeScript application with best practices.
+This project was bootstrapped using the **T3 Stack (Drizzle)** template via `create-t3-app`, which provides a full-stack TypeScript application with best practices.
 
 ## What Was Included
 
@@ -9,7 +9,7 @@ This project was bootstrapped using the **T3 Stack** template, which provides a 
 - **TypeScript** - Type-safe development
 - **Tailwind CSS** - Utility-first CSS
 - **tRPC** - End-to-end typesafe APIs
-- **Prisma** - Next-generation ORM
+- **Drizzle ORM** - Lightweight TypeScript ORM with SQL-like syntax
 - **NextAuth.js** - Authentication
 - **Vitest** - Testing framework
 - **ESLint** - Code linting (ESLint 9 flat config)
@@ -17,14 +17,15 @@ This project was bootstrapped using the **T3 Stack** template, which provides a 
 
 ### Project Structure
 
-\`\`\`
+```
 ${config.name}/
 ├── src/
 │   ├── app/                # Next.js App Router pages
-│   ├── server/             # Server-side code (tRPC, Prisma)
+│   ├── server/             # Server-side code (tRPC, Drizzle)
+│   │   └── db/             # Drizzle schema and config
 │   └── components/         # React components
 ├── public/                 # Static assets
-├── prisma/                 # Prisma schema and migrations
+├── drizzle/                # Drizzle migrations
 ├── tests/                  # Test files
 ├── docs/                   # Documentation
 ├── .boss/                  # BOSS configuration
@@ -36,25 +37,25 @@ ${config.name}/
 ├── scripts/                # Utility scripts
 ├── package.json            # Dependencies and scripts
 └── docker-compose.yml      # Local infrastructure
-\`\`\`
+```
 
 ### Available Scripts
 
-- \`pnpm dev\` - Start development server
-- \`pnpm build\` - Build for production
-- \`pnpm start\` - Start production server
-- \`pnpm typecheck\` - Type check without emitting files
-- \`pnpm lint\` - Lint code with ESLint
-- \`pnpm test\` - Run tests in watch mode
-- \`pnpm test:unit\` - Run unit tests (excludes e2e/integration)
-- \`pnpm test:coverage\` - Run tests with coverage
-- \`pnpm db:push\` - Push Prisma schema to database
-- \`pnpm db:studio\` - Open Prisma Studio
+- `pnpm dev` - Start development server
+- `pnpm build` - Build for production
+- `pnpm start` - Start production server
+- `pnpm typecheck` - Type check without emitting files
+- `pnpm lint` - Lint code with ESLint
+- `pnpm test` - Run tests in watch mode
+- `pnpm test:unit` - Run unit tests (excludes e2e/integration)
+- `pnpm test:coverage` - Run tests with coverage
+- `pnpm db:push` - Push Drizzle schema to database
+- `pnpm db:studio` - Open Drizzle Studio
 
 ### Features
 
 - **End-to-End Type Safety** - tRPC provides type-safe APIs from server to client
-- **Database ORM** - Prisma for type-safe database access
+- **Drizzle ORM** - SQL-like syntax with full TypeScript inference
 - **Authentication** - NextAuth.js for secure authentication
 - **Styling** - Tailwind CSS for utility-first styling
 - **Full-Stack** - Server and client code in one TypeScript project
@@ -78,23 +79,23 @@ The following git hooks are configured:
 ### Next Steps
 
 1. **Start Development**
-   \`\`\`bash
+   ```bash
    pnpm install
    pnpm db:push
    pnpm dev
-   \`\`\`
+   ```
 
 2. **Configure Database**
-   - Update \`prisma/schema.prisma\` with your database schema
-   - Run \`pnpm db:push\` to sync schema
-   - Use Prisma Client in your server code
+   - Update `src/server/db/schema.ts` with your database schema
+   - Run `pnpm db:push` to sync schema
+   - Use Drizzle queries in your server code
 
 3. **Add tRPC Procedures**
-   - Define procedures in \`src/server/api/routers/\`
+   - Define procedures in `src/server/api/routers/`
    - Use type-safe procedures in your React components
 
 4. **Use BOSS**
-   - Run \`./start-boss.sh\` to start BOSS orchestration
+   - Run `./start-boss.sh` to start BOSS orchestration
    - BOSS will help you build features following the Spec-Kit workflow
 
 ### Documentation
@@ -102,5 +103,5 @@ The following git hooks are configured:
 - [T3 Stack Documentation](https://create.t3.gg)
 - [Next.js Documentation](https://nextjs.org/docs)
 - [tRPC Documentation](https://trpc.io/docs)
-- [Prisma Documentation](https://www.prisma.io/docs)
+- [Drizzle ORM Documentation](https://orm.drizzle.team)
 

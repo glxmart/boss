@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'fs-extra';
 import path from 'path';
 import os from 'os';
@@ -8,7 +8,14 @@ import {
   validateQualityPreset,
   validateProjectDirectory,
   validateMCPScope,
+  validateTemplateAvailability,
 } from '../validators.js';
+
+// Mock the external-templates module
+vi.mock('../../generators/external-templates.js', () => ({
+  checkTemplateAvailability: vi.fn(),
+  formatAvailabilityError: vi.fn(),
+}));
 
 describe('validators', () => {
   describe('validateProjectName', () => {
@@ -139,6 +146,39 @@ describe('validators', () => {
       const result = await validateProjectDirectory(filePath);
       expect(result.valid).toBe(false);
       expect(result.error).toContain('not a directory');
+    });
+  });
+
+  describe('validateTemplateAvailability', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it('should return valid when template source is available', async () => {
+      const { checkTemplateAvailability } = await import('../../generators/external-templates.js');
+      vi.mocked(checkTemplateAvailability).mockResolvedValueOnce({ available: true });
+
+      const result = await validateTemplateAvailability('t3-prisma');
+
+      expect(result.valid).toBe(true);
+      expect(checkTemplateAvailability).toHaveBeenCalledWith('t3-prisma');
+    });
+
+    it('should return invalid with error when template source is unavailable', async () => {
+      const { checkTemplateAvailability, formatAvailabilityError } =
+        await import('../../generators/external-templates.js');
+      vi.mocked(checkTemplateAvailability).mockResolvedValueOnce({
+        available: false,
+        error: 'Cannot reach npm',
+        remediation: 'Check network',
+      });
+      vi.mocked(formatAvailabilityError).mockReturnValueOnce('Formatted error message');
+
+      const result = await validateTemplateAvailability('t3-prisma');
+
+      expect(result.valid).toBe(false);
+      expect(result.error).toBe('Formatted error message');
+      expect(result.remediation).toBe('Check network');
     });
   });
 });

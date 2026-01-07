@@ -22,7 +22,7 @@ describe('Bootstrap Integration Tests', () => {
 
   it('should bootstrap a complete project structure', async () => {
     const options = {
-      template: 'blank' as const,
+      template: 't3-prisma' as const,
       quality: 'startup' as const,
       name: projectName,
       nonInteractive: true,
@@ -44,7 +44,7 @@ describe('Bootstrap Integration Tests', () => {
 
   it('should generate CLAUDE.md with mandatory verbatim text', async () => {
     const options = {
-      template: 'blank' as const,
+      template: 't3-prisma' as const,
       quality: 'startup' as const,
       name: projectName,
       nonInteractive: true,
@@ -62,7 +62,7 @@ describe('Bootstrap Integration Tests', () => {
 
   it('should generate all worker configurations', async () => {
     const options = {
-      template: 'blank' as const,
+      template: 't3-prisma' as const,
       quality: 'startup' as const,
       name: projectName,
       nonInteractive: true,
@@ -93,7 +93,7 @@ describe('Bootstrap Integration Tests', () => {
 
   it('should generate .claude/ directory structure', async () => {
     const options = {
-      template: 'blank' as const,
+      template: 't3-prisma' as const,
       quality: 'startup' as const,
       name: projectName,
       nonInteractive: true,
@@ -112,7 +112,7 @@ describe('Bootstrap Integration Tests', () => {
 
   it('should generate GitHub workflows', async () => {
     const options = {
-      template: 'blank' as const,
+      template: 't3-prisma' as const,
       quality: 'startup' as const,
       name: projectName,
       nonInteractive: true,
@@ -128,7 +128,7 @@ describe('Bootstrap Integration Tests', () => {
 
   it('should generate git hooks', async () => {
     const options = {
-      template: 'blank' as const,
+      template: 't3-prisma' as const,
       quality: 'startup' as const,
       name: projectName,
       nonInteractive: true,
@@ -143,7 +143,7 @@ describe('Bootstrap Integration Tests', () => {
 
   it('should generate docker-compose.yml with required services', async () => {
     const options = {
-      template: 'blank' as const,
+      template: 't3-prisma' as const,
       quality: 'startup' as const,
       name: projectName,
       nonInteractive: true,
@@ -158,9 +158,9 @@ describe('Bootstrap Integration Tests', () => {
     expect(dockerCompose).toContain('embeddings:');
   });
 
-  it('should generate package.json for blank template', async () => {
+  it('should generate package.json for t3-prisma template', async () => {
     const options = {
-      template: 'blank' as const,
+      template: 't3-prisma' as const,
       quality: 'startup' as const,
       name: projectName,
       nonInteractive: true,
@@ -178,7 +178,7 @@ describe('Bootstrap Integration Tests', () => {
 
   it('should initialize git repository', async () => {
     const options = {
-      template: 'blank' as const,
+      template: 't3-prisma' as const,
       quality: 'startup' as const,
       name: projectName,
       nonInteractive: true,
@@ -192,7 +192,7 @@ describe('Bootstrap Integration Tests', () => {
 
   it('should generate template documentation', async () => {
     const options = {
-      template: 'blank' as const,
+      template: 't3-prisma' as const,
       quality: 'startup' as const,
       name: projectName,
       nonInteractive: true,
@@ -204,16 +204,16 @@ describe('Bootstrap Integration Tests', () => {
     expect(await fileExists(projectName, 'docs/TEMPLATE.md')).toBe(true);
 
     const content = await readProjectFile(projectName, 'docs/TEMPLATE.md');
-    expect(content).toContain('Template Documentation: Blank');
+    expect(content).toContain('Template Documentation: T3 Stack (Prisma)');
     expect(content).toContain(projectName);
     expect(content).toContain('startup');
     expect(content).toContain('Available Scripts');
     expect(content).toContain('Next Steps');
   });
 
-  it('should generate template-specific documentation for nextjs template', async () => {
+  it('should generate template-specific documentation for fastify template', async () => {
     const options = {
-      template: 'nextjs-app-turbo' as const,
+      template: 'fastify-native' as const,
       quality: 'production' as const,
       name: projectName,
       nonInteractive: true,
@@ -225,9 +225,8 @@ describe('Bootstrap Integration Tests', () => {
     expect(await fileExists(projectName, 'docs/TEMPLATE.md')).toBe(true);
 
     const content = await readProjectFile(projectName, 'docs/TEMPLATE.md');
-    expect(content).toContain('Template Documentation: Next.js Turbo Monorepo');
-    expect(content).toContain('Next.js');
-    expect(content).toContain('Turborepo');
+    expect(content).toContain('Template Documentation: Fastify Native');
+    expect(content).toContain('Fastify');
     expect(content).toContain('production');
   });
 });

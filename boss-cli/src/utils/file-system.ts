@@ -9,6 +9,11 @@ export async function copyDirectory(src: string, dest: string): Promise<void> {
   await fs.copy(src, dest);
 }
 
+export async function copyFile(src: string, dest: string): Promise<void> {
+  await fs.ensureDir(path.dirname(dest));
+  await fs.copyFile(src, dest);
+}
+
 export async function writeFile(filePath: string, content: string): Promise<void> {
   await fs.ensureDir(path.dirname(filePath));
   await fs.writeFile(filePath, content, 'utf8');

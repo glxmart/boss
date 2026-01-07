@@ -1,12 +1,11 @@
 import { logger } from '../utils/logger.js';
 import { TEMPLATES, TEMPLATE_CATEGORIES } from '../utils/prompts.js';
-import type { TemplateCategory } from '../types/index.js';
 
 export function templatesCommand(): void {
   logger.section('📋 Available Templates');
 
   // Group templates by category
-  for (const [categoryKey, category] of Object.entries(TEMPLATE_CATEGORIES)) {
+  for (const [_categoryKey, category] of Object.entries(TEMPLATE_CATEGORIES)) {
     console.log(`\n━━━ ${category.name} ━━━`);
     console.log(`  ${category.description}\n`);
 

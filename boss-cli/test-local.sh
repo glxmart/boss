@@ -15,7 +15,7 @@ NC='\033[0m' # No Color
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TEST_PROJECT_NAME="${TEST_PROJECT_NAME:-test-boss-project}"
-TEST_TEMPLATE="${TEST_TEMPLATE:-blank}"
+TEST_TEMPLATE="${TEST_TEMPLATE:-t3-prisma}"
 TEST_QUALITY="${TEST_QUALITY:-startup}"
 TEST_DIR="${TEST_DIR:-$HOME}"
 LINK_GLOBALLY="${LINK_GLOBALLY:-false}"
@@ -97,7 +97,7 @@ validate_parameters() {
     fi
     
     # Validate template
-    local valid_templates=("blank" "nextjs-app-turbo" "api-service-fastify" "t3-app")
+    local valid_templates=("t3-prisma" "t3-drizzle" "nestjs-typeorm" "fastify-native" "astro-portfolio")
     local template_valid=false
     for t in "${valid_templates[@]}"; do
         if [ "$TEST_TEMPLATE" = "$t" ]; then
@@ -105,7 +105,7 @@ validate_parameters() {
             break
         fi
     done
-    
+
     if [ "$template_valid" = false ]; then
         log_error "Invalid template: $TEST_TEMPLATE"
         log_info "Valid templates: ${valid_templates[*]}"
@@ -451,12 +451,8 @@ verify_project() {
     check_file "docker-compose.yml"
     check_file ".boss/config.yaml"
 
-    # Template-specific verification
-    if [ "$TEST_TEMPLATE" = "nextjs-app-turbo" ]; then
-        verify_monorepo_template
-        local monorepo_result=$?
-        checks_failed=$((checks_failed + monorepo_result))
-    fi
+    # Template-specific verification can be added here for each template type
+    # Currently using external templates that don't have monorepo structure
 
     # Check git repository
     if git rev-parse --git-dir > /dev/null 2>&1; then
@@ -517,8 +513,8 @@ Usage: $0 [OPTIONS]
 Options:
     -h, --help              Show this help message
     -n, --name NAME         Test project name (default: test-boss-project)
-    -t, --template TEMPLATE Template to use (default: blank)
-                           Options: blank, nextjs-app-turbo, api-service-fastify
+    -t, --template TEMPLATE Template to use (default: t3-prisma)
+                           Options: t3-prisma, t3-drizzle, nestjs-typeorm, fastify-native, astro-portfolio
     -q, --quality QUALITY   Quality preset (default: startup)
                            Options: startup, production, enterprise
     -d, --dir DIR           Directory to create test project in (default: $HOME)
@@ -541,7 +537,7 @@ Examples:
     $0
 
     # Test with specific template and quality
-    $0 --template nextjs-app-turbo --quality production
+    $0 --template t3-prisma --quality production
 
     # Link globally and test
     $0 --link

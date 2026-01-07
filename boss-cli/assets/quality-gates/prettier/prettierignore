@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Build outputs
+dist/
+build/
+.next/
+.astro/
+out/
+
+# Generated files
+*.min.js
+*.min.css
+coverage/
+.nyc_output/
+
+# IDE and editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Docker
+Dockerfile
+docker-compose*.yml
+
+# BOSS specific
+.boss/
+.container-use/
+.specify/
+
+# Misc
+*.md
+LICENSE

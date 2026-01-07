@@ -1,0 +1,61 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build outputs
+dist
+build
+.next
+.turbo
+
+# Version control
+.git
+.gitignore
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files (secrets should be injected at runtime)
+.env
+.env.*
+!.env.example
+
+# Test files
+coverage
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+__tests__
+tests
+vitest.config.ts
+jest.config.*
+
+# Documentation
+*.md
+docs
+LICENSE
+
+# Docker files (avoid recursive copy)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# BOSS configuration (not needed in container)
+.boss
+.specify
+.container-use
+.claude
+
+# Misc
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.npmrc

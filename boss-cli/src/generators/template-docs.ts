@@ -13,16 +13,15 @@ export async function generateTemplateDocs(
 }
 
 async function getTemplateDocContent(template: Template, config: ProjectConfig): Promise<string> {
-  // New template system - map new templates to doc templates
-  // For now, use t3-app docs for T3 variants, fastify for backend, and blank for others
-  const templateMap: Record<string, string> = {
-    't3-prisma': 'template-docs/t3-app.md',
-    't3-drizzle': 'template-docs/t3-app.md',
-    'nestjs-typeorm': 'template-docs/api-service-fastify.md', // Use API template for NestJS
-    'fastify-native': 'template-docs/api-service-fastify.md',
-    'astro-portfolio': 'template-docs/blank.md', // Use blank for Astro until we have a dedicated template
+  // Template documentation files for each external template
+  const templateMap: Record<Template, string> = {
+    't3-prisma': 'template-docs/t3-prisma.md',
+    't3-drizzle': 'template-docs/t3-drizzle.md',
+    'nestjs-typeorm': 'template-docs/nestjs-typeorm.md',
+    'fastify-native': 'template-docs/fastify-native.md',
+    'astro-portfolio': 'template-docs/astro-portfolio.md',
   };
 
-  const templatePath = templateMap[template] || 'template-docs/blank.md';
+  const templatePath = templateMap[template];
   return await loadTemplate(templatePath, { config });
 }

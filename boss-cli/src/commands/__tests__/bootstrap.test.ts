@@ -92,8 +92,20 @@ vi.mock('../../generators/docker-compose.js', () => ({
   generateDockerCompose: vi.fn(async () => {}),
 }));
 
+vi.mock('../../generators/dockerfile.js', () => ({
+  generateDockerFiles: vi.fn(async () => {}),
+  generateDockerfile: vi.fn(async () => {}),
+  generateDockerignore: vi.fn(async () => {}),
+  getTemplatePort: vi.fn(() => 3000),
+  isStaticSite: vi.fn(() => false),
+}));
+
 vi.mock('../../generators/claude-md.js', () => ({
   generateClaudeMD: vi.fn(async () => {}),
+}));
+
+vi.mock('../../generators/renovate.js', () => ({
+  generateRenovateConfig: vi.fn(async () => {}),
 }));
 
 vi.mock('../../generators/claude-folder.js', () => ({
@@ -338,6 +350,7 @@ describe('bootstrap command', () => {
       const { generateQualityGates } = await import('../../generators/quality-gates.js');
       const { generateMCPConfig } = await import('../../generators/mcp-config.js');
       const { generateGitHubWorkflows } = await import('../../generators/github-workflows.js');
+      const { generateRenovateConfig } = await import('../../generators/renovate.js');
 
       const options: BootstrapOptions = {
         name: 'test-project',
@@ -352,6 +365,7 @@ describe('bootstrap command', () => {
       expect(generateQualityGates).toHaveBeenCalled();
       expect(generateMCPConfig).toHaveBeenCalled();
       expect(generateGitHubWorkflows).toHaveBeenCalled();
+      expect(generateRenovateConfig).toHaveBeenCalled();
     });
 
     it('should create initial setup branch', async () => {

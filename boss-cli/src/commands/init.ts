@@ -13,8 +13,10 @@ import {
   validateTemplate,
   validateQualityPreset,
   validateMCPScope,
+  validateTemplateAvailability,
 } from '../utils/validators.js';
 import { validateProjectDirectory } from '../utils/validators.js';
+import { getTemplateExecutorInfo } from '../generators/external-templates.js';
 import type { BootstrapOptions, ProjectConfig, ProjectConfigFile } from '../types/index.js';
 import { initGitRepository } from '../utils/git.js';
 import { generateProjectStructure } from '../generators/project-structure.js';
@@ -27,7 +29,9 @@ import { generateMCPConfig } from '../generators/mcp-config.js';
 import { generateGitHubWorkflows } from '../generators/github-workflows.js';
 import { generateGitHooks } from '../generators/git-hooks.js';
 import { generateDockerCompose } from '../generators/docker-compose.js';
+import { generateDockerFiles } from '../generators/dockerfile.js';
 import { generateClaudeMD } from '../generators/claude-md.js';
+import { generateRenovateConfig } from '../generators/renovate.js';
 import { generateClaudeFolder } from '../generators/claude-folder.js';
 import { generateStartBossScript } from '../generators/start-boss-sh.js';
 import { generateSetupScripts } from '../generators/setup-scripts.js';
@@ -49,6 +53,23 @@ export async function initCommand(options: BootstrapOptions): Promise<void> {
   if (!dirValidation.valid) {
     logger.error(dirValidation.error || 'Invalid project directory');
     process.exit(1);
+  }
+
+  // Validate template availability (pre-bootstrap check)
+  // Skip in test environment to avoid network calls
+  if (!process.env.VITEST && !process.env.NODE_ENV?.includes('test')) {
+    logger.startSpinner(`Checking template availability: ${config.template}...`);
+    const templateAvailability = await validateTemplateAvailability(config.template);
+    if (!templateAvailability.valid) {
+      logger.stopSpinner(false, 'Template source unavailable');
+      logger.error(templateAvailability.error || 'Template source unavailable');
+      process.exit(1);
+    }
+    const executorInfo = getTemplateExecutorInfo(config.template);
+    logger.stopSpinner(
+      true,
+      `Template source available: ${executorInfo?.source || config.template}`
+    );
   }
 
   // Confirm before proceeding
@@ -98,9 +119,9 @@ export async function initCommand(options: BootstrapOptions): Promise<void> {
     await applyQualityPreset(projectPath, config.quality);
     logger.stopSpinner(true, 'Quality preset applied');
 
-    // Generate quality gates
+    // Generate quality gates (includes TypeScript strict mode, ESLint, Prettier, lint-staged)
     logger.startSpinner('Generating quality gates...');
-    await generateQualityGates(projectPath, config.quality);
+    await generateQualityGates(projectPath, config.quality, config.template);
     logger.stopSpinner(true, 'Quality gates generated');
 
     // Determine MCP scope BEFORE starting spinner (to avoid UI hang)
@@ -131,10 +152,20 @@ export async function initCommand(options: BootstrapOptions): Promise<void> {
     await generateGitHooks(projectPath, config.quality);
     logger.stopSpinner(true, 'Git hooks generated');
 
-    // Generate Docker Compose
+    // Generate Docker Compose (with app service)
     logger.startSpinner('Generating Docker Compose...');
-    await generateDockerCompose(projectPath);
+    await generateDockerCompose(projectPath, config.template, config);
     logger.stopSpinner(true, 'Docker Compose generated');
+
+    // Generate Dockerfile and .dockerignore
+    logger.startSpinner('Generating Docker files...');
+    await generateDockerFiles(projectPath, config.template, config);
+    logger.stopSpinner(true, 'Docker files generated');
+
+    // Generate Renovate configuration
+    logger.startSpinner('Generating Renovate configuration...');
+    await generateRenovateConfig(projectPath);
+    logger.stopSpinner(true, 'Renovate configuration generated');
 
     // Generate critical files
     logger.startSpinner('Generating critical files...');

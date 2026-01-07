@@ -238,10 +238,10 @@ describe('template-loader', () => {
         .mockResolvedValueOnce(false) // template doesn't exist
         .mockResolvedValueOnce(true); // .gitignore exists
 
-      const templates: Array<'t3-prisma' | 'fastify-native' | 't3-prisma' | 't3-drizzle'> = [
+      const templates: Array<'t3-prisma' | 'fastify-native' | 't3-drizzle'> = [
         't3-prisma',
         'fastify-native',
-        't3-prisma',
+        't3-drizzle',
       ];
 
       for (const template of templates) {

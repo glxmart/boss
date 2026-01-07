@@ -57,9 +57,19 @@ addInitOptions(
 program
   .command('doctor')
   .description('Check prerequisites and system health')
-  .action(async () => {
+  .option(
+    '-p, --project-dir <dir>',
+    'Project directory to validate (defaults to current directory)'
+  )
+  .option('--skip-system', 'Skip system prerequisite checks')
+  .option('--skip-project', 'Skip project validation checks')
+  .action(async (options: { projectDir?: string; skipSystem?: boolean; skipProject?: boolean }) => {
     try {
-      await doctorCommand();
+      await doctorCommand({
+        projectDir: options.projectDir,
+        skipSystemChecks: options.skipSystem,
+        skipProjectChecks: options.skipProject,
+      });
     } catch (error) {
       logger.error(
         `Doctor check failed: ${error instanceof Error ? error.message : String(error)}`

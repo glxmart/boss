@@ -30,6 +30,23 @@ describe('project-structure generator', () => {
     expect(await fs.pathExists(path.join(testDir, 'tests'))).toBe(true);
   });
 
+  it('should generate .boss directory with worker-manifests subdirectory', async () => {
+    const config: ProjectConfig = {
+      name: 'test-project',
+      template: 't3-prisma',
+      quality: 'startup',
+    };
+
+    await generateProjectStructure(testDir, config);
+
+    // Check for .boss directories
+    expect(await fs.pathExists(path.join(testDir, '.boss'))).toBe(true);
+    expect(await fs.pathExists(path.join(testDir, '.boss', 'workers'))).toBe(true);
+    expect(await fs.pathExists(path.join(testDir, '.boss', 'worker-manifests'))).toBe(true);
+    expect(await fs.pathExists(path.join(testDir, '.boss', 'quality-gates'))).toBe(true);
+    expect(await fs.pathExists(path.join(testDir, '.boss', 'templates'))).toBe(true);
+  });
+
   it('should generate structure for different templates', async () => {
     const configs: ProjectConfig[] = [
       { name: 'test', template: 't3-prisma', quality: 'startup' },

@@ -53,7 +53,7 @@ describe('E2E: BOSS Workflow with Conductor MCP', () => {
         path.join(BOSS_CLI_PATH, 'dist/index.js'),
         'bootstrap',
         '--template',
-        'blank',
+        't3-prisma',
         '--quality',
         'startup',
         '--name',

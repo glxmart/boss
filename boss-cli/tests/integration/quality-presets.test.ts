@@ -14,7 +14,7 @@ describe('Quality Presets Integration Tests', () => {
 
     it('should apply startup quality gates', async () => {
       const options = {
-        template: 'blank' as const,
+        template: 't3-prisma' as const,
         quality: 'startup' as const,
         name: projectName,
         nonInteractive: true,
@@ -39,7 +39,7 @@ describe('Quality Presets Integration Tests', () => {
 
     it('should apply production quality gates', async () => {
       const options = {
-        template: 'blank' as const,
+        template: 't3-prisma' as const,
         quality: 'production' as const,
         name: projectName,
         nonInteractive: true,
@@ -65,7 +65,7 @@ describe('Quality Presets Integration Tests', () => {
 
     it('should apply enterprise quality gates', async () => {
       const options = {
-        template: 'blank' as const,
+        template: 't3-prisma' as const,
         quality: 'enterprise' as const,
         name: projectName,
         nonInteractive: true,

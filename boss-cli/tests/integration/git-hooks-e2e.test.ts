@@ -15,7 +15,7 @@ const execAsync = promisify(exec);
  */
 function createTestOptions(
   projectName: string,
-  template: Template = 'blank',
+  template: Template = 't3-prisma',
   quality: QualityPreset = 'startup'
 ): {
   template: Template;
@@ -80,7 +80,7 @@ describe('Git Hooks E2E Tests', () => {
       'should block commits with linting errors',
       async () => {
         // Bootstrap project
-        await bootstrapCommand(createTestOptions(projectName, 'blank', 'startup'));
+        await bootstrapCommand(createTestOptions(projectName, 't3-prisma', 'startup'));
 
         // Install dependencies (required for hooks to work)
         await runInProject(projectName, 'pnpm install');
@@ -115,7 +115,7 @@ console.log("no semicolon")  // missing semicolon
       'should allow commits with properly formatted code',
       async () => {
         // Bootstrap project
-        await bootstrapCommand(createTestOptions(projectName, 'blank', 'startup'));
+        await bootstrapCommand(createTestOptions(projectName, 't3-prisma', 'startup'));
 
         // Install dependencies
         await runInProject(projectName, 'pnpm install');
@@ -154,7 +154,7 @@ export function goodFunction() {
       'should block commits with non-conventional messages',
       async () => {
         // Bootstrap project
-        await bootstrapCommand(createTestOptions(projectName, 'blank', 'startup'));
+        await bootstrapCommand(createTestOptions(projectName, 't3-prisma', 'startup'));
 
         // Install dependencies
         await runInProject(projectName, 'pnpm install');
@@ -178,7 +178,7 @@ export function goodFunction() {
       'should allow commits with conventional commit messages',
       async () => {
         // Bootstrap project
-        await bootstrapCommand(createTestOptions(projectName, 'blank', 'startup'));
+        await bootstrapCommand(createTestOptions(projectName, 't3-prisma', 'startup'));
 
         // Install dependencies
         await runInProject(projectName, 'pnpm install');
@@ -213,7 +213,7 @@ export function goodFunction() {
       'should run tests before push',
       async () => {
         // Bootstrap project
-        await bootstrapCommand(createTestOptions(projectName, 'blank', 'startup'));
+        await bootstrapCommand(createTestOptions(projectName, 't3-prisma', 'startup'));
 
         // Install dependencies
         await runInProject(projectName, 'pnpm install');

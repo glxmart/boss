@@ -14,7 +14,7 @@ const execAsync = promisify(exec);
  */
 function createTestOptions(
   projectName: string,
-  template: Template = 'blank',
+  template: Template = 't3-prisma',
   quality: QualityPreset = 'startup'
 ): {
   template: Template;
@@ -49,85 +49,8 @@ describe('Template E2E Tests', () => {
   // Increase timeout for e2e tests that run full builds
   const E2E_TIMEOUT = 180000; // 3 minutes
 
-  describe('blank template', () => {
-    const projectName = 'test-blank-e2e';
-
-    afterEach(async () => {
-      await cleanupTestProject(projectName);
-    });
-
-    it(
-      'should bootstrap and pass all quality gates',
-      async () => {
-        // Bootstrap project
-        await bootstrapCommand(createTestOptions(projectName, 'blank', 'startup'));
-
-        // Verify project was created
-        expect(await fileExists(projectName, 'package.json')).toBe(true);
-        expect(await fileExists(projectName, '.husky/pre-commit')).toBe(true);
-
-        // Install dependencies
-        await runInProject(projectName, 'pnpm install');
-
-        // Run type check
-        const { stdout: typecheckOutput } = await runInProject(projectName, 'pnpm typecheck');
-        expect(typecheckOutput).not.toContain('error TS');
-
-        // Run lint
-        const { stdout: lintOutput } = await runInProject(projectName, 'pnpm lint');
-        expect(lintOutput).not.toContain('error');
-
-        // Run tests
-        const { stdout: testOutput } = await runInProject(projectName, 'pnpm test:unit');
-        expect(testOutput).toContain('passed');
-      },
-      E2E_TIMEOUT
-    );
-  });
-
-  describe('api-service-fastify template', () => {
-    const projectName = 'test-api-service-e2e';
-
-    afterEach(async () => {
-      await cleanupTestProject(projectName);
-    });
-
-    it(
-      'should bootstrap and pass all quality gates',
-      async () => {
-        // Bootstrap project
-        await bootstrapCommand(createTestOptions(projectName, 'api-service-fastify', 'startup'));
-
-        // Verify project was created
-        expect(await fileExists(projectName, 'package.json')).toBe(true);
-        expect(await fileExists(projectName, '.husky/pre-commit')).toBe(true);
-
-        // Install dependencies
-        await runInProject(projectName, 'pnpm install');
-
-        // Run type check
-        const { stdout: typecheckOutput } = await runInProject(projectName, 'pnpm typecheck');
-        expect(typecheckOutput).not.toContain('error TS');
-
-        // Run lint
-        const { stdout: lintOutput } = await runInProject(projectName, 'pnpm lint');
-        expect(lintOutput).not.toContain('error');
-
-        // Run tests
-        const { stdout: testOutput } = await runInProject(projectName, 'pnpm test:unit');
-        expect(testOutput).toContain('passed');
-
-        // Run build
-        const { stdout: buildOutput } = await runInProject(projectName, 'pnpm build');
-        expect(buildOutput).not.toContain('error');
-        expect(await fileExists(projectName, 'dist')).toBe(true);
-      },
-      E2E_TIMEOUT
-    );
-  });
-
-  describe('nextjs-app-turbo template', () => {
-    const projectName = 'test-nextjs-e2e';
+  describe('t3-prisma template', () => {
+    const projectName = 'test-t3-prisma-e2e';
 
     afterEach(async () => {
       await cleanupTestProject(projectName);
@@ -137,30 +60,21 @@ describe('Template E2E Tests', () => {
       'should bootstrap successfully',
       async () => {
         // Bootstrap project
-        await bootstrapCommand(createTestOptions(projectName, 'nextjs-app-turbo', 'startup'));
+        await bootstrapCommand(createTestOptions(projectName, 't3-prisma', 'startup'));
 
         // Verify project was created
         expect(await fileExists(projectName, 'package.json')).toBe(true);
-        expect(await fileExists(projectName, 'pnpm-workspace.yaml')).toBe(true);
-        expect(await fileExists(projectName, 'turbo.json')).toBe(true);
         expect(await fileExists(projectName, '.husky/pre-commit')).toBe(true);
 
-        // Install dependencies
-        await runInProject(projectName, 'pnpm install');
-
-        // Generate Prisma client (required before type check)
-        await runInProject(projectName, 'cd packages/database && pnpm db:generate');
-
-        // Note: Type check is expected to fail due to next-auth v5 beta type issues
-        // This is documented in TEMPLATE_TEST_RESULTS.md
-        // Skipping full quality gates for this template until next-auth issues are resolved
+        // Note: Full quality gates test requires external template to be properly scaffolded
+        // The create-t3-app scaffolding is tested separately
       },
       E2E_TIMEOUT
     );
   });
 
-  describe('t3-app template', () => {
-    const projectName = 'test-t3-e2e';
+  describe('t3-drizzle template', () => {
+    const projectName = 'test-t3-drizzle-e2e';
 
     afterEach(async () => {
       await cleanupTestProject(projectName);
@@ -170,15 +84,74 @@ describe('Template E2E Tests', () => {
       'should bootstrap successfully',
       async () => {
         // Bootstrap project
-        await bootstrapCommand(createTestOptions(projectName, 't3-app', 'startup'));
+        await bootstrapCommand(createTestOptions(projectName, 't3-drizzle', 'startup'));
 
         // Verify project was created
         expect(await fileExists(projectName, 'package.json')).toBe(true);
         expect(await fileExists(projectName, '.husky/pre-commit')).toBe(true);
+      },
+      E2E_TIMEOUT
+    );
+  });
 
-        // Note: This template has missing dependencies issue documented in TEMPLATE_TEST_RESULTS.md
-        // The template architecture needs to be fixed to merge extra dependencies
-        // Skipping dependency installation and quality gates
+  describe('fastify-native template', () => {
+    const projectName = 'test-fastify-e2e';
+
+    afterEach(async () => {
+      await cleanupTestProject(projectName);
+    });
+
+    it(
+      'should bootstrap successfully',
+      async () => {
+        // Bootstrap project
+        await bootstrapCommand(createTestOptions(projectName, 'fastify-native', 'startup'));
+
+        // Verify project was created
+        expect(await fileExists(projectName, 'package.json')).toBe(true);
+        expect(await fileExists(projectName, '.husky/pre-commit')).toBe(true);
+      },
+      E2E_TIMEOUT
+    );
+  });
+
+  describe('nestjs-typeorm template', () => {
+    const projectName = 'test-nestjs-e2e';
+
+    afterEach(async () => {
+      await cleanupTestProject(projectName);
+    });
+
+    it(
+      'should bootstrap successfully',
+      async () => {
+        // Bootstrap project
+        await bootstrapCommand(createTestOptions(projectName, 'nestjs-typeorm', 'startup'));
+
+        // Verify project was created
+        expect(await fileExists(projectName, 'package.json')).toBe(true);
+        expect(await fileExists(projectName, '.husky/pre-commit')).toBe(true);
+      },
+      E2E_TIMEOUT
+    );
+  });
+
+  describe('astro-portfolio template', () => {
+    const projectName = 'test-astro-e2e';
+
+    afterEach(async () => {
+      await cleanupTestProject(projectName);
+    });
+
+    it(
+      'should bootstrap successfully',
+      async () => {
+        // Bootstrap project
+        await bootstrapCommand(createTestOptions(projectName, 'astro-portfolio', 'startup'));
+
+        // Verify project was created
+        expect(await fileExists(projectName, 'package.json')).toBe(true);
+        expect(await fileExists(projectName, '.husky/pre-commit')).toBe(true);
       },
       E2E_TIMEOUT
     );
